@@ -19,7 +19,13 @@ import { getModel } from "@/lib/get-model";
  * 上限：按字符数近似 token 上限，超出后按时间权重丢弃最旧记忆。
  */
 
-export type MemoryFact = { text: string; ts: number };
+export type MemoryCategory = "user" | "pet";
+export type MemoryFact = {
+  text: string;
+  ts: number;
+  /** 事实分类：user=关于用户，pet=关于宠物 */
+  category?: MemoryCategory;
+};
 export type MemoryStore = {
   facts: MemoryFact[];
   /** 已触发记忆提取的对话轮次计数（用于降频） */
@@ -42,14 +48,15 @@ const EXTRACT_PROMPT = `你是一个长期记忆提取助手。你的任务是�
 要求：
 1. 每条事实必须具体、完整、可独立理解（如"用户喜欢喝咖啡"，而不是"喜欢咖啡"）。
 2. 忽略问候、客套、天气、与用户无关的临时内容。
-3. 只输出 JSON，格式：{"facts": ["事实1", "事实2"]}。不要输出任何其他文字。
+3. 只输出 JSON，格式：{"facts": [{"text": "用户喜欢喝咖啡", "category": "user"}, {"text": "宠物叫旺财", "category": "pet"}]}。
+   category 取值：user（关于用户本人的信息）、pet（关于宠物/陪伴角色的信息）。不要输出任何其他文字。
 4. 没有值得记忆的新信息时输出 {"facts": []}。
 
 示例1：
 对话：
 用户：你好，我叫小明，平时喜欢喝咖啡，养了一只叫旺财的狗。
 助手：很高兴认识你，小明！
-输出：{"facts": ["用户叫小明", "用户喜欢喝咖啡", "用户养了一只叫旺财的狗"]}
+输出：{"facts": [{"text": "用户叫小明", "category": "user"}, {"text": "用户喜欢喝咖啡", "category": "user"}, {"text": "用户养了一只叫旺财的狗", "category": "pet"}]}
 
 示例2：
 对话：
@@ -68,12 +75,16 @@ export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
       return {
         facts: data.facts
           .filter(
-            (f): f is { text: string; ts?: unknown } =>
+            (f): f is { text: string; ts?: unknown; category?: unknown } =>
               !!f && typeof (f as { text?: unknown }).text === "string",
           )
           .map((f) => ({
             text: f.text,
             ts: typeof f.ts === "number" ? f.ts : Date.now(),
+            category:
+              f.category === "pet" || f.category === "user"
+                ? f.category
+                : undefined,
           })),
         extractCounter:
           typeof data.extractCounter === "number" ? data.extractCounter : 0,
@@ -87,7 +98,11 @@ export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
 
 export function serializeMemoryStore(store: MemoryStore): string {
   return JSON.stringify({
-    facts: store.facts,
+    facts: store.facts.map((f) => ({
+      text: f.text,
+      ts: f.ts,
+      ...(f.category ? { category: f.category } : {}),
+    })),
     extractCounter: store.extractCounter ?? 0,
   });
 }
@@ -100,18 +115,45 @@ export function normalizeFact(text: string): string {
     .trim();
 }
 
+/** 宠物相关关键词（启发式分类兜底） */
+const PET_KEYWORDS = [
+  "宠物",
+  "猫",
+  "狗",
+  "企鹅",
+  "狐狸",
+  "兔",
+  "鸭",
+  "鹦鹉",
+  "仓鼠",
+  "金鱼",
+  "养了",
+  "它叫",
+  "抱抱狐",
+  "小企鹅",
+  "修勾",
+];
+
+/** 启发式分类：提到宠物/养宠相关内容 → pet，否则 user */
+export function classifyFact(text: string): MemoryCategory {
+  const t = text.toLowerCase();
+  return PET_KEYWORDS.some((k) => t.includes(k)) ? "pet" : "user";
+}
+
 /** 合并新事实（去重 / 更新替换 / 追加）+ 按时间权重裁剪到上限 */
 export function mergeFacts(
   existing: MemoryFact[],
-  newFacts: string[],
+  newFacts: (string | { text: string; category?: MemoryCategory })[],
   now: number = Date.now(),
 ): MemoryFact[] {
   const result = existing.map((f) => ({ ...f }));
 
   for (const raw of newFacts) {
-    const text = raw.trim();
+    const text = (typeof raw === "string" ? raw : raw.text).trim();
     const norm = normalizeFact(text);
     if (!norm) continue;
+    const category =
+      typeof raw === "string" ? classifyFact(text) : raw.category ?? classifyFact(text);
 
     // 1) 完全一致 → 去重，仅刷新时间戳（提升提及权重）
     const exactIdx = result.findIndex((f) => normalizeFact(f.text) === norm);
@@ -126,12 +168,12 @@ export function mergeFacts(
       return nf.length > 0 && (norm.includes(nf) || nf.includes(norm));
     });
     if (similarIdx >= 0) {
-      result[similarIdx] = { text, ts: now };
+      result[similarIdx] = { text, ts: now, category };
       continue;
     }
 
     // 3) 新信息 → 追加
-    result.push({ text, ts: now });
+    result.push({ text, ts: now, category });
   }
 
   // 上限控制：按时间权重（ts 升序）丢弃最旧记忆，直到字符数不超限
@@ -157,8 +199,28 @@ function lastUserText(messages: UIMessage[]): string {
   return "";
 }
 
+/** 解析提取结果：兼容旧格式（字符串数组）和新格式（{text, category} 数组） */
+function parseFactsResult(facts: unknown[]): { text: string; category?: MemoryCategory }[] {
+  const out: { text: string; category?: MemoryCategory }[] = [];
+  for (const f of facts) {
+    if (typeof f === "string") {
+      out.push({ text: f, category: classifyFact(f) });
+    } else if (f && typeof (f as { text?: unknown }).text === "string") {
+      const obj = f as { text: string; category?: unknown };
+      out.push({
+        text: obj.text,
+        category: obj.category === "pet" ? "pet" : obj.category === "user" ? "user" : classifyFact(obj.text),
+      });
+    }
+  }
+  return out;
+}
+
 /** 调用模型提取关键事实（复用当前模型；JSON 容错解析） */
-async function extractFacts(userText: string, assistantText: string): Promise<string[]> {
+async function extractFacts(
+  userText: string,
+  assistantText: string,
+): Promise<{ text: string; category?: MemoryCategory }[]> {
   const convo = [
     `用户：${userText}`,
     assistantText ? `助手：${assistantText}` : "",
@@ -179,7 +241,7 @@ async function extractFacts(userText: string, assistantText: string): Promise<st
   try {
     const data = JSON.parse(t) as { facts?: unknown[] };
     if (Array.isArray(data?.facts)) {
-      return data.facts.filter((x): x is string => typeof x === "string");
+      return parseFactsResult(data.facts);
     }
   } catch {
     // 容错：尝试提取首个 JSON 对象
@@ -189,7 +251,7 @@ async function extractFacts(userText: string, assistantText: string): Promise<st
     try {
       const data = JSON.parse(block[0]) as { facts?: unknown[] };
       if (Array.isArray(data?.facts)) {
-        return data.facts.filter((x): x is string => typeof x === "string");
+        return parseFactsResult(data.facts);
       }
     } catch {
       // 忽略解析失败
@@ -287,6 +349,54 @@ export async function clearMemory(adoptionId: string): Promise<void> {
     .update(adoptions)
     .set({ memoryContext: null })
     .where(eq(adoptions.id, adoptionId));
+}
+
+/** 手动新增一条记忆；返回新增后的事实列表 */
+export async function addMemoryFact(
+  adoptionId: string,
+  text: string,
+  category?: MemoryCategory,
+): Promise<MemoryFact[]> {
+  const [adoption] = await db
+    .select({ memoryContext: adoptions.memoryContext })
+    .from(adoptions)
+    .where(eq(adoptions.id, adoptionId))
+    .limit(1);
+  if (!adoption) return [];
+
+  const store = parseMemoryStore(adoption.memoryContext);
+  store.facts = mergeFacts(store.facts, [{ text, category }]);
+  await db
+    .update(adoptions)
+    .set({ memoryContext: serializeMemoryStore(store) })
+    .where(eq(adoptions.id, adoptionId));
+  return store.facts;
+}
+
+/** 编辑一条记忆；返回编辑后的事实列表，未找到旧条目返回 null */
+export async function updateMemoryFact(
+  adoptionId: string,
+  oldText: string,
+  text: string,
+  category?: MemoryCategory,
+): Promise<MemoryFact[] | null> {
+  const [adoption] = await db
+    .select({ memoryContext: adoptions.memoryContext })
+    .from(adoptions)
+    .where(eq(adoptions.id, adoptionId))
+    .limit(1);
+  if (!adoption) return null;
+
+  const store = parseMemoryStore(adoption.memoryContext);
+  const idx = store.facts.findIndex((f) => f.text === oldText);
+  if (idx < 0) return null;
+
+  store.facts[idx] = { text, ts: Date.now(), category: category ?? classifyFact(text) };
+  await db
+    .update(adoptions)
+    .set({ memoryContext: serializeMemoryStore(store) })
+    .where(eq(adoptions.id, adoptionId));
+  return store.facts;
 }
 
 /** 把长期记忆渲染为注入 System Prompt 的段落；无记忆返回空串 */

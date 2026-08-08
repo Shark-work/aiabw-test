@@ -15,6 +15,40 @@ export function moodInfo(happiness: number) {
   return { emoji: "🥰", label: "超幸福" };
 }
 
+/** 记忆分类切换：用户 / 宠物 */
+function CategoryToggle({
+  value,
+  onChange,
+}: {
+  value: "user" | "pet";
+  onChange: (v: "user" | "pet") => void;
+}) {
+  const base =
+    "px-3 py-1 transition";
+  return (
+    <div className="flex shrink-0 overflow-hidden rounded-full border border-zinc-200 text-xs">
+      <button
+        type="button"
+        onClick={() => onChange("user")}
+        className={`${base} ${
+          value === "user" ? "bg-violet-100 font-medium text-violet-700" : "bg-white text-zinc-500 hover:bg-zinc-50"
+        }`}
+      >
+        👤 用户
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("pet")}
+        className={`${base} ${
+          value === "pet" ? "bg-orange-100 font-medium text-orange-700" : "bg-white text-zinc-500 hover:bg-zinc-50"
+        }`}
+      >
+        🐾 宠物
+      </button>
+    </div>
+  );
+}
+
 export function ChatClient({
   threadId,
   adoptionId,
@@ -46,12 +80,25 @@ export function ChatClient({
   const [showMigratedToast, setShowMigratedToast] = useState(false);
 
   // —— 记忆可视化 / 管理 ——
+  type MemoryFactView = { text: string; ts: number; category?: "user" | "pet" };
   const [memoryOpen, setMemoryOpen] = useState(false);
-  const [memoryFacts, setMemoryFacts] = useState<{ text: string; ts: number }[]>([]);
+  const [memoryFacts, setMemoryFacts] = useState<MemoryFactView[]>([]);
   const [memoryUsedChars, setMemoryUsedChars] = useState(0);
   const [memoryMaxChars, setMemoryMaxChars] = useState(3000);
   const [memoryLoading, setMemoryLoading] = useState(false);
   const [memoryError, setMemoryError] = useState("");
+  // 新增记忆
+  const [newFactText, setNewFactText] = useState("");
+  const [newFactCategory, setNewFactCategory] = useState<"user" | "pet">("user");
+  // 编辑记忆
+  const [editingOldText, setEditingOldText] = useState<string | null>(null);
+  const [editFactText, setEditFactText] = useState("");
+  const [editFactCategory, setEditFactCategory] = useState<"user" | "pet">("user");
+
+  const applyFacts = (facts: MemoryFactView[]) => {
+    setMemoryFacts(facts);
+    setMemoryUsedChars(facts.reduce((s, f) => s + f.text.length, 0));
+  };
 
   const openMemory = useCallback(async () => {
     setMemoryOpen(true);
@@ -62,8 +109,7 @@ export function ChatClient({
       const res = await fetch(`/api/memory?adoptionId=${adoptionIdState}`);
       const data = await res.json();
       if (data?.ok) {
-        setMemoryFacts(data.facts ?? []);
-        setMemoryUsedChars(data.usedChars ?? 0);
+        applyFacts(data.facts ?? []);
         setMemoryMaxChars(data.maxChars ?? 3000);
       } else {
         setMemoryError(data?.error ?? "读取记忆失败");
@@ -74,6 +120,61 @@ export function ChatClient({
       setMemoryLoading(false);
     }
   }, [adoptionIdState]);
+
+  const addMemoryFact = useCallback(async () => {
+    const text = newFactText.trim();
+    if (!text || !adoptionIdState) return;
+    try {
+      const res = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adoptionId: adoptionIdState,
+          action: "add",
+          text,
+          category: newFactCategory,
+        }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        applyFacts(data.facts ?? []);
+        setNewFactText("");
+      }
+    } catch {
+      // 忽略
+    }
+  }, [adoptionIdState, newFactText, newFactCategory]);
+
+  const startEditFact = (f: MemoryFactView) => {
+    setEditingOldText(f.text);
+    setEditFactText(f.text);
+    setEditFactCategory(f.category ?? "user");
+  };
+
+  const saveEditFact = useCallback(async () => {
+    const text = editFactText.trim();
+    if (!text || !adoptionIdState || !editingOldText) return;
+    try {
+      const res = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adoptionId: adoptionIdState,
+          action: "update",
+          oldText: editingOldText,
+          text,
+          category: editFactCategory,
+        }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        applyFacts(data.facts ?? []);
+        setEditingOldText(null);
+      }
+    } catch {
+      // 忽略
+    }
+  }, [adoptionIdState, editingOldText, editFactText, editFactCategory]);
 
   const deleteMemoryFact = useCallback(
     async (text: string) => {
@@ -86,14 +187,14 @@ export function ChatClient({
         });
         const data = await res.json();
         if (data?.ok) {
-          setMemoryFacts(data.facts ?? []);
-          setMemoryUsedChars(data.usedChars ?? 0);
+          applyFacts(data.facts ?? []);
+          if (editingOldText === text) setEditingOldText(null);
         }
       } catch {
         // 忽略
       }
     },
-    [adoptionIdState],
+    [adoptionIdState, editingOldText],
   );
 
   const clearMemory = useCallback(async () => {
@@ -107,8 +208,8 @@ export function ChatClient({
       });
       const data = await res.json();
       if (data?.ok) {
-        setMemoryFacts([]);
-        setMemoryUsedChars(0);
+        applyFacts([]);
+        setEditingOldText(null);
       }
     } catch {
       // 忽略
@@ -154,6 +255,20 @@ export function ChatClient({
   }, [adoptionIdState]);
 
   const mo = moodInfo(happiness);
+
+  // 记忆按分类分组展示
+  const memoryGroups = [
+    {
+      key: "user",
+      title: "👤 关于用户",
+      list: memoryFacts.filter((f) => (f.category ?? "user") === "user"),
+    },
+    {
+      key: "pet",
+      title: "🐾 关于宠物",
+      list: memoryFacts.filter((f) => f.category === "pet"),
+    },
+  ].filter((g) => g.list.length > 0);
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -247,29 +362,106 @@ export function ChatClient({
               </span>
             </div>
 
+            {/* 手动新增记忆 */}
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="text"
+                value={newFactText}
+                onChange={(e) => setNewFactText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") addMemoryFact();
+                }}
+                placeholder="新增记忆，如：用户喜欢听民谣"
+                className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+              />
+              <CategoryToggle value={newFactCategory} onChange={setNewFactCategory} />
+              <button
+                type="button"
+                onClick={addMemoryFact}
+                disabled={!newFactText.trim()}
+                className="shrink-0 rounded-full bg-violet-500 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                添加
+              </button>
+            </div>
+
             <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
               {memoryLoading && <p className="text-sm text-zinc-400">加载中…</p>}
               {memoryError && <p className="text-sm text-red-600">{memoryError}</p>}
               {!memoryLoading && !memoryError && memoryFacts.length === 0 && (
                 <p className="py-6 text-center text-sm text-zinc-400">
-                  还没有记忆，多和{pet.name}聊聊，它会记住你~
+                  还没有记忆，多和{pet.name}聊聊，或手动添加一条~
                 </p>
               )}
               {!memoryLoading &&
-                memoryFacts.map((f) => (
-                  <div
-                    key={f.text}
-                    className="mb-2 flex items-start justify-between gap-3 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2"
-                  >
-                    <span className="text-sm text-zinc-700">{f.text}</span>
-                    <button
-                      type="button"
-                      onClick={() => deleteMemoryFact(f.text)}
-                      className="shrink-0 text-xs text-zinc-400 hover:text-red-500"
-                      title="删除这条记忆"
-                    >
-                      删除
-                    </button>
+                !memoryError &&
+                memoryGroups.map((g) => (
+                  <div key={g.key} className="mb-3">
+                    <div className="mb-1.5 text-xs font-medium text-zinc-500">
+                      {g.title}
+                    </div>
+                    {g.list.map((f) => (
+                      <div
+                        key={f.text}
+                        className="mb-2 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2"
+                      >
+                        {editingOldText === f.text ? (
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={editFactText}
+                              onChange={(e) => setEditFactText(e.target.value)}
+                              className="w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm focus:border-violet-400 focus:outline-none"
+                            />
+                            <div className="flex items-center justify-between gap-2">
+                              <CategoryToggle
+                                value={editFactCategory}
+                                onChange={setEditFactCategory}
+                              />
+                              <div className="flex items-center gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingOldText(null)}
+                                  className="text-xs text-zinc-400 hover:text-zinc-600"
+                                >
+                                  取消
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={saveEditFact}
+                                  disabled={!editFactText.trim()}
+                                  className="text-xs font-medium text-violet-600 hover:underline disabled:opacity-50"
+                                >
+                                  保存
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="text-sm text-zinc-700">{f.text}</span>
+                            <div className="flex shrink-0 items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => startEditFact(f)}
+                                className="text-xs text-zinc-400 hover:text-violet-600"
+                                title="编辑这条记忆"
+                              >
+                                编辑
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteMemoryFact(f.text)}
+                                className="text-xs text-zinc-400 hover:text-red-500"
+                                title="删除这条记忆"
+                              >
+                                删除
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ))}
             </div>
