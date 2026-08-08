@@ -25,6 +25,8 @@ export type MemoryFact = {
   ts: number;
   /** 事实分类：user=关于用户，pet=关于宠物 */
   category?: MemoryCategory;
+  /** 置顶：置顶记忆优先展示，且淘汰时最后才丢弃 */
+  pinned?: boolean;
 };
 export type MemoryStore = {
   facts: MemoryFact[];
@@ -70,12 +72,15 @@ const EXTRACT_PROMPT = `你是一个长期记忆提取助手。你的任务是�
 export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
   if (!raw) return { facts: [] };
   try {
-    const data = JSON.parse(raw) as { facts?: unknown[]; extractCounter?: unknown };
+    const data = JSON.parse(raw) as {
+      facts?: unknown[];
+      extractCounter?: unknown;
+    };
     if (Array.isArray(data?.facts)) {
       return {
         facts: data.facts
           .filter(
-            (f): f is { text: string; ts?: unknown; category?: unknown } =>
+            (f): f is { text: string; ts?: unknown; category?: unknown; pinned?: unknown } =>
               !!f && typeof (f as { text?: unknown }).text === "string",
           )
           .map((f) => ({
@@ -85,6 +90,7 @@ export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
               f.category === "pet" || f.category === "user"
                 ? f.category
                 : undefined,
+            pinned: f.pinned === true,
           })),
         extractCounter:
           typeof data.extractCounter === "number" ? data.extractCounter : 0,
@@ -102,6 +108,7 @@ export function serializeMemoryStore(store: MemoryStore): string {
       text: f.text,
       ts: f.ts,
       ...(f.category ? { category: f.category } : {}),
+      ...(f.pinned ? { pinned: true } : {}),
     })),
     extractCounter: store.extractCounter ?? 0,
   });
@@ -168,7 +175,13 @@ export function mergeFacts(
       return nf.length > 0 && (norm.includes(nf) || nf.includes(norm));
     });
     if (similarIdx >= 0) {
-      result[similarIdx] = { text, ts: now, category };
+      // 保留旧条目的置顶状态
+      result[similarIdx] = {
+        text,
+        ts: now,
+        category,
+        pinned: result[similarIdx].pinned,
+      };
       continue;
     }
 
@@ -176,8 +189,10 @@ export function mergeFacts(
     result.push({ text, ts: now, category });
   }
 
-  // 上限控制：按时间权重（ts 升序）丢弃最旧记忆，直到字符数不超限
-  result.sort((a, b) => a.ts - b.ts);
+  // 上限控制：置顶记忆最后才丢弃。先按 ts 升序丢非置顶，仍超限再丢最旧置顶
+  result.sort(
+    (a, b) => Number(!!a.pinned) - Number(!!b.pinned) || a.ts - b.ts,
+  );
   let total = result.reduce((s, f) => s + f.text.length, 0);
   while (total > MEMORY_MAX_CHARS && result.length > 0) {
     total -= result[0].text.length;
@@ -392,6 +407,31 @@ export async function updateMemoryFact(
   if (idx < 0) return null;
 
   store.facts[idx] = { text, ts: Date.now(), category: category ?? classifyFact(text) };
+  await db
+    .update(adoptions)
+    .set({ memoryContext: serializeMemoryStore(store) })
+    .where(eq(adoptions.id, adoptionId));
+  return store.facts;
+}
+
+/** 置顶/取消置顶一条记忆；返回事实列表，未找到返回 null */
+export async function pinMemoryFact(
+  adoptionId: string,
+  text: string,
+  pinned: boolean,
+): Promise<MemoryFact[] | null> {
+  const [adoption] = await db
+    .select({ memoryContext: adoptions.memoryContext })
+    .from(adoptions)
+    .where(eq(adoptions.id, adoptionId))
+    .limit(1);
+  if (!adoption) return null;
+
+  const store = parseMemoryStore(adoption.memoryContext);
+  const idx = store.facts.findIndex((f) => f.text === text);
+  if (idx < 0) return null;
+
+  store.facts[idx] = { ...store.facts[idx], pinned };
   await db
     .update(adoptions)
     .set({ memoryContext: serializeMemoryStore(store) })

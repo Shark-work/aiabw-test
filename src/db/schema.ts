@@ -32,6 +32,8 @@ export const adoptions = pgTable('adoptions', {
   userId: text('user_id').notNull().default('anonymous'),
   // 游客设备标识：登录后据此迁移匿名数据
   anonymousId: text('anonymous_id'),
+  // 该宠物对应的首条对话线程（用于“我的宠物”跳转聊天）
+  threadId: uuid('thread_id').references(() => threads.id),
   petName: text('pet_name').notNull(),
   petType: text('pet_type').notNull().default('fox'),
   adoptedAt: timestamp('adopted_at').defaultNow().notNull(),

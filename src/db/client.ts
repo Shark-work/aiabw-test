@@ -46,6 +46,7 @@ const SCHEMA_STATEMENTS: string[] = [
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "user_id" text DEFAULT 'anonymous' NOT NULL,
     "anonymous_id" text,
+    "thread_id" uuid REFERENCES "threads"("id"),
     "pet_name" text NOT NULL,
     "pet_type" text DEFAULT 'fox' NOT NULL,
     "adopted_at" timestamp DEFAULT now() NOT NULL,
@@ -68,6 +69,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "is_unlocked" boolean DEFAULT false NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "memory_context" text`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
+  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "thread_id" uuid REFERENCES "threads"("id")`,
   `ALTER TABLE "threads" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
 ];
 

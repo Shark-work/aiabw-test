@@ -93,6 +93,13 @@ export default function Home() {
       <div className="relative z-20 flex justify-end px-2 pt-2">
         {user ? (
           <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
+            <Link
+              href="/my-pets"
+              className="font-medium text-zinc-600 hover:text-orange-600"
+            >
+              🐾 我的宠物
+            </Link>
+            <span className="text-zinc-300">|</span>
             <span className="text-zinc-600">{user.email}</span>
             <button
               type="button"
@@ -104,6 +111,13 @@ export default function Home() {
           </div>
         ) : (
           <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
+            <Link
+              href="/my-pets"
+              className="font-medium text-zinc-600 hover:text-orange-600"
+            >
+              🐾 我的宠物
+            </Link>
+            <span className="text-zinc-300">|</span>
             <Link href="/login" className="font-medium text-zinc-600 hover:text-orange-600">
               登录
             </Link>

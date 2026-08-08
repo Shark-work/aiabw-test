@@ -7,6 +7,7 @@ import {
   clearMemory,
   addMemoryFact,
   updateMemoryFact,
+  pinMemoryFact,
   type MemoryCategory,
   MEMORY_MAX_CHARS,
 } from "@/lib/memory";
@@ -86,6 +87,17 @@ export async function POST(req: Request) {
 
     if (action === "delete" && typeof body?.text === "string") {
       const facts = await deleteMemoryFact(adoptionId, body.text);
+      if (!facts) {
+        return NextResponse.json({ ok: false, error: "未找到该记忆" }, { status: 404 });
+      }
+      return NextResponse.json({ ok: true, ...factsResponse(facts) });
+    }
+
+    if (
+      (action === "pin" || action === "unpin") &&
+      typeof body?.text === "string"
+    ) {
+      const facts = await pinMemoryFact(adoptionId, body.text, action === "pin");
       if (!facts) {
         return NextResponse.json({ ok: false, error: "未找到该记忆" }, { status: 404 });
       }

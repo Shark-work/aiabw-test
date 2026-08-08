@@ -80,7 +80,12 @@ export function ChatClient({
   const [showMigratedToast, setShowMigratedToast] = useState(false);
 
   // —— 记忆可视化 / 管理 ——
-  type MemoryFactView = { text: string; ts: number; category?: "user" | "pet" };
+  type MemoryFactView = {
+    text: string;
+    ts: number;
+    category?: "user" | "pet";
+    pinned?: boolean;
+  };
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [memoryFacts, setMemoryFacts] = useState<MemoryFactView[]>([]);
   const [memoryUsedChars, setMemoryUsedChars] = useState(0);
@@ -94,6 +99,8 @@ export function ChatClient({
   const [editingOldText, setEditingOldText] = useState<string | null>(null);
   const [editFactText, setEditFactText] = useState("");
   const [editFactCategory, setEditFactCategory] = useState<"user" | "pet">("user");
+  // 搜索
+  const [memorySearch, setMemorySearch] = useState("");
 
   const applyFacts = (facts: MemoryFactView[]) => {
     setMemoryFacts(facts);
@@ -197,6 +204,28 @@ export function ChatClient({
     [adoptionIdState, editingOldText],
   );
 
+  const togglePinFact = useCallback(
+    async (text: string, pinned: boolean) => {
+      if (!adoptionIdState) return;
+      try {
+        const res = await fetch("/api/memory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            adoptionId: adoptionIdState,
+            action: pinned ? "pin" : "unpin",
+            text,
+          }),
+        });
+        const data = await res.json();
+        if (data?.ok) applyFacts(data.facts ?? []);
+      } catch {
+        // 忽略
+      }
+    },
+    [adoptionIdState],
+  );
+
   const clearMemory = useCallback(async () => {
     if (!adoptionIdState) return;
     if (!confirm("确定要清空宠物的全部记忆吗？此操作不可恢复。")) return;
@@ -256,19 +285,30 @@ export function ChatClient({
 
   const mo = moodInfo(happiness);
 
-  // 记忆按分类分组展示
+  // 记忆按分类分组展示（支持搜索；置顶优先、再按时间倒序）
+  const memoryQuery = memorySearch.trim().toLowerCase();
+  const visibleFacts = memoryFacts.filter((f) =>
+    memoryQuery ? f.text.toLowerCase().includes(memoryQuery) : true,
+  );
   const memoryGroups = [
     {
       key: "user",
       title: "👤 关于用户",
-      list: memoryFacts.filter((f) => (f.category ?? "user") === "user"),
+      list: visibleFacts.filter((f) => (f.category ?? "user") === "user"),
     },
     {
       key: "pet",
       title: "🐾 关于宠物",
-      list: memoryFacts.filter((f) => f.category === "pet"),
+      list: visibleFacts.filter((f) => f.category === "pet"),
     },
-  ].filter((g) => g.list.length > 0);
+  ]
+    .map((g) => ({
+      ...g,
+      list: [...g.list].sort(
+        (a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.ts - a.ts,
+      ),
+    }))
+    .filter((g) => g.list.length > 0);
 
   return (
     <div className="flex h-full flex-col gap-2">
@@ -362,6 +402,15 @@ export function ChatClient({
               </span>
             </div>
 
+            {/* 搜索记忆 */}
+            <input
+              type="text"
+              value={memorySearch}
+              onChange={(e) => setMemorySearch(e.target.value)}
+              placeholder="🔍 搜索记忆…"
+              className="mt-3 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none"
+            />
+
             {/* 手动新增记忆 */}
             <div className="mt-3 flex items-center gap-2">
               <input
@@ -440,7 +489,19 @@ export function ChatClient({
                         ) : (
                           <div className="flex items-start justify-between gap-3">
                             <span className="text-sm text-zinc-700">{f.text}</span>
-                            <div className="flex shrink-0 items-center gap-3">
+                            <div className="flex shrink-0 items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => togglePinFact(f.text, !f.pinned)}
+                                className={`text-xs ${
+                                  f.pinned
+                                    ? "text-amber-500"
+                                    : "text-zinc-300 hover:text-amber-500"
+                                }`}
+                                title={f.pinned ? "取消置顶" : "置顶"}
+                              >
+                                📌
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => startEditFact(f)}

@@ -61,14 +61,21 @@ export async function POST(req: Request) {
     await ensureDbSchemaOnce();
 
     const result = await db.transaction(async (tx) => {
-      const [adoption] = await tx
-        .insert(adoptions)
-        .values({ userId, petName: effectiveName, petType, anonymousId })
-        .returning();
-
+      // 先建线程，再建领养记录并关联 threadId
       const [thread] = await tx
         .insert(threads)
         .values({ userId, title: `${effectiveName} 的家`, anonymousId })
+        .returning();
+
+      const [adoption] = await tx
+        .insert(adoptions)
+        .values({
+          userId,
+          petName: effectiveName,
+          petType,
+          anonymousId,
+          threadId: thread.id,
+        })
         .returning();
 
       await tx.insert(messagesTable).values({
