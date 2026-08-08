@@ -1,10 +1,12 @@
 import { streamText, convertToModelMessages, stepCountIs } from "ai";
+import type { UIMessage } from "ai";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 import { agentTools } from "@/lib/agent-tools";
 import { getPet } from "@/lib/pet-config";
 import { getModel } from "@/lib/get-model";
+import { buildMemorySection, updateMemory } from "@/lib/memory";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 
@@ -14,7 +16,11 @@ export const maxDuration = 60;
 const FREE_MESSAGE_LIMIT = 10;
 
 export async function POST(req: Request) {
-  const { messages, petType, adoptionId } = await req.json();
+  const { messages, petType, adoptionId } = (await req.json()) as {
+    messages: UIMessage[];
+    petType?: string;
+    adoptionId?: string;
+  };
 
   // 根据 petType 动态切换宠物人设（系统提示词），未提供时回退到狐狸。
   const pet = getPet(petType);
@@ -23,11 +29,14 @@ export async function POST(req: Request) {
   await ensureDbSchemaOnce();
 
   // 商业化变现：10 句免费门槛。达到后且未解锁时才拒绝调用 AI 模型。
+  // 同时读取长期记忆用于注入。
+  let memoryContext: string | null = null;
   if (typeof adoptionId === "string" && adoptionId) {
     const [adoption] = await db
       .select({
         chatCount: adoptions.chatCount,
         isUnlocked: adoptions.isUnlocked,
+        memoryContext: adoptions.memoryContext,
       })
       .from(adoptions)
       .where(eq(adoptions.id, adoptionId))
@@ -47,16 +56,32 @@ export async function POST(req: Request) {
         { status: 402 },
       );
     }
+
+    memoryContext = adoption?.memoryContext ?? null;
   }
+
+  // 长期记忆注入：把 memory_context 追加到 System Prompt
+  const memorySection = buildMemorySection(memoryContext);
+  const system = memorySection
+    ? `${pet.systemPrompt}\n\n${memorySection}`
+    : pet.systemPrompt;
 
   const result = streamText({
     model: getModel(),
-    system: pet.systemPrompt,
+    system,
     messages: convertToModelMessages(messages),
     tools: agentTools,
     // Agent loop: model may call tools, observe results, and respond
     // across up to 5 steps in a single turn.
     stopWhen: stepCountIs(5),
+    // 对话流结束后：异步提取长期记忆（不阻塞回复）
+    onFinish: async (event) => {
+      if (typeof adoptionId === "string" && adoptionId) {
+        void updateMemory(adoptionId, messages, event.text ?? "").catch((err) =>
+          console.error("[memory] update failed:", err),
+        );
+      }
+    },
   });
 
   return result.toUIMessageStreamResponse();

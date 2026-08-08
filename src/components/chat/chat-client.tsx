@@ -43,12 +43,21 @@ export function ChatClient({
   const [refreshing, setRefreshing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [loginRedirect, setLoginRedirect] = useState("/chat");
+  const [showMigratedToast, setShowMigratedToast] = useState(false);
 
   // 游客检测：没有登录 token 时提示引导登录
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
     setIsGuest(!token);
     setLoginRedirect(window.location.pathname + window.location.search);
+
+    // 登录/注册后迁移了游客数据 → 显示找回提示
+    if (sessionStorage.getItem("aiabw_migrated_toast") === "1") {
+      sessionStorage.removeItem("aiabw_migrated_toast");
+      setShowMigratedToast(true);
+      const t = setTimeout(() => setShowMigratedToast(false), 4000);
+      return () => clearTimeout(t);
+    }
   }, []);
 
   // 每次互动结束后重新拉取最新心情 / 等级 / 月度积分
@@ -78,6 +87,11 @@ export function ChatClient({
 
   return (
     <div className="flex h-full flex-col gap-2">
+      {showMigratedToast && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-700 shadow-sm">
+          🎉 已为你找回之前的聊天记录和宠物记忆 ✨
+        </div>
+      )}
       {isGuest && (
         <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
           <span className="text-amber-800">

@@ -32,14 +32,21 @@ export default function LoginPage() {
       // 登录成功 → 立即把游客数据迁移回账号（尽力而为，失败不阻塞登录）
       const anonymousId = getAnonymousId();
       if (anonymousId) {
-        await fetch("/api/auth/migrate", {
+        const migRes = await fetch("/api/auth/migrate", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${data.token}`,
           },
           body: JSON.stringify({ anonymousId }),
-        }).catch(() => {});
+        }).catch(() => null);
+        if (migRes && migRes.ok) {
+          const migData = await migRes.json().catch(() => null);
+          const migrated = migData?.migrated;
+          if (migrated && migrated.adoptions + migrated.threads > 0) {
+            sessionStorage.setItem("aiabw_migrated_toast", "1");
+          }
+        }
       }
 
       const redirect =
