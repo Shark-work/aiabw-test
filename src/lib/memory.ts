@@ -20,12 +20,23 @@ import { getModel } from "@/lib/get-model";
  */
 
 export type MemoryFact = { text: string; ts: number };
-export type MemoryStore = { facts: MemoryFact[] };
+export type MemoryStore = {
+  facts: MemoryFact[];
+  /** 已触发记忆提取的对话轮次计数（用于降频） */
+  extractCounter?: number;
+};
 
 /** 近似 token 上限（中文约 1 字符 ≈ 1 token） */
-const MEMORY_MAX_CHARS = 3000;
+export const MEMORY_MAX_CHARS = 3000;
 /** 提取模型最大输出 */
 const EXTRACT_MAX_OUTPUT_TOKENS = 500;
+/** 每 N 条对话消息才执行一次记忆提取（省模型调用） */
+const MEMORY_EXTRACT_EVERY = Math.max(
+  1,
+  Number(process.env.MEMORY_EXTRACT_EVERY ?? 3) || 3,
+);
+/** 记忆提取专用模型（可选；默认跟随主模型） */
+const MEMORY_EXTRACT_MODEL = process.env.MEMORY_EXTRACT_MODEL ?? undefined;
 
 const EXTRACT_PROMPT = `你是一个长期记忆提取助手。你的任务是从对话中提取"关于用户"的关键事实、偏好和重要信息（例如：姓名/昵称、爱好、喜好、重要经历、宠物名字等）。
 要求：
@@ -52,7 +63,7 @@ const EXTRACT_PROMPT = `你是一个长期记忆提取助手。你的任务是�
 export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
   if (!raw) return { facts: [] };
   try {
-    const data = JSON.parse(raw) as { facts?: unknown[] };
+    const data = JSON.parse(raw) as { facts?: unknown[]; extractCounter?: unknown };
     if (Array.isArray(data?.facts)) {
       return {
         facts: data.facts
@@ -64,6 +75,8 @@ export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
             text: f.text,
             ts: typeof f.ts === "number" ? f.ts : Date.now(),
           })),
+        extractCounter:
+          typeof data.extractCounter === "number" ? data.extractCounter : 0,
       };
     }
   } catch {
@@ -73,7 +86,10 @@ export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
 }
 
 export function serializeMemoryStore(store: MemoryStore): string {
-  return JSON.stringify({ facts: store.facts });
+  return JSON.stringify({
+    facts: store.facts,
+    extractCounter: store.extractCounter ?? 0,
+  });
 }
 
 /** 归一化：小写 + 去空白/标点，用于语义近似比较 */
@@ -152,7 +168,7 @@ async function extractFacts(userText: string, assistantText: string): Promise<st
   if (!convo.trim()) return [];
 
   const { text } = await generateText({
-    model: getModel(),
+    model: getModel(MEMORY_EXTRACT_MODEL),
     temperature: 0.2,
     maxOutputTokens: EXTRACT_MAX_OUTPUT_TOKENS,
     system: EXTRACT_PROMPT,
@@ -183,8 +199,8 @@ async function extractFacts(userText: string, assistantText: string): Promise<st
 }
 
 /**
- * 对话流结束后调用：读取现有记忆 → 提取新事实 → 合并去重 → 写回。
- * 无新信息或无 adoptionId 时直接返回。
+ * 对话流结束后调用：读取现有记忆 → （按频率）提取新事实 → 合并去重 → 写回。
+ * 每 MEMORY_EXTRACT_EVERY 条消息才调用一次提取模型，其余只推进计数。
  */
 export async function updateMemory(
   adoptionId: string | undefined,
@@ -192,11 +208,6 @@ export async function updateMemory(
   assistantText: string,
 ): Promise<void> {
   if (!adoptionId) return;
-  const userText = lastUserText(messages);
-  if (!userText) return;
-
-  const facts = await extractFacts(userText, assistantText);
-  if (facts.length === 0) return;
 
   const [adoption] = await db
     .select({ memoryContext: adoptions.memoryContext })
@@ -206,17 +217,75 @@ export async function updateMemory(
   if (!adoption) return;
 
   const store = parseMemoryStore(adoption.memoryContext);
-  const merged = mergeFacts(store.facts, facts);
+  store.extractCounter = (store.extractCounter ?? 0) + 1;
 
-  // 文本未发生变化则不写库
-  const unchanged =
-    merged.length === store.facts.length &&
-    merged.every((f, i) => f.text === store.facts[i].text);
-  if (unchanged) return;
+  // 降频：未到提取节点则只保存计数，不调用模型
+  if (store.extractCounter % MEMORY_EXTRACT_EVERY !== 0) {
+    await db
+      .update(adoptions)
+      .set({ memoryContext: serializeMemoryStore(store) })
+      .where(eq(adoptions.id, adoptionId));
+    return;
+  }
+
+  const userText = lastUserText(messages);
+  if (userText) {
+    const facts = await extractFacts(userText, assistantText);
+    store.facts = mergeFacts(store.facts, facts);
+  }
 
   await db
     .update(adoptions)
-    .set({ memoryContext: serializeMemoryStore({ facts: merged }) })
+    .set({ memoryContext: serializeMemoryStore(store) })
+    .where(eq(adoptions.id, adoptionId));
+}
+
+/** 读取某宠物的记忆（用于可视化/管理） */
+export async function readMemory(
+  adoptionId: string,
+): Promise<{ facts: MemoryFact[]; usedChars: number; maxChars: number }> {
+  const [adoption] = await db
+    .select({ memoryContext: adoptions.memoryContext })
+    .from(adoptions)
+    .where(eq(adoptions.id, adoptionId))
+    .limit(1);
+  const store = parseMemoryStore(adoption?.memoryContext);
+  return {
+    facts: store.facts,
+    usedChars: store.facts.reduce((s, f) => s + f.text.length, 0),
+    maxChars: MEMORY_MAX_CHARS,
+  };
+}
+
+/** 删除某条记忆；返回删除后的事实列表，未找到返回 null */
+export async function deleteMemoryFact(
+  adoptionId: string,
+  text: string,
+): Promise<MemoryFact[] | null> {
+  const [adoption] = await db
+    .select({ memoryContext: adoptions.memoryContext })
+    .from(adoptions)
+    .where(eq(adoptions.id, adoptionId))
+    .limit(1);
+  if (!adoption) return null;
+
+  const store = parseMemoryStore(adoption.memoryContext);
+  const before = store.facts.length;
+  store.facts = store.facts.filter((f) => f.text !== text);
+  if (store.facts.length === before) return null;
+
+  await db
+    .update(adoptions)
+    .set({ memoryContext: serializeMemoryStore(store) })
+    .where(eq(adoptions.id, adoptionId));
+  return store.facts;
+}
+
+/** 清空某宠物的全部记忆 */
+export async function clearMemory(adoptionId: string): Promise<void> {
+  await db
+    .update(adoptions)
+    .set({ memoryContext: null })
     .where(eq(adoptions.id, adoptionId));
 }
 
