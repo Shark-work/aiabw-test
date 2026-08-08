@@ -154,11 +154,11 @@ export default function HandbooksPage() {
                 <span className="font-semibold text-zinc-900">
                   {hb.title ?? "（生成中）"}
                 </span>
-                {hb.status === "processing" && (
+                {hb.status === "processing" || hb.status === "generating" ? (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                     生成中
                   </span>
-                )}
+                ) : null}
                 {hb.status === "error" && (
                   <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-600">
                     失败

@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, lt, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { adoptions, handbooks, messages as messagesTable } from "@/db/schema";
@@ -15,9 +15,31 @@ const HANDBOOK_PROMPT = `你是「艾比世界」的记忆手账助手。请把�
 
 /**
  * 异步执行手账生成任务：读取聊天记录 → 调用百炼生成 Markdown → 写回 handbooks。
- * 由 POST /api/generate/handbook 在响应返回后 fire-and-forget 调用。
+ * 由 POST /api/generate/handbook（辅助）或 Vercel Cron（兜底）调用。
+ *
+ * 认领机制：先原子把 status 从 processing（或卡死超过 10 分钟的 generating）
+ * 置为 generating，防止 setTimeout 与 Cron 并发重复生成。
  */
 export async function runHandbookTask(taskId: string): Promise<void> {
+  const claimed = await db
+    .update(handbooks)
+    .set({ status: "generating", updatedAt: new Date() })
+    .where(
+      and(
+        eq(handbooks.id, taskId),
+        or(
+          eq(handbooks.status, "processing"),
+          and(
+            eq(handbooks.status, "generating"),
+            lt(handbooks.updatedAt, sql`now() - interval '10 minutes'`),
+          ),
+        ),
+      ),
+    );
+  if (claimed.rowCount === 0) {
+    return; // 已被其它 worker 认领，跳过
+  }
+
   const [task] = await db
     .select()
     .from(handbooks)
