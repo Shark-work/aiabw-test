@@ -4,7 +4,8 @@ import { eq, asc } from "drizzle-orm";
 import type { UIMessage } from "ai";
 
 import { ChatClient } from "@/components/chat/chat-client";
-import { getPet, DEFAULT_PET_TYPE } from "@/lib/pet-config";
+import { DEFAULT_PET_TYPE } from "@/lib/pet-config";
+import { resolvePetConfig } from "@/lib/ugc";
 
 const FALLBACK_WELCOME =
   "太开心啦！以后我就是你的专属艾比了！有什么我可以帮你的吗？";
@@ -59,8 +60,8 @@ export default async function ChatPage({
     }
   }
 
-  // 根据 petType 解析宠物配置（未知类型自动回退狐狸）
-  const pet = getPet(petType);
+  // 根据 petType 解析宠物配置（UGC 宠物读取数据库；未知类型自动回退狐狸）
+  const pet = await resolvePetConfig(petType);
 
   return (
     <main className="flex h-dvh w-full flex-col gap-2 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">

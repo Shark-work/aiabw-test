@@ -23,6 +23,28 @@ const SCHEMA_STATEMENTS: string[] = [
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "email" text NOT NULL UNIQUE,
     "password_hash" text NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "is_creator" boolean DEFAULT false NOT NULL,
+    "creator_balance" integer DEFAULT 0 NOT NULL,
+    "points" integer DEFAULT 0 NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS "ugc_pets" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "creator_id" uuid NOT NULL REFERENCES "users"("id"),
+    "name" text NOT NULL,
+    "image_url" text NOT NULL,
+    "system_prompt" text NOT NULL,
+    "price_or_points" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS "ugc_sales" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "pet_id" uuid NOT NULL REFERENCES "ugc_pets"("id"),
+    "buyer_id" uuid NOT NULL REFERENCES "users"("id"),
+    "creator_id" uuid NOT NULL REFERENCES "users"("id"),
+    "amount" integer DEFAULT 0 NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL
   )`,
 
@@ -71,6 +93,9 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "thread_id" uuid REFERENCES "threads"("id")`,
   `ALTER TABLE "threads" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_creator" boolean DEFAULT false NOT NULL`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "creator_balance" integer DEFAULT 0 NOT NULL`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "points" integer DEFAULT 0 NOT NULL`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;

@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
 import { agentTools } from "@/lib/agent-tools";
-import { getPet } from "@/lib/pet-config";
 import { getModel } from "@/lib/get-model";
 import { buildMemorySection, updateMemory } from "@/lib/memory";
+import { resolvePetConfig } from "@/lib/ugc";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 
@@ -23,7 +23,8 @@ export async function POST(req: Request) {
   };
 
   // 根据 petType 动态切换宠物人设（系统提示词），未提供时回退到狐狸。
-  const pet = getPet(petType);
+  // UGC 宠物（petType=ugc:<id>）从数据库读取创作者设置的人设。
+  const pet = await resolvePetConfig(petType);
 
   // 首次访问自动建表（幂等）
   await ensureDbSchemaOnce();

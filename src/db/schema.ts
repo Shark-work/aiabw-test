@@ -6,6 +6,33 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  /** 是否创作者（可发布 UGC 宠物） */
+  isCreator: boolean('is_creator').notNull().default(false),
+  /** 创作者分成余额（UGC 宠物销售所得，单位：积分） */
+  creatorBalance: integer('creator_balance').notNull().default(0),
+  /** 用户可用积分（购买 UGC 宠物 / 盲盒消耗） */
+  points: integer('points').notNull().default(0),
+});
+
+/** UGC 宠物（创作者上传） */
+export const ugcPets = pgTable('ugc_pets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  creatorId: uuid('creator_id').references(() => users.id).notNull(),
+  name: text('name').notNull(),
+  imageUrl: text('image_url').notNull(),
+  systemPrompt: text('system_prompt').notNull(),
+  priceOrPoints: integer('price_or_points').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** UGC 宠物销售记录（用于创作者分成结算） */
+export const ugcSales = pgTable('ugc_sales', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  petId: uuid('pet_id').references(() => ugcPets.id).notNull(),
+  buyerId: uuid('buyer_id').references(() => users.id).notNull(),
+  creatorId: uuid('creator_id').references(() => users.id).notNull(),
+  amount: integer('amount').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const threads = pgTable('threads', {

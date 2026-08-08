@@ -64,6 +64,13 @@
       "when": 1786178085651,
       "tag": "0008_gorgeous_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786184411313,
+      "tag": "0009_colorful_nico_minoru",
+      "breakpoints": true
     }
   ]
 }
