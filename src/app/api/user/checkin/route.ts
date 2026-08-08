@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, isNull, not, or, sql } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { users } from "@/db/schema";
+import { users, pointsLog } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -46,6 +46,10 @@ export async function POST(req: Request) {
       );
 
     const already = res.rowCount === 0;
+    if (!already) {
+      // 记录积分流水
+      await db.insert(pointsLog).values({ userId: user.id, amount: CHECKIN_POINTS, reason: "checkin" });
+    }
     const [me] = await db
       .select({ points: users.points, lastCheckinDate: users.lastCheckinDate })
       .from(users)

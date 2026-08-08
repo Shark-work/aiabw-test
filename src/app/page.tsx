@@ -146,7 +146,11 @@ export default function Home() {
       <div className="relative z-20 flex justify-end px-2 pt-2">
         {user ? (
           <div className="flex flex-wrap items-center justify-end gap-2 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
-            <span className="font-medium text-violet-600">积分 {user.points}</span>
+            <span className="font-medium text-violet-600">
+              <Link href="/points" className="hover:underline" title="积分明细">
+                积分 {user.points}
+              </Link>
+            </span>
             <button
               type="button"
               onClick={handleCheckin}

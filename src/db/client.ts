@@ -60,6 +60,14 @@ const SCHEMA_STATEMENTS: string[] = [
     "updated_at" timestamp DEFAULT now() NOT NULL
   )`,
 
+  `CREATE TABLE IF NOT EXISTS "points_log" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "amount" integer DEFAULT 0 NOT NULL,
+    "reason" text NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
   `CREATE TABLE IF NOT EXISTS "threads" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "user_id" text NOT NULL,

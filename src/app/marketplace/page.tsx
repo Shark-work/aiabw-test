@@ -20,6 +20,15 @@ export default function MarketplacePage() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
   const [isCreator, setIsCreator] = useState(false);
+  // UGC 发布表单
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishBusy, setPublishBusy] = useState(false);
+  const [publishForm, setPublishForm] = useState({
+    name: "",
+    imageUrl: "",
+    systemPrompt: "",
+    priceOrPoints: "0",
+  });
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -106,6 +115,41 @@ export default function MarketplacePage() {
     }
   };
 
+  const handlePublish = async () => {
+    if (
+      !publishForm.name.trim() ||
+      !publishForm.imageUrl.trim() ||
+      !publishForm.systemPrompt.trim()
+    ) {
+      showToast("请填写完整信息");
+      return;
+    }
+    setPublishBusy(true);
+    try {
+      const res = await fetch("/api/creator/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          name: publishForm.name.trim(),
+          imageUrl: publishForm.imageUrl.trim(),
+          systemPrompt: publishForm.systemPrompt.trim(),
+          priceOrPoints: Number(publishForm.priceOrPoints) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        showToast("🎉 发布成功！你的艾比已上架~");
+        setPublishOpen(false);
+        setPublishForm({ name: "", imageUrl: "", systemPrompt: "", priceOrPoints: "0" });
+        load();
+      } else {
+        showToast(data?.error ?? "发布失败");
+      }
+    } finally {
+      setPublishBusy(false);
+    }
+  };
+
   const handleGacha = async () => {
     const token = localStorage.getItem("aiabw_token");
     if (!token) {
@@ -149,7 +193,15 @@ export default function MarketplacePage() {
             >
               🎁 盲盒抽取
             </button>
-            {!isCreator && (
+            {isCreator ? (
+              <button
+                type="button"
+                onClick={() => setPublishOpen(true)}
+                className="rounded-full bg-violet-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-violet-600"
+              >
+                ➕ 发布 UGC 宠物
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={handleApplyCreator}
@@ -217,6 +269,69 @@ export default function MarketplacePage() {
           ))}
         </div>
       </div>
+
+      {publishOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-zinc-900/50 p-4 backdrop-blur-sm"
+          onClick={() => setPublishOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-zinc-900">➕ 发布 UGC 宠物</h3>
+              <button
+                type="button"
+                onClick={() => setPublishOpen(false)}
+                className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
+                aria-label="关闭"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={publishForm.name}
+                onChange={(e) => setPublishForm({ ...publishForm, name: e.target.value })}
+                placeholder="宠物名字（如：小幽灵）"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+              />
+              <input
+                type="text"
+                value={publishForm.imageUrl}
+                onChange={(e) => setPublishForm({ ...publishForm, imageUrl: e.target.value })}
+                placeholder="头像图片地址（如 /resources/pet/qapi.png）"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+              />
+              <textarea
+                value={publishForm.systemPrompt}
+                onChange={(e) => setPublishForm({ ...publishForm, systemPrompt: e.target.value })}
+                placeholder="系统提示词：定义它的性格、说话风格……"
+                rows={4}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+              />
+              <input
+                type="number"
+                min={0}
+                value={publishForm.priceOrPoints}
+                onChange={(e) => setPublishForm({ ...publishForm, priceOrPoints: e.target.value })}
+                placeholder="售价（积分）"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={publishBusy}
+                className="w-full rounded-full bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-60"
+              >
+                {publishBusy ? "发布中..." : "发布"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

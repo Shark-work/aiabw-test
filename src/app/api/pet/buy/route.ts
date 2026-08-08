@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { users, ugcPets, ugcSales, adoptions, threads, messages as messagesTable } from "@/db/schema";
+import { users, ugcPets, ugcSales, adoptions, threads, messages as messagesTable, pointsLog } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -54,6 +54,7 @@ export async function POST(req: Request) {
       if (buyerRes.rowCount === 0) {
         throw new Error("INSUFFICIENT_POINTS");
       }
+      await tx.insert(pointsLog).values({ userId: user.id, amount: -price, reason: "ugc_buy" });
 
       const amount = Math.round(price * CREATOR_COMMISSION_RATE);
       await tx

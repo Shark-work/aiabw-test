@@ -8,6 +8,7 @@ import {
   adoptions,
   threads,
   messages as messagesTable,
+  pointsLog,
 } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { PETS, type PetType } from "@/lib/pet-config";
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       if (deduct.rowCount === 0) {
         throw new Error("INSUFFICIENT_POINTS");
       }
+      await tx.insert(pointsLog).values({ userId: user.id, amount: -GACHA_COST, reason: "gacha" });
 
       // 宠物池：官方 + UGC
       const pool: { petType: string; name: string; avatar: string; welcome: string }[] =

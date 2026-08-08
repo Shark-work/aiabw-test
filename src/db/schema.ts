@@ -44,10 +44,21 @@ export const handbooks = pgTable('handbooks', {
   adoptionId: uuid('adoption_id').references(() => adoptions.id),
   title: text('title'),
   content: text('content'),
-  /** processing | done | error */
+  /** processing | generating | done | error */
   status: text('status').notNull().default('processing'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/** 用户积分流水（签到 / 盲盒 / 购买 UGC 等） */
+export const pointsLog = pgTable('points_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  /** 正为入账，负为支出 */
+  amount: integer('amount').notNull().default(0),
+  /** checkin | gacha | ugc_buy */
+  reason: text('reason').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const threads = pgTable('threads', {
