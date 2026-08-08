@@ -58,6 +58,7 @@ export async function GET(req: Request) {
         monthlyPoints: a.monthlyPoints,
         isUnlocked: a.isUnlocked,
         threadId: a.threadId,
+        adoptedAt: a.adoptedAt ? a.adoptedAt.toISOString() : null,
         memory: {
           facts,
           usedChars: facts.reduce((s, f) => s + f.text.length, 0),
