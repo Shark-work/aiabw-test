@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -13,5 +16,27 @@ export async function GET(req: Request) {
   if (!user) {
     return NextResponse.json({ ok: false, error: "未登录或登录已过期" }, { status: 401 });
   }
-  return NextResponse.json({ ok: true, user });
+
+  const [row] = await db
+    .select({
+      points: users.points,
+      isCreator: users.isCreator,
+      creatorBalance: users.creatorBalance,
+      lastCheckinDate: users.lastCheckinDate,
+    })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+
+  return NextResponse.json({
+    ok: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      points: row?.points ?? 0,
+      isCreator: !!row?.isCreator,
+      creatorBalance: row?.creatorBalance ?? 0,
+      lastCheckinDate: row?.lastCheckinDate ?? null,
+    },
+  });
 }

@@ -12,7 +12,12 @@ export default function Home() {
   const router = useRouter();
   const [adoptingType, setAdoptingType] = useState<PetType | null>(null);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [user, setUser] = useState<{
+    id: string;
+    email: string;
+    points: number;
+    isCreator: boolean;
+  } | null>(null);
 
   // 从 localStorage 恢复登录态
   useEffect(() => {
@@ -23,8 +28,16 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data?.ok && data.user) setUser(data.user);
-        else localStorage.removeItem("aiabw_token");
+        if (data?.ok && data.user) {
+          setUser({
+            id: data.user.id,
+            email: data.user.email,
+            points: data.user.points ?? 0,
+            isCreator: !!data.user.isCreator,
+          });
+        } else {
+          localStorage.removeItem("aiabw_token");
+        }
       })
       .catch(() => {});
   }, []);
@@ -32,6 +45,46 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem("aiabw_token");
     setUser(null);
+  };
+
+  const handleCheckin = async () => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/user/checkin", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setUser((prev) => (prev ? { ...prev, points: data.points ?? prev.points } : prev));
+        alert(data.already ? "今天已经签到过啦，明天再来~" : "🎉 签到成功 +10 积分！");
+      } else {
+        alert(data?.error ?? "签到失败");
+      }
+    } catch {
+      alert("网络错误，请稍后重试");
+    }
+  };
+
+  const handleApplyCreator = async () => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/creator/apply", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setUser((prev) => (prev ? { ...prev, isCreator: true } : prev));
+        alert("🎉 恭喜！你现在是创作者了，可以去发布 UGC 宠物~");
+      } else {
+        alert(data?.error ?? "申请失败");
+      }
+    } catch {
+      alert("网络错误，请稍后重试");
+    }
   };
 
   const handleAdopt = async (petType: PetType) => {
@@ -92,7 +145,36 @@ export default function Home() {
       {/* 账号入口 */}
       <div className="relative z-20 flex justify-end px-2 pt-2">
         {user ? (
-          <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
+          <div className="flex flex-wrap items-center justify-end gap-2 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
+            <span className="font-medium text-violet-600">积分 {user.points}</span>
+            <button
+              type="button"
+              onClick={handleCheckin}
+              className="font-medium text-emerald-600 hover:underline"
+            >
+              📅 签到 +10
+            </button>
+            {!user.isCreator && (
+              <button
+                type="button"
+                onClick={handleApplyCreator}
+                className="font-medium text-violet-600 hover:underline"
+              >
+                ✨ 成为创作者
+              </button>
+            )}
+            <Link
+              href="/marketplace"
+              className="font-medium text-zinc-600 hover:text-orange-600"
+            >
+              🛍️ 广场
+            </Link>
+            <Link
+              href="/handbooks"
+              className="font-medium text-zinc-600 hover:text-orange-600"
+            >
+              📔 手账
+            </Link>
             <Link
               href="/my-pets"
               className="font-medium text-zinc-600 hover:text-orange-600"
@@ -112,10 +194,10 @@ export default function Home() {
         ) : (
           <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
             <Link
-              href="/my-pets"
+              href="/marketplace"
               className="font-medium text-zinc-600 hover:text-orange-600"
             >
-              🐾 我的宠物
+              🛍️ 广场
             </Link>
             <span className="text-zinc-300">|</span>
             <Link href="/login" className="font-medium text-zinc-600 hover:text-orange-600">

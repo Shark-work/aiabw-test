@@ -12,6 +12,8 @@ export const users = pgTable('users', {
   creatorBalance: integer('creator_balance').notNull().default(0),
   /** 用户可用积分（购买 UGC 宠物 / 盲盒消耗） */
   points: integer('points').notNull().default(0),
+  /** 最近签到日期（YYYY-MM-DD，用于每日签到判断） */
+  lastCheckinDate: text('last_checkin_date'),
 });
 
 /** UGC 宠物（创作者上传） */
@@ -33,6 +35,19 @@ export const ugcSales = pgTable('ugc_sales', {
   creatorId: uuid('creator_id').references(() => users.id).notNull(),
   amount: integer('amount').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** AI 记忆手账（异步生成） */
+export const handbooks = pgTable('handbooks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  adoptionId: uuid('adoption_id').references(() => adoptions.id),
+  title: text('title'),
+  content: text('content'),
+  /** processing | done | error */
+  status: text('status').notNull().default('processing'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const threads = pgTable('threads', {

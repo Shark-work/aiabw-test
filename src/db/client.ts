@@ -26,7 +26,8 @@ const SCHEMA_STATEMENTS: string[] = [
     "created_at" timestamp DEFAULT now() NOT NULL,
     "is_creator" boolean DEFAULT false NOT NULL,
     "creator_balance" integer DEFAULT 0 NOT NULL,
-    "points" integer DEFAULT 0 NOT NULL
+    "points" integer DEFAULT 0 NOT NULL,
+    "last_checkin_date" text
   )`,
 
   `CREATE TABLE IF NOT EXISTS "ugc_pets" (
@@ -46,6 +47,17 @@ const SCHEMA_STATEMENTS: string[] = [
     "creator_id" uuid NOT NULL REFERENCES "users"("id"),
     "amount" integer DEFAULT 0 NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS "handbooks" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "adoption_id" uuid REFERENCES "adoptions"("id"),
+    "title" text,
+    "content" text,
+    "status" text DEFAULT 'processing' NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
   )`,
 
   `CREATE TABLE IF NOT EXISTS "threads" (
@@ -96,6 +108,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_creator" boolean DEFAULT false NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "creator_balance" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "points" integer DEFAULT 0 NOT NULL`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_checkin_date" text`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
