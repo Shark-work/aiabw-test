@@ -12,14 +12,14 @@ Build a multi-step AI agent end to end in a single Next.js 15 app. The agent pla
 - Define typed tools with Zod schemas that the model can discover, call, and chain
 - Wire `useChat` to render streaming text and tool invocations inline in a React 19 UI
 - Run a Fullstack AI agent in one Next.js app (no separate Python service, no orchestration framework)
-- Swap providers cleanly by routing through OpenRouter as the default gateway
+- Swap providers cleanly by routing through 阿里云百炼 (DashScope / 通义千问) as the default gateway
 - Ship with Docker, a Makefile, and a `.env.example` so the project is reproducible on any machine
 
 ## Tech Stack
 
 - **Next.js 15** (App Router, Turbopack) with **TypeScript** and **React 19**
 - **Vercel AI SDK** (`ai`, `@ai-sdk/react`) for `streamText`, tools, and `useChat`
-- **OpenRouter** (`@openrouter/ai-sdk-provider`) as the default LLM gateway
+- **阿里云百炼**（`@ai-sdk/openai`，OpenAI 兼容模式）作为默认 LLM 接入
 - **Zod** for tool input schemas
 - **Tailwind CSS** + **shadcn/ui** + **lucide-react** for the UI
 - **pnpm** for dependency management
@@ -29,7 +29,7 @@ Build a multi-step AI agent end to end in a single Next.js 15 app. The agent pla
 ### Prerequisites
 
 - Node.js 20+ and `pnpm` (installed automatically by `make setup`)
-- An OpenRouter API key (free tier works for testing)
+- 一个阿里云百炼（DashScope）的 API Key（用于聊天模型）
 
 ### Quick Start
 
@@ -38,7 +38,7 @@ make dev
 
 # Or step by step:
 make setup          # Install deps and create .env
-# Edit .env with your OPENROUTER_API_KEY
+# Edit .env with your BAILIAN_API_KEY and BAILIAN_MODEL
 make run            # Next.js dev server at http://localhost:3000
 ```
 

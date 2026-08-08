@@ -1,0 +1,1 @@
+ALTER TABLE "adoptions" ADD COLUMN "pet_type" text DEFAULT 'fox' NOT NULL;

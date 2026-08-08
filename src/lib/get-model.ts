@@ -1,20 +1,19 @@
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createOpenAI } from '@ai-sdk/openai';
 
+/**
+ * 阿里云百炼（通义千问）模型获取助手。
+ *
+ * 通过 DashScope 的 OpenAI 兼容模式接入：
+ *   Base URL: https://dashscope.aliyuncs.com/compatible-mode/v1
+ *
+ * 读取的环境变量：
+ *   - BAILIAN_API_KEY  百炼 API Key（必填）
+ *   - BAILIAN_MODEL    模型名（可选，默认 qwen-turbo）
+ */
 export function getModel() {
-  const provider = process.env.LLM_PROVIDER ?? 'openrouter';
-
-  if (provider === 'openai') {
-    const openai = createOpenAI({
-      apiKey: process.env.OPENAI_API_KEY ?? '',
-    });
-    return openai.chat(process.env.OPENAI_MODEL ?? 'gpt-4o-mini');
-  }
-
-  const openrouter = createOpenRouter({
-    apiKey: process.env.OPENROUTER_API_KEY ?? '',
+  const bailian = createOpenAI({
+    apiKey: process.env.BAILIAN_API_KEY ?? '',
+    baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   });
-  return openrouter.chat(
-    process.env.OPENROUTER_MODEL ?? 'google/gemma-3-12b-it',
-  );
+  return bailian(process.env.BAILIAN_MODEL ?? 'qwen-turbo');
 }

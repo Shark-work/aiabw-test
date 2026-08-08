@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1785896798566,
+      "tag": "0000_wet_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785999207203,
+      "tag": "0001_purple_silverclaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786021114614,
+      "tag": "0002_little_lyja",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786071402217,
+      "tag": "0003_green_nebula",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786072639127,
+      "tag": "0004_vengeful_jane_foster",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786093262714,
+      "tag": "0005_smart_sphinx",
+      "breakpoints": true
+    }
+  ]
+}

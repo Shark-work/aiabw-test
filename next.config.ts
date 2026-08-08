@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // 项目根目录就是当前目录
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 export default nextConfig;

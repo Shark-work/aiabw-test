@@ -10,7 +10,7 @@ Backing project for a [learnwithparam.com](https://www.learnwithparam.com) cours
 
 ```bash
 uv sync              # Python projects (or: npm install / go mod tidy)
-cp .env.example .env # populate OPENROUTER_API_KEY and any other keys
+cp .env.example .env # populate BAILIAN_API_KEY/BAILIAN_MODEL and any other keys
 uv run uvicorn main:app --reload --port 8111
 ```
 

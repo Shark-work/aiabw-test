@@ -1,4 +1,8 @@
 import type { Config } from "tailwindcss";
+import { createRequire } from "module";
+
+// 兼容 ESM 加载环境：避免直接使用 require 触发 "require is not defined"
+const require = createRequire(import.meta.url);
 
 export default {
   darkMode: ["class"],

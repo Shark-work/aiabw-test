@@ -1,4 +1,4 @@
-import { tool } from "ai";
+import { tool, zodSchema } from "ai";
 import { z } from "zod";
 
 /**
@@ -8,9 +8,11 @@ import { z } from "zod";
 export const getWeather = tool({
   description:
     "Get the current weather for a given city. Returns temperature, condition, and humidity.",
-  parameters: z.object({
-    city: z.string().describe("The city name, e.g. 'Tokyo' or 'Paris'"),
-  }),
+  inputSchema: zodSchema(
+    z.object({
+      city: z.string().describe("The city name, e.g. 'Tokyo' or 'Paris'"),
+    }),
+  ),
   execute: async ({ city }) => {
     const MOCK: Record<string, { tempC: number; condition: string; humidity: number }> = {
       tokyo: { tempC: 18, condition: "Partly Cloudy", humidity: 62 },
@@ -38,17 +40,18 @@ export const getWeather = tool({
 export const calculator = tool({
   description:
     "Evaluate a basic math expression. Supports + - * / % ** and parentheses. Example: '47 * 23'",
-  parameters: z.object({
-    expression: z
-      .string()
-      .describe("The arithmetic expression to evaluate, e.g. '47 * 23'"),
-  }),
+  inputSchema: zodSchema(
+    z.object({
+      expression: z
+        .string()
+        .describe("The arithmetic expression to evaluate, e.g. '47 * 23'"),
+    }),
+  ),
   execute: async ({ expression }) => {
     if (!/^[\d\s+\-*/%().]+$/.test(expression)) {
       return { error: "Invalid characters in expression", expression };
     }
     try {
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
       const fn = new Function(`return (${expression});`);
       const value = fn();
       if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -71,9 +74,11 @@ export const calculator = tool({
 export const webSearch = tool({
   description:
     "Search the web and return a list of result snippets. Use for recent news, docs, or facts beyond the model's training.",
-  parameters: z.object({
-    query: z.string().describe("The search query"),
-  }),
+  inputSchema: zodSchema(
+    z.object({
+      query: z.string().describe("The search query"),
+    }),
+  ),
   execute: async ({ query }) => {
     const snippets = [
       {

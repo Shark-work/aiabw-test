@@ -1,0 +1,1 @@
+ALTER TABLE "adoptions" ADD COLUMN "is_unlocked" boolean DEFAULT false NOT NULL;

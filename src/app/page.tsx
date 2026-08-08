@@ -1,22 +1,126 @@
-import { ChatPanel } from "@/components/chat/chat-panel";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { DiagnosticForm } from "@/components/diagnostic-form";
+import { PETS, type PetType } from "@/lib/pet-config";
 
 export default function Home() {
+  const router = useRouter();
+  const [adoptingType, setAdoptingType] = useState<PetType | null>(null);
+  const [error, setError] = useState("");
+
+  const handleAdopt = async (petType: PetType) => {
+    if (adoptingType) return;
+    setAdoptingType(petType);
+    setError("");
+
+    try {
+      const res = await fetch("/api/adopt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          petType,
+          userId: "anonymous",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "领养失败，请稍后重试");
+      }
+
+      // 领养成功 → 带着新线程与领养记录进入独立聊天页面
+      if (data.ok && data.threadId) {
+        router.push(
+          `/chat?thread=${data.threadId}&adopt=${data.adoption?.id ?? ""}`,
+        );
+      } else {
+        router.push("/chat");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "领养失败，请稍后重试");
+      setAdoptingType(null);
+    }
+  };
+
+  const petEntries = Object.entries(PETS) as [PetType, (typeof PETS)[PetType]][];
+
   return (
-    <main className="flex min-h-screen flex-col bg-gradient-to-br from-zinc-50 via-white to-emerald-50 p-4 sm:p-6 md:p-8">
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4">
-        <header className="space-y-1">
+    <main className="relative flex min-h-screen flex-col overflow-hidden p-4 sm:p-6">
+      {/* 艾比世界背景图 */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/resources/background_clothing/bg1.jpg')",
+        }}
+      />
+      {/* 半透明白色遮罩，保证内容可读 */}
+      <div aria-hidden className="absolute inset-0 bg-white/60" />
+
+      <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center">
+        <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            Fullstack AI Agents with Next.js
+            艾比世界 · 多宠图鉴
           </h1>
           <p className="text-sm text-zinc-600">
-            A multi-step agent that plans, calls tools, observes results, and
-            responds. Streaming chat UI powered by the Vercel AI SDK.
+            选一只你喜欢的艾比伙伴，陪它聊天、帮它成长~
           </p>
-        </header>
-        <div className="flex-1">
-          <ChatPanel />
         </div>
+
+        {/* 宠物选择卡片 */}
+        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+          {petEntries.map(([petType, pet]) => {
+            const busy = adoptingType === petType;
+            return (
+              <button
+                key={petType}
+                type="button"
+                onClick={() => handleAdopt(petType)}
+                disabled={adoptingType !== null}
+                className="group flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-5 text-center shadow-sm backdrop-blur transition hover:scale-[1.03] hover:border-orange-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={pet.avatar}
+                  alt={`艾比-${pet.name}`}
+                  className="h-24 w-24 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"
+                />
+                <div className="space-y-1">
+                  <div className="text-lg font-semibold text-zinc-900">
+                    {pet.name}
+                  </div>
+                  <div className="text-xs text-zinc-500">{pet.personality}</div>
+                </div>
+                <span className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white shadow transition group-hover:bg-orange-600">
+                  {busy ? "⏳ 打造中..." : "🐾 领养"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <p className="text-xs text-zinc-400">
+          领养后将进入艾比世界，和你的伙伴开始聊天
+        </p>
+
+        {/* 次要功能：旧版 AI 工具诊断 */}
+        <details className="mt-6 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white/70 p-4 text-left shadow-sm backdrop-blur">
+          <summary className="cursor-pointer text-sm font-medium text-zinc-700">
+            🔧 高级：工具诊断（旧版）
+          </summary>
+          <div className="mt-4">
+            <DiagnosticForm />
+          </div>
+        </details>
       </div>
     </main>
   );
 }
+

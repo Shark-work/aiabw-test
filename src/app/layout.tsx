@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Fullstack AI Agents with Next.js",
+  title: "艾比世界 - 领养你的 AI 虚拟宠物",
   description:
-    "Multi-step AI agent with tool calling, streaming, and a Next.js chat UI.",
+    "领养一只专属 AI 虚拟宠物艾比，通过陪伴式聊天解锁功能、获取 AI 工具推荐。",
 };
 
 export default function RootLayout({
