@@ -11,6 +11,8 @@ export const users = pgTable('users', {
 export const threads = pgTable('threads', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: text('user_id').notNull(),
+  // 游客设备标识：用于登录后把匿名数据迁移回账号
+  anonymousId: text('anonymous_id'),
   title: text('title'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -28,6 +30,8 @@ export const adoptions = pgTable('adoptions', {
   // 关联账号：已登录用户写入 users.id（字符串），游客为 'anonymous'。
   // 保持 text 类型以兼容历史数据。
   userId: text('user_id').notNull().default('anonymous'),
+  // 游客设备标识：登录后据此迁移匿名数据
+  anonymousId: text('anonymous_id'),
   petName: text('pet_name').notNull(),
   petType: text('pet_type').notNull().default('fox'),
   adoptedAt: timestamp('adopted_at').defaultNow().notNull(),

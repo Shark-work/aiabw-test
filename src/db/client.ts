@@ -29,6 +29,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE TABLE IF NOT EXISTS "threads" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "user_id" text NOT NULL,
+    "anonymous_id" text,
     "title" text,
     "created_at" timestamp DEFAULT now() NOT NULL
   )`,
@@ -44,6 +45,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE TABLE IF NOT EXISTS "adoptions" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "user_id" text DEFAULT 'anonymous' NOT NULL,
+    "anonymous_id" text,
     "pet_name" text NOT NULL,
     "pet_type" text DEFAULT 'fox' NOT NULL,
     "adopted_at" timestamp DEFAULT now() NOT NULL,
@@ -65,6 +67,8 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "monthly_points" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "is_unlocked" boolean DEFAULT false NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "memory_context" text`,
+  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
+  `ALTER TABLE "threads" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;

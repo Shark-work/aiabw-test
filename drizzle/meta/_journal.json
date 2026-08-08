@@ -50,6 +50,13 @@
       "when": 1786173569636,
       "tag": "0006_foamy_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786174602672,
+      "tag": "0007_next_alex_wilder",
+      "breakpoints": true
     }
   ]
 }

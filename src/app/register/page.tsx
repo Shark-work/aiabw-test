@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+import { getAnonymousId } from "@/lib/anon-id";
+
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -31,6 +33,20 @@ export default function RegisterPage() {
         throw new Error(data.error || "注册失败");
       }
       localStorage.setItem("aiabw_token", data.token);
+
+      // 注册成功 → 立即把游客数据迁移回账号（尽力而为，失败不阻塞）
+      const anonymousId = getAnonymousId();
+      if (anonymousId) {
+        await fetch("/api/auth/migrate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.token}`,
+          },
+          body: JSON.stringify({ anonymousId }),
+        }).catch(() => {});
+      }
+
       const redirect =
         new URLSearchParams(window.location.search).get("redirect") || "/";
       router.push(redirect);

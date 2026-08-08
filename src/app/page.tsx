@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { DiagnosticForm } from "@/components/diagnostic-form";
 import { PETS, type PetType } from "@/lib/pet-config";
+import { getAnonymousId } from "@/lib/anon-id";
 
 export default function Home() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function Home() {
 
     try {
       const token = localStorage.getItem("aiabw_token");
+      const anonymousId = getAnonymousId();
       const res = await fetch("/api/adopt", {
         method: "POST",
         headers: {
@@ -48,6 +50,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           petType,
+          ...(anonymousId ? { anonymousId } : {}),
         }),
       });
 

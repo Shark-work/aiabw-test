@@ -26,6 +26,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   let petType: string = "fox";
   let petName: string | undefined;
+  let anonymousId: string | undefined;
 
   // 归属：已登录用户写 users.id，游客为 anonymous
   const authed = await getUserFromRequest(req);
@@ -38,6 +39,9 @@ export async function POST(req: Request) {
     }
     if (typeof body?.petName === "string" && body.petName.trim()) {
       petName = body.petName.trim();
+    }
+    if (typeof body?.anonymousId === "string" && body.anonymousId.trim()) {
+      anonymousId = body.anonymousId.trim();
     }
   } catch {
     // 请求体无法解析时忽略，使用默认值继续。
@@ -59,12 +63,12 @@ export async function POST(req: Request) {
     const result = await db.transaction(async (tx) => {
       const [adoption] = await tx
         .insert(adoptions)
-        .values({ userId, petName: effectiveName, petType })
+        .values({ userId, petName: effectiveName, petType, anonymousId })
         .returning();
 
       const [thread] = await tx
         .insert(threads)
-        .values({ userId, title: `${effectiveName} 的家` })
+        .values({ userId, title: `${effectiveName} 的家`, anonymousId })
         .returning();
 
       await tx.insert(messagesTable).values({
