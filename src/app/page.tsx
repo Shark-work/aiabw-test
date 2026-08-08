@@ -57,7 +57,7 @@ export default function Home() {
         aria-hidden
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/resources/background_clothing/bg1.jpg')",
+          backgroundImage: "url('/resources/background_clothing/bg1.png')",
         }}
       />
       {/* 半透明白色遮罩，保证内容可读 */}
