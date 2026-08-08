@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { db } from "@/db/client";
+import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions, threads, messages as messagesTable } from "@/db/schema";
 import { defaults as petDefaults, getPet } from "@/lib/pet-config";
 
@@ -50,6 +50,9 @@ export async function POST(req: Request) {
       : petDefaults.welcome;
 
   try {
+    // 首次访问自动建表（幂等）
+    await ensureDbSchemaOnce();
+
     const result = await db.transaction(async (tx) => {
       const [adoption] = await tx
         .insert(adoptions)

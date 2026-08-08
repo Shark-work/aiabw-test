@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
-import { db } from "@/db/client";
+import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import {
   XORPAY_AID,
@@ -48,6 +48,9 @@ export async function POST(req: Request) {
         { status: 500 },
       );
     }
+
+    // 首次访问自动建表（幂等）
+    await ensureDbSchemaOnce();
 
     // 校验领养记录存在
     const [adoption] = await db

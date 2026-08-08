@@ -1,4 +1,4 @@
-import { db } from "@/db/client";
+import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { XORPAY_APP_SECRET, XORPAY_NOTIFY_URL, md5 } from "@/lib/xorpay";
@@ -57,6 +57,9 @@ export async function POST(req: Request) {
   const adoptionId = order_id.startsWith(PREFIX)
     ? order_id.slice(PREFIX.length)
     : "";
+
+  // 首次访问自动建表（幂等）
+  await ensureDbSchemaOnce();
 
   if (adoptionId) {
     await db

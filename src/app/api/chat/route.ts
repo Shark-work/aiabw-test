@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { agentTools } from "@/lib/agent-tools";
 import { getPet } from "@/lib/pet-config";
 import { getModel } from "@/lib/get-model";
-import { db } from "@/db/client";
+import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 
 export const maxDuration = 60;
@@ -18,6 +18,9 @@ export async function POST(req: Request) {
 
   // 根据 petType 动态切换宠物人设（系统提示词），未提供时回退到狐狸。
   const pet = getPet(petType);
+
+  // 首次访问自动建表（幂等）
+  await ensureDbSchemaOnce();
 
   // 商业化变现：10 句免费门槛。达到后且未解锁时才拒绝调用 AI 模型。
   if (typeof adoptionId === "string" && adoptionId) {
