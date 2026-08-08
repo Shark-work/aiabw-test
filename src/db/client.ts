@@ -19,6 +19,13 @@ export const db = drizzle(pool);
 // ============================================================================
 
 const SCHEMA_STATEMENTS: string[] = [
+  `CREATE TABLE IF NOT EXISTS "users" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "email" text NOT NULL UNIQUE,
+    "password_hash" text NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
   `CREATE TABLE IF NOT EXISTS "threads" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "user_id" text NOT NULL,
@@ -45,7 +52,8 @@ const SCHEMA_STATEMENTS: string[] = [
     "level" integer DEFAULT 1 NOT NULL,
     "chat_count" integer DEFAULT 0 NOT NULL,
     "monthly_points" integer DEFAULT 0 NOT NULL,
-    "is_unlocked" boolean DEFAULT false NOT NULL
+    "is_unlocked" boolean DEFAULT false NOT NULL,
+    "memory_context" text
   )`,
 
   // —— 兼容旧库：为已有表补充后续新增的列（全部带默认值，安全回填） ——
@@ -56,6 +64,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "chat_count" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "monthly_points" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "is_unlocked" boolean DEFAULT false NOT NULL`,
+  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "memory_context" text`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { DiagnosticForm } from "@/components/diagnostic-form";
 import { PETS, type PetType } from "@/lib/pet-config";
@@ -10,6 +11,27 @@ export default function Home() {
   const router = useRouter();
   const [adoptingType, setAdoptingType] = useState<PetType | null>(null);
   const [error, setError] = useState("");
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+
+  // 从 localStorage 恢复登录态
+  useEffect(() => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.ok && data.user) setUser(data.user);
+        else localStorage.removeItem("aiabw_token");
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("aiabw_token");
+    setUser(null);
+  };
 
   const handleAdopt = async (petType: PetType) => {
     if (adoptingType) return;
@@ -17,14 +39,15 @@ export default function Home() {
     setError("");
 
     try {
+      const token = localStorage.getItem("aiabw_token");
       const res = await fetch("/api/adopt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           petType,
-          userId: "anonymous",
         }),
       });
 
@@ -62,6 +85,32 @@ export default function Home() {
       />
       {/* 半透明白色遮罩，保证内容可读 */}
       <div aria-hidden className="absolute inset-0 bg-white/60" />
+
+      {/* 账号入口 */}
+      <div className="relative z-20 flex justify-end px-2 pt-2">
+        {user ? (
+          <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
+            <span className="text-zinc-600">{user.email}</span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="font-medium text-orange-600 hover:underline"
+            >
+              退出
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
+            <Link href="/login" className="font-medium text-zinc-600 hover:text-orange-600">
+              登录
+            </Link>
+            <span className="text-zinc-300">|</span>
+            <Link href="/register" className="font-medium text-orange-600 hover:underline">
+              注册
+            </Link>
+          </div>
+        )}
+      </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center">
         <div className="space-y-2">

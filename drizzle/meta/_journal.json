@@ -43,6 +43,13 @@
       "when": 1786093262714,
       "tag": "0005_smart_sphinx",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786173569636,
+      "tag": "0006_foamy_leader",
+      "breakpoints": true
     }
   ]
 }

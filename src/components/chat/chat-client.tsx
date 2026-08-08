@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import type { UIMessage } from "ai";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
@@ -40,6 +41,15 @@ export function ChatClient({
   const [level, setLevel] = useState(initialLevel);
   const [monthlyPoints, setMonthlyPoints] = useState(initialMonthlyPoints);
   const [refreshing, setRefreshing] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
+  const [loginRedirect, setLoginRedirect] = useState("/chat");
+
+  // 游客检测：没有登录 token 时提示引导登录
+  useEffect(() => {
+    const token = localStorage.getItem("aiabw_token");
+    setIsGuest(!token);
+    setLoginRedirect(window.location.pathname + window.location.search);
+  }, []);
 
   // 每次互动结束后重新拉取最新心情 / 等级 / 月度积分
   const refreshMood = useCallback(async () => {
@@ -67,7 +77,22 @@ export function ChatClient({
   const mo = moodInfo(happiness);
 
   return (
-    <ChatPanel
+    <div className="flex h-full flex-col gap-2">
+      {isGuest && (
+        <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
+          <span className="text-amber-800">
+            🔒 你是游客模式，刷新后宠物记忆会丢失。
+          </span>
+          <Link
+            href={`/login?redirect=${encodeURIComponent(loginRedirect)}`}
+            className="font-medium text-orange-600 hover:underline"
+          >
+            登录以保存你的宠物记忆
+          </Link>
+        </div>
+      )}
+
+      <ChatPanel
       threadId={threadId}
       adoptionId={adoptionIdState}
       initialMessages={initialMessages}
@@ -95,6 +120,7 @@ export function ChatClient({
           </span>
         </div>
       }
-    />
-  );
+      />
+      </div>
+    );
 }

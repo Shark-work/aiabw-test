@@ -3,19 +3,22 @@ import { NextResponse } from "next/server";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions, threads, messages as messagesTable } from "@/db/schema";
 import { defaults as petDefaults, getPet } from "@/lib/pet-config";
+import { getUserFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 /**
  * POST /api/adopt
  *
- * 请求体（可选）：{ petType?: string, petName?: string, userId?: string }
+ * 请求体（可选）：{ petType?: string, petName?: string }
  *  - petType  宠物类型，默认 "fox"（从 PETS 多宠图鉴选择）。
  *  - petName  用户给宠物起的昵称（可选，默认取该宠物配置里的 name）。
- *  - userId   默认 "anonymous"。
+ *
+ * 归属：若请求携带有效登录 Token（Authorization: Bearer），userId 使用账号 id；
+ *       否则视为游客，userId 为 "anonymous"。
  *
  * 在一个数据库事务里完成：
- *   1. 写入 adoptions 领养记录（petType + petName）
+ *   1. 写入 adoptions 领养记录（petType + petName + userId）
  *   2. 为这只宠物创建一条初始对话线程（threads），标题为「{petName} 的家」
  *   3. 写入一条 assistant 欢迎消息（messages），内容为该宠物的专属欢迎语
  * 成功后返回 { ok, adoption, threadId }。
@@ -23,7 +26,10 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   let petType: string = "fox";
   let petName: string | undefined;
-  let userId = "anonymous";
+
+  // 归属：已登录用户写 users.id，游客为 anonymous
+  const authed = await getUserFromRequest(req);
+  const userId = authed ? authed.id : "anonymous";
 
   try {
     const body = await req.json();
@@ -32,9 +38,6 @@ export async function POST(req: Request) {
     }
     if (typeof body?.petName === "string" && body.petName.trim()) {
       petName = body.petName.trim();
-    }
-    if (typeof body?.userId === "string" && body.userId.trim()) {
-      userId = body.userId.trim();
     }
   } catch {
     // 请求体无法解析时忽略，使用默认值继续。
