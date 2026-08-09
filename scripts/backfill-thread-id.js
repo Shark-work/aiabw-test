@@ -13,7 +13,7 @@
  */
 const fs = require("fs");
 const path = require("path");
-const { Pool } = require("pg");
+const { Pool } = require("@neondatabase/serverless");
 
 const envPath = path.join(__dirname, "..", ".env");
 const env = fs.readFileSync(envPath, "utf8");

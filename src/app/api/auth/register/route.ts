@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users } from "@/db/schema";
 import { hashPassword, signToken } from "@/lib/auth";
+import { timer } from "@/lib/perf";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * 注册成功返回 { ok, token, user }。
  */
 export async function POST(req: Request) {
+  const perf = timer("register");
   try {
     const body = await req.json().catch(() => ({}));
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -27,6 +29,7 @@ export async function POST(req: Request) {
     }
 
     await ensureDbSchemaOnce();
+    perf("ensureSchema");
 
     // 直接插入；邮箱唯一约束冲突(code 23505)时返回 409，省去一次前置查询
     let user: { id: string; email: string };
@@ -54,6 +57,7 @@ export async function POST(req: Request) {
     }
 
     const token = await signToken({ id: user.id, email: user.email });
+    perf("signToken");
     return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email } });
   } catch (err) {
     console.error("[auth/register] failed:", err);

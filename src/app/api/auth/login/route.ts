@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users } from "@/db/schema";
 import { signToken, verifyPassword } from "@/lib/auth";
+import { timer } from "@/lib/perf";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,7 @@ export const runtime = "nodejs";
  * 登录成功返回 { ok, token, user }。
  */
 export async function POST(req: Request) {
+  const perf = timer("login");
   try {
     const body = await req.json().catch(() => ({}));
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -23,6 +25,7 @@ export async function POST(req: Request) {
     }
 
     await ensureDbSchemaOnce();
+    perf("ensureSchema");
 
     const [user] = await db
       .select({ id: users.id, email: users.email, passwordHash: users.passwordHash })
@@ -35,6 +38,7 @@ export async function POST(req: Request) {
     }
 
     const token = await signToken({ id: user.id, email: user.email });
+    perf("signToken");
     return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email } });
   } catch (err) {
     console.error("[auth/login] failed:", err);

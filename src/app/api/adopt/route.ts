@@ -4,6 +4,7 @@ import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions, threads, messages as messagesTable } from "@/db/schema";
 import { defaults as petDefaults, getPet } from "@/lib/pet-config";
 import { getUserFromRequest } from "@/lib/auth";
+import { timer } from "@/lib/perf";
 
 export const runtime = "nodejs";
 
@@ -24,6 +25,7 @@ export const runtime = "nodejs";
  * 成功后返回 { ok, adoption, threadId }。
  */
 export async function POST(req: Request) {
+  const perf = timer("adopt");
   let petType: string = "fox";
   let petName: string | undefined;
   let anonymousId: string | undefined;
@@ -59,6 +61,7 @@ export async function POST(req: Request) {
   try {
     // 首次访问自动建表（幂等）
     await ensureDbSchemaOnce();
+    perf("ensureSchema");
 
     const result = await db.transaction(async (tx) => {
       // 先建线程，再建领养记录并关联 threadId
@@ -86,6 +89,7 @@ export async function POST(req: Request) {
 
       return { adoption, threadId: thread.id };
     });
+    perf("transaction");
 
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
