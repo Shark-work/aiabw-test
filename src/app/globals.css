@@ -9,5 +9,6 @@ body {
 @layer base {
   :root {
     --radius: 0.5rem;
+    --muted-foreground: 215.4 16.3% 46.9%;
   }
 }

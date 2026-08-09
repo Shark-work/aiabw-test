@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "艾比世界 - 领养你的 AI 虚拟宠物",
@@ -15,8 +16,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-zinc-50">
-        {children}
+      <body className="antialiased bg-zinc-50 flex min-h-screen flex-col">
+        <div className="flex flex-1 flex-col">{children}</div>
+        <Footer />
         <Analytics />
       </body>
     </html>

@@ -17,6 +17,7 @@ export default {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "muted-foreground": "hsl(var(--muted-foreground) / <alpha-value>)",
       },
       borderRadius: {
         lg: "var(--radius)",
