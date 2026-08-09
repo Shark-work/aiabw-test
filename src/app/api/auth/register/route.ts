@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users } from "@/db/schema";
@@ -29,19 +28,30 @@ export async function POST(req: Request) {
 
     await ensureDbSchemaOnce();
 
-    const [existing] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-    if (existing) {
-      return NextResponse.json({ ok: false, error: "该邮箱已注册，请直接登录" }, { status: 409 });
+    // 直接插入；邮箱唯一约束冲突(code 23505)时返回 409，省去一次前置查询
+    let user: { id: string; email: string };
+    try {
+      const [u] = await db
+        .insert(users)
+        .values({ email, passwordHash: hashPassword(password) })
+        .returning({ id: users.id, email: users.email });
+      user = u;
+    } catch (err) {
+      const e = err as { code?: string; cause?: { code?: string } };
+      const isDuplicate =
+        e?.code === "23505" ||
+        e?.cause?.code === "23505" ||
+        /duplicate key value violates unique constraint/i.test(
+          err instanceof Error ? err.message : "",
+        );
+      if (isDuplicate) {
+        return NextResponse.json(
+          { ok: false, error: "该邮箱已注册，请直接登录" },
+          { status: 409 },
+        );
+      }
+      throw err;
     }
-
-    const [user] = await db
-      .insert(users)
-      .values({ email, passwordHash: hashPassword(password) })
-      .returning({ id: users.id, email: users.email });
 
     const token = await signToken({ id: user.id, email: user.email });
     return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email } });

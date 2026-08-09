@@ -29,24 +29,30 @@ export default function LoginPage() {
       }
       localStorage.setItem("aiabw_token", data.token);
 
-      // 登录成功 → 立即把游客数据迁移回账号（尽力而为，失败不阻塞登录）
+      // 游客数据迁移：后台异步执行，不阻塞跳转（提升登录体验）
       const anonymousId = getAnonymousId();
       if (anonymousId) {
-        const migRes = await fetch("/api/auth/migrate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${data.token}`,
-          },
-          body: JSON.stringify({ anonymousId }),
-        }).catch(() => null);
-        if (migRes && migRes.ok) {
-          const migData = await migRes.json().catch(() => null);
-          const migrated = migData?.migrated;
-          if (migrated && migrated.adoptions + migrated.threads > 0) {
-            sessionStorage.setItem("aiabw_migrated_toast", "1");
+        void (async () => {
+          try {
+            const migRes = await fetch("/api/auth/migrate", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.token}`,
+              },
+              body: JSON.stringify({ anonymousId }),
+            });
+            if (migRes.ok) {
+              const migData = await migRes.json().catch(() => null);
+              const migrated = migData?.migrated;
+              if (migrated && migrated.adoptions + migrated.threads > 0) {
+                sessionStorage.setItem("aiabw_migrated_toast", "1");
+              }
+            }
+          } catch {
+            // 迁移失败不影响登录
           }
-        }
+        })();
       }
 
       const redirect =
