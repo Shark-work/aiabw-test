@@ -3,6 +3,8 @@ import { Pool } from 'pg';
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  // 快速失败：数据库不可达时 5 秒内报错，而不是无限挂起（避免前端一直“注册中/加载中”）
+  connectionTimeoutMillis: 5000,
 });
 
 export const db = drizzle(pool);
@@ -124,11 +126,25 @@ let schemaReadyPromise: Promise<void> | null = null;
 /**
  * 幂等建表：全局只执行一次（失败会记录日志但不抛出，避免阻断业务请求重试）。
  * 调用方 await 它即可保证“执行本次查询前表结构已就绪”。
+ *
+ * 性能优化：先用一条 to_regclass 查询确认核心表已存在——
+ * 存在则直接跳过整套 DDL，避免每次 Serverless 冷启动都跑 17 条建表语句。
  */
 export function ensureDbSchemaOnce(): Promise<void> {
   schemaReadyPromise ??= (async () => {
     const client = await pool.connect();
     try {
+      // 快速路径：核心表存在则跳过 DDL
+      const exists = await client.query(
+        `SELECT to_regclass('public.users') AS u,
+                to_regclass('public.adoptions') AS a,
+                to_regclass('public.threads') AS t`,
+      );
+      const row = exists.rows[0] ?? {};
+      if (row.u && row.a && row.t) {
+        console.log('[db] schema already present, skip DDL');
+        return;
+      }
       for (const statement of SCHEMA_STATEMENTS) {
         await client.query(statement);
       }
