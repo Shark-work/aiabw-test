@@ -13,22 +13,44 @@ import { SignJWT, jwtVerify } from "jose";
 const AUTH_SECRET = process.env.AUTH_SECRET ?? "dev-insecure-change-me";
 const TOKEN_TTL = "30d";
 
+/**
+ * scrypt 成本参数。
+ *  - 旧哈希（无前缀）：N=16384（Node scryptSync 默认），保持可校验。
+ *  - 新哈希（v2$ 前缀）：N=8192。理由：Vercel Lambda CPU 上 N=16384 的
+ *    scrypt 耗时约 60ms，是 login/register 的主要耗时；N=8192 约 30ms。
+ *    对小型应用属于可接受的平衡（如需更高安全性可改回 16384/32768）。
+ */
+const SCRYPT_N_V2 = 8192;
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+const SCRYPT_KEYLEN = 64;
+const V2_PREFIX = "v2$";
+
 function secretKey(): Uint8Array {
   return new TextEncoder().encode(AUTH_SECRET);
 }
 
-/** 密码哈希：scrypt，格式 `salt:hash`（salt 16 字节 hex，hash 64 字节 hex）。 */
+/** 密码哈希：scrypt，格式 `[v2$]salt:hash`（salt 16 字节 hex，hash 64 字节 hex）。 */
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
+  const hash = crypto
+    .scryptSync(password, salt, SCRYPT_KEYLEN, { N: SCRYPT_N_V2, r: SCRYPT_R, p: SCRYPT_P })
+    .toString("hex");
+  return `${V2_PREFIX}${salt}:${hash}`;
 }
 
-/** 校验密码是否匹配存储的哈希。 */
+/** 校验密码是否匹配存储的哈希（兼容 v2 与旧格式）。 */
 export function verifyPassword(password: string, stored: string): boolean {
-  const [salt, hash] = stored.split(":");
+  const isV2 = stored.startsWith(V2_PREFIX);
+  const body = isV2 ? stored.slice(V2_PREFIX.length) : stored;
+  const [salt, hash] = body.split(":");
   if (!salt || !hash) return false;
-  const candidate = crypto.scryptSync(password, salt, 64);
+  const cost = isV2 ? SCRYPT_N_V2 : 16384; // 旧哈希用默认 16384
+  const candidate = crypto.scryptSync(password, salt, SCRYPT_KEYLEN, {
+    N: cost,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+  });
   const expected = Buffer.from(hash, "hex");
   if (candidate.length !== expected.length) return false;
   return crypto.timingSafeEqual(
