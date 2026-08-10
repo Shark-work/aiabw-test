@@ -23,7 +23,7 @@ export const db = drizzle(pool);
 // 若将来修改 src/db/schema.ts，请同步更新下面的 DDL。
 // ============================================================================
 
-const SCHEMA_STATEMENTS: string[] = [
+const SCHEMA_CREATES: string[] = [
   `CREATE TABLE IF NOT EXISTS "users" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "email" text NOT NULL UNIQUE,
@@ -106,8 +106,14 @@ const SCHEMA_STATEMENTS: string[] = [
     "is_unlocked" boolean DEFAULT false NOT NULL,
     "memory_context" text
   )`,
+];
 
-  // —— 兼容旧库：为已有表补充后续新增的列（全部带默认值，安全回填） ——
+/**
+ * 兼容旧库：为已有表补充后续新增的列（全部带默认值，安全回填）。
+ * 注意：这些 ALTER 在“表已存在”的快速路径上也会执行（幂等）——
+ * 否则新列永远不会被应用到已存在的生产库。
+ */
+const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "pet_type" text DEFAULT 'fox' NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "happiness" integer DEFAULT 50 NOT NULL`,
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "last_interacted_at" timestamp`,
@@ -154,6 +160,18 @@ async function runIndexes(client: { query: (sql: string) => Promise<unknown> }) 
   }
 }
 
+/** 幂等补列（ALTER ... ADD COLUMN IF NOT EXISTS）；并发/已存在时容错。 */
+async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
+  for (const stmt of SCHEMA_ALTERS) {
+    try {
+      await client.query(stmt);
+    } catch (err) {
+      // 列已存在 / 短暂锁冲突时忽略（DDL 幂等）
+      console.log("[db] alter skipped:", stmt.slice(0, 60), String(err).slice(0, 120));
+    }
+  }
+}
+
 /**
  * 幂等建表：全局只执行一次（失败会记录日志但不抛出，避免阻断业务请求重试）。
  * 调用方 await 它即可保证“执行本次查询前表结构已就绪”。
@@ -173,14 +191,17 @@ export function ensureDbSchemaOnce(): Promise<void> {
       );
       const row = exists.rows[0] ?? {};
       if (row.u && row.a && row.t) {
-        // 表已存在：仅补索引（幂等，一次冷启动执行一次）
+        // 表已存在：幂等补列（ALTER）+ 补索引（都必须在快速路径执行，
+        // 否则新增列/索引永远不会应用到已存在的生产库）
+        await runAlters(client);
         await runIndexes(client);
-        console.log("[db] schema already present, skip DDL (indexes ensured)");
+        console.log("[db] schema present: columns & indexes ensured");
         return;
       }
-      for (const statement of SCHEMA_STATEMENTS) {
+      for (const statement of SCHEMA_CREATES) {
         await client.query(statement);
       }
+      await runAlters(client);
       await runIndexes(client);
       console.log("[db] schema ensured (tables are ready)");
     } finally {
