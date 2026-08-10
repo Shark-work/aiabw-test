@@ -1,0 +1,17 @@
+name: keepalive
+
+# 保活：每 5 分钟 GET 一次 /api/keepalive，避免 Neon 免费版 compute
+# 在 5 分钟无连接后自动休眠（scale-to-zero），消除下一次访问的 1~5s 冷唤醒。
+# 注意：GitHub Actions 的 schedule 有排队抖动，偶尔会延迟几分钟；
+# 若需要更严格保活，可改用第三方监控（UptimeRobot/BetterStack）以更短间隔轮询。
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ping keepalive
+        run: curl -sS --max-time 20 https://www.aiabw.com/api/keepalive || true
