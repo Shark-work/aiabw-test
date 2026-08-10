@@ -60,7 +60,7 @@ export async function GET() {
     done();
 
     done = timed("scryptMs");
-    hashPassword("perf-test-password");
+    await hashPassword("perf-test-password");
     done();
 
     done = timed("joseSignMs");

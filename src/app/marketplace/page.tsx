@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 
 type UgcPet = {
   id: string;
@@ -20,6 +21,10 @@ export default function MarketplacePage() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
   const [isCreator, setIsCreator] = useState(false);
+  // 单宠限制 → 解锁弹窗
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [unlockAdoptionId, setUnlockAdoptionId] = useState<string | null>(null);
+  const [upgradePetCount, setUpgradePetCount] = useState(1);
   // UGC 发布表单
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishBusy, setPublishBusy] = useState(false);
@@ -107,6 +112,11 @@ export default function MarketplacePage() {
       if (data?.ok && data.threadId) {
         showToast("🎉 购买成功！宠物已入住你的艾比世界~");
         router.push(`/chat?thread=${data.threadId}&adopt=${data.adoption?.id}`);
+      } else if (data?.needPayment === true) {
+        setUpgradeOpen(true);
+        setUnlockAdoptionId(data.unlockAdoptionId ?? null);
+        setUpgradePetCount(data.petCount ?? 1);
+        showToast(data.error ?? "请先解锁多宠图鉴");
       } else {
         showToast(data?.error ?? "购买失败");
       }
@@ -166,6 +176,11 @@ export default function MarketplacePage() {
       if (data?.ok && data.threadId) {
         showToast(`🎁 盲盒开出「${data.petName}」！`);
         router.push(`/chat?thread=${data.threadId}&adopt=${data.adoption?.id}`);
+      } else if (data?.needPayment === true) {
+        setUpgradeOpen(true);
+        setUnlockAdoptionId(data.unlockAdoptionId ?? null);
+        setUpgradePetCount(data.petCount ?? 1);
+        showToast(data.error ?? "请先解锁多宠图鉴");
       } else {
         showToast(data?.error ?? "抽取失败");
       }
@@ -332,6 +347,17 @@ export default function MarketplacePage() {
           </div>
         </div>
       )}
+
+      <UpgradePetModal
+        open={upgradeOpen}
+        adoptionId={unlockAdoptionId}
+        petCount={upgradePetCount}
+        onClose={() => setUpgradeOpen(false)}
+        onUnlocked={() => {
+          setUpgradeOpen(false);
+          void load();
+        }}
+      />
     </main>
   );
 }

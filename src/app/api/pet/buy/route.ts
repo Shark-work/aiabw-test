@@ -4,6 +4,13 @@ import { and, eq, gte, sql } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users, ugcPets, ugcSales, adoptions, threads, messages as messagesTable, pointsLog } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import {
+  buildPetLimitBody,
+  evaluatePetLimit,
+  FREE_PET_LIMIT,
+  isPetLimitError,
+  PetLimitError,
+} from "@/lib/pet-limit";
 
 export const runtime = "nodejs";
 
@@ -53,6 +60,29 @@ export async function POST(req: Request) {
         .where(and(eq(users.id, user.id), gte(users.points, price)));
       if (buyerRes.rowCount === 0) {
         throw new Error("INSUFFICIENT_POINTS");
+      }
+
+      // 单宠限制：上面的 UPDATE 已锁定用户行，计数后再插入可防并发超领。
+      // 已解锁（付费）用户不受限制；未解锁用户最多 1 只。
+      const [countRow] = await tx
+        .select({
+          petCount: sql<number>`count(*)`,
+          unlockedPetCount: sql<number>`count(*) filter (where ${adoptions.isUnlocked})`,
+        })
+        .from(adoptions)
+        .where(eq(adoptions.userId, user.id));
+      const decision = evaluatePetLimit({
+        petCount: Number(countRow?.petCount ?? 0),
+        unlockedPetCount: Number(countRow?.unlockedPetCount ?? 0),
+        limit: FREE_PET_LIMIT,
+      });
+      if (!decision.allowed) {
+        const [existing] = await tx
+          .select({ id: adoptions.id })
+          .from(adoptions)
+          .where(eq(adoptions.userId, user.id))
+          .limit(1);
+        throw new PetLimitError(decision, existing?.id ?? null);
       }
       await tx.insert(pointsLog).values({ userId: user.id, amount: -price, reason: "ugc_buy" });
 
@@ -106,6 +136,11 @@ export async function POST(req: Request) {
       threadId: result.threadId,
     });
   } catch (err) {
+    if (isPetLimitError(err)) {
+      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId), {
+        status: 402,
+      });
+    }
     const msg = err instanceof Error ? err.message : "";
     if (msg === "PET_NOT_FOUND") {
       return NextResponse.json({ ok: false, error: "未找到该 UGC 宠物" }, { status: 404 });

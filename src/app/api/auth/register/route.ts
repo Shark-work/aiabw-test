@@ -36,11 +36,13 @@ export async function POST(req: Request) {
     dbg["ensure"] = Date.now() - start;
 
     // 直接插入；邮箱唯一约束冲突(code 23505)时返回 409，省去一次前置查询
+    const passwordHash = await hashPassword(password);
+    dbg["hash"] = Date.now() - start;
     let user: { id: string; email: string };
     try {
       const [u] = await db
         .insert(users)
-        .values({ email, passwordHash: hashPassword(password) })
+        .values({ email, passwordHash })
         .returning({ id: users.id, email: users.email });
       user = u;
     } catch (err) {

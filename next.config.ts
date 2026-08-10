@@ -35,6 +35,9 @@ const nextConfig: NextConfig = {
   },
   env: {
     NEXT_PUBLIC_APP_VERSION: resolveAppVersion(),
+    // 提升 scrypt 等 CPU 密集异步任务的并发度（libuv 线程池默认 4）。
+    // 注意：仅在 Node 进程启动早期生效；Vercel 项目环境变量里也可设置同名项。
+    UV_THREADPOOL_SIZE: "8",
   },
 };
 

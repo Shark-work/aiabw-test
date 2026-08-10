@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { promisify } from "util";
 import { SignJWT, jwtVerify } from "jose";
 
 /**
@@ -26,27 +27,40 @@ const SCRYPT_P = 1;
 const SCRYPT_KEYLEN = 64;
 const V2_PREFIX = "v2$";
 
+/** 异步 scrypt（libuv 线程池执行，避免阻塞 Node 事件循环，提升并发登录/注册体验）。 */
+const scryptAsync = promisify(crypto.scrypt) as (
+  password: crypto.BinaryLike,
+  salt: crypto.BinaryLike,
+  keylen: number,
+  options: crypto.ScryptOptions,
+) => Promise<Buffer>;
+
 function secretKey(): Uint8Array {
   return new TextEncoder().encode(AUTH_SECRET);
 }
 
 /** 密码哈希：scrypt，格式 `[v2$]salt:hash`（salt 16 字节 hex，hash 64 字节 hex）。 */
-export function hashPassword(password: string): string {
+export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto
-    .scryptSync(password, salt, SCRYPT_KEYLEN, { N: SCRYPT_N_V2, r: SCRYPT_R, p: SCRYPT_P })
-    .toString("hex");
-  return `${V2_PREFIX}${salt}:${hash}`;
+  const hash = await scryptAsync(password, salt, SCRYPT_KEYLEN, {
+    N: SCRYPT_N_V2,
+    r: SCRYPT_R,
+    p: SCRYPT_P,
+  });
+  return `${V2_PREFIX}${salt}:${hash.toString("hex")}`;
 }
 
 /** 校验密码是否匹配存储的哈希（兼容 v2 与旧格式）。 */
-export function verifyPassword(password: string, stored: string): boolean {
+export async function verifyPassword(
+  password: string,
+  stored: string,
+): Promise<boolean> {
   const isV2 = stored.startsWith(V2_PREFIX);
   const body = isV2 ? stored.slice(V2_PREFIX.length) : stored;
   const [salt, hash] = body.split(":");
   if (!salt || !hash) return false;
   const cost = isV2 ? SCRYPT_N_V2 : 16384; // 旧哈希用默认 16384
-  const candidate = crypto.scryptSync(password, salt, SCRYPT_KEYLEN, {
+  const candidate = await scryptAsync(password, salt, SCRYPT_KEYLEN, {
     N: cost,
     r: SCRYPT_R,
     p: SCRYPT_P,

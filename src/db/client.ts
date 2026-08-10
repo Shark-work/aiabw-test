@@ -5,6 +5,9 @@ export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // 快速失败：数据库不可达时 5 秒内报错，而不是无限挂起（避免前端一直“注册中/加载中”）
   connectionTimeoutMillis: 5000,
+  // 显式声明最大并发物理连接数（@neondatabase/serverless 默认 10）。
+  // Neon 免费版 pooler 并发上限约 10，故保持 10；如遇连接超限可调低到 5。
+  max: 10,
 });
 
 export const db = drizzle(pool);
@@ -121,7 +124,33 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_checkin_date" text`,
 ];
 
+/**
+ * 高频查询索引（幂等，冷启动执行一次）。
+ *  - adoptions.user_id：单宠限制 / 宠物列表（WHERE user_id=?）
+ *  - adoptions.anonymous_id：游客宠物查询
+ *  - threads.user_id：会话列表
+ *  - points_log.user_id：积分流水
+ */
+const SCHEMA_INDEXES: string[] = [
+  `CREATE INDEX IF NOT EXISTS idx_adoptions_user_id ON "adoptions" ("user_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_adoptions_anonymous_id ON "adoptions" ("anonymous_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
+];
+
 let schemaReadyPromise: Promise<void> | null = null;
+
+/** 幂等建索引；并发冷启动时多实例同名索引会触发 pg_class 重复名竞态，逐个容错即可。 */
+async function runIndexes(client: { query: (sql: string) => Promise<unknown> }) {
+  for (const idx of SCHEMA_INDEXES) {
+    try {
+      await client.query(idx);
+    } catch (err) {
+      // 索引幂等：其他实例已建成时本实例会拿到 duplicate name 错误，忽略即可。
+      console.log("[db] index already present by another instance:", idx.slice(0, 70));
+    }
+  }
+}
 
 /**
  * 幂等建表：全局只执行一次（失败会记录日志但不抛出，避免阻断业务请求重试）。
@@ -142,13 +171,16 @@ export function ensureDbSchemaOnce(): Promise<void> {
       );
       const row = exists.rows[0] ?? {};
       if (row.u && row.a && row.t) {
-        console.log('[db] schema already present, skip DDL');
+        // 表已存在：仅补索引（幂等，一次冷启动执行一次）
+        await runIndexes(client);
+        console.log("[db] schema already present, skip DDL (indexes ensured)");
         return;
       }
       for (const statement of SCHEMA_STATEMENTS) {
         await client.query(statement);
       }
-      console.log('[db] schema ensured (tables are ready)');
+      await runIndexes(client);
+      console.log("[db] schema ensured (tables are ready)");
     } finally {
       client.release();
     }

@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
+import { and, eq, sql } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { adoptions, threads, messages as messagesTable } from "@/db/schema";
+import { users, adoptions, threads, messages as messagesTable } from "@/db/schema";
 import { defaults as petDefaults, getPet } from "@/lib/pet-config";
 import { getUserFromRequest } from "@/lib/auth";
 import { timer } from "@/lib/perf";
+import {
+  buildPetLimitBody,
+  evaluatePetLimit,
+  FREE_PET_LIMIT,
+  isPetLimitError,
+  PetLimitError,
+} from "@/lib/pet-limit";
 
 export const runtime = "nodejs";
 
@@ -64,6 +72,47 @@ export async function POST(req: Request) {
     perf("ensureSchema");
 
     const result = await db.transaction(async (tx) => {
+      // 单宠限制（防并发：先锁用户行，再计数，再插入）。
+      // 已解锁（付费）用户不受限制；未解锁用户最多 1 只。
+      if (authed) {
+        await tx.select().from(users).where(eq(users.id, authed.id)).for("update");
+      }
+      const [countRow] = await tx
+        .select({
+          petCount: sql<number>`count(*)`,
+          unlockedPetCount: sql<number>`count(*) filter (where ${adoptions.isUnlocked})`,
+        })
+        .from(adoptions)
+        .where(
+          authed
+            ? eq(adoptions.userId, authed.id)
+            : and(
+                eq(adoptions.userId, "anonymous"),
+                eq(adoptions.anonymousId, anonymousId ?? ""),
+              ),
+        );
+      const decision = evaluatePetLimit({
+        petCount: Number(countRow?.petCount ?? 0),
+        unlockedPetCount: Number(countRow?.unlockedPetCount ?? 0),
+        limit: FREE_PET_LIMIT,
+      });
+      if (!decision.allowed) {
+        // 取一只已有宠物作为“解锁”目标，供前端发起支付
+        const [existing] = await tx
+          .select({ id: adoptions.id })
+          .from(adoptions)
+          .where(
+            authed
+              ? eq(adoptions.userId, authed.id)
+              : and(
+                  eq(adoptions.userId, "anonymous"),
+                  eq(adoptions.anonymousId, anonymousId ?? ""),
+                ),
+          )
+          .limit(1);
+        throw new PetLimitError(decision, existing?.id ?? null);
+      }
+
       // 先建线程，再建领养记录并关联 threadId
       const [thread] = await tx
         .insert(threads)
@@ -93,6 +142,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
+    if (isPetLimitError(err)) {
+      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId), {
+        status: 402,
+      });
+    }
     console.error("Failed to create adoption:", err);
     return NextResponse.json(
       { ok: false, error: "领养记录写入失败，请稍后重试" },

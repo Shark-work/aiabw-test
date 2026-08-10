@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { DiagnosticForm } from "@/components/diagnostic-form";
+import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PETS, type PetType } from "@/lib/pet-config";
 import { getAnonymousId } from "@/lib/anon-id";
 
@@ -18,6 +19,14 @@ export default function Home() {
     points: number;
     isCreator: boolean;
   } | null>(null);
+  // 单宠限制：用户已有宠物数量 / 是否已解锁 / 可用于支付的宠物 id
+  const [petState, setPetState] = useState<{
+    petCount: number;
+    hasUnlocked: boolean;
+    unlockAdoptionId: string | null;
+  }>({ petCount: 0, hasUnlocked: false, unlockAdoptionId: null });
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const petLimitReached = petState.petCount >= 1 && !petState.hasUnlocked;
 
   // 从 localStorage 恢复登录态
   useEffect(() => {
@@ -41,6 +50,35 @@ export default function Home() {
       })
       .catch(() => {});
   }, []);
+
+  // 读取当前用户宠物数量 / 解锁状态（单宠限制前端提示）
+  const refreshPetState = useCallback(async () => {
+    const token = localStorage.getItem("aiabw_token");
+    const anonymousId = getAnonymousId();
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    try {
+      const res = await fetch(
+        `/api/pets${!token && anonymousId ? `?anonymousId=${encodeURIComponent(anonymousId)}` : ""}`,
+        { headers },
+      );
+      const data = await res.json();
+      if (data?.ok && Array.isArray(data.pets)) {
+        const pets = data.pets as { id: string; isUnlocked: boolean }[];
+        setPetState({
+          petCount: pets.length,
+          hasUnlocked: pets.some((p) => p.isUnlocked),
+          unlockAdoptionId: pets[0]?.id ?? null,
+        });
+      }
+    } catch {
+      // 静默失败，不影响页面
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPetState();
+  }, [refreshPetState]);
 
   const handleLogout = () => {
     localStorage.removeItem("aiabw_token");
@@ -110,6 +148,20 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
+        // 单宠限制：引导用户解锁付费
+        if (data?.needPayment === true) {
+          setError(data.error || "请先解锁多宠图鉴");
+          if (data.unlockAdoptionId) {
+            setPetState((prev) => ({
+              ...prev,
+              petCount: data.petCount ?? prev.petCount,
+              hasUnlocked: false,
+              unlockAdoptionId: data.unlockAdoptionId,
+            }));
+          }
+          setUpgradeOpen(true);
+          return;
+        }
         throw new Error(data.error || "领养失败，请稍后重试");
       }
 
@@ -233,7 +285,9 @@ export default function Home() {
               <button
                 key={petType}
                 type="button"
-                onClick={() => handleAdopt(petType)}
+                onClick={() =>
+                  petLimitReached ? setUpgradeOpen(true) : handleAdopt(petType)
+                }
                 disabled={adoptingType !== null}
                 className="group flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-5 text-center shadow-sm backdrop-blur transition hover:scale-[1.03] hover:border-orange-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
@@ -249,8 +303,18 @@ export default function Home() {
                   </div>
                   <div className="text-xs text-zinc-500">{pet.personality}</div>
                 </div>
-                <span className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white shadow transition group-hover:bg-orange-600">
-                  {busy ? "⏳ 打造中..." : "🐾 领养"}
+                <span
+                  className={`rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition ${
+                    petLimitReached
+                      ? "bg-zinc-400 group-hover:bg-zinc-500"
+                      : "bg-orange-500 group-hover:bg-orange-600"
+                  }`}
+                >
+                  {busy
+                    ? "⏳ 打造中..."
+                    : petLimitReached
+                      ? "🔒 需升级"
+                      : "🐾 领养"}
                 </span>
               </button>
             );
@@ -272,6 +336,17 @@ export default function Home() {
           </div>
         </details>
       </div>
+
+      <UpgradePetModal
+        open={upgradeOpen}
+        adoptionId={petState.unlockAdoptionId}
+        petCount={petState.petCount}
+        onClose={() => setUpgradeOpen(false)}
+        onUnlocked={() => {
+          void refreshPetState();
+          setError("");
+        }}
+      />
     </main>
   );
 }

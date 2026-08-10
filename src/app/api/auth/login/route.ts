@@ -38,7 +38,7 @@ export async function POST(req: Request) {
       .limit(1);
     dbg["select"] = Date.now() - start;
 
-    if (!user || !verifyPassword(password, user.passwordHash)) {
+    if (!user || !(await verifyPassword(password, user.passwordHash))) {
       return NextResponse.json({ ok: false, error: "邮箱或密码错误" }, { status: 401 });
     }
     dbg["verify"] = Date.now() - start;
