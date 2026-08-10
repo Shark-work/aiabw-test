@@ -145,7 +145,7 @@ async function runIndexes(client: { query: (sql: string) => Promise<unknown> }) 
   for (const idx of SCHEMA_INDEXES) {
     try {
       await client.query(idx);
-    } catch (err) {
+    } catch {
       // 索引幂等：其他实例已建成时本实例会拿到 duplicate name 错误，忽略即可。
       console.log("[db] index already present by another instance:", idx.slice(0, 70));
     }
