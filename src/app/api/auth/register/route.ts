@@ -16,8 +16,11 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  */
 export async function POST(req: Request) {
   const perf = timer("register");
+  const start = Date.now();
+  const dbg: Record<string, number> = {};
   try {
     const body = await req.json().catch(() => ({}));
+    dbg["json"] = Date.now() - start;
     const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
     const password = typeof body?.password === "string" ? body.password : "";
 
@@ -30,6 +33,7 @@ export async function POST(req: Request) {
 
     await ensureDbSchemaOnce();
     perf("ensureSchema");
+    dbg["ensure"] = Date.now() - start;
 
     // 直接插入；邮箱唯一约束冲突(code 23505)时返回 409，省去一次前置查询
     let user: { id: string; email: string };
@@ -55,10 +59,13 @@ export async function POST(req: Request) {
       }
       throw err;
     }
+    dbg["insert"] = Date.now() - start;
 
     const token = await signToken({ id: user.id, email: user.email });
     perf("signToken");
-    return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email } });
+    dbg["sign"] = Date.now() - start;
+    dbg["total"] = Date.now() - start;
+    return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email }, dbg });
   } catch (err) {
     console.error("[auth/register] failed:", err);
     return NextResponse.json({ ok: false, error: "注册失败，请稍后重试" }, { status: 500 });
