@@ -73,14 +73,19 @@ export async function POST(req: Request) {
 
     const result = await db.transaction(async (tx) => {
       // 单宠限制（防并发：先锁用户行，再计数，再插入）。
-      // 已解锁（付费）用户不受限制；未解锁用户最多 1 只。
+      // 全局解锁（users.is_unlocked）用户不受限制；未解锁用户最多 1 只。
+      let isUnlocked = false;
       if (authed) {
-        await tx.select().from(users).where(eq(users.id, authed.id)).for("update");
+        const [u] = await tx
+          .select({ isUnlocked: users.isUnlocked })
+          .from(users)
+          .where(eq(users.id, authed.id))
+          .for("update");
+        isUnlocked = !!u?.isUnlocked;
       }
       const [countRow] = await tx
         .select({
           petCount: sql<number>`count(*)`,
-          unlockedPetCount: sql<number>`count(*) filter (where ${adoptions.isUnlocked})`,
         })
         .from(adoptions)
         .where(
@@ -93,7 +98,7 @@ export async function POST(req: Request) {
         );
       const decision = evaluatePetLimit({
         petCount: Number(countRow?.petCount ?? 0),
-        unlockedPetCount: Number(countRow?.unlockedPetCount ?? 0),
+        isUnlocked,
         limit: FREE_PET_LIMIT,
       });
       if (!decision.allowed) {

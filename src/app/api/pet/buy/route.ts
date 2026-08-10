@@ -62,18 +62,22 @@ export async function POST(req: Request) {
         throw new Error("INSUFFICIENT_POINTS");
       }
 
-      // 单宠限制：上面的 UPDATE 已锁定用户行，计数后再插入可防并发超领。
-      // 已解锁（付费）用户不受限制；未解锁用户最多 1 只。
+      // 单宠限制：上面的 UPDATE 已锁定用户行，读取用户解锁标记 + 计数后再插入可防并发超领。
+      // 全局解锁（users.is_unlocked）用户不受限制；未解锁用户最多 1 只。
+      const [me] = await tx
+        .select({ isUnlocked: users.isUnlocked })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
       const [countRow] = await tx
         .select({
           petCount: sql<number>`count(*)`,
-          unlockedPetCount: sql<number>`count(*) filter (where ${adoptions.isUnlocked})`,
         })
         .from(adoptions)
         .where(eq(adoptions.userId, user.id));
       const decision = evaluatePetLimit({
         petCount: Number(countRow?.petCount ?? 0),
-        unlockedPetCount: Number(countRow?.unlockedPetCount ?? 0),
+        isUnlocked: !!me?.isUnlocked,
         limit: FREE_PET_LIMIT,
       });
       if (!decision.allowed) {

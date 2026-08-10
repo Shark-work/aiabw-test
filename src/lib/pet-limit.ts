@@ -1,8 +1,7 @@
 /**
  * 单宠限制（商业化变现核心规则）：
- * 每个用户在“未付费/未解锁”的情况下最多拥有 1 只宠物；
- * 只要用户拥有任意一只已解锁（is_unlocked=true）的宠物，即视为已付费用户，
- * 可继续领养/购买/抽取更多宠物。
+ * 每个用户默认最多拥有 1 只宠物；
+ * 只要用户付过一次款（users.is_unlocked = true），即永久解锁多宠权限，不再限制数量。
  *
  * 本文件为纯逻辑（无 DB / 无 Next 依赖），便于单元测试。
  */
@@ -11,23 +10,21 @@ export const FREE_PET_LIMIT = 1;
 
 export type PetLimitState = {
   petCount: number;
-  unlockedPetCount: number;
+  /** users.is_unlocked：全局解锁（付过一次费永久有效） */
+  isUnlocked: boolean;
   limit: number;
 };
 
 export type PetLimitDecision = PetLimitState & {
   allowed: boolean;
   reason: "ok" | "limit_reached";
-  hasUnlocked: boolean;
 };
 
-/** 纯函数：根据用户当前宠物数量 / 已解锁数量判断是否允许继续获取宠物。 */
+/** 纯函数：全局解锁直接放行；否则未解锁用户最多拥有 limit 只宠物。 */
 export function evaluatePetLimit(input: PetLimitState): PetLimitDecision {
-  const hasUnlocked = input.unlockedPetCount > 0;
-  const allowed = hasUnlocked || input.petCount < input.limit;
+  const allowed = input.isUnlocked || input.petCount < input.limit;
   return {
     ...input,
-    hasUnlocked,
     allowed,
     reason: allowed ? "ok" : "limit_reached",
   };
@@ -47,7 +44,7 @@ export function buildPetLimitBody(
     code: "PET_LIMIT_REACHED",
     needPayment: true,
     petCount: decision.petCount,
-    unlockedPetCount: decision.unlockedPetCount,
+    isUnlocked: decision.isUnlocked,
     limit: decision.limit,
     unlockAdoptionId: unlockAdoptionId ?? null,
   };
@@ -68,3 +65,4 @@ export class PetLimitError extends Error {
 export function isPetLimitError(err: unknown): err is PetLimitError {
   return err instanceof PetLimitError;
 }
+

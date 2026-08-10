@@ -8,6 +8,8 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   /** 是否创作者（可发布 UGC 宠物） */
   isCreator: boolean('is_creator').notNull().default(false),
+  /** 是否全局解锁：付过一次款即为 true，永久解锁多宠权限（不再限制数量） */
+  isUnlocked: boolean('is_unlocked').notNull().default(false),
   /** 创作者分成余额（UGC 宠物销售所得，单位：积分） */
   creatorBalance: integer('creator_balance').notNull().default(0),
   /** 用户可用积分（购买 UGC 宠物 / 盲盒消耗） */

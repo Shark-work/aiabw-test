@@ -30,6 +30,7 @@ const SCHEMA_STATEMENTS: string[] = [
     "password_hash" text NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL,
     "is_creator" boolean DEFAULT false NOT NULL,
+    "is_unlocked" boolean DEFAULT false NOT NULL,
     "creator_balance" integer DEFAULT 0 NOT NULL,
     "points" integer DEFAULT 0 NOT NULL,
     "last_checkin_date" text
@@ -119,6 +120,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "thread_id" uuid REFERENCES "threads"("id")`,
   `ALTER TABLE "threads" ADD COLUMN IF NOT EXISTS "anonymous_id" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_creator" boolean DEFAULT false NOT NULL`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "is_unlocked" boolean DEFAULT false NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "creator_balance" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "points" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_checkin_date" text`,

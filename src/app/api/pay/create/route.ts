@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
+import { getUserFromRequest } from "@/lib/auth";
 import {
   XORPAY_AID,
   XORPAY_APP_SECRET,
@@ -36,6 +37,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "缺少 adoptionId" }, { status: 400 });
     }
 
+    // —— 鉴权：必须登录，且只能为自己的宠物发起支付 ——
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+    }
+
     // —— 环境变量防御性检查：缺少任何一项都直接返回 500，避免发起无效请求 ——
     const missing: string[] = [];
     if (!XORPAY_AID) missing.push("XORPAY_AID");
@@ -52,15 +59,21 @@ export async function POST(req: Request) {
     // 首次访问自动建表（幂等）
     await ensureDbSchemaOnce();
 
-    // 校验领养记录存在
+    // 校验领养记录存在，且属于当前登录用户
     const [adoption] = await db
-      .select({ id: adoptions.id })
+      .select({ id: adoptions.id, userId: adoptions.userId })
       .from(adoptions)
       .where(eq(adoptions.id, adoptionId))
       .limit(1);
 
     if (!adoption) {
       return NextResponse.json({ ok: false, error: "未找到该领养记录" }, { status: 404 });
+    }
+    if (adoption.userId !== user.id) {
+      return NextResponse.json(
+        { ok: false, error: "无权为该宠物发起支付" },
+        { status: 403 },
+      );
     }
 
     // 校验金额（默认 9.9 元）

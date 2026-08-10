@@ -1,4 +1,4 @@
-import { db, ensureDbSchemaOnce } from "@/db/client";
+import { db, ensureDbSchemaOnce, pool } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { XORPAY_APP_SECRET, XORPAY_NOTIFY_URL, md5 } from "@/lib/xorpay";
@@ -62,10 +62,22 @@ export async function POST(req: Request) {
   await ensureDbSchemaOnce();
 
   if (adoptionId) {
+    // 解锁该宠物（畅聊解锁）
     await db
       .update(adoptions)
       .set({ isUnlocked: true })
       .where(eq(adoptions.id, adoptionId));
+
+    // 全局解锁：该宠物主人永久获得多宠权限（排除游客 user_id='anonymous'，
+    // 且用子查询保证 uuid 转换安全：游客不是合法 uuid）
+    await pool.query(
+      `UPDATE users SET is_unlocked = true
+         WHERE id = (
+           SELECT user_id::uuid FROM adoptions
+           WHERE id = $1 AND user_id <> 'anonymous'
+         )`,
+      [adoptionId],
+    );
   }
 
   return new Response("success", {

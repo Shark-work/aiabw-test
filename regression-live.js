@@ -131,12 +131,12 @@ async function main() {
     ok(r.status === 200 && r.json?.ok === true && r.json?.pointsDeducted === 60, "buy ugc pet", "deducted=" + r.json?.pointsDeducted + " status=" + r.status);
 
     // 单宠限制：免费用户购买第 1 只后，盲盒/再次领养会被 402 拦截。
-    // 这里模拟“已付费解锁”，使后续 gacha + adopt 继续走通。
+    // 这里模拟“已付费全局解锁”（users.is_unlocked），使后续 gacha + adopt 继续走通。
     await pool.query(
-      `UPDATE adoptions SET is_unlocked = true WHERE user_id = (SELECT id::text FROM users WHERE email=$1)`,
+      `UPDATE users SET is_unlocked = true WHERE email = $1`,
       [buyerEmail]
     );
-    console.log("INFO  buyer marked as unlocked (simulated payment)");
+    console.log("INFO  buyer marked as globally unlocked (simulated payment)");
 
     r = await req("POST", "/api/gacha/draw", {}, buyerToken);
     ok(r.status === 200 && r.json?.ok === true && r.json?.cost === 100 && !!r.json?.petType, "gacha draw", "cost=" + r.json?.cost + " got=" + r.json?.petType);
