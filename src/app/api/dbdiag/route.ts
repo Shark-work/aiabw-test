@@ -38,6 +38,27 @@ export async function GET() {
     await db.select().from(users).limit(1);
     done();
 
+    // raw INSERT (temp row, then delete) vs drizzle INSERT -> is 125ms a Neon write cost or adapter overhead?
+    const tempEmail = `diag_${Date.now()}@test.aiabw`;
+    done = timed("rawInsertMs");
+    await pool.query(
+      "INSERT INTO users (email, password_hash) VALUES ($1, 'x') RETURNING id",
+      [tempEmail],
+    );
+    done();
+
+    done = timed("drizzleInsertMs");
+    const tempEmail2 = `diag2_${Date.now()}@test.aiabw`;
+    await db
+      .insert(users)
+      .values({ email: tempEmail2, passwordHash: "x" })
+      .returning({ id: users.id });
+    done();
+
+    done = timed("deleteMs");
+    await pool.query("DELETE FROM users WHERE email = ANY($1)", [[tempEmail, tempEmail2]]);
+    done();
+
     done = timed("scryptMs");
     hashPassword("perf-test-password");
     done();
