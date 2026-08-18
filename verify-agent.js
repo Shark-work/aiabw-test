@@ -37,12 +37,15 @@ function ok(cond, label, extra) {
 }
 
 (async () => {
-  // A) memory dedup self-test on the live DB
+  // A) memory self-test on the live DB: dedup + important flag + cross-day protection
   let r = await req("POST", "/api/agent/memories/verify", {}, CRON_SECRET);
   ok(
-    r.status === 200 && r.json?.ok === true && r.json?.dedupWorks === true,
-    "memory dedup works on live DB (2 similar -> 1 stored)",
-    "status=" + r.status + " first=" + JSON.stringify(r.json?.firstWrite) + " second=" + JSON.stringify(r.json?.secondWrite) + " stored=" + r.json?.storedRows,
+    r.status === 200 && r.json?.ok === true &&
+      r.json?.dedupWorks === true &&
+      r.json?.importantWorks === true &&
+      r.json?.protectionWorks === true,
+    "memory verify: dedup + important flag + cross-day protection all pass on live DB",
+    "status=" + r.status + " msg=" + (r.json?.message ?? ""),
   );
 
   // B) post-to-social with missing credentials -> graceful 500, no crash
@@ -60,6 +63,22 @@ function ok(cond, label, extra) {
   // D) post-to-social with invalid platform -> 400
   r = await req("POST", "/api/agent/post-to-social", { platform: "weibo", text: "test" }, CRON_SECRET);
   ok(r.status === 400, "post-to-social invalid platform -> 400", "status=" + r.status);
+
+  // E) unified memory API: GET list (auth) works on live
+  r = await req("GET", "/api/agent/memories?limit=5", null, CRON_SECRET);
+  ok(
+    r.status === 200 && r.json?.ok === true && Array.isArray(r.json?.memories),
+    "unified memory API: GET /api/agent/memories works (read-only, no pollution)",
+    "status=" + r.status + " count=" + r.json?.count,
+  );
+
+  // F) unified memory API: bad action -> 400
+  r = await req("POST", "/api/agent/memories", { action: "explode" }, CRON_SECRET);
+  ok(r.status === 400, "unified memory API: unknown action -> 400", "status=" + r.status);
+
+  // G) unified memory API: without auth -> 401
+  r = await req("GET", "/api/agent/memories", null, null);
+  ok(r.status === 401, "unified memory API: without auth -> 401", "status=" + r.status);
 
   console.log("----------------------------------");
   const passed = results.filter(Boolean).length;

@@ -5,6 +5,7 @@
 //   A) agent_memories table exists (created by ensureDbSchemaOnce idempotent DDL)
 //   B) dedup: write 2 similar memories -> exactly 1 row remains (merge/update, no insert)
 //   C) lifecycle: a memory with last_accessed > 30d ago is removed by cleanup SQL
+//   D) important flag: important memories survive the 30-day cleanup (cross-day persistence)
 const fs = require("fs");
 const path = require("path");
 const { Pool } = require("@neondatabase/serverless");
@@ -25,6 +26,11 @@ async function main() {
     `SELECT to_regclass('public.agent_memories') AS t, to_regclass('public.agent_memories') IS NOT NULL AS exists`,
   );
   ok(tbl[0]?.exists === true, "agent_memories table exists on live DB");
+
+  // A2) important column (idempotent, mirrors the app's ensureDbSchemaOnce ALTER path)
+  await pool.query(
+    `ALTER TABLE agent_memories ADD COLUMN IF NOT EXISTS "important" boolean DEFAULT false NOT NULL`,
+  );
 
   // B) dedup via raw SQL + the SAME pure embedding lib used in production
   const { embed, cosineSimilarity, DEDUP_SIMILARITY_THRESHOLD } = await import(
@@ -97,10 +103,30 @@ async function main() {
     [`${tag}_stale`, `{${embed("stale memory to purge").map((v) => v.toFixed(10)).join(",")}}`, cutoff],
   );
   const del = await pool.query(
-    `DELETE FROM agent_memories WHERE last_accessed < now() - interval '30 days' AND content LIKE $1`,
+    `DELETE FROM agent_memories WHERE last_accessed < now() - interval '30 days' AND important = false AND content LIKE $1`,
     [`%${tag}%`],
   );
   ok(Number(del.rowCount) === 1, "lifecycle cleanup: stale (>30d) memory purged", "removed=" + del.rowCount);
+
+  // D) important protection: stale but important memory survives cleanup
+  await pool.query(
+    `INSERT INTO agent_memories (memory_type, content, embedding, last_accessed, important)
+     VALUES ('fact', $1, $2::double precision[], $3, true)`,
+    [`${tag}_core`, `{${embed("core memory that must survive").map((v) => v.toFixed(10)).join(",")}}`, cutoff],
+  );
+  const delCore = await pool.query(
+    `DELETE FROM agent_memories WHERE last_accessed < now() - interval '30 days' AND important = false AND content LIKE $1`,
+    [`%${tag}%`],
+  );
+  const { rows: coreCount } = await pool.query(
+    `SELECT count(*)::int AS n FROM agent_memories WHERE content LIKE $1 AND important = true`,
+    [`%${tag}_core%`],
+  );
+  ok(
+    Number(coreCount[0].n) === 1,
+    "important memory survives 30-day cleanup (cross-day persistence)",
+    `survived=${coreCount[0].n}`,
+  );
 
   // cleanup all test rows
   await pool.query(`DELETE FROM agent_memories WHERE content LIKE $1`, [`%${tag}%`]);

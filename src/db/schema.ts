@@ -122,6 +122,7 @@ export const adoptions = pgTable('adoptions', {
  *  - memory_type: fact(事实) / skill(技能) / user_preference(用户偏好)
  *  - embedding:   double precision[] 向量，用于语义去重与向量检索
  *  - last_accessed: 最近访问时间，>30 天未访问的低频记忆由 cleanupStaleMemories 清理
+ *  - important:  核心记忆标记（跨日沉淀）；重要记忆豁免 30 天清理
  */
 export const agentMemories = pgTable('agent_memories', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -130,4 +131,5 @@ export const agentMemories = pgTable('agent_memories', {
   embedding: doublePrecision('embedding').array().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   lastAccessed: timestamp('last_accessed').defaultNow().notNull(),
+  important: boolean('important').notNull().default(false),
 });

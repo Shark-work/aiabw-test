@@ -113,7 +113,8 @@ const SCHEMA_CREATES: string[] = [
     "content" text NOT NULL,
     "embedding" double precision[] NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL,
-    "last_accessed" timestamp DEFAULT now() NOT NULL
+    "last_accessed" timestamp DEFAULT now() NOT NULL,
+    "important" boolean DEFAULT false NOT NULL
   )`,
 
   `CREATE TABLE IF NOT EXISTS "invite_rewards" (
@@ -151,6 +152,7 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_checkin_date" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invite_code" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invited_by" uuid REFERENCES "users"("id")`,
+  `ALTER TABLE "agent_memories" ADD COLUMN IF NOT EXISTS "important" boolean DEFAULT false NOT NULL`,
 ];
 
 /**
