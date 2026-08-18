@@ -69,3 +69,7 @@ Thumbs.db
 *.swo
 *~
 *.log
+
+# resource-check generated artifacts (never commit local runs)
+check-resources-report.json
+check-resources-report.md

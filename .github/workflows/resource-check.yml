@@ -1,0 +1,51 @@
+name: resource-check
+
+# 自动化资源巡检：每周一 01:00 UTC（北京时间 09:00）运行一次；
+# 命中阈值（Vercel 用量 >= 免费额度 70% 或 Neon 存储 >= 300MB）时自动创建 GitHub Issue。
+on:
+  schedule:
+    - cron: "0 1 * * 1"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+
+      - name: run resource check
+        id: check
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set +e
+          node scripts/check-resources.js
+          code=$?
+          set -e
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 1 ]; then
+            echo "::error::资源巡检脚本执行失败（环境变量或网络问题），请检查 Secrets 配置"
+            exit 1
+          fi
+
+      - name: create warning issue if threshold hit
+        if: steps.check.outputs.exit_code == '2'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --search "资源瓶颈预警 in:title" --state open --limit 1 --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then
+            echo "已存在预警 Issue #$EXISTING（防止重复刷屏），跳过创建"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "⚠️ 资源瓶颈预警" --body "$(cat check-resources-report.md)"
+            echo "已创建 Issue：⚠️ 资源瓶颈预警"
+          fi
