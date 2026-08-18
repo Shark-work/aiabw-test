@@ -94,7 +94,7 @@ async function main() {
   await pool.query(
     `INSERT INTO agent_memories (memory_type, content, embedding, last_accessed)
      VALUES ('fact', $1, $2::double precision[], $3)`,
-    [`${tag}_stale`, JSON.stringify(embed("stale memory to purge")), cutoff],
+    [`${tag}_stale`, `{${embed("stale memory to purge").map((v) => v.toFixed(10)).join(",")}}`, cutoff],
   );
   const del = await pool.query(
     `DELETE FROM agent_memories WHERE last_accessed < now() - interval '30 days' AND content LIKE $1`,
