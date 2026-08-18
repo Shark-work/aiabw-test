@@ -24,10 +24,16 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
+      // 邀请码：来自 ？ref= 参数（好友分享的注册链接）；deviceId 用于防刷
+      const ref = new URLSearchParams(window.location.search).get("ref") || "";
+      const body: Record<string, unknown> = { email, password };
+      if (ref) body.ref = ref;
+      const anonymousId = getAnonymousId();
+      if (anonymousId) body.deviceId = anonymousId;
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -36,7 +42,6 @@ export default function RegisterPage() {
       localStorage.setItem("aiabw_token", data.token);
 
       // 游客数据迁移：后台异步执行，不阻塞跳转（提升注册体验）
-      const anonymousId = getAnonymousId();
       if (anonymousId) {
         void (async () => {
           try {

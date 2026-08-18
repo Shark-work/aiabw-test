@@ -19,6 +19,7 @@ export default function PointsPage() {
       checkin: t("checkin"),
       gacha: t("gacha"),
       ugc_buy: t("ugcBuy"),
+      invite_reward: t("inviteReward"),
     };
     return map[r] ?? r;
   };

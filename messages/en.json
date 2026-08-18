@@ -89,7 +89,11 @@
     "monthlyPoints": "Monthly points",
     "chats": "Chats",
     "statsLine": "{emoji} {label} · Points {points} · Chats {chats}",
-    "adoptedLine": "{emoji} {label} · Adopted on {date}"
+    "adoptedLine": "{emoji} {label} · Adopted on {date}",
+    "inviteTitle": "🎁 Invite friends & earn points",
+    "inviteHint": "Earn 50 points when a friend registers via your link (anti-abuse enabled)",
+    "inviteFriends": "Copy invite link",
+    "inviteCopied": "Copied ✅"
   },
   "marketplace": {
     "title": "UGC Market",
@@ -125,7 +129,8 @@
     "empty": "No points records yet.",
     "checkin": "Daily check-in",
     "gacha": "Mystery box draw",
-    "ugcBuy": "UGC pet purchase"
+    "ugcBuy": "UGC pet purchase",
+    "inviteReward": "Invite reward"
   }
   ,
   "handbooks": {

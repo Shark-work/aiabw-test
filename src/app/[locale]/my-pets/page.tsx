@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 
@@ -34,6 +34,7 @@ export default function MyPetsPage() {
   const t = useTranslations("myPets");
   const tc = useTranslations("common");
   const tchat = useTranslations("chat");
+  const locale = useLocale();
   const router = useRouter();
   const [pets, setPets] = useState<PetItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,8 @@ export default function MyPetsPage() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("recent");
   const [selectedPet, setSelectedPet] = useState<PetItem | null>(null);
+  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
 
   const loadPets = useCallback(async () => {
     setLoading(true);
@@ -65,6 +68,36 @@ export default function MyPetsPage() {
   useEffect(() => {
     loadPets();
   }, [loadPets]);
+
+  // 拉取当前用户邀请码（裂变入口：好友通过分享链接注册后邀请人 +50 积分）
+  useEffect(() => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.ok && data.user?.inviteCode) setInviteCode(data.user.inviteCode);
+      })
+      .catch(() => {
+        /* 邀请码拉取失败不影响页面主体 */
+      });
+  }, []);
+
+  const copyInviteLink = async () => {
+    const url = `${window.location.origin}/${locale}/register?ref=${inviteCode}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // 降级：复制仅展示邀请码
+      try {
+        await navigator.clipboard.writeText(inviteCode);
+      } catch {
+        return;
+      }
+    }
+    setInviteCopied(true);
+    window.setTimeout(() => setInviteCopied(false), 2000);
+  };
 
   const callMemory = useCallback(
     async (adoptionId: string, action: string, text?: string) => {
@@ -171,6 +204,22 @@ export default function MyPetsPage() {
             </Link>
           </div>
         </div>
+
+        {inviteCode && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-100 to-amber-50 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-orange-900">{t("inviteTitle")}</p>
+              <p className="mt-0.5 text-xs text-orange-700">{t("inviteHint")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={copyInviteLink}
+              className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
+            >
+              {inviteCopied ? t("inviteCopied") : t("inviteFriends")}
+            </button>
+          </div>
+        )}
 
         {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}

@@ -89,7 +89,11 @@
     "monthlyPoints": "本月积分",
     "chats": "对话数",
     "statsLine": "{emoji} {label} · 积分 {points} · 对话 {chats} 句",
-    "adoptedLine": "{emoji} {label} · 领养于 {date}"
+    "adoptedLine": "{emoji} {label} · 领养于 {date}",
+    "inviteTitle": "🎁 邀请好友，赚取积分",
+    "inviteHint": "好友通过你的链接注册，你即可获得 50 积分（防刷保护已开启）",
+    "inviteFriends": "复制邀请链接",
+    "inviteCopied": "已复制 ✅"
   },
   "marketplace": {
     "title": "UGC 广场",
@@ -125,7 +129,8 @@
     "empty": "还没有积分记录~",
     "checkin": "每日签到",
     "gacha": "盲盒抽取",
-    "ugcBuy": "购买 UGC 宠物"
+    "ugcBuy": "购买 UGC 宠物",
+    "inviteReward": "邀请好友奖励"
   }
   ,
   "handbooks": {

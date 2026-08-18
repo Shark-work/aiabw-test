@@ -24,6 +24,7 @@ export async function GET(req: Request) {
       isCreator: users.isCreator,
       creatorBalance: users.creatorBalance,
       lastCheckinDate: users.lastCheckinDate,
+      inviteCode: users.inviteCode,
     })
     .from(users)
     .where(eq(users.id, user.id))
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
       isCreator: !!row?.isCreator,
       creatorBalance: row?.creatorBalance ?? 0,
       lastCheckinDate: row?.lastCheckinDate ?? null,
+      inviteCode: row?.inviteCode ?? null,
     },
   });
 }

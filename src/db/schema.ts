@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /** 账号：注册用户 */
 export const users = pgTable('users', {
@@ -16,6 +16,21 @@ export const users = pgTable('users', {
   points: integer('points').notNull().default(0),
   /** 最近签到日期（YYYY-MM-DD，用于每日签到判断） */
   lastCheckinDate: text('last_checkin_date'),
+  /** 裂变邀请：唯一邀请码（注册时自动生成） */
+  inviteCode: text('invite_code').unique(),
+  /** 裂变邀请：由谁邀请（邀请人 user id） */
+  invitedBy: uuid('invited_by').references((): AnyPgColumn => users.id),
+});
+
+/** 邀请奖励发放记录（用于防刷：同一 IP 或同一设备指纹最多触发一次） */
+export const inviteRewards = pgTable('invite_rewards', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  inviterId: uuid('inviter_id').references(() => users.id).notNull(),
+  invitedUserId: uuid('invited_user_id').references(() => users.id).notNull(),
+  ip: text('ip'),
+  deviceId: text('device_id'),
+  amount: integer('amount').notNull().default(50),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 /** UGC 宠物（创作者上传） */

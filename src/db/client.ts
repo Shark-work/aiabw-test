@@ -115,6 +115,16 @@ const SCHEMA_CREATES: string[] = [
     "created_at" timestamp DEFAULT now() NOT NULL,
     "last_accessed" timestamp DEFAULT now() NOT NULL
   )`,
+
+  `CREATE TABLE IF NOT EXISTS "invite_rewards" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "inviter_id" uuid NOT NULL REFERENCES "users"("id"),
+    "invited_user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "ip" text,
+    "device_id" text,
+    "amount" integer DEFAULT 50 NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
 ];
 
 /**
@@ -139,6 +149,8 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "creator_balance" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "points" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_checkin_date" text`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invite_code" text`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invited_by" uuid REFERENCES "users"("id")`,
 ];
 
 /**
@@ -155,6 +167,11 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
   // 数字人记忆：清理低频记忆（last_accessed 超过 30 天）按索引扫描，避免全表扫
   `CREATE INDEX IF NOT EXISTS idx_agent_memories_last_accessed ON "agent_memories" ("last_accessed")`,
+  // 裂变邀请：邀请码唯一（并发注册防重）
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_invite_code ON "users" ("invite_code")`,
+  // 裂变防刷：同 IP / 同设备指纹最多一次奖励
+  `CREATE INDEX IF NOT EXISTS idx_invite_rewards_ip ON "invite_rewards" ("ip")`,
+  `CREATE INDEX IF NOT EXISTS idx_invite_rewards_device ON "invite_rewards" ("device_id")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
