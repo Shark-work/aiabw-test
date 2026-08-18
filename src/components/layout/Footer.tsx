@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -9,7 +10,10 @@ export async function Footer() {
   return (
     <footer className="flex items-center justify-center gap-3 pb-4 pt-2 text-center text-xs text-muted-foreground">
       <span>{t("copyright", { version })}</span>
-      <LanguageSwitcher />
+      {/* useSearchParams 需要 Suspense 边界，否则 SSR 阶段会抛错 */}
+      <Suspense fallback={null}>
+        <LanguageSwitcher />
+      </Suspense>
     </footer>
   );
 }
