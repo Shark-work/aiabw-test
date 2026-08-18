@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs",
+    "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs tests/agent-embedding.test.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

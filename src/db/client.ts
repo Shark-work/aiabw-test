@@ -106,6 +106,15 @@ const SCHEMA_CREATES: string[] = [
     "is_unlocked" boolean DEFAULT false NOT NULL,
     "memory_context" text
   )`,
+
+  `CREATE TABLE IF NOT EXISTS "agent_memories" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "memory_type" text NOT NULL,
+    "content" text NOT NULL,
+    "embedding" double precision[] NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "last_accessed" timestamp DEFAULT now() NOT NULL
+  )`,
 ];
 
 /**
@@ -144,6 +153,8 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_adoptions_anonymous_id ON "adoptions" ("anonymous_id")`,
   `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
+  // 数字人记忆：清理低频记忆（last_accessed 超过 30 天）按索引扫描，避免全表扫
+  `CREATE INDEX IF NOT EXISTS idx_agent_memories_last_accessed ON "agent_memories" ("last_accessed")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;

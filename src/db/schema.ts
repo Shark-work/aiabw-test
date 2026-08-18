@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, uuid, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision } from 'drizzle-orm/pg-core';
 
 /** 账号：注册用户 */
 export const users = pgTable('users', {
@@ -100,4 +100,19 @@ export const adoptions = pgTable('adoptions', {
   isUnlocked: boolean('is_unlocked').notNull().default(false),
   // 长期记忆：AI 提取的用户偏好/关键记忆（后续由 AI 写入）
   memoryContext: text('memory_context'),
+});
+
+/**
+ * 数字人 Agent 的长期记忆库（防止存储膨胀版）：
+ *  - memory_type: fact(事实) / skill(技能) / user_preference(用户偏好)
+ *  - embedding:   double precision[] 向量，用于语义去重与向量检索
+ *  - last_accessed: 最近访问时间，>30 天未访问的低频记忆由 cleanupStaleMemories 清理
+ */
+export const agentMemories = pgTable('agent_memories', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  memoryType: text('memory_type', { enum: ['fact', 'skill', 'user_preference'] }).notNull(),
+  content: text('content').notNull(),
+  embedding: doublePrecision('embedding').array().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastAccessed: timestamp('last_accessed').defaultNow().notNull(),
 });
