@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
+import { Link, useRouter } from "@/i18n/navigation";
 import { getAnonymousId } from "@/lib/anon-id";
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslations("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,11 +26,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Login failed");
+        throw new Error(data.error || t("failed"));
       }
       localStorage.setItem("aiabw_token", data.token);
 
-      // Guest data migration: run in the background, never blocks navigation
+      // 游客数据迁移：后台异步执行，不阻塞跳转（提升登录体验）
       const anonymousId = getAnonymousId();
       if (anonymousId) {
         void (async () => {
@@ -50,7 +51,7 @@ export default function LoginPage() {
               }
             }
           } catch {
-            // Migration failure must not block login
+            // 迁移失败不影响登录
           }
         })();
       }
@@ -59,7 +60,7 @@ export default function LoginPage() {
         new URLSearchParams(window.location.search).get("redirect") || "/";
       router.push(redirect);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed, please try again");
+      setError(err instanceof Error ? err.message : t("failed"));
       setLoading(false);
     }
   };
@@ -75,15 +76,15 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-sm rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-lg backdrop-blur">
         <h1 className="text-center text-2xl font-semibold text-zinc-900">
-          Sign in to Aibi World
+          {t("title")}
         </h1>
         <p className="mt-1 text-center text-sm text-zinc-500">
-          Sign in to keep your pets&apos; memories forever.
+          {t("subtitle")}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">Email</label>
+            <label className="mb-1 block text-sm text-zinc-600">{t("email")}</label>
             <input
               type="email"
               required
@@ -94,13 +95,13 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">Password</label>
+            <label className="mb-1 block text-sm text-zinc-600">{t("password")}</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t("passwordPlaceholder")}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
             />
           </div>
@@ -112,14 +113,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-full bg-orange-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t("submitting") : t("submit")}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-zinc-500">
-          No account yet?{" "}
+          {t("noAccount")}{" "}
           <Link href="/register" className="font-medium text-orange-600 hover:underline">
-            Create one
+            {t("createOne")}
           </Link>
         </p>
       </div>

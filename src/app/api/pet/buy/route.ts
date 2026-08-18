@@ -4,6 +4,7 @@ import { and, eq, gte, sql } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users, ugcPets, ugcSales, adoptions, threads, messages as messagesTable, pointsLog } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import {
   buildPetLimitBody,
   evaluatePetLimit,
@@ -25,10 +26,11 @@ const CREATOR_COMMISSION_RATE = 1;
  * 事务内完成：扣买家积分 → 结算创作者分成 → 写入 ugc_sales → 创建领养记录 + 线程。
  */
 export async function POST(req: Request) {
+  const locale = resolveLocale(req);
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "signInFirst") }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -141,21 +143,21 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     if (isPetLimitError(err)) {
-      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId), {
+      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId, locale), {
         status: 402,
       });
     }
     const msg = err instanceof Error ? err.message : "";
     if (msg === "PET_NOT_FOUND") {
-      return NextResponse.json({ ok: false, error: "UGC pet not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "ugcNotFound") }, { status: 404 });
     }
     if (msg === "BUY_OWN_PET") {
-      return NextResponse.json({ ok: false, error: "You cannot buy your own published pet" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "buyOwnPet") }, { status: 400 });
     }
     if (msg === "INSUFFICIENT_POINTS") {
-      return NextResponse.json({ ok: false, error: "Not enough points" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "notEnoughPoints") }, { status: 400 });
     }
     console.error("[pet/buy] failed:", err);
-    return NextResponse.json({ ok: false, error: "Purchase failed, please try again" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(locale, "buyFailed") }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions, handbooks } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { runHandbookTask } from "@/lib/handbook";
 
 export const runtime = "nodejs";
@@ -20,13 +21,13 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "signInFirst") }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
     const adoptionId = typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
     if (!adoptionId) {
-      return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "missingAdoptionId") }, { status: 400 });
     }
 
     await ensureDbSchemaOnce();
@@ -37,10 +38,10 @@ export async function POST(req: Request) {
       .where(eq(adoptions.id, adoptionId))
       .limit(1);
     if (!adoption) {
-      return NextResponse.json({ ok: false, error: "Pet not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "journalNotFound") }, { status: 404 });
     }
     if (adoption.userId !== user.id) {
-      return NextResponse.json({ ok: false, error: "You cannot generate a journal for this pet" }, { status: 403 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "journalNoPermission") }, { status: 403 });
     }
 
     const [task] = await db
@@ -56,6 +57,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, taskId: task.id, status: "processing" });
   } catch (err) {
     console.error("[generate/handbook] failed:", err);
-    return NextResponse.json({ ok: false, error: "Failed to create the journal task" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "journalTaskFailed") }, { status: 500 });
   }
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+
+import { Link, useRouter } from "@/i18n/navigation";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 
 type UgcPet = {
@@ -14,6 +15,8 @@ type UgcPet = {
 };
 
 export default function MarketplacePage() {
+  const t = useTranslations("marketplace");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [pets, setPets] = useState<UgcPet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +55,7 @@ export default function MarketplacePage() {
       const res = await fetch("/api/creator/pets");
       const data = await res.json();
       if (data?.ok) setPets(data.pets ?? []);
-      else setError(data?.error ?? "Failed to load");
+      else setError(data?.error ?? tc("loadFailed"));
       const token = localStorage.getItem("aiabw_token");
       if (token) {
         const me = await fetch("/api/auth/me", {
@@ -61,7 +64,7 @@ export default function MarketplacePage() {
         if (me?.ok) setIsCreator(!!me.user?.isCreator);
       }
     } catch {
-      setError("Network error, please try again");
+      setError(tc("networkError"));
     } finally {
       setLoading(false);
     }
@@ -86,9 +89,9 @@ export default function MarketplacePage() {
       const data = await res.json();
       if (data?.ok) {
         setIsCreator(true);
-        showToast("🎉 Congratulations! You are now a creator and can publish your own Aibi pets.");
+        showToast(t("creatorOk"));
       } else {
-        showToast(data?.error ?? "Application failed");
+        showToast(data?.error ?? t("creatorFailed"));
       }
     } finally {
       setBusy(false);
@@ -110,15 +113,15 @@ export default function MarketplacePage() {
       });
       const data = await res.json();
       if (data?.ok && data.threadId) {
-        showToast("🎉 Purchase successful! Your new pet has moved into Aibi World.");
+        showToast(t("buyOk"));
         router.push(`/chat?thread=${data.threadId}&adopt=${data.adoption?.id}`);
       } else if (data?.needPayment === true) {
         setUpgradeOpen(true);
         setUnlockAdoptionId(data.unlockAdoptionId ?? null);
         setUpgradePetCount(data.petCount ?? 1);
-        showToast(data.error ?? "Please unlock the Multi-Pet Collection first");
+        showToast(data.error ?? t("unlockFirst"));
       } else {
-        showToast(data?.error ?? "Purchase failed");
+        showToast(data?.error ?? t("buyFailed"));
       }
     } finally {
       setBusy(false);
@@ -131,7 +134,7 @@ export default function MarketplacePage() {
       !publishForm.imageUrl.trim() ||
       !publishForm.systemPrompt.trim()
     ) {
-      showToast("Please fill in all the required fields");
+      showToast(t("fillAll"));
       return;
     }
     setPublishBusy(true);
@@ -148,12 +151,12 @@ export default function MarketplacePage() {
       });
       const data = await res.json();
       if (data?.ok) {
-        showToast("🎉 Published! Your Aibi pet is now on the market.");
+        showToast(t("publishOk"));
         setPublishOpen(false);
         setPublishForm({ name: "", imageUrl: "", systemPrompt: "", priceOrPoints: "0" });
         load();
       } else {
-        showToast(data?.error ?? "Publish failed");
+        showToast(data?.error ?? t("publishFailed"));
       }
     } finally {
       setPublishBusy(false);
@@ -174,15 +177,15 @@ export default function MarketplacePage() {
       });
       const data = await res.json();
       if (data?.ok && data.threadId) {
-        showToast(`🎁 Mystery box opened: "${data.petName}"!`);
+        showToast(t("gachaOk", { name: data.petName }));
         router.push(`/chat?thread=${data.threadId}&adopt=${data.adoption?.id}`);
       } else if (data?.needPayment === true) {
         setUpgradeOpen(true);
         setUnlockAdoptionId(data.unlockAdoptionId ?? null);
         setUpgradePetCount(data.petCount ?? 1);
-        showToast(data.error ?? "Please unlock the Multi-Pet Collection first");
+        showToast(data.error ?? t("unlockFirst"));
       } else {
-        showToast(data?.error ?? "Draw failed");
+        showToast(data?.error ?? t("gachaFailed"));
       }
     } finally {
       setBusy(false);
@@ -194,9 +197,9 @@ export default function MarketplacePage() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">UGC Market</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">{t("title")}</h1>
             <p className="text-xs text-zinc-500">
-              Unique Aibi pets from creators - take them home with points.
+              {t("subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -206,7 +209,7 @@ export default function MarketplacePage() {
               disabled={busy}
               className="rounded-full bg-fuchsia-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-fuchsia-600 disabled:opacity-60"
             >
-              🎁 Mystery box
+              {t("gacha")}
             </button>
             {isCreator ? (
               <button
@@ -214,7 +217,7 @@ export default function MarketplacePage() {
                 onClick={() => setPublishOpen(true)}
                 className="rounded-full bg-violet-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-violet-600"
               >
-                ➕ Publish UGC pet
+                {t("publishPet")}
               </button>
             ) : (
               <button
@@ -223,14 +226,14 @@ export default function MarketplacePage() {
                 disabled={busy}
                 className="rounded-full border border-violet-300 bg-white px-4 py-1.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50 disabled:opacity-60"
               >
-                ✨ Become a creator
+                {t("becomeCreator")}
               </button>
             )}
             <Link
               href="/my-pets"
               className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600"
             >
-              🐾 My pets
+              {tc("myPets")}
             </Link>
           </div>
         </div>
@@ -245,7 +248,7 @@ export default function MarketplacePage() {
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && pets.length === 0 && (
           <div className="py-16 text-center">
-            <p className="text-zinc-500">No UGC pets yet - become a creator and publish the first one!</p>
+            <p className="text-zinc-500">{t("empty")}</p>
           </div>
         )}
 
@@ -265,10 +268,10 @@ export default function MarketplacePage() {
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-zinc-900">{pet.name}</div>
                   <div className="text-xs text-zinc-500">
-                    Creator: {pet.creatorEmail ?? "unknown"}
+                    {t("creatorLabel", { email: pet.creatorEmail ?? "unknown" })}
                   </div>
                   <div className="text-sm font-medium text-violet-600">
-                    {pet.priceOrPoints} points
+                    {t("pointsLabel", { points: pet.priceOrPoints })}
                   </div>
                 </div>
                 <button
@@ -277,7 +280,7 @@ export default function MarketplacePage() {
                   disabled={busy}
                   className="shrink-0 rounded-full bg-violet-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-violet-600 disabled:opacity-60"
                 >
-                  Buy
+                  {t("buy")}
                 </button>
               </div>
             </div>
@@ -295,12 +298,12 @@ export default function MarketplacePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-zinc-900">➕ Publish UGC pet</h3>
+              <h3 className="text-lg font-bold text-zinc-900">{t("publishPet")}</h3>
               <button
                 type="button"
                 onClick={() => setPublishOpen(false)}
                 className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                aria-label="Close"
+                aria-label={tc("close")}
               >
                 ×
               </button>
@@ -310,20 +313,20 @@ export default function MarketplacePage() {
                 type="text"
                 value={publishForm.name}
                 onChange={(e) => setPublishForm({ ...publishForm, name: e.target.value })}
-                placeholder="Pet name (e.g. Little Ghost)"
+                placeholder={t("petName")}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
               <input
                 type="text"
                 value={publishForm.imageUrl}
                 onChange={(e) => setPublishForm({ ...publishForm, imageUrl: e.target.value })}
-                placeholder="Avatar image URL (e.g. /resources/pet/qapi.png)"
+                placeholder={t("imageUrl")}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
               <textarea
                 value={publishForm.systemPrompt}
                 onChange={(e) => setPublishForm({ ...publishForm, systemPrompt: e.target.value })}
-                placeholder="System prompt: define its personality, speaking style..."
+                placeholder={t("systemPrompt")}
                 rows={4}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
@@ -332,7 +335,7 @@ export default function MarketplacePage() {
                 min={0}
                 value={publishForm.priceOrPoints}
                 onChange={(e) => setPublishForm({ ...publishForm, priceOrPoints: e.target.value })}
-                placeholder="Price (points)"
+                placeholder={t("price")}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
               <button
@@ -341,7 +344,7 @@ export default function MarketplacePage() {
                 disabled={publishBusy}
                 className="w-full rounded-full bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-60"
               >
-                {publishBusy ? "Publishing..." : "Publish"}
+                {publishBusy ? t("publishing") : t("publish")}
               </button>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { agentTools } from "@/lib/agent-tools";
 import { getModel } from "@/lib/get-model";
 import { buildMemorySection, updateMemory } from "@/lib/memory";
 import { resolvePetConfig } from "@/lib/ugc";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
     petType?: string;
     adoptionId?: string;
   };
+  const locale = resolveLocale(req);
 
   // 根据 petType 动态切换宠物人设（系统提示词），未提供时回退到狐狸。
   // UGC 宠物（petType=ugc:<id>）从数据库读取创作者设置的人设。
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           blocked: true,
-          message: `${pet.name}'s energy is running low! Unlock unlimited chatting to keep playing~`,
+          message: apiError(locale, "chatBlocked", { name: pet.name }),
         },
         // 非 2xx 状态让前端 useChat 通过 error.message 捕获这段 JSON。
         { status: 402 },

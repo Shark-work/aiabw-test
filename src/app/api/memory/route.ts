@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ensureDbSchemaOnce } from "@/db/client";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import {
   readMemory,
   deleteMemoryFact,
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const adoptionId = url.searchParams.get("adoptionId") ?? "";
   if (!adoptionId) {
-    return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "missingAdoptionId") }, { status: 400 });
   }
 
   await ensureDbSchemaOnce();
@@ -45,7 +46,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, ...data });
   } catch (err) {
     console.error("[memory] GET failed:", err);
-    return NextResponse.json({ ok: false, error: "Failed to load memories" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "memoryLoadFailed") }, { status: 500 });
   }
 }
 
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
     body?.category === "pet" || body?.category === "user" ? body.category : undefined;
 
   if (!adoptionId) {
-    return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "missingAdoptionId") }, { status: 400 });
   }
 
   await ensureDbSchemaOnce();
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
     ) {
       const facts = await updateMemoryFact(adoptionId, body.oldText, body.text.trim(), category);
       if (!facts) {
-        return NextResponse.json({ ok: false, error: "Memory not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "memoryNotFound") }, { status: 404 });
       }
       return NextResponse.json({ ok: true, ...factsResponse(facts) });
     }
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
     if (action === "delete" && typeof body?.text === "string") {
       const facts = await deleteMemoryFact(adoptionId, body.text);
       if (!facts) {
-        return NextResponse.json({ ok: false, error: "Memory not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "memoryNotFound") }, { status: 404 });
       }
       return NextResponse.json({ ok: true, ...factsResponse(facts) });
     }
@@ -99,14 +100,14 @@ export async function POST(req: Request) {
     ) {
       const facts = await pinMemoryFact(adoptionId, body.text, action === "pin");
       if (!facts) {
-        return NextResponse.json({ ok: false, error: "Memory not found" }, { status: 404 });
+        return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "memoryNotFound") }, { status: 404 });
       }
       return NextResponse.json({ ok: true, ...factsResponse(facts) });
     }
 
-    return NextResponse.json({ ok: false, error: "Invalid action" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "invalidAction") }, { status: 400 });
   } catch (err) {
     console.error("[memory] POST failed:", err);
-    return NextResponse.json({ ok: false, error: "Memory management failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "memoryManageFailed") }, { status: 500 });
   }
 }

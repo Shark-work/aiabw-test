@@ -1,12 +1,15 @@
-/**
- * 全局页脚：版权信息 + 自动版本号。
- * 版本号来自 next.config 注入的 NEXT_PUBLIC_APP_VERSION（git commit 短哈希，兜底 package.json version）。
- */
-export function Footer() {
+import { getTranslations } from "next-intl/server";
+
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+
+/** 全局页脚：版权信息 + 自动版本号 + 语言切换。 */
+export async function Footer() {
+  const t = await getTranslations("footer");
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
   return (
-    <footer className="pb-4 text-center text-xs text-muted-foreground">
-      © 2025-2026 aiabw.com | v{version}
+    <footer className="flex items-center justify-center gap-3 pb-4 pt-2 text-center text-xs text-muted-foreground">
+      <span>{t("copyright", { version })}</span>
+      <LanguageSwitcher />
     </footer>
   );
 }

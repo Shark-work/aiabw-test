@@ -11,6 +11,7 @@ import {
   pointsLog,
 } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { PETS, type PetType } from "@/lib/pet-config";
 import {
   buildPetLimitBody,
@@ -34,10 +35,11 @@ const OFFICIAL_TYPES: PetType[] = ["fox", "penguin", "dog"];
  * 扣除 points → 从官方 + UGC 宠物池随机抽取 → 写入 adoptions。纯数据库操作。
  */
 export async function POST(req: Request) {
+  const locale = resolveLocale(req);
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "signInFirst") }, { status: 401 });
     }
 
     await ensureDbSchemaOnce();
@@ -138,18 +140,18 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     if (isPetLimitError(err)) {
-      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId), {
+      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId, locale), {
         status: 402,
       });
     }
     const msg = err instanceof Error ? err.message : "";
     if (msg === "INSUFFICIENT_POINTS") {
-      return NextResponse.json({ ok: false, error: "Not enough points" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "notEnoughPoints") }, { status: 400 });
     }
     if (msg === "EMPTY_POOL") {
-      return NextResponse.json({ ok: false, error: "The pet pool is empty" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "emptyPool") }, { status: 400 });
     }
     console.error("[gacha/draw] failed:", err);
-    return NextResponse.json({ ok: false, error: "Draw failed, please try again" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(locale, "gachaFailed") }, { status: 500 });
   }
 }

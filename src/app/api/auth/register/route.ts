@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users } from "@/db/schema";
 import { hashPassword, signToken } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { timer } from "@/lib/perf";
 
 export const runtime = "nodejs";
@@ -25,10 +26,10 @@ export async function POST(req: Request) {
     const password = typeof body?.password === "string" ? body.password : "";
 
     if (!EMAIL_RE.test(email)) {
-      return NextResponse.json({ ok: false, error: "Invalid email format" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "invalidEmail") }, { status: 400 });
     }
     if (password.length < 6) {
-      return NextResponse.json({ ok: false, error: "Password must be at least 6 characters" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "passwordTooShort") }, { status: 400 });
     }
 
     await ensureDbSchemaOnce();
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
         );
       if (isDuplicate) {
         return NextResponse.json(
-          { ok: false, error: "This email is already registered - please sign in" },
+          { ok: false, error: apiError(resolveLocale(req), "emailRegistered") },
           { status: 409 },
         );
       }
@@ -70,6 +71,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email }, dbg });
   } catch (err) {
     console.error("[auth/register] failed:", err);
-    return NextResponse.json({ ok: false, error: "Registration failed, please try again" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "registerFailed") }, { status: 500 });
   }
 }

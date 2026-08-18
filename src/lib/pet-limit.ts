@@ -30,17 +30,28 @@ export function evaluatePetLimit(input: PetLimitState): PetLimitDecision {
   };
 }
 
-export const PET_LIMIT_MESSAGE =
+export const PET_LIMIT_MESSAGE_EN =
   "You already have 1 companion! Unlock the Multi-Pet Collection to adopt new friends and chat without limits.";
+export const PET_LIMIT_MESSAGE_ZH =
+  "你已经有了 1 只艾比伙伴啦！解锁「多宠图鉴」，即可再领养新伙伴，还能无限畅聊~";
+
+/** 英文兜底（兼容旧测试/默认） */
+export const PET_LIMIT_MESSAGE = PET_LIMIT_MESSAGE_EN;
+
+/** 按语言返回 402 拦截提示。 */
+export function petLimitMessage(locale: "zh" | "en" = "zh"): string {
+  return locale === "en" ? PET_LIMIT_MESSAGE_EN : PET_LIMIT_MESSAGE_ZH;
+}
 
 /** 返回给前端的拦截响应体（各路由统一用 status 402 包装）。 */
 export function buildPetLimitBody(
   decision: PetLimitDecision,
   unlockAdoptionId?: string | null,
+  locale: "zh" | "en" = "zh",
 ) {
   return {
     ok: false,
-    error: PET_LIMIT_MESSAGE,
+    error: petLimitMessage(locale),
     code: "PET_LIMIT_REACHED",
     needPayment: true,
     petCount: decision.petCount,

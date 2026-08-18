@@ -33,7 +33,7 @@ test("limit boundary is exclusive: petCount < limit allowed", () => {
 
 test("buildPetLimitBody carries payment hint fields", () => {
   const d = evaluatePetLimit({ petCount: 1, isUnlocked: false, limit: FREE_PET_LIMIT });
-  const body = buildPetLimitBody(d, "adopt-123");
+  const body = buildPetLimitBody(d, "adopt-123", "en");
   assert.equal(body.ok, false);
   assert.equal(body.code, "PET_LIMIT_REACHED");
   assert.equal(body.needPayment, true);

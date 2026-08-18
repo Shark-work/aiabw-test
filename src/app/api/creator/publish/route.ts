@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users, ugcPets } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "signInFirst") }, { status: 401 });
     }
 
     await ensureDbSchemaOnce();
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
       .limit(1);
     if (!me?.isCreator) {
       return NextResponse.json(
-        { ok: false, error: "Only creators can publish UGC pets" },
+        { ok: false, error: apiError(resolveLocale(req), "onlyCreator") },
         { status: 403 },
       );
     }
@@ -61,6 +62,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, pet });
   } catch (err) {
     console.error("[creator/publish] failed:", err);
-    return NextResponse.json({ ok: false, error: "Publish failed, please try again" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "publishFailed") }, { status: 500 });
   }
 }

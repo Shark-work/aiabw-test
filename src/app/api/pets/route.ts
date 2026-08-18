@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { parseMemoryStore, type MemoryFact } from "@/lib/memory";
 import { getPet } from "@/lib/pet-config";
 
@@ -69,6 +70,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, pets });
   } catch (err) {
     console.error("[pets] failed:", err);
-    return NextResponse.json({ ok: false, error: "Failed to load the pet list" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "petListFailed") }, { status: 500 });
   }
 }

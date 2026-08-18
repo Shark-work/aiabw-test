@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "signInFirst") }, { status: 401 });
     }
 
     await ensureDbSchemaOnce();
@@ -28,6 +29,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, isCreator: true });
   } catch (err) {
     console.error("[creator/apply] failed:", err);
-    return NextResponse.json({ ok: false, error: "Application failed, please try again" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "applyFailed") }, { status: 500 });
   }
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 /** 旧版「AI 工具诊断」表单，降级为次要功能（高级入口），保留原逻辑。 */
 export function DiagnosticForm() {
+  const t = useTranslations("diagnostic");
   const [coreNeed, setCoreNeed] = useState("");
   const [expectation, setExpectation] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
@@ -33,12 +35,12 @@ export function DiagnosticForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Recommendation failed, please try again");
+        throw new Error(data.error || t("failed"));
       }
 
       setResult(data.result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Recommendation failed, please try again");
+      setError(err instanceof Error ? err.message : t("failed"));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export function DiagnosticForm() {
             htmlFor="core-need"
             className="block text-sm font-medium text-zinc-800"
           >
-            1. Core need
+            {t("coreNeed")}
           </label>
           <select
             id="core-need"
@@ -62,25 +64,25 @@ export function DiagnosticForm() {
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
           >
             <option value="" disabled>
-              Select your core need
+              {t("coreNeedSelect")}
             </option>
-            <option value="code">Writing code</option>
-            <option value="writing">Writing articles</option>
-            <option value="data">Data analysis</option>
-            <option value="other">Other</option>
+            <option value="code">{t("code")}</option>
+            <option value="writing">{t("writing")}</option>
+            <option value="data">{t("data")}</option>
+            <option value="other">{t("other")}</option>
           </select>
         </div>
 
         {/* 期望程度 */}
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-zinc-800">
-            2. Expected level
+            {t("expectation")}
           </legend>
           <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
             {[
-              { value: "idea", label: "Ideas only" },
-              { value: "draft", label: "Generate a draft" },
-              { value: "auto", label: "Full automation" },
+              { value: "idea", label: t("idea") },
+              { value: "draft", label: t("draft") },
+              { value: "auto", label: t("auto") },
             ].map((option) => (
               <label
                 key={option.value}
@@ -107,13 +109,13 @@ export function DiagnosticForm() {
         {/* 技术基础 */}
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-zinc-800">
-            3. Technical level
+            {t("techLevel")}
           </legend>
           <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
             {[
-              { value: "beginner", label: "Complete beginner" },
-              { value: "basic", label: "Some basics" },
-              { value: "expert", label: "Senior developer" },
+              { value: "beginner", label: t("beginner") },
+              { value: "basic", label: t("basic") },
+              { value: "expert", label: t("expert") },
             ].map((option) => (
               <label
                 key={option.value}
@@ -143,7 +145,7 @@ export function DiagnosticForm() {
           className="w-full rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
           disabled={!coreNeed || !expectation || !skillLevel || loading}
         >
-          {loading ? "AI is preparing the best solution for you..." : "Start exploring →"}
+          {loading ? t("submitting") : t("submit")}
         </button>
       </form>
 
@@ -153,7 +155,7 @@ export function DiagnosticForm() {
           {loading && (
             <div className="flex items-center justify-center gap-3 py-4 text-sm text-zinc-600">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-              AI is analyzing and recommending...
+              {t("analyzing")}
             </div>
           )}
 
@@ -166,7 +168,7 @@ export function DiagnosticForm() {
           {result && !loading && (
             <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 space-y-3">
               <h2 className="text-lg font-semibold text-zinc-900">
-                Your personalized AI tool prescription
+                {t("resultTitle")}
               </h2>
               <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
                 {result}

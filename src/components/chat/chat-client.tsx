@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import type { UIMessage } from "ai";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import type { PetConfig } from "@/lib/pet-config";
+import { useTranslations } from "next-intl";
 
 /** 根据心情值返回对应的表情与文案。 */
 export function moodInfo(happiness: number) {
@@ -23,6 +24,7 @@ function CategoryToggle({
   value: "user" | "pet";
   onChange: (v: "user" | "pet") => void;
 }) {
+  const t = useTranslations("chatClient");
   const base =
     "px-3 py-1 transition";
   return (
@@ -34,7 +36,7 @@ function CategoryToggle({
           value === "user" ? "bg-violet-100 font-medium text-violet-700" : "bg-white text-zinc-500 hover:bg-zinc-50"
         }`}
       >
-        👤 User
+        {t("userTab")}
       </button>
       <button
         type="button"
@@ -43,7 +45,7 @@ function CategoryToggle({
           value === "pet" ? "bg-orange-100 font-medium text-orange-700" : "bg-white text-zinc-500 hover:bg-zinc-50"
         }`}
       >
-        🐾 Pet
+        {t("petTab")}
       </button>
     </div>
   );
@@ -70,6 +72,8 @@ export function ChatClient({
   petType: string;
   pet: PetConfig;
 }) {
+  const t = useTranslations("chatClient");
+  const tc = useTranslations("common");
   const [adoptionIdState] = useState(adoptionId);
   const [happiness, setHappiness] = useState(initialHappiness);
   const [level, setLevel] = useState(initialLevel);
@@ -119,10 +123,10 @@ export function ChatClient({
         applyFacts(data.facts ?? []);
         setMemoryMaxChars(data.maxChars ?? 3000);
       } else {
-        setMemoryError(data?.error ?? "Failed to load memories");
+        setMemoryError(data?.error ?? tc("loadFailed"));
       }
     } catch {
-      setMemoryError("Failed to load memories, please try again");
+      setMemoryError(t("loadFailed"));
     } finally {
       setMemoryLoading(false);
     }
@@ -228,7 +232,7 @@ export function ChatClient({
 
   const clearMemory = useCallback(async () => {
     if (!adoptionIdState) return;
-    if (!confirm("Clear all of this pet's memories? This cannot be undone.")) return;
+    if (!confirm(t("clearConfirm"))) return;
     try {
       const res = await fetch("/api/memory", {
         method: "POST",
@@ -293,12 +297,12 @@ export function ChatClient({
   const memoryGroups = [
     {
       key: "user",
-      title: "👤 About the user",
+      title: t("groupUser"),
       list: visibleFacts.filter((f) => (f.category ?? "user") === "user"),
     },
     {
       key: "pet",
-      title: "🐾 About the pet",
+      title: t("groupPet"),
       list: visibleFacts.filter((f) => f.category === "pet"),
     },
   ]
@@ -314,19 +318,19 @@ export function ChatClient({
     <div className="flex h-full flex-col gap-2">
       {showMigratedToast && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-700 shadow-sm">
-          🎉 We restored your previous chats and pet memories ✨
+          {t("migratedToast")}
         </div>
       )}
       {isGuest && (
         <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
           <span className="text-amber-800">
-            🔒 You are in guest mode - pet memories will be lost after a refresh.
+            {t("guestHint")}
           </span>
           <Link
             href={`/login?redirect=${encodeURIComponent(loginRedirect)}`}
             className="font-medium text-orange-600 hover:underline"
           >
-            Sign in to save your pet memories
+            {t("signInSave")}
           </Link>
         </div>
       )}
@@ -338,7 +342,7 @@ export function ChatClient({
             onClick={openMemory}
             className="rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-xs font-medium text-violet-600 shadow-sm backdrop-blur transition hover:bg-violet-50"
           >
-            🧠 Memory
+            {t("memory")}
           </button>
         </div>
       )}
@@ -366,7 +370,7 @@ export function ChatClient({
               Monthly points: {monthlyPoints}
             </span>
             {refreshing && (
-              <span className="text-xs text-zinc-400">Refreshing…</span>
+              <span className="text-xs text-zinc-400">{t("refreshing")}</span>
             )}
           </span>
         </div>
@@ -384,12 +388,12 @@ export function ChatClient({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-zinc-900">🧠 {pet.name}&apos;s long-term memory</h3>
+              <h3 className="text-lg font-bold text-zinc-900">{t("memoryTitle", { name: pet.name })}</h3>
               <button
                 type="button"
                 onClick={() => setMemoryOpen(false)}
                 className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                aria-label="Close"
+                aria-label={tc("close")}
               >
                 ×
               </button>
@@ -407,7 +411,7 @@ export function ChatClient({
               type="text"
               value={memorySearch}
               onChange={(e) => setMemorySearch(e.target.value)}
-              placeholder="🔍 Search memories…"
+              placeholder={t("searchMemory")}
               className="mt-3 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none"
             />
 
@@ -420,7 +424,7 @@ export function ChatClient({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") addMemoryFact();
                 }}
-                placeholder="Add a memory, e.g. the user likes indie folk"
+                placeholder={t("addMemory")}
                 className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
               />
               <CategoryToggle value={newFactCategory} onChange={setNewFactCategory} />
@@ -430,12 +434,12 @@ export function ChatClient({
                 disabled={!newFactText.trim()}
                 className="shrink-0 rounded-full bg-violet-500 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Add
+                {t("add")}
               </button>
             </div>
 
             <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
-              {memoryLoading && <p className="text-sm text-zinc-400">Loading…</p>}
+              {memoryLoading && <p className="text-sm text-zinc-400">{tc("loading")}</p>}
               {memoryError && <p className="text-sm text-red-600">{memoryError}</p>}
               {!memoryLoading && !memoryError && memoryFacts.length === 0 && (
                 <p className="py-6 text-center text-sm text-zinc-400">
@@ -473,7 +477,7 @@ export function ChatClient({
                                   onClick={() => setEditingOldText(null)}
                                   className="text-xs text-zinc-400 hover:text-zinc-600"
                                 >
-                                  Cancel
+                                  {tc("cancel")}
                                 </button>
                                 <button
                                   type="button"
@@ -481,7 +485,7 @@ export function ChatClient({
                                   disabled={!editFactText.trim()}
                                   className="text-xs font-medium text-violet-600 hover:underline disabled:opacity-50"
                                 >
-                                  Save
+                                  {tc("save")}
                                 </button>
                               </div>
                             </div>
@@ -498,7 +502,7 @@ export function ChatClient({
                                     ? "text-amber-500"
                                     : "text-zinc-300 hover:text-amber-500"
                                 }`}
-                                title={f.pinned ? "Unpin" : "Pin"}
+                                title={f.pinned ? t("unpin") : t("pin")}
                               >
                                 📌
                               </button>
@@ -506,17 +510,17 @@ export function ChatClient({
                                 type="button"
                                 onClick={() => startEditFact(f)}
                                 className="text-xs text-zinc-400 hover:text-violet-600"
-                                title="Edit this memory"
+                                title={t("editMemory")}
                               >
-                                Edit
+                                {tc("edit")}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => deleteMemoryFact(f.text)}
                                 className="text-xs text-zinc-400 hover:text-red-500"
-                                title="Delete this memory"
+                                title={t("deleteMemory")}
                               >
-                                Delete
+                                {tc("delete")}
                               </button>
                             </div>
                           </div>
@@ -534,14 +538,14 @@ export function ChatClient({
                 disabled={memoryFacts.length === 0}
                 className="flex-1 rounded-full border border-red-200 px-3 py-2 text-sm text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Clear all memories
+                {t("clearAll")}
               </button>
               <button
                 type="button"
                 onClick={() => setMemoryOpen(false)}
                 className="flex-1 rounded-full bg-zinc-100 px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-200"
               >
-                Close
+                {tc("close")}
               </button>
             </div>
           </div>

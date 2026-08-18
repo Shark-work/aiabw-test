@@ -2,15 +2,19 @@ import { db } from '@/db/client';
 import { messages as messagesTable } from '@/db/schema';
 import { eq, asc } from 'drizzle-orm';
 import type { UIMessage } from 'ai';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { ChatPanel } from '@/components/chat/chat-panel';
-import { getPet, DEFAULT_PET_TYPE } from '@/lib/pet-config';
+import { getPet, PETS, DEFAULT_PET_TYPE, type PetConfig } from '@/lib/pet-config';
 
 export default async function ThreadPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; locale: string }>;
 }) {
-  const { id } = await params;
+  const { id, locale } = await params;
+  setRequestLocale(locale);
+  const tp = await getTranslations('pets');
+
   const rows = await db
     .select()
     .from(messagesTable)
@@ -25,7 +29,11 @@ export default async function ThreadPage({
 
   // 该线程页没有独立的领养上下文，默认使用狐狸人设。
   const petType = DEFAULT_PET_TYPE;
-  const pet = getPet(petType);
+  const basePet = getPet(petType);
+  const pet: PetConfig =
+    petType && (PETS as Record<string, PetConfig>)[petType]
+      ? { ...basePet, name: tp(`${petType}.name`), personality: tp(`${petType}.personality`) }
+      : basePet;
 
   return (
     <ChatPanel

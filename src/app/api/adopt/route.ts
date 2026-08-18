@@ -5,6 +5,7 @@ import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users, adoptions, threads, messages as messagesTable } from "@/db/schema";
 import { defaults as petDefaults, getPet } from "@/lib/pet-config";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { timer } from "@/lib/perf";
 import {
   buildPetLimitBody,
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
 
   // 归属：已登录用户写 users.id，游客为 anonymous
   const authed = await getUserFromRequest(req);
+  const locale = resolveLocale(req);
   const userId = authed ? authed.id : "anonymous";
 
   try {
@@ -117,7 +119,6 @@ export async function POST(req: Request) {
           .limit(1);
         throw new PetLimitError(decision, existing?.id ?? null);
       }
-
       // 先建线程，再建领养记录并关联 threadId
       const [thread] = await tx
         .insert(threads)
@@ -148,13 +149,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     if (isPetLimitError(err)) {
-      return NextResponse.json(buildPetLimitBody(err.decision, err.unlockAdoptionId), {
-        status: 402,
-      });
+      return NextResponse.json(
+        buildPetLimitBody(err.decision, err.unlockAdoptionId, locale),
+        { status: 402 },
+      );
     }
     console.error("Failed to create adoption:", err);
     return NextResponse.json(
-      { ok: false, error: "Failed to create the adoption record, please try again" },
+      { ok: false, error: apiError(locale, "adoptFailed") },
       { status: 500 },
     );
   }

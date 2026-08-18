@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
 
 type Handbook = {
   id: string;
@@ -13,6 +15,8 @@ type Handbook = {
 type PetOption = { id: string; petName: string };
 
 export default function HandbooksPage() {
+  const trans = useTranslations("handbooks");
+  const tc = useTranslations("common");
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
   const [pets, setPets] = useState<PetOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,22 +32,22 @@ export default function HandbooksPage() {
     setLoading(true);
     setError("");
     try {
-      const t = token();
-      if (!t) return;
+      const tk = token();
+      if (!tk) return;
       const h = await fetch("/api/handbooks", {
-        headers: { Authorization: `Bearer ${t}` },
+        headers: { Authorization: `Bearer ${tk}` },
       }).then((r) => r.json());
       if (h?.ok) setHandbooks(h.handbooks ?? []);
       const p = await fetch(`/api/pets?anonymousId=`, {
-        headers: { Authorization: `Bearer ${t}` },
+        headers: { Authorization: `Bearer ${tk}` },
       }).then((r) => r.json());
       if (p?.ok) setPets(p.pets.map((x: { id: string; petName: string }) => ({ id: x.id, petName: x.petName })));
     } catch {
-      setError("Failed to load, please try again");
+      setError(tc("loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     loadAll();
@@ -66,13 +70,13 @@ export default function HandbooksPage() {
   }, [loadAll]);
 
   const handleGenerate = async () => {
-    const t = token();
-    if (!t || pets.length === 0) return;
+    const tk = token();
+    if (!tk || pets.length === 0) return;
     setGenerating(true);
     try {
       const res = await fetch("/api/generate/handbook", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${tk}` },
         body: JSON.stringify({ adoptionId: pets[0].id }),
       });
       const data = await res.json();
@@ -94,51 +98,50 @@ export default function HandbooksPage() {
     setDetail(r?.ok ? { title: r.title, content: r.content ?? "" } : null);
   };
 
-  const t = token();
+  const authToken = token();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Memory Journals</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">{trans("title")}</h1>
             <p className="text-xs text-zinc-500">
-              Turn the moments with your pet into a warm memory journal.
+              {trans("subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleGenerate}
-              disabled={generating || !t || pets.length === 0}
+              disabled={generating || !authToken || pets.length === 0}
               className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {generating ? "⏳ Generating (in the background)..." : "📔 Generate a journal for your first pet"}
+              {generating ? trans("generating") : trans("generate")}
             </button>
             <Link
               href="/my-pets"
               className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
             >
-              My pets
+              {trans("myPets")}
             </Link>
           </div>
         </div>
 
-        {!t && (
+        {!authToken && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-700">
-            Please{" "}
             <Link href="/login?redirect=/handbooks" className="font-medium underline">
-              sign in
-            </Link>{" "}
-            to view your memory journals.
+              {tc("signIn")}
+            </Link>
+            {" "}{trans("loginHint")}
           </div>
         )}
 
-        {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">{tc("loading")}</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
-        {!loading && !error && t && handbooks.length === 0 && (
+        {!loading && !error && authToken && handbooks.length === 0 && (
           <p className="py-10 text-center text-sm text-zinc-400">
-            No journals yet - tap the button above to generate one for your first pet.
+            {trans("empty")}
           </p>
         )}
 
@@ -152,21 +155,21 @@ export default function HandbooksPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-zinc-900">
-                  {hb.title ?? "(generating)"}
+                  {hb.title ?? trans("generatingPlaceholder")}
                 </span>
                 {hb.status === "processing" || hb.status === "generating" ? (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                    Generating
+                    {trans("statusGenerating")}
                   </span>
                 ) : null}
                 {hb.status === "error" && (
                   <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-600">
-                    Failed
+                    {trans("statusFailed")}
                   </span>
                 )}
                 {hb.status === "done" && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                    Done
+                    {trans("statusDone")}
                   </span>
                 )}
               </div>
@@ -191,7 +194,7 @@ export default function HandbooksPage() {
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-zinc-900">
-                  {detail?.title ?? "Memory journal"}
+                  {detail?.title ?? trans("detailTitle")}
                 </h3>
                 <button
                   type="button"
@@ -200,13 +203,13 @@ export default function HandbooksPage() {
                     setDetail(null);
                   }}
                   className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                  aria-label="Close"
+                  aria-label={tc("close")}
                 >
                   ×
                 </button>
               </div>
               <div className="mt-3 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-                {detail?.content ?? "Loading…"}
+                {detail?.content ?? tc("loading")}
               </div>
             </div>
           </div>

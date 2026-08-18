@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
+import { Link, useRouter } from "@/i18n/navigation";
 import { DiagnosticForm } from "@/components/diagnostic-form";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PETS, type PetType } from "@/lib/pet-config";
@@ -11,6 +11,10 @@ import { getAnonymousId } from "@/lib/anon-id";
 
 export default function Home() {
   const router = useRouter();
+  const t = useTranslations("home");
+  const tc = useTranslations("common");
+  const tp = useTranslations("pets");
+
   const [adoptingType, setAdoptingType] = useState<PetType | null>(null);
   const [error, setError] = useState("");
   const [user, setUser] = useState<{
@@ -96,12 +100,12 @@ export default function Home() {
       const data = await res.json();
       if (data?.ok) {
         setUser((prev) => (prev ? { ...prev, points: data.points ?? prev.points } : prev));
-        alert(data.already ? "You already checked in today. See you tomorrow!" : "🎉 Check-in success +10 points!");
+        alert(data.already ? t("checkinAlready") : t("checkinOk"));
       } else {
-        alert(data?.error ?? "Check-in failed");
+        alert(data?.error ?? t("checkinFailed"));
       }
     } catch {
-      alert("Network error, please try again");
+      alert(tc("networkError"));
     }
   };
 
@@ -116,12 +120,12 @@ export default function Home() {
       const data = await res.json();
       if (data?.ok) {
         setUser((prev) => (prev ? { ...prev, isCreator: true } : prev));
-        alert("🎉 Congratulations! You are now a creator and can publish UGC pets.");
+        alert(t("creatorOk"));
       } else {
-        alert(data?.error ?? "Application failed");
+        alert(data?.error ?? t("creatorFailed"));
       }
     } catch {
-      alert("Network error, please try again");
+      alert(tc("networkError"));
     }
   };
 
@@ -148,9 +152,9 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Single-pet rule: guide the user to the paid unlock flow
+        // 单宠限制：引导用户解锁付费
         if (data?.needPayment === true) {
-          setError(data.error || "Please unlock the Multi-Pet Collection first");
+          setError(data.error || t("unlockFirst"));
           if (data.unlockAdoptionId) {
             setPetState((prev) => ({
               ...prev,
@@ -162,10 +166,10 @@ export default function Home() {
           setUpgradeOpen(true);
           return;
         }
-        throw new Error(data.error || "Adoption failed, please try again");
+        throw new Error(data.error || t("adoptFailed"));
       }
 
-      // Adoption success → open the dedicated chat page for the new thread & adoption
+      // 领养成功 → 带着新线程与领养记录进入独立聊天页面
       if (data.ok && data.threadId) {
         router.push(
           `/chat?thread=${data.threadId}&adopt=${data.adoption?.id ?? ""}`,
@@ -174,7 +178,7 @@ export default function Home() {
         router.push("/chat");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Adoption failed, please try again");
+      setError(err instanceof Error ? err.message : t("adoptFailed"));
       setAdoptingType(null);
     }
   };
@@ -187,9 +191,7 @@ export default function Home() {
       <div
         aria-hidden
         className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url('/resources/background_clothing/bg1.png')",
-        }}
+        style={{ backgroundImage: "url('/resources/background_clothing/bg1.png')" }}
       />
       {/* 半透明白色遮罩，保证内容可读 */}
       <div aria-hidden className="absolute inset-0 bg-white/60" />
@@ -199,8 +201,8 @@ export default function Home() {
         {user ? (
           <div className="flex flex-wrap items-center justify-end gap-2 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
             <span className="font-medium text-violet-600">
-              <Link href="/points" className="hover:underline" title="Points history">
-                Points {user.points}
+              <Link href="/points" className="hover:underline" title={tc("points")}>
+                {tc("points")} {user.points}
               </Link>
             </span>
             <button
@@ -208,7 +210,7 @@ export default function Home() {
               onClick={handleCheckin}
               className="font-medium text-emerald-600 hover:underline"
             >
-              📅 Check-in +10
+              {t("checkin")}
             </button>
             {!user.isCreator && (
               <button
@@ -216,26 +218,17 @@ export default function Home() {
                 onClick={handleApplyCreator}
                 className="font-medium text-violet-600 hover:underline"
               >
-                ✨ Become a creator
+                {t("becomeCreator")}
               </button>
             )}
-            <Link
-              href="/marketplace"
-              className="font-medium text-zinc-600 hover:text-orange-600"
-            >
-              🛍️ Market
+            <Link href="/marketplace" className="font-medium text-zinc-600 hover:text-orange-600">
+              🛍️ {tc("market")}
             </Link>
-            <Link
-              href="/handbooks"
-              className="font-medium text-zinc-600 hover:text-orange-600"
-            >
-              📔 Journals
+            <Link href="/handbooks" className="font-medium text-zinc-600 hover:text-orange-600">
+              📔 {tc("journals")}
             </Link>
-            <Link
-              href="/my-pets"
-              className="font-medium text-zinc-600 hover:text-orange-600"
-            >
-              🐾 My pets
+            <Link href="/my-pets" className="font-medium text-zinc-600 hover:text-orange-600">
+              🐾 {tc("myPets")}
             </Link>
             <span className="text-zinc-300">|</span>
             <span className="text-zinc-600">{user.email}</span>
@@ -244,24 +237,21 @@ export default function Home() {
               onClick={handleLogout}
               className="font-medium text-orange-600 hover:underline"
             >
-              Sign out
+              {tc("logout")}
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
-            <Link
-              href="/marketplace"
-              className="font-medium text-zinc-600 hover:text-orange-600"
-            >
-              🛍️ Market
+            <Link href="/marketplace" className="font-medium text-zinc-600 hover:text-orange-600">
+              🛍️ {tc("market")}
             </Link>
             <span className="text-zinc-300">|</span>
             <Link href="/login" className="font-medium text-zinc-600 hover:text-orange-600">
-              Sign in
+              {tc("signIn")}
             </Link>
             <span className="text-zinc-300">|</span>
             <Link href="/register" className="font-medium text-orange-600 hover:underline">
-              Register
+              {tc("register")}
             </Link>
           </div>
         )}
@@ -270,17 +260,17 @@ export default function Home() {
       <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            Aibi World · Multi-Pet Collection
+            {t("title")}
           </h1>
-          <p className="text-sm text-zinc-600">
-            Pick a companion you love, chat with it, and help it grow.
-          </p>
+          <p className="text-sm text-zinc-600">{t("subtitle")}</p>
         </div>
 
         {/* 宠物选择卡片 */}
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
           {petEntries.map(([petType, pet]) => {
             const busy = adoptingType === petType;
+            const petName = tp(`${petType}.name`);
+            const petPersonality = tp(`${petType}.personality`);
             return (
               <button
                 key={petType}
@@ -294,14 +284,12 @@ export default function Home() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={pet.avatar}
-                  alt={`Aibi-${pet.name}`}
+                  alt={`${tc("appName")}-${petName}`}
                   className="h-24 w-24 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"
                 />
                 <div className="space-y-1">
-                  <div className="text-lg font-semibold text-zinc-900">
-                    {pet.name}
-                  </div>
-                  <div className="text-xs text-zinc-500">{pet.personality}</div>
+                  <div className="text-lg font-semibold text-zinc-900">{petName}</div>
+                  <div className="text-xs text-zinc-500">{petPersonality}</div>
                 </div>
                 <span
                   className={`rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition ${
@@ -310,11 +298,7 @@ export default function Home() {
                       : "bg-orange-500 group-hover:bg-orange-600"
                   }`}
                 >
-                  {busy
-                    ? "⏳ Crafting..."
-                    : petLimitReached
-                      ? "🔒 Upgrade"
-                      : "🐾 Adopt"}
+                  {busy ? t("crafting") : petLimitReached ? t("upgrade") : t("adopt")}
                 </span>
               </button>
             );
@@ -322,14 +306,12 @@ export default function Home() {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <p className="text-xs text-zinc-400">
-          After adopting, you&apos;ll enter Aibi World and start chatting with your companion.
-        </p>
+        <p className="text-xs text-zinc-400">{t("adoptHint")}</p>
 
         {/* 次要功能：旧版 AI 工具诊断 */}
         <details className="mt-6 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white/70 p-4 text-left shadow-sm backdrop-blur">
           <summary className="cursor-pointer text-sm font-medium text-zinc-700">
-            🔧 Advanced: AI tool diagnostics (legacy)
+            {t("diagnosticLink")}
           </summary>
           <div className="mt-4">
             <DiagnosticForm />
@@ -350,4 +332,3 @@ export default function Home() {
     </main>
   );
 }
-

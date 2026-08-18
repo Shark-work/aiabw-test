@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import {
   XORPAY_AID,
   XORPAY_APP_SECRET,
@@ -30,17 +31,18 @@ const DEFAULT_AMOUNT = 9.9;
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
+    const locale = resolveLocale(req);
     const adoptionId =
       typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
 
     if (!adoptionId) {
-      return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "missingAdoptionId") }, { status: 400 });
     }
 
     // —— 鉴权：必须登录，且只能为自己的宠物发起支付 ——
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "signInFirst") }, { status: 401 });
     }
 
     // —— 环境变量防御性检查：缺少任何一项都直接返回 500，避免发起无效请求 ——
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
     if (missing.length > 0) {
       console.error("[pay/create] missing payment config:", missing.join(", "));
       return NextResponse.json(
-        { ok: false, error: `Missing payment config: ${missing.join(", ")}` },
+        { ok: false, error: `${apiError(locale, "missingPaymentConfig")}: ${missing.join(", ")}` },
         { status: 500 },
       );
     }
@@ -67,11 +69,11 @@ export async function POST(req: Request) {
       .limit(1);
 
     if (!adoption) {
-      return NextResponse.json({ ok: false, error: "Adoption record not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "adoptionNotFound") }, { status: 404 });
     }
     if (adoption.userId !== user.id) {
       return NextResponse.json(
-        { ok: false, error: "You are not allowed to pay for this pet" },
+        { ok: false, error: apiError(locale, "noPermissionPet") },
         { status: 403 },
       );
     }
@@ -80,7 +82,7 @@ export async function POST(req: Request) {
     const rawAmount = body?.amount ?? DEFAULT_AMOUNT;
     const amount = Number(rawAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json({ ok: false, error: "Invalid amount" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(locale, "invalidAmount") }, { status: 400 });
     }
 
     const name = XORPAY_PRODUCT_NAME;
@@ -117,7 +119,10 @@ export async function POST(req: Request) {
 
     if (!ok) {
       console.error("[pay/create] XorPay order failed:", error);
-      return NextResponse.json({ ok: false, error: error ?? "Order creation failed" }, { status: 502 });
+      return NextResponse.json(
+        { ok: false, error: error ?? apiError(locale, "orderCreateFailed") },
+        { status: 502 },
+      );
     }
 
     const d = (data ?? {}) as Record<string, unknown>;
@@ -140,7 +145,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("[pay/create] unhandled exception:", err);
     return NextResponse.json(
-      { ok: false, error: "Payment service is temporarily unavailable, check server logs" },
+      { ok: false, error: apiError("zh", "payServiceUnavailable") },
       { status: 500 },
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 
 type Props = {
@@ -23,6 +24,8 @@ export function UpgradePetModal({
   onClose,
   onUnlocked,
 }: Props) {
+  const t = useTranslations("pay");
+  const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
   const [payUrl, setPayUrl] = useState<string | null>(null);
@@ -62,13 +65,13 @@ export function UpgradePetModal({
         setPayUrl(data.payUrl ?? null);
       } else {
         setLoading(false);
-        setError(data?.error ?? "Order creation failed, please try again");
+        setError(data?.error ?? t("orderFailed"));
       }
     } catch {
       setLoading(false);
-      setError("Network error, please try again");
+      setError(tc("networkError"));
     }
-  }, [adoptionId, loading]);
+  }, [adoptionId, loading, t, tc]);
 
   useEffect(() => {
     if (open) {
@@ -92,7 +95,7 @@ export function UpgradePetModal({
         const data = await res.json();
         if (data?.ok && data.isUnlocked) {
           stopPolling();
-          alert("🎉 Unlocked! You can now adopt more companions.");
+          alert(t("unlockedOk"));
           onUnlocked?.();
           onClose();
           return;
@@ -119,12 +122,12 @@ export function UpgradePetModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-zinc-900">🔓 Unlock the Multi-Pet Collection</h3>
+          <h3 className="text-lg font-bold text-zinc-900">{t("title")}</h3>
           <button
             type="button"
             onClick={onClose}
             className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-            aria-label="Close"
+            aria-label={tc("close")}
           >
             ×
           </button>
@@ -132,11 +135,11 @@ export function UpgradePetModal({
 
         <p className="mb-1 text-sm text-zinc-600">
           {petCount != null && petCount >= 1
-            ? `You already have ${petCount} companion${petCount > 1 ? "s" : ""}! Unlock to adopt new friends and chat without limits.`
-            : "Unlock to adopt new friends and chat without limits."}
+            ? t("descCount", { count: petCount })
+            : t("desc")}
         </p>
         <p className="mb-4 text-xs text-zinc-400">
-          Sponsor a milk tea for ¥9.9 and unlock all pet slots (one-time, permanent).
+          {t("priceHint")}
         </p>
 
         {error ? (
@@ -148,7 +151,7 @@ export function UpgradePetModal({
         {loading && (
           <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-500">
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-            Generating payment QR code...
+            {t("generatingQr")}
           </div>
         )}
 
@@ -158,7 +161,7 @@ export function UpgradePetModal({
               <QRCodeSVG value={qr} size={200} />
             </div>
             <p className="text-xs text-zinc-500">
-              Scan with WeChat / Alipay. Your account unlocks automatically after payment.
+              {t("scanHint")}
             </p>
             {payUrl ? (
               <a
@@ -167,7 +170,7 @@ export function UpgradePetModal({
                 rel="noreferrer"
                 className="rounded-full bg-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-600"
               >
-                Open payment page
+                {t("openCashier")}
               </a>
             ) : null}
           </div>
@@ -179,7 +182,7 @@ export function UpgradePetModal({
             onClick={onClose}
             className="rounded-full bg-zinc-100 px-4 py-2 text-sm text-zinc-600 transition hover:bg-zinc-200"
           >
-            Not now
+            {t("notNow")}
           </button>
         </div>
       </div>

@@ -1,20 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
 
 type Log = { id: string; amount: number; reason: string; createdAt: string };
 
-const REASON_LABEL: Record<string, string> = {
-  checkin: "Daily check-in",
-  gacha: "Mystery box draw",
-  ugc_buy: "UGC pet purchase",
-};
-
 export default function PointsPage() {
+  const t = useTranslations("points");
+  const tc = useTranslations("common");
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const reasonLabel = (r: string) => {
+    const map: Record<string, string> = {
+      checkin: t("checkin"),
+      gacha: t("gacha"),
+      ugc_buy: t("ugcBuy"),
+    };
+    return map[r] ?? r;
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -27,13 +34,13 @@ export default function PointsPage() {
       });
       const data = await res.json();
       if (data?.ok) setLogs(data.logs ?? []);
-      else setError(data?.error ?? "Failed to load");
+      else setError(data?.error ?? tc("loadFailed"));
     } catch {
-      setError("Network error, please try again");
+      setError(tc("networkError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     load();
@@ -46,24 +53,23 @@ export default function PointsPage() {
       <div className="mx-auto max-w-2xl">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">Points history</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">{t("title")}</h1>
             <p className="text-xs text-zinc-500">
-              Last 50 entries · Total {total > 0 ? "+" : ""}
-              {total}
+              {t("subtitle", { total: `${total > 0 ? "+" : ""}${total}` })}
             </p>
           </div>
           <Link
             href="/my-pets"
             className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
           >
-            Back
+            {tc("back")}
           </Link>
         </div>
 
-        {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">{tc("loading")}</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && logs.length === 0 && (
-          <p className="py-10 text-center text-sm text-zinc-400">No points records yet.</p>
+          <p className="py-10 text-center text-sm text-zinc-400">{t("empty")}</p>
         )}
 
         <div className="space-y-2">
@@ -74,7 +80,7 @@ export default function PointsPage() {
             >
               <div>
                 <div className="text-sm font-medium text-zinc-700">
-                  {REASON_LABEL[l.reason] ?? l.reason}
+                  {reasonLabel(l.reason)}
                 </div>
                 <div className="text-xs text-zinc-400">
                   {new Date(l.createdAt).toLocaleString()}
@@ -95,3 +101,4 @@ export default function PointsPage() {
     </main>
   );
 }
+

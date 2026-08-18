@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
   const id = url.searchParams.get("id");
 
   if (!id) {
-    return NextResponse.json({ ok: false, error: "Adoption record id is required" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "adoptionIdRequired") }, { status: 400 });
   }
 
   try {
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
       .limit(1);
 
     if (!row) {
-      return NextResponse.json({ ok: false, error: "Adoption record not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "adoptionNotFound") }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -50,6 +51,6 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     console.error("Failed to load pet status:", err);
-    return NextResponse.json({ ok: false, error: "Failed to load pet status" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "petStatusFailed") }, { status: 500 });
   }
 }

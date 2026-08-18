@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users } from "@/db/schema";
 import { signToken, verifyPassword } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { timer } from "@/lib/perf";
 
 export const runtime = "nodejs";
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     const password = typeof body?.password === "string" ? body.password : "";
 
     if (!email || !password) {
-      return NextResponse.json({ ok: false, error: "Email and password are required" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "emailPasswordRequired") }, { status: 400 });
     }
 
     await ensureDbSchemaOnce();
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     dbg["select"] = Date.now() - start;
 
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
-      return NextResponse.json({ ok: false, error: "Incorrect email or password" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "badCredentials") }, { status: 401 });
     }
     dbg["verify"] = Date.now() - start;
 
@@ -50,6 +51,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email }, dbg });
   } catch (err) {
     console.error("[auth/login] failed:", err);
-    return NextResponse.json({ ok: false, error: "Login failed, please try again" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "loginFailed") }, { status: 500 });
   }
 }

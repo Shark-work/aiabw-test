@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const user = await getUserFromRequest(req);
   if (!user) {
-    return NextResponse.json({ ok: false, error: "Not signed in or session expired" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "sessionExpired") }, { status: 401 });
   }
 
   const [row] = await db

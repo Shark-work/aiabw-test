@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ToolCallCard } from "@/components/chat/tool-call-card";
 import { EXAMPLE_PROMPTS } from "@/lib/utils";
 import type { PetConfig } from "@/lib/pet-config";
+import { useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 
 function AgentAvatar({
@@ -68,6 +69,8 @@ export function ChatPanel({
   onInteractionComplete,
   footerInfo,
 }: ChatPanelProps) {
+  const t = useTranslations("chatPanel");
+  const tc = useTranslations("common");
   const [input, setInput] = useState("");
   const { messages, sendMessage, status, error, clearError } = useChat({
     id: threadId,
@@ -105,10 +108,10 @@ export function ChatPanel({
       if (data?.ok) {
         setPay({ loading: false, qr: data.qr, payUrl: data.payUrl ?? null });
       } else {
-        setPay({ loading: false, error: data?.error ?? "Order creation failed, please try again" });
+        setPay({ loading: false, error: data?.error ?? t("orderFailed") });
       }
     } catch {
-      setPay({ loading: false, error: "Network error, please try again" });
+      setPay({ loading: false, error: tc("networkError") });
     } finally {
       payBusyRef.current = false;
     }
@@ -126,12 +129,12 @@ export function ChatPanel({
         setBlockedDismissed(false);
         setPay({ loading: false });
         clearError?.();
-        alert("🎉 Unlocked! Go chat with your pet!");
+        alert(t("unlockedOk"));
       } else {
-        alert("Unlock not detected yet. Please make sure you completed the payment and try again.");
+        alert(t("unlockNotDetected"));
       }
     } catch {
-      alert("Network error, please try again");
+      alert(tc("networkError"));
     }
   };
 
@@ -298,7 +301,7 @@ export function ChatPanel({
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="text-xs font-medium text-zinc-500">
-                    {m.role === "user" ? "You" : pet.name}
+                    {m.role === "user" ? t("you") : pet.name}
                   </div>
                   {parts.map((part, idx) => {
                     if (part.type === "text") {
@@ -339,7 +342,7 @@ export function ChatPanel({
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Tell ${pet.name} what you need~`}
+            placeholder={t("placeholder", { name: pet.name })}
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading || !input.trim()}>
@@ -348,7 +351,7 @@ export function ChatPanel({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            Send
+            {t("send")}
           </Button>
         </form>
       </CardContent>
@@ -361,11 +364,11 @@ export function ChatPanel({
               🧋
             </div>
             <h3 className="text-lg font-bold text-zinc-900">
-              {pet.name} needs an energy boost!
+              {t("needEnergy", { name: pet.name })}
             </h3>
             <p className="mt-2 text-sm text-zinc-600">{blocked.message}</p>
             <p className="mt-1 text-xs text-zinc-400">
-              Sponsor a milk tea to unlock unlimited chatting and get exclusive limited skins too!
+              {t("sponsorHint")}
             </p>
             {/* 支付流程 */}
             {pay.qr ? (
@@ -374,15 +377,15 @@ export function ChatPanel({
                   <QRCodeSVG value={pay.qr} size={176} />
                 </div>
                 <p className="text-xs text-zinc-500">
-                  Scan the QR code above with Alipay / WeChat to complete the payment.
+                  {t("scanHint")}
                 </p>
                 {payTimeout ? (
                   <p className="text-xs text-amber-600">
-                    ⏱️ Payment status not synced. Please tap &quot;Confirm unlock&quot; below or try again later.
+                    {t("timeoutHint")}
                   </p>
                 ) : (
                   <p className="text-xs text-zinc-400">
-                    ⏳ Waiting for the payment result - unlocks automatically once paid…
+                    {t("waiting")}
                   </p>
                 )}
                 {pay.payUrl && (
@@ -392,7 +395,7 @@ export function ChatPanel({
                     rel="noreferrer"
                     className="block text-xs text-blue-600 underline"
                   >
-                    Can&apos;t scan? Open the payment page instead →
+                    {t("openPayUrl")}
                   </a>
                 )}
                 <button
@@ -400,14 +403,14 @@ export function ChatPanel({
                   onClick={handleVerifyPay}
                   className="w-full rounded-full bg-amber-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-amber-600"
                 >
-                  ✅ I&apos;ve paid - confirm unlock
+                  {t("confirmPaid")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setPay({ loading: false })}
                   className="w-full rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-50"
                 >
-                  Back
+                  {t("back")}
                 </button>
               </div>
             ) : (
@@ -421,14 +424,14 @@ export function ChatPanel({
                   disabled={pay.loading || !adoptionId}
                   className="w-full rounded-full bg-amber-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {pay.loading ? "⏳ Generating payment QR code..." : "🧋 Sponsor a milk tea · Unlock chatting"}
+                  {pay.loading ? t("generatingQr") : t("startPay")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setBlockedDismissed(true)}
                   className="w-full rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-50"
                 >
-                  Later
+                  {t("later")}
                 </button>
               </div>
             )}
