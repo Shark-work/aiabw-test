@@ -69,6 +69,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, pets });
   } catch (err) {
     console.error("[pets] failed:", err);
-    return NextResponse.json({ ok: false, error: "获取宠物列表失败" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Failed to load the pet list" }, { status: 500 });
   }
 }

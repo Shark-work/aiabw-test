@@ -18,7 +18,7 @@ export async function GET(
   const { taskId } = await params;
   const user = await getUserFromRequest(req);
   if (!user) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
   }
 
   const [task] = await db
@@ -27,7 +27,7 @@ export async function GET(
     .where(and(eq(handbooks.id, taskId), eq(handbooks.userId, user.id)))
     .limit(1);
   if (!task) {
-    return NextResponse.json({ ok: false, error: "任务不存在" }, { status: 404 });
+    return NextResponse.json({ ok: false, error: "Task not found" }, { status: 404 });
   }
 
   return NextResponse.json({

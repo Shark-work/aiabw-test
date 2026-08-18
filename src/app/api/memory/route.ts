@@ -36,7 +36,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const adoptionId = url.searchParams.get("adoptionId") ?? "";
   if (!adoptionId) {
-    return NextResponse.json({ ok: false, error: "缺少 adoptionId" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
   }
 
   await ensureDbSchemaOnce();
@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, ...data });
   } catch (err) {
     console.error("[memory] GET failed:", err);
-    return NextResponse.json({ ok: false, error: "读取记忆失败" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Failed to load memories" }, { status: 500 });
   }
 }
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     body?.category === "pet" || body?.category === "user" ? body.category : undefined;
 
   if (!adoptionId) {
-    return NextResponse.json({ ok: false, error: "缺少 adoptionId" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
   }
 
   await ensureDbSchemaOnce();
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     ) {
       const facts = await updateMemoryFact(adoptionId, body.oldText, body.text.trim(), category);
       if (!facts) {
-        return NextResponse.json({ ok: false, error: "未找到该记忆" }, { status: 404 });
+        return NextResponse.json({ ok: false, error: "Memory not found" }, { status: 404 });
       }
       return NextResponse.json({ ok: true, ...factsResponse(facts) });
     }
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     if (action === "delete" && typeof body?.text === "string") {
       const facts = await deleteMemoryFact(adoptionId, body.text);
       if (!facts) {
-        return NextResponse.json({ ok: false, error: "未找到该记忆" }, { status: 404 });
+        return NextResponse.json({ ok: false, error: "Memory not found" }, { status: 404 });
       }
       return NextResponse.json({ ok: true, ...factsResponse(facts) });
     }
@@ -99,14 +99,14 @@ export async function POST(req: Request) {
     ) {
       const facts = await pinMemoryFact(adoptionId, body.text, action === "pin");
       if (!facts) {
-        return NextResponse.json({ ok: false, error: "未找到该记忆" }, { status: 404 });
+        return NextResponse.json({ ok: false, error: "Memory not found" }, { status: 404 });
       }
       return NextResponse.json({ ok: true, ...factsResponse(facts) });
     }
 
-    return NextResponse.json({ ok: false, error: "无效操作" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "Invalid action" }, { status: 400 });
   } catch (err) {
     console.error("[memory] POST failed:", err);
-    return NextResponse.json({ ok: false, error: "记忆管理失败" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Memory management failed" }, { status: 500 });
   }
 }

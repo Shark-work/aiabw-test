@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
     }
 
     await ensureDbSchemaOnce();
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
           petType: t,
           name: PETS[t].name,
           avatar: PETS[t].avatar,
-          welcome: `🎁 盲盒开到了「${PETS[t].name}」！它已经住进你的艾比世界啦~`,
+          welcome: `🎁 The mystery box opened and you got "${PETS[t].name}"! It has moved into your Aibi World~`,
         }));
       const ugcRows = await tx.select().from(ugcPets);
       for (const u of ugcRows) {
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
           petType: `ugc:${u.id}`,
           name: u.name,
           avatar: u.imageUrl,
-          welcome: `🎁 盲盒开到了创作者作品「${u.name}」！它已经住进你的艾比世界啦~`,
+          welcome: `🎁 The mystery box opened a creator's work "${u.name}"! It has moved into your Aibi World~`,
         });
       }
       if (pool.length === 0) {
@@ -105,7 +105,7 @@ export async function POST(req: Request) {
 
       const [thread] = await tx
         .insert(threads)
-        .values({ userId: user.id, title: `${pick.name} 的家` })
+        .values({ userId: user.id, title: `${pick.name}'s Home` })
         .returning();
 
       const [adoption] = await tx
@@ -144,12 +144,12 @@ export async function POST(req: Request) {
     }
     const msg = err instanceof Error ? err.message : "";
     if (msg === "INSUFFICIENT_POINTS") {
-      return NextResponse.json({ ok: false, error: "积分不足" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Not enough points" }, { status: 400 });
     }
     if (msg === "EMPTY_POOL") {
-      return NextResponse.json({ ok: false, error: "宠物池为空" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "The pet pool is empty" }, { status: 400 });
     }
     console.error("[gacha/draw] failed:", err);
-    return NextResponse.json({ ok: false, error: "抽取失败，请稍后重试" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Draw failed, please try again" }, { status: 500 });
   }
 }

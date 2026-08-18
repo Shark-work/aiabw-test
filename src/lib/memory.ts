@@ -46,28 +46,28 @@ const MEMORY_EXTRACT_EVERY = Math.max(
 /** 记忆提取专用模型（可选；默认跟随主模型） */
 const MEMORY_EXTRACT_MODEL = process.env.MEMORY_EXTRACT_MODEL ?? undefined;
 
-const EXTRACT_PROMPT = `你是一个长期记忆提取助手。你的任务是从对话中提取"关于用户"的关键事实、偏好和重要信息（例如：姓名/昵称、爱好、喜好、重要经历、宠物名字等）。
-要求：
-1. 每条事实必须具体、完整、可独立理解（如"用户喜欢喝咖啡"，而不是"喜欢咖啡"）。
-2. 忽略问候、客套、天气、与用户无关的临时内容。
-3. 只输出 JSON，格式：{"facts": [{"text": "用户喜欢喝咖啡", "category": "user"}, {"text": "宠物叫旺财", "category": "pet"}]}。
-   category 取值：user（关于用户本人的信息）、pet（关于宠物/陪伴角色的信息）。不要输出任何其他文字。
-4. 没有值得记忆的新信息时输出 {"facts": []}。
+const EXTRACT_PROMPT = `You are a long-term memory extraction assistant. Your job is to extract key facts, preferences and important information "about the user" from a conversation (e.g. name/nickname, hobbies, likes, important experiences, pet names, etc.).
+Requirements:
+1. Each fact must be specific, complete and self-contained (e.g. "The user likes coffee", not just "likes coffee").
+2. Ignore greetings, small talk, weather, and anything temporary that is not about the user.
+3. Output JSON only, format: {"facts": [{"text": "The user likes coffee", "category": "user"}, {"text": "The pet is named Lucky", "category": "pet"}]}.
+   category values: user (info about the user), pet (info about the pet/companion). Do not output any other text.
+4. If there is no new information worth remembering, output {"facts": []}.
 
-示例1：
-对话：
-用户：你好，我叫小明，平时喜欢喝咖啡，养了一只叫旺财的狗。
-助手：很高兴认识你，小明！
-输出：{"facts": [{"text": "用户叫小明", "category": "user"}, {"text": "用户喜欢喝咖啡", "category": "user"}, {"text": "用户养了一只叫旺财的狗", "category": "pet"}]}
+Example 1:
+Conversation:
+User: Hi, my name is Ming. I like coffee and I have a dog named Lucky.
+Assistant: Nice to meet you, Ming!
+Output: {"facts": [{"text": "The user's name is Ming", "category": "user"}, {"text": "The user likes coffee", "category": "user"}, {"text": "The user has a dog named Lucky", "category": "pet"}]}
 
-示例2：
-对话：
-用户：今天天气不错。
-助手：是啊，很适合出门散步。
-输出：{"facts": []}
+Example 2:
+Conversation:
+User: The weather is nice today.
+Assistant: Yes, great for a walk.
+Output: {"facts": []}
 
-现在分析下面的对话并只输出 JSON：
-对话：`;
+Now analyze the following conversation and output JSON only:
+Conversation: `;
 
 export function parseMemoryStore(raw: string | null | undefined): MemoryStore {
   if (!raw) return { facts: [] };
@@ -122,7 +122,7 @@ export function normalizeFact(text: string): string {
     .trim();
 }
 
-/** 宠物相关关键词（启发式分类兜底） */
+/** 宠物相关关键词（启发式分类兜底，中英文都覆盖） */
 const PET_KEYWORDS = [
   "宠物",
   "猫",
@@ -139,6 +139,21 @@ const PET_KEYWORDS = [
   "抱抱狐",
   "小企鹅",
   "修勾",
+  "pet",
+  "cat",
+  "dog",
+  "penguin",
+  "fox",
+  "rabbit",
+  "duck",
+  "parrot",
+  "hamster",
+  "goldfish",
+  "adopted",
+  "named",
+  "huggy fox",
+  "chilly penguin",
+  "rover",
 ];
 
 /** 启发式分类：提到宠物/养宠相关内容 → pet，否则 user */
@@ -237,8 +252,8 @@ async function extractFacts(
   assistantText: string,
 ): Promise<{ text: string; category?: MemoryCategory }[]> {
   const convo = [
-    `用户：${userText}`,
-    assistantText ? `助手：${assistantText}` : "",
+    `User: ${userText}`,
+    assistantText ? `Assistant: ${assistantText}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -249,7 +264,7 @@ async function extractFacts(
     temperature: 0.2,
     maxOutputTokens: EXTRACT_MAX_OUTPUT_TOKENS,
     system: EXTRACT_PROMPT,
-    prompt: `${convo}\n\n只输出 JSON：`,
+    prompt: `${convo}\n\nOutput JSON only:`,
   });
 
   const t = text.trim();
@@ -445,8 +460,8 @@ export function buildMemorySection(memoryContext: string | null | undefined): st
   if (store.facts.length === 0) return "";
   const lines = store.facts.map((f) => `- ${f.text}`).join("\n");
   return (
-    "# 关于主人的长期记忆\n" +
-    "以下是关于用户的长期记忆，请在回复时自然参考这些信息，不要生硬背诵：\n" +
+    "# Long-term memory about the owner\n" +
+    "Below are long-term facts about the user. Reference them naturally in your replies - do not recite them stiffly:\n" +
     lines
   );
 }

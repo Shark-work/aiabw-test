@@ -96,12 +96,12 @@ export default function Home() {
       const data = await res.json();
       if (data?.ok) {
         setUser((prev) => (prev ? { ...prev, points: data.points ?? prev.points } : prev));
-        alert(data.already ? "今天已经签到过啦，明天再来~" : "🎉 签到成功 +10 积分！");
+        alert(data.already ? "You already checked in today. See you tomorrow!" : "🎉 Check-in success +10 points!");
       } else {
-        alert(data?.error ?? "签到失败");
+        alert(data?.error ?? "Check-in failed");
       }
     } catch {
-      alert("网络错误，请稍后重试");
+      alert("Network error, please try again");
     }
   };
 
@@ -116,12 +116,12 @@ export default function Home() {
       const data = await res.json();
       if (data?.ok) {
         setUser((prev) => (prev ? { ...prev, isCreator: true } : prev));
-        alert("🎉 恭喜！你现在是创作者了，可以去发布 UGC 宠物~");
+        alert("🎉 Congratulations! You are now a creator and can publish UGC pets.");
       } else {
-        alert(data?.error ?? "申请失败");
+        alert(data?.error ?? "Application failed");
       }
     } catch {
-      alert("网络错误，请稍后重试");
+      alert("Network error, please try again");
     }
   };
 
@@ -148,9 +148,9 @@ export default function Home() {
       const data = await res.json();
 
       if (!res.ok) {
-        // 单宠限制：引导用户解锁付费
+        // Single-pet rule: guide the user to the paid unlock flow
         if (data?.needPayment === true) {
-          setError(data.error || "请先解锁多宠图鉴");
+          setError(data.error || "Please unlock the Multi-Pet Collection first");
           if (data.unlockAdoptionId) {
             setPetState((prev) => ({
               ...prev,
@@ -162,10 +162,10 @@ export default function Home() {
           setUpgradeOpen(true);
           return;
         }
-        throw new Error(data.error || "领养失败，请稍后重试");
+        throw new Error(data.error || "Adoption failed, please try again");
       }
 
-      // 领养成功 → 带着新线程与领养记录进入独立聊天页面
+      // Adoption success → open the dedicated chat page for the new thread & adoption
       if (data.ok && data.threadId) {
         router.push(
           `/chat?thread=${data.threadId}&adopt=${data.adoption?.id ?? ""}`,
@@ -174,7 +174,7 @@ export default function Home() {
         router.push("/chat");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "领养失败，请稍后重试");
+      setError(err instanceof Error ? err.message : "Adoption failed, please try again");
       setAdoptingType(null);
     }
   };
@@ -199,8 +199,8 @@ export default function Home() {
         {user ? (
           <div className="flex flex-wrap items-center justify-end gap-2 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
             <span className="font-medium text-violet-600">
-              <Link href="/points" className="hover:underline" title="积分明细">
-                积分 {user.points}
+              <Link href="/points" className="hover:underline" title="Points history">
+                Points {user.points}
               </Link>
             </span>
             <button
@@ -208,7 +208,7 @@ export default function Home() {
               onClick={handleCheckin}
               className="font-medium text-emerald-600 hover:underline"
             >
-              📅 签到 +10
+              📅 Check-in +10
             </button>
             {!user.isCreator && (
               <button
@@ -216,26 +216,26 @@ export default function Home() {
                 onClick={handleApplyCreator}
                 className="font-medium text-violet-600 hover:underline"
               >
-                ✨ 成为创作者
+                ✨ Become a creator
               </button>
             )}
             <Link
               href="/marketplace"
               className="font-medium text-zinc-600 hover:text-orange-600"
             >
-              🛍️ 广场
+              🛍️ Market
             </Link>
             <Link
               href="/handbooks"
               className="font-medium text-zinc-600 hover:text-orange-600"
             >
-              📔 手账
+              📔 Journals
             </Link>
             <Link
               href="/my-pets"
               className="font-medium text-zinc-600 hover:text-orange-600"
             >
-              🐾 我的宠物
+              🐾 My pets
             </Link>
             <span className="text-zinc-300">|</span>
             <span className="text-zinc-600">{user.email}</span>
@@ -244,7 +244,7 @@ export default function Home() {
               onClick={handleLogout}
               className="font-medium text-orange-600 hover:underline"
             >
-              退出
+              Sign out
             </button>
           </div>
         ) : (
@@ -253,15 +253,15 @@ export default function Home() {
               href="/marketplace"
               className="font-medium text-zinc-600 hover:text-orange-600"
             >
-              🛍️ 广场
+              🛍️ Market
             </Link>
             <span className="text-zinc-300">|</span>
             <Link href="/login" className="font-medium text-zinc-600 hover:text-orange-600">
-              登录
+              Sign in
             </Link>
             <span className="text-zinc-300">|</span>
             <Link href="/register" className="font-medium text-orange-600 hover:underline">
-              注册
+              Register
             </Link>
           </div>
         )}
@@ -270,10 +270,10 @@ export default function Home() {
       <div className="relative z-10 mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            艾比世界 · 多宠图鉴
+            Aibi World · Multi-Pet Collection
           </h1>
           <p className="text-sm text-zinc-600">
-            选一只你喜欢的艾比伙伴，陪它聊天、帮它成长~
+            Pick a companion you love, chat with it, and help it grow.
           </p>
         </div>
 
@@ -294,7 +294,7 @@ export default function Home() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={pet.avatar}
-                  alt={`艾比-${pet.name}`}
+                  alt={`Aibi-${pet.name}`}
                   className="h-24 w-24 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"
                 />
                 <div className="space-y-1">
@@ -311,10 +311,10 @@ export default function Home() {
                   }`}
                 >
                   {busy
-                    ? "⏳ 打造中..."
+                    ? "⏳ Crafting..."
                     : petLimitReached
-                      ? "🔒 需升级"
-                      : "🐾 领养"}
+                      ? "🔒 Upgrade"
+                      : "🐾 Adopt"}
                 </span>
               </button>
             );
@@ -323,13 +323,13 @@ export default function Home() {
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <p className="text-xs text-zinc-400">
-          领养后将进入艾比世界，和你的伙伴开始聊天
+          After adopting, you&apos;ll enter Aibi World and start chatting with your companion.
         </p>
 
         {/* 次要功能：旧版 AI 工具诊断 */}
         <details className="mt-6 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white/70 p-4 text-left shadow-sm backdrop-blur">
           <summary className="cursor-pointer text-sm font-medium text-zinc-700">
-            🔧 高级：工具诊断（旧版）
+            🔧 Advanced: AI tool diagnostics (legacy)
           </summary>
           <div className="mt-4">
             <DiagnosticForm />

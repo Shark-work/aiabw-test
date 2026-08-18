@@ -6,7 +6,7 @@ export const maxDuration = 60;
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions";
 
-const SYSTEM_PROMPT = `你是一个 AI Agent 导航专家。用户会告诉你他的需求、期望和技术水平。请你根据这些信息，从你的知识库中推荐 2-3 个最适合的 AI Agent 工具，并说明推荐理由。如果用户是小白，推荐要简单易用；如果是开发者，推荐要高效强大。`;
+const SYSTEM_PROMPT = `You are an AI Agent navigation expert. The user tells you their need, expectation, and technical level. Based on this, recommend 2-3 of the most suitable AI Agent tools from your knowledge and explain why. If the user is a beginner, recommend simple and easy-to-use tools; if a developer, recommend powerful and efficient ones.`;
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     // Validate required parameters
     if (!coreNeed || !expectation || !techLevel) {
       return NextResponse.json(
-        { error: "缺少必要参数：coreNeed, expectation, techLevel" },
+        { error: "Missing required parameters: coreNeed, expectation, techLevel" },
         { status: 400 },
       );
     }
@@ -23,12 +23,12 @@ export async function POST(req: Request) {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "未配置 DEEPSEEK_API_KEY，请在 .env 文件中设置" },
+        { error: "DEEPSEEK_API_KEY is not configured - please set it in the .env file" },
         { status: 500 },
       );
     }
 
-    const userPrompt = `我的核心诉求是：${coreNeed}。我的期望程度是：${expectation}。我的技术水平是：${techLevel}。请为我推荐合适的 AI Agent 工具。`;
+    const userPrompt = `My core need is: ${coreNeed}. My expected level is: ${expectation}. My technical level is: ${techLevel}. Please recommend suitable AI Agent tools for me.`;
 
     const response = await fetch(DEEPSEEK_API_URL, {
       method: "POST",
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       const errorText = await response.text();
       console.error("DeepSeek API error:", response.status, errorText);
       return NextResponse.json(
-        { error: `DeepSeek API 调用失败: ${response.status}` },
+        { error: `DeepSeek API call failed: ${response.status}` },
         { status: 502 },
       );
     }
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
 
     if (!content) {
       return NextResponse.json(
-        { error: "DeepSeek API 返回内容为空" },
+        { error: "DeepSeek API returned empty content" },
         { status: 502 },
       );
     }
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
         .insert(threads)
         .values({
           userId: "anonymous",
-          title: `AI 诊断：${coreNeed}`,
+          title: `AI Diagnosis: ${coreNeed}`,
         })
         .returning({ id: threads.id });
 
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
           parts: [
             {
               type: "text",
-              text: `核心诉求：${coreNeed}；期望程度：${expectation}；技术基础：${techLevel}`,
+              text: `Core need: ${coreNeed}; Expected level: ${expectation}; Technical level: ${techLevel}`,
             },
           ],
         });
@@ -107,7 +107,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Recommend API error:", error);
     return NextResponse.json(
-      { error: "服务器内部错误" },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }

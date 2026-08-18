@@ -121,7 +121,7 @@ export async function POST(req: Request) {
       // 先建线程，再建领养记录并关联 threadId
       const [thread] = await tx
         .insert(threads)
-        .values({ userId, title: `${effectiveName} 的家`, anonymousId })
+        .values({ userId, title: `${effectiveName}'s Home`, anonymousId })
         .returning();
 
       const [adoption] = await tx
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
     }
     console.error("Failed to create adoption:", err);
     return NextResponse.json(
-      { ok: false, error: "领养记录写入失败，请稍后重试" },
+      { ok: false, error: "Failed to create the adoption record, please try again" },
       { status: 500 },
     );
   }

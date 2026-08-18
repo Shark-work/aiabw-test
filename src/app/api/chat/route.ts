@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           blocked: true,
-          message: `${pet.name}的体力耗尽啦！请赞助一杯奶茶解锁无限畅聊~`,
+          message: `${pet.name}'s energy is running low! Unlock unlimited chatting to keep playing~`,
         },
         // 非 2xx 状态让前端 useChat 通过 error.message 捕获这段 JSON。
         { status: 402 },

@@ -8,23 +8,25 @@ export const runtime = "nodejs";
 
 /** 触发更高心情加成的积极情绪词。 */
 const HAPPY_WORDS = [
-  "开心",
-  "高兴",
-  "快乐",
-  "好开心",
-  "喜欢",
-  "超爱",
-  "爱",
-  "太棒",
-  "真棒",
-  "棒",
-  "哈哈",
-  "可爱",
-  "谢谢",
-  "感谢",
-  "真好",
-  "爽",
-  "赞",
+  "happy",
+  "glad",
+  "love",
+  "awesome",
+  "great",
+  "amazing",
+  "thank",
+  "thanks",
+  "cool",
+  "nice",
+  "wonderful",
+  "fantastic",
+  "cute",
+  "lol",
+  "haha",
+  "good",
+  "like",
+  "best",
+  "perfect",
 ];
 
 /** 根据消息内容计算心情增量：只要互动 +1，包含积极情绪词则 +3。 */
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
   const message = typeof body?.message === "string" ? body.message : "";
 
   if (typeof adoptionId !== "string" || !adoptionId) {
-    return NextResponse.json({ ok: false, error: "缺少 adoptionId" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
   }
 
   try {
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
       .limit(1);
 
     if (!row) {
-      return NextResponse.json({ ok: false, error: "未找到该领养记录" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Adoption record not found" }, { status: 404 });
     }
 
     const delta = happinessDeltaFor(message);
@@ -105,6 +107,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("Failed to update happiness:", err);
-    return NextResponse.json({ ok: false, error: "互动更新失败" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Interaction update failed" }, { status: 500 });
   }
 }

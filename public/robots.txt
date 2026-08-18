@@ -1,0 +1,4 @@
+# aiabw.com - global launch
+# Allow all search engines to index the site (required for SEO/global launch)
+User-agent: *
+Allow: /

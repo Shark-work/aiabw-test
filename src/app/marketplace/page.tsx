@@ -52,7 +52,7 @@ export default function MarketplacePage() {
       const res = await fetch("/api/creator/pets");
       const data = await res.json();
       if (data?.ok) setPets(data.pets ?? []);
-      else setError(data?.error ?? "加载失败");
+      else setError(data?.error ?? "Failed to load");
       const token = localStorage.getItem("aiabw_token");
       if (token) {
         const me = await fetch("/api/auth/me", {
@@ -61,7 +61,7 @@ export default function MarketplacePage() {
         if (me?.ok) setIsCreator(!!me.user?.isCreator);
       }
     } catch {
-      setError("网络错误，请稍后重试");
+      setError("Network error, please try again");
     } finally {
       setLoading(false);
     }
@@ -86,9 +86,9 @@ export default function MarketplacePage() {
       const data = await res.json();
       if (data?.ok) {
         setIsCreator(true);
-        showToast("🎉 恭喜！你现在是创作者了，可以发布自己的艾比~");
+        showToast("🎉 Congratulations! You are now a creator and can publish your own Aibi pets.");
       } else {
-        showToast(data?.error ?? "申请失败");
+        showToast(data?.error ?? "Application failed");
       }
     } finally {
       setBusy(false);
@@ -110,15 +110,15 @@ export default function MarketplacePage() {
       });
       const data = await res.json();
       if (data?.ok && data.threadId) {
-        showToast("🎉 购买成功！宠物已入住你的艾比世界~");
+        showToast("🎉 Purchase successful! Your new pet has moved into Aibi World.");
         router.push(`/chat?thread=${data.threadId}&adopt=${data.adoption?.id}`);
       } else if (data?.needPayment === true) {
         setUpgradeOpen(true);
         setUnlockAdoptionId(data.unlockAdoptionId ?? null);
         setUpgradePetCount(data.petCount ?? 1);
-        showToast(data.error ?? "请先解锁多宠图鉴");
+        showToast(data.error ?? "Please unlock the Multi-Pet Collection first");
       } else {
-        showToast(data?.error ?? "购买失败");
+        showToast(data?.error ?? "Purchase failed");
       }
     } finally {
       setBusy(false);
@@ -131,7 +131,7 @@ export default function MarketplacePage() {
       !publishForm.imageUrl.trim() ||
       !publishForm.systemPrompt.trim()
     ) {
-      showToast("请填写完整信息");
+      showToast("Please fill in all the required fields");
       return;
     }
     setPublishBusy(true);
@@ -148,12 +148,12 @@ export default function MarketplacePage() {
       });
       const data = await res.json();
       if (data?.ok) {
-        showToast("🎉 发布成功！你的艾比已上架~");
+        showToast("🎉 Published! Your Aibi pet is now on the market.");
         setPublishOpen(false);
         setPublishForm({ name: "", imageUrl: "", systemPrompt: "", priceOrPoints: "0" });
         load();
       } else {
-        showToast(data?.error ?? "发布失败");
+        showToast(data?.error ?? "Publish failed");
       }
     } finally {
       setPublishBusy(false);
@@ -174,15 +174,15 @@ export default function MarketplacePage() {
       });
       const data = await res.json();
       if (data?.ok && data.threadId) {
-        showToast(`🎁 盲盒开出「${data.petName}」！`);
+        showToast(`🎁 Mystery box opened: "${data.petName}"!`);
         router.push(`/chat?thread=${data.threadId}&adopt=${data.adoption?.id}`);
       } else if (data?.needPayment === true) {
         setUpgradeOpen(true);
         setUnlockAdoptionId(data.unlockAdoptionId ?? null);
         setUpgradePetCount(data.petCount ?? 1);
-        showToast(data.error ?? "请先解锁多宠图鉴");
+        showToast(data.error ?? "Please unlock the Multi-Pet Collection first");
       } else {
-        showToast(data?.error ?? "抽取失败");
+        showToast(data?.error ?? "Draw failed");
       }
     } finally {
       setBusy(false);
@@ -194,9 +194,9 @@ export default function MarketplacePage() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">UGC 广场</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">UGC Market</h1>
             <p className="text-xs text-zinc-500">
-              来自创作者的独特艾比，用积分把它们带回家~
+              Unique Aibi pets from creators - take them home with points.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export default function MarketplacePage() {
               disabled={busy}
               className="rounded-full bg-fuchsia-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-fuchsia-600 disabled:opacity-60"
             >
-              🎁 盲盒抽取
+              🎁 Mystery box
             </button>
             {isCreator ? (
               <button
@@ -214,7 +214,7 @@ export default function MarketplacePage() {
                 onClick={() => setPublishOpen(true)}
                 className="rounded-full bg-violet-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-violet-600"
               >
-                ➕ 发布 UGC 宠物
+                ➕ Publish UGC pet
               </button>
             ) : (
               <button
@@ -223,14 +223,14 @@ export default function MarketplacePage() {
                 disabled={busy}
                 className="rounded-full border border-violet-300 bg-white px-4 py-1.5 text-sm font-medium text-violet-600 transition hover:bg-violet-50 disabled:opacity-60"
               >
-                ✨ 申请成为创作者
+                ✨ Become a creator
               </button>
             )}
             <Link
               href="/my-pets"
               className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600"
             >
-              🐾 我的宠物
+              🐾 My pets
             </Link>
           </div>
         </div>
@@ -241,11 +241,11 @@ export default function MarketplacePage() {
           </div>
         )}
 
-        {loading && <p className="py-10 text-center text-sm text-zinc-400">加载中…</p>}
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && pets.length === 0 && (
           <div className="py-16 text-center">
-            <p className="text-zinc-500">还没有 UGC 宠物，成为创作者发布第一只吧~</p>
+            <p className="text-zinc-500">No UGC pets yet - become a creator and publish the first one!</p>
           </div>
         )}
 
@@ -265,10 +265,10 @@ export default function MarketplacePage() {
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-zinc-900">{pet.name}</div>
                   <div className="text-xs text-zinc-500">
-                    创作者：{pet.creatorEmail ?? "未知"}
+                    Creator: {pet.creatorEmail ?? "unknown"}
                   </div>
                   <div className="text-sm font-medium text-violet-600">
-                    {pet.priceOrPoints} 积分
+                    {pet.priceOrPoints} points
                   </div>
                 </div>
                 <button
@@ -277,7 +277,7 @@ export default function MarketplacePage() {
                   disabled={busy}
                   className="shrink-0 rounded-full bg-violet-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-violet-600 disabled:opacity-60"
                 >
-                  购买
+                  Buy
                 </button>
               </div>
             </div>
@@ -295,12 +295,12 @@ export default function MarketplacePage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-zinc-900">➕ 发布 UGC 宠物</h3>
+              <h3 className="text-lg font-bold text-zinc-900">➕ Publish UGC pet</h3>
               <button
                 type="button"
                 onClick={() => setPublishOpen(false)}
                 className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                aria-label="关闭"
+                aria-label="Close"
               >
                 ×
               </button>
@@ -310,20 +310,20 @@ export default function MarketplacePage() {
                 type="text"
                 value={publishForm.name}
                 onChange={(e) => setPublishForm({ ...publishForm, name: e.target.value })}
-                placeholder="宠物名字（如：小幽灵）"
+                placeholder="Pet name (e.g. Little Ghost)"
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
               <input
                 type="text"
                 value={publishForm.imageUrl}
                 onChange={(e) => setPublishForm({ ...publishForm, imageUrl: e.target.value })}
-                placeholder="头像图片地址（如 /resources/pet/qapi.png）"
+                placeholder="Avatar image URL (e.g. /resources/pet/qapi.png)"
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
               <textarea
                 value={publishForm.systemPrompt}
                 onChange={(e) => setPublishForm({ ...publishForm, systemPrompt: e.target.value })}
-                placeholder="系统提示词：定义它的性格、说话风格……"
+                placeholder="System prompt: define its personality, speaking style..."
                 rows={4}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
@@ -332,7 +332,7 @@ export default function MarketplacePage() {
                 min={0}
                 value={publishForm.priceOrPoints}
                 onChange={(e) => setPublishForm({ ...publishForm, priceOrPoints: e.target.value })}
-                placeholder="售价（积分）"
+                placeholder="Price (points)"
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
               <button
@@ -341,7 +341,7 @@ export default function MarketplacePage() {
                 disabled={publishBusy}
                 className="w-full rounded-full bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-60"
               >
-                {publishBusy ? "发布中..." : "发布"}
+                {publishBusy ? "Publishing..." : "Publish"}
               </button>
             </div>
           </div>

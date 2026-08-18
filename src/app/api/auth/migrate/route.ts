@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "未登录" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Not signed in" }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
@@ -56,6 +56,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[auth/migrate] failed:", err);
-    return NextResponse.json({ ok: false, error: "数据迁移失败，请稍后重试" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Data migration failed, please try again" }, { status: 500 });
   }
 }

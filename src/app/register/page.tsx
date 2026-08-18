@@ -18,7 +18,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     if (password !== confirm) {
-      setError("两次输入的密码不一致");
+      setError("Passwords do not match");
       return;
     }
     setLoading(true);
@@ -30,11 +30,11 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "注册失败");
+        throw new Error(data.error || "Registration failed");
       }
       localStorage.setItem("aiabw_token", data.token);
 
-      // 游客数据迁移：后台异步执行，不阻塞跳转（提升注册体验）
+      // Guest data migration: run in the background, never blocks navigation
       const anonymousId = getAnonymousId();
       if (anonymousId) {
         void (async () => {
@@ -55,7 +55,7 @@ export default function RegisterPage() {
               }
             }
           } catch {
-            // 迁移失败不影响注册
+            // Migration failure must not block registration
           }
         })();
       }
@@ -64,7 +64,7 @@ export default function RegisterPage() {
         new URLSearchParams(window.location.search).get("redirect") || "/";
       router.push(redirect);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "注册失败，请稍后重试");
+      setError(err instanceof Error ? err.message : "Registration failed, please try again");
       setLoading(false);
     }
   };
@@ -80,15 +80,15 @@ export default function RegisterPage() {
 
       <div className="relative z-10 w-full max-w-sm rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-lg backdrop-blur">
         <h1 className="text-center text-2xl font-semibold text-zinc-900">
-          注册艾比世界
+          Create your Aibi World account
         </h1>
         <p className="mt-1 text-center text-sm text-zinc-500">
-          创建账号，开启你的多宠图鉴之旅~
+          Start your Multi-Pet Collection journey now.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">邮箱</label>
+            <label className="mb-1 block text-sm text-zinc-600">Email</label>
             <input
               type="email"
               required
@@ -99,25 +99,25 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">密码（至少 6 位）</label>
+            <label className="mb-1 block text-sm text-zinc-600">Password (min 6 characters)</label>
             <input
               type="password"
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="设置登录密码"
+              placeholder="Create a password"
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">确认密码</label>
+            <label className="mb-1 block text-sm text-zinc-600">Confirm password</label>
             <input
               type="password"
               required
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="再次输入密码"
+              placeholder="Re-enter your password"
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
             />
           </div>
@@ -129,14 +129,14 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full rounded-full bg-orange-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "注册中..." : "注册并登录"}
+            {loading ? "Creating account..." : "Register & sign in"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-zinc-500">
-          已有账号？{" "}
+          Already have an account?{" "}
           <Link href="/login" className="font-medium text-orange-600 hover:underline">
-            去登录
+            Sign in
           </Link>
         </p>
       </div>

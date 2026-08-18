@@ -31,6 +31,6 @@ export async function GET() {
     return NextResponse.json({ ok: true, pets: rows });
   } catch (err) {
     console.error("[creator/pets] failed:", err);
-    return NextResponse.json({ ok: false, error: "获取 UGC 宠物列表失败" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Failed to load the UGC pet list" }, { status: 500 });
   }
 }

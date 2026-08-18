@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 
 type Props = {
   open: boolean;
-  /** 需要支付的宠物（用户的已有宠物之一），用于 /api/pay/create 下单 */
+  /** The pet (one of the user's existing pets) to pay for; used by /api/pay/create */
   adoptionId: string | null;
   petCount?: number;
   onClose: () => void;
@@ -13,8 +13,8 @@ type Props = {
 };
 
 /**
- * 升级解锁弹窗：单宠限制命中时引导用户付费解锁「多宠图鉴」。
- * 复用聊天页的支付流程：/api/pay/create 拿二维码 → 轮询 /api/pet/status 检测解锁。
+ * Upgrade / unlock modal: shown when the single-pet rule blocks the user.
+ * Same payment flow as the chat page: /api/pay/create → QR → poll /api/pet/status.
  */
 export function UpgradePetModal({
   open,
@@ -44,7 +44,7 @@ export function UpgradePetModal({
     setError("");
   }, [stopPolling]);
 
-  // 打开时自动下单
+  // Create the order automatically when the modal opens
   const createOrder = useCallback(async () => {
     if (!adoptionId || loading) return;
     setLoading(true);
@@ -62,25 +62,25 @@ export function UpgradePetModal({
         setPayUrl(data.payUrl ?? null);
       } else {
         setLoading(false);
-        setError(data?.error ?? "下单失败，请稍后重试");
+        setError(data?.error ?? "Order creation failed, please try again");
       }
     } catch {
       setLoading(false);
-      setError("网络错误，请稍后重试");
+      setError("Network error, please try again");
     }
   }, [adoptionId, loading]);
 
   useEffect(() => {
     if (open) {
       reset();
-      // 让 DOM 先渲染，再发起下单
+      // Let the DOM render first, then create the order
       const t = setTimeout(() => void createOrder(), 50);
       return () => clearTimeout(t);
     }
     reset();
   }, [open, createOrder, reset]);
 
-  // 二维码就绪后轮询解锁状态（每 2s，最多 90 次）
+  // Once the QR is ready, poll the unlock status (every 2s, max 90 times)
   useEffect(() => {
     if (!open || !qr || !adoptionId) return;
     stopPolling();
@@ -92,13 +92,13 @@ export function UpgradePetModal({
         const data = await res.json();
         if (data?.ok && data.isUnlocked) {
           stopPolling();
-          alert("🎉 解锁成功！现在可以领养更多宠物啦~");
+          alert("🎉 Unlocked! You can now adopt more companions.");
           onUnlocked?.();
           onClose();
           return;
         }
       } catch {
-        // 单次失败不中断
+        // A single polling failure does not abort
       }
       if (count >= 90) stopPolling();
     }, 2000);
@@ -119,12 +119,12 @@ export function UpgradePetModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-zinc-900">🔓 解锁「多宠图鉴」</h3>
+          <h3 className="text-lg font-bold text-zinc-900">🔓 Unlock the Multi-Pet Collection</h3>
           <button
             type="button"
             onClick={onClose}
             className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-            aria-label="关闭"
+            aria-label="Close"
           >
             ×
           </button>
@@ -132,11 +132,11 @@ export function UpgradePetModal({
 
         <p className="mb-1 text-sm text-zinc-600">
           {petCount != null && petCount >= 1
-            ? `你已经有了 ${petCount} 只艾比伙伴啦！解锁后可再领养新伙伴，还能无限畅聊~`
-            : "解锁后可再领养新伙伴，还能无限畅聊~"}
+            ? `You already have ${petCount} companion${petCount > 1 ? "s" : ""}! Unlock to adopt new friends and chat without limits.`
+            : "Unlock to adopt new friends and chat without limits."}
         </p>
         <p className="mb-4 text-xs text-zinc-400">
-          赞助一杯奶茶 ¥9.9，解锁全部宠物位置（1 次解锁长期有效）
+          Sponsor a milk tea for ¥9.9 and unlock all pet slots (one-time, permanent).
         </p>
 
         {error ? (
@@ -148,7 +148,7 @@ export function UpgradePetModal({
         {loading && (
           <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-500">
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-            正在生成支付二维码...
+            Generating payment QR code...
           </div>
         )}
 
@@ -158,7 +158,7 @@ export function UpgradePetModal({
               <QRCodeSVG value={qr} size={200} />
             </div>
             <p className="text-xs text-zinc-500">
-              请使用微信 / 支付宝扫码支付，支付成功后自动解锁
+              Scan with WeChat / Alipay. Your account unlocks automatically after payment.
             </p>
             {payUrl ? (
               <a
@@ -167,7 +167,7 @@ export function UpgradePetModal({
                 rel="noreferrer"
                 className="rounded-full bg-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-600"
               >
-                点击前往收银台支付
+                Open payment page
               </a>
             ) : null}
           </div>
@@ -179,7 +179,7 @@ export function UpgradePetModal({
             onClick={onClose}
             className="rounded-full bg-zinc-100 px-4 py-2 text-sm text-zinc-600 transition hover:bg-zinc-200"
           >
-            暂不解锁
+            Not now
           </button>
         </div>
       </div>

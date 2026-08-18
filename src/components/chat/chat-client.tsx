@@ -9,10 +9,10 @@ import type { PetConfig } from "@/lib/pet-config";
 
 /** 根据心情值返回对应的表情与文案。 */
 export function moodInfo(happiness: number) {
-  if (happiness < 30) return { emoji: "😢", label: "难过" };
-  if (happiness < 50) return { emoji: "😐", label: "一般" };
-  if (happiness < 80) return { emoji: "😊", label: "开心" };
-  return { emoji: "🥰", label: "超幸福" };
+  if (happiness < 30) return { emoji: "😢", label: "Sad" };
+  if (happiness < 50) return { emoji: "😐", label: "OK" };
+  if (happiness < 80) return { emoji: "😊", label: "Happy" };
+  return { emoji: "🥰", label: "Ecstatic" };
 }
 
 /** 记忆分类切换：用户 / 宠物 */
@@ -34,7 +34,7 @@ function CategoryToggle({
           value === "user" ? "bg-violet-100 font-medium text-violet-700" : "bg-white text-zinc-500 hover:bg-zinc-50"
         }`}
       >
-        👤 用户
+        👤 User
       </button>
       <button
         type="button"
@@ -43,7 +43,7 @@ function CategoryToggle({
           value === "pet" ? "bg-orange-100 font-medium text-orange-700" : "bg-white text-zinc-500 hover:bg-zinc-50"
         }`}
       >
-        🐾 宠物
+        🐾 Pet
       </button>
     </div>
   );
@@ -119,10 +119,10 @@ export function ChatClient({
         applyFacts(data.facts ?? []);
         setMemoryMaxChars(data.maxChars ?? 3000);
       } else {
-        setMemoryError(data?.error ?? "读取记忆失败");
+        setMemoryError(data?.error ?? "Failed to load memories");
       }
     } catch {
-      setMemoryError("读取记忆失败，请稍后重试");
+      setMemoryError("Failed to load memories, please try again");
     } finally {
       setMemoryLoading(false);
     }
@@ -228,7 +228,7 @@ export function ChatClient({
 
   const clearMemory = useCallback(async () => {
     if (!adoptionIdState) return;
-    if (!confirm("确定要清空宠物的全部记忆吗？此操作不可恢复。")) return;
+    if (!confirm("Clear all of this pet's memories? This cannot be undone.")) return;
     try {
       const res = await fetch("/api/memory", {
         method: "POST",
@@ -293,12 +293,12 @@ export function ChatClient({
   const memoryGroups = [
     {
       key: "user",
-      title: "👤 关于用户",
+      title: "👤 About the user",
       list: visibleFacts.filter((f) => (f.category ?? "user") === "user"),
     },
     {
       key: "pet",
-      title: "🐾 关于宠物",
+      title: "🐾 About the pet",
       list: visibleFacts.filter((f) => f.category === "pet"),
     },
   ]
@@ -314,19 +314,19 @@ export function ChatClient({
     <div className="flex h-full flex-col gap-2">
       {showMigratedToast && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-700 shadow-sm">
-          🎉 已为你找回之前的聊天记录和宠物记忆 ✨
+          🎉 We restored your previous chats and pet memories ✨
         </div>
       )}
       {isGuest && (
         <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
           <span className="text-amber-800">
-            🔒 你是游客模式，刷新后宠物记忆会丢失。
+            🔒 You are in guest mode - pet memories will be lost after a refresh.
           </span>
           <Link
             href={`/login?redirect=${encodeURIComponent(loginRedirect)}`}
             className="font-medium text-orange-600 hover:underline"
           >
-            登录以保存你的宠物记忆
+            Sign in to save your pet memories
           </Link>
         </div>
       )}
@@ -338,7 +338,7 @@ export function ChatClient({
             onClick={openMemory}
             className="rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-xs font-medium text-violet-600 shadow-sm backdrop-blur transition hover:bg-violet-50"
           >
-            🧠 记忆
+            🧠 Memory
           </button>
         </div>
       )}
@@ -354,19 +354,19 @@ export function ChatClient({
       footerInfo={
         <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-sm">
           <span className="font-medium text-zinc-700">
-            {pet.name}现在的心情：
+            {pet.name}&apos;s mood:
             <span className="text-lg">{mo.emoji}</span>
-            <span className="ml-1 text-zinc-500">（{mo.label}）</span>
+            <span className="ml-1 text-zinc-500">({mo.label})</span>
           </span>
           <span className="flex items-center gap-3">
             <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
               Lv.{level}
             </span>
             <span className="text-xs text-violet-600">
-              本月活跃度积分：{monthlyPoints}
+              Monthly points: {monthlyPoints}
             </span>
             {refreshing && (
-              <span className="text-xs text-zinc-400">刷新中…</span>
+              <span className="text-xs text-zinc-400">Refreshing…</span>
             )}
           </span>
         </div>
@@ -384,19 +384,19 @@ export function ChatClient({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-zinc-900">🧠 {pet.name}的长期记忆</h3>
+              <h3 className="text-lg font-bold text-zinc-900">🧠 {pet.name}&apos;s long-term memory</h3>
               <button
                 type="button"
                 onClick={() => setMemoryOpen(false)}
                 className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                aria-label="关闭"
+                aria-label="Close"
               >
                 ×
               </button>
             </div>
 
             <div className="mt-1 text-xs text-zinc-500">
-              已用 {memoryUsedChars} / {memoryMaxChars} 字符
+              Used {memoryUsedChars} / {memoryMaxChars} chars
               <span className="ml-2 text-violet-500">
                 {Math.min(100, Math.round((memoryUsedChars / memoryMaxChars) * 100))}%
               </span>
@@ -407,7 +407,7 @@ export function ChatClient({
               type="text"
               value={memorySearch}
               onChange={(e) => setMemorySearch(e.target.value)}
-              placeholder="🔍 搜索记忆…"
+              placeholder="🔍 Search memories…"
               className="mt-3 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none"
             />
 
@@ -420,7 +420,7 @@ export function ChatClient({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") addMemoryFact();
                 }}
-                placeholder="新增记忆，如：用户喜欢听民谣"
+                placeholder="Add a memory, e.g. the user likes indie folk"
                 className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
               />
               <CategoryToggle value={newFactCategory} onChange={setNewFactCategory} />
@@ -430,16 +430,16 @@ export function ChatClient({
                 disabled={!newFactText.trim()}
                 className="shrink-0 rounded-full bg-violet-500 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                添加
+                Add
               </button>
             </div>
 
             <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
-              {memoryLoading && <p className="text-sm text-zinc-400">加载中…</p>}
+              {memoryLoading && <p className="text-sm text-zinc-400">Loading…</p>}
               {memoryError && <p className="text-sm text-red-600">{memoryError}</p>}
               {!memoryLoading && !memoryError && memoryFacts.length === 0 && (
                 <p className="py-6 text-center text-sm text-zinc-400">
-                  还没有记忆，多和{pet.name}聊聊，或手动添加一条~
+                  No memories yet - chat more with {pet.name}, or add one manually.
                 </p>
               )}
               {!memoryLoading &&
@@ -473,7 +473,7 @@ export function ChatClient({
                                   onClick={() => setEditingOldText(null)}
                                   className="text-xs text-zinc-400 hover:text-zinc-600"
                                 >
-                                  取消
+                                  Cancel
                                 </button>
                                 <button
                                   type="button"
@@ -481,7 +481,7 @@ export function ChatClient({
                                   disabled={!editFactText.trim()}
                                   className="text-xs font-medium text-violet-600 hover:underline disabled:opacity-50"
                                 >
-                                  保存
+                                  Save
                                 </button>
                               </div>
                             </div>
@@ -498,7 +498,7 @@ export function ChatClient({
                                     ? "text-amber-500"
                                     : "text-zinc-300 hover:text-amber-500"
                                 }`}
-                                title={f.pinned ? "取消置顶" : "置顶"}
+                                title={f.pinned ? "Unpin" : "Pin"}
                               >
                                 📌
                               </button>
@@ -506,17 +506,17 @@ export function ChatClient({
                                 type="button"
                                 onClick={() => startEditFact(f)}
                                 className="text-xs text-zinc-400 hover:text-violet-600"
-                                title="编辑这条记忆"
+                                title="Edit this memory"
                               >
-                                编辑
+                                Edit
                               </button>
                               <button
                                 type="button"
                                 onClick={() => deleteMemoryFact(f.text)}
                                 className="text-xs text-zinc-400 hover:text-red-500"
-                                title="删除这条记忆"
+                                title="Delete this memory"
                               >
-                                删除
+                                Delete
                               </button>
                             </div>
                           </div>
@@ -534,14 +534,14 @@ export function ChatClient({
                 disabled={memoryFacts.length === 0}
                 className="flex-1 rounded-full border border-red-200 px-3 py-2 text-sm text-red-500 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                清空全部记忆
+                Clear all memories
               </button>
               <button
                 type="button"
                 onClick={() => setMemoryOpen(false)}
                 className="flex-1 rounded-full bg-zinc-100 px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-200"
               >
-                关闭
+                Close
               </button>
             </div>
           </div>

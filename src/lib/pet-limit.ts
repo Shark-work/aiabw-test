@@ -31,7 +31,7 @@ export function evaluatePetLimit(input: PetLimitState): PetLimitDecision {
 }
 
 export const PET_LIMIT_MESSAGE =
-  "你已经有了 1 只艾比伙伴啦！解锁「多宠图鉴」，即可再领养新伙伴，还能无限畅聊~";
+  "You already have 1 companion! Unlock the Multi-Pet Collection to adopt new friends and chat without limits.";
 
 /** 返回给前端的拦截响应体（各路由统一用 status 402 包装）。 */
 export function buildPetLimitBody(

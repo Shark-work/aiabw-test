@@ -25,11 +25,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "登录失败");
+        throw new Error(data.error || "Login failed");
       }
       localStorage.setItem("aiabw_token", data.token);
 
-      // 游客数据迁移：后台异步执行，不阻塞跳转（提升登录体验）
+      // Guest data migration: run in the background, never blocks navigation
       const anonymousId = getAnonymousId();
       if (anonymousId) {
         void (async () => {
@@ -50,7 +50,7 @@ export default function LoginPage() {
               }
             }
           } catch {
-            // 迁移失败不影响登录
+            // Migration failure must not block login
           }
         })();
       }
@@ -59,7 +59,7 @@ export default function LoginPage() {
         new URLSearchParams(window.location.search).get("redirect") || "/";
       router.push(redirect);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "登录失败，请稍后重试");
+      setError(err instanceof Error ? err.message : "Login failed, please try again");
       setLoading(false);
     }
   };
@@ -75,15 +75,15 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-sm rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-lg backdrop-blur">
         <h1 className="text-center text-2xl font-semibold text-zinc-900">
-          登录艾比世界
+          Sign in to Aibi World
         </h1>
         <p className="mt-1 text-center text-sm text-zinc-500">
-          登录后，你的宠物记忆会一直保存~
+          Sign in to keep your pets&apos; memories forever.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">邮箱</label>
+            <label className="mb-1 block text-sm text-zinc-600">Email</label>
             <input
               type="email"
               required
@@ -94,13 +94,13 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-zinc-600">密码</label>
+            <label className="mb-1 block text-sm text-zinc-600">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="请输入密码"
+              placeholder="Enter your password"
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
             />
           </div>
@@ -112,14 +112,14 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full rounded-full bg-orange-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "登录中..." : "登录"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-zinc-500">
-          还没有账号？{" "}
+          No account yet?{" "}
           <Link href="/register" className="font-medium text-orange-600 hover:underline">
-            去注册
+            Create one
           </Link>
         </p>
       </div>

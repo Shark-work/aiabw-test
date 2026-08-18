@@ -6,9 +6,9 @@ import Link from "next/link";
 type Log = { id: string; amount: number; reason: string; createdAt: string };
 
 const REASON_LABEL: Record<string, string> = {
-  checkin: "每日签到",
-  gacha: "盲盒抽取",
-  ugc_buy: "购买 UGC 宠物",
+  checkin: "Daily check-in",
+  gacha: "Mystery box draw",
+  ugc_buy: "UGC pet purchase",
 };
 
 export default function PointsPage() {
@@ -27,9 +27,9 @@ export default function PointsPage() {
       });
       const data = await res.json();
       if (data?.ok) setLogs(data.logs ?? []);
-      else setError(data?.error ?? "加载失败");
+      else setError(data?.error ?? "Failed to load");
     } catch {
-      setError("网络错误，请稍后重试");
+      setError("Network error, please try again");
     } finally {
       setLoading(false);
     }
@@ -46,9 +46,9 @@ export default function PointsPage() {
       <div className="mx-auto max-w-2xl">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">积分明细</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Points history</h1>
             <p className="text-xs text-zinc-500">
-              近 50 条记录 · 合计 {total > 0 ? "+" : ""}
+              Last 50 entries · Total {total > 0 ? "+" : ""}
               {total}
             </p>
           </div>
@@ -56,14 +56,14 @@ export default function PointsPage() {
             href="/my-pets"
             className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
           >
-            返回
+            Back
           </Link>
         </div>
 
-        {loading && <p className="py-10 text-center text-sm text-zinc-400">加载中…</p>}
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && logs.length === 0 && (
-          <p className="py-10 text-center text-sm text-zinc-400">还没有积分记录~</p>
+          <p className="py-10 text-center text-sm text-zinc-400">No points records yet.</p>
         )}
 
         <div className="space-y-2">

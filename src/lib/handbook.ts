@@ -6,12 +6,12 @@ import { adoptions, handbooks, messages as messagesTable } from "@/db/schema";
 import { getModel } from "@/lib/get-model";
 import { resolvePetConfig } from "@/lib/ugc";
 
-const HANDBOOK_PROMPT = `你是「艾比世界」的记忆手账助手。请把用户与宠物之间的聊天记录整理成一份温暖的 Markdown 记忆手账。
-要求：
-- 用 Markdown 输出，包含：# 标题、## 小节（例如「我们的相遇」「喜欢的点点滴滴」「重要时刻」「写给未来的你」等）。
-- 语气温柔，像宠物写给主人的手账。
-- 从对话中提炼用户的偏好、宠物相关趣事、重要经历；如果信息不多，就写鼓励与陪伴的话。
-- 只输出 Markdown 内容，不要输出解释。`;
+const HANDBOOK_PROMPT = `You are the memory journal assistant of "Aibi World". Turn the chat history between the user and their pet into a warm Markdown memory journal.
+Requirements:
+- Output in Markdown, including: # title, ## sections (e.g. "How we met", "Little things I love", "Important moments", "A letter to your future self", etc.).
+- Gentle tone, like a journal written by the pet to its owner.
+- Extract the user's preferences, pet-related fun facts and important experiences from the conversation; if there is little information, write words of encouragement and companionship.
+- Output the Markdown content only - no explanations.`;
 
 /**
  * 异步执行手账生成任务：读取聊天记录 → 调用百炼生成 Markdown → 写回 handbooks。
@@ -48,8 +48,8 @@ export async function runHandbookTask(taskId: string): Promise<void> {
   if (!task) return;
 
   try {
-    let messagesText = "（没有找到聊天记录）";
-    let petName = "艾比";
+    let messagesText = "(No chat history found)";
+    let petName = "Aibi";
 
     if (task.adoptionId) {
       const [adoption] = await db
@@ -59,7 +59,7 @@ export async function runHandbookTask(taskId: string): Promise<void> {
         .limit(1);
       if (adoption) {
         const pet = await resolvePetConfig(adoption.petType);
-        petName = pet?.name ?? "艾比";
+        petName = pet?.name ?? "Aibi";
         if (adoption.threadId) {
           const rows = await db
             .select()
@@ -71,10 +71,10 @@ export async function runHandbookTask(taskId: string): Promise<void> {
               const parts = r.parts as { type?: string; text?: string }[];
               const textPart = parts.find((p) => p.type === "text");
               const text = typeof textPart?.text === "string" ? textPart.text : "";
-              return text ? `${r.role === "user" ? "主人" : "宠物"}：${text}` : "";
+              return text ? `${r.role === "user" ? "Owner" : "Pet"}: ${text}` : "";
             })
             .filter(Boolean);
-          messagesText = lines.length ? lines.join("\n") : "（还没有聊天记录）";
+          messagesText = lines.length ? lines.join("\n") : "(No chat history yet)";
         }
       }
     }
@@ -84,13 +84,13 @@ export async function runHandbookTask(taskId: string): Promise<void> {
       temperature: 0.7,
       maxOutputTokens: 1200,
       system: HANDBOOK_PROMPT,
-      prompt: `宠物名字：${petName}\n\n聊天记录：\n${messagesText}`,
+      prompt: `Pet name: ${petName}\n\nChat history:\n${messagesText}`,
     });
 
     await db
       .update(handbooks)
       .set({
-        title: `${petName} 的记忆手账`,
+        title: `${petName}'s Memory Journal`,
         content: text.trim(),
         status: "done",
         updatedAt: new Date(),

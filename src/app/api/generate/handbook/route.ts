@@ -20,13 +20,13 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
     const adoptionId = typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
     if (!adoptionId) {
-      return NextResponse.json({ ok: false, error: "缺少 adoptionId" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "adoptionId is required" }, { status: 400 });
     }
 
     await ensureDbSchemaOnce();
@@ -37,10 +37,10 @@ export async function POST(req: Request) {
       .where(eq(adoptions.id, adoptionId))
       .limit(1);
     if (!adoption) {
-      return NextResponse.json({ ok: false, error: "未找到该宠物" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Pet not found" }, { status: 404 });
     }
     if (adoption.userId !== user.id) {
-      return NextResponse.json({ ok: false, error: "无权生成该宠物的手账" }, { status: 403 });
+      return NextResponse.json({ ok: false, error: "You cannot generate a journal for this pet" }, { status: 403 });
     }
 
     const [task] = await db
@@ -56,6 +56,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, taskId: task.id, status: "processing" });
   } catch (err) {
     console.error("[generate/handbook] failed:", err);
-    return NextResponse.json({ ok: false, error: "创建手账任务失败" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Failed to create the journal task" }, { status: 500 });
   }
 }

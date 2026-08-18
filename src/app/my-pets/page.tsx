@@ -48,9 +48,9 @@ export default function MyPetsPage() {
       );
       const data = await res.json();
       if (data?.ok) setPets(data.pets ?? []);
-      else setError(data?.error ?? "加载失败");
+      else setError(data?.error ?? "Failed to load");
     } catch {
-      setError("网络错误，请稍后重试");
+      setError("Network error, please try again");
     } finally {
       setLoading(false);
     }
@@ -105,12 +105,12 @@ export default function MyPetsPage() {
     [
       {
         key: "user",
-        title: "👤 关于用户",
+        title: "👤 About the user",
         list: pet.memory.facts.filter((f) => (f.category ?? "user") === "user"),
       },
       {
         key: "pet",
-        title: "🐾 关于宠物",
+        title: "🐾 About the pet",
         list: pet.memory.facts.filter((f) => f.category === "pet"),
       },
     ].filter((g) => g.list.length > 0);
@@ -133,9 +133,9 @@ export default function MyPetsPage() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">我的宠物</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">My pets</h1>
             <p className="text-xs text-zinc-500">
-              这里保存着你和伙伴们一起积累的记忆~
+              All the memories you&apos;ve built with your companions live here.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -143,39 +143,39 @@ export default function MyPetsPage() {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
               className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none"
-              title="排序方式"
+              title="Sort by"
             >
-              <option value="recent">最近领养</option>
-              <option value="happiness">心情最高</option>
-              <option value="level">等级最高</option>
-              <option value="points">积分最多</option>
+              <option value="recent">Recently adopted</option>
+              <option value="happiness">Highest mood</option>
+              <option value="level">Highest level</option>
+              <option value="points">Most points</option>
             </select>
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="🔍 搜索记忆…"
+              placeholder="🔍 Search memories…"
               className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm focus:border-violet-400 focus:outline-none"
             />
             <Link
               href="/"
               className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600"
             >
-              🐾 领养更多
+              🐾 Adopt more
             </Link>
           </div>
         </div>
 
-        {loading && <p className="py-10 text-center text-sm text-zinc-400">加载中…</p>}
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && pets.length === 0 && (
           <div className="py-16 text-center">
-            <p className="text-zinc-500">还没有宠物伙伴，快去领养一只吧~</p>
+            <p className="text-zinc-500">No companions yet - go adopt one!</p>
             <Link
               href="/"
               className="mt-4 inline-block rounded-full bg-orange-500 px-6 py-2 text-sm font-medium text-white hover:bg-orange-600"
             >
-              去领养
+              Adopt a pet
             </Link>
           </div>
         )}
@@ -191,12 +191,12 @@ export default function MyPetsPage() {
             const groups = [
               {
                 key: "user",
-                title: "👤 关于用户",
+                title: "👤 About the user",
                 list: facts.filter((f) => (f.category ?? "user") === "user"),
               },
               {
                 key: "pet",
-                title: "🐾 关于宠物",
+                title: "🐾 About the pet",
                 list: facts.filter((f) => f.category === "pet"),
               },
             ].filter((g) => g.list.length > 0);
@@ -223,12 +223,12 @@ export default function MyPetsPage() {
                       </span>
                       {pet.isUnlocked && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                          已解锁
+                          Unlocked
                         </span>
                       )}
                     </div>
                     <div className="mt-0.5 text-xs text-zinc-500">
-                      {mo.emoji} {mo.label} · 积分 {pet.monthlyPoints} · 对话 {pet.chatCount} 句
+                      {mo.emoji} {mo.label} · Points {pet.monthlyPoints} · Chats {pet.chatCount}
                     </div>
                   </div>
                   <button
@@ -236,7 +236,7 @@ export default function MyPetsPage() {
                     onClick={() => setSelectedPet(pet)}
                     className="shrink-0 rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-500 transition hover:bg-zinc-50"
                   >
-                    详情
+                    Details
                   </button>
                   {pet.threadId && (
                     <button
@@ -244,14 +244,14 @@ export default function MyPetsPage() {
                       onClick={() => router.push(`/chat?thread=${pet.threadId}&adopt=${pet.id}`)}
                       className="shrink-0 rounded-full bg-violet-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-violet-600"
                     >
-                      去聊天
+                      Chat
                     </button>
                   )}
                 </div>
 
                 <div className="mt-3 border-t border-zinc-100 pt-2">
                   {groups.length === 0 ? (
-                    <p className="py-2 text-xs text-zinc-400">还没有记忆~</p>
+                    <p className="py-2 text-xs text-zinc-400">No memories yet.</p>
                   ) : (
                     groups.map((g) => (
                       <div key={g.key} className="mb-1.5">
@@ -278,7 +278,7 @@ export default function MyPetsPage() {
                                     ? "text-amber-500"
                                     : "text-zinc-300 hover:text-amber-500"
                                 }`}
-                                title={f.pinned ? "取消置顶" : "置顶"}
+                                title={f.pinned ? "Unpin" : "Pin"}
                               >
                                 📌
                               </button>
@@ -286,9 +286,9 @@ export default function MyPetsPage() {
                                 type="button"
                                 onClick={() => deleteFact(pet, f.text)}
                                 className="text-[10px] text-zinc-300 hover:text-red-500"
-                                title="删除"
+                                title="Delete"
                               >
-                                删除
+                                Delete
                               </button>
                             </span>
                           </div>
@@ -329,13 +329,13 @@ export default function MyPetsPage() {
                   </span>
                   {selectedPet.isUnlocked && (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                      已解锁
+                      Unlocked
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-zinc-500">
                   {moodInfo(selectedPet.happiness).emoji}{" "}
-                  {moodInfo(selectedPet.happiness).label} · 领养于{" "}
+                  {moodInfo(selectedPet.happiness).label} · Adopted on{" "}
                   {selectedPet.adoptedAt
                     ? new Date(selectedPet.adoptedAt).toLocaleDateString()
                     : "—"}
@@ -345,7 +345,7 @@ export default function MyPetsPage() {
                 type="button"
                 onClick={() => setSelectedPet(null)}
                 className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                aria-label="关闭"
+                aria-label="Close"
               >
                 ×
               </button>
@@ -355,7 +355,7 @@ export default function MyPetsPage() {
             <div className="mt-4 space-y-2">
               <div>
                 <div className="mb-1 flex justify-between text-xs text-zinc-500">
-                  <span>心情值</span>
+                  <span>Mood</span>
                   <span>{selectedPet.happiness}/100</span>
                 </div>
                 <div className="h-2 rounded-full bg-zinc-100">
@@ -370,19 +370,19 @@ export default function MyPetsPage() {
                   <div className="text-sm font-semibold text-zinc-800">
                     Lv.{selectedPet.level}
                   </div>
-                  <div className="text-[10px] text-zinc-400">等级</div>
+                  <div className="text-[10px] text-zinc-400">Level</div>
                 </div>
                 <div className="rounded-xl bg-zinc-50 py-2">
                   <div className="text-sm font-semibold text-zinc-800">
                     {selectedPet.monthlyPoints}
                   </div>
-                  <div className="text-[10px] text-zinc-400">本月积分</div>
+                  <div className="text-[10px] text-zinc-400">Monthly points</div>
                 </div>
                 <div className="rounded-xl bg-zinc-50 py-2">
                   <div className="text-sm font-semibold text-zinc-800">
                     {selectedPet.chatCount}
                   </div>
-                  <div className="text-[10px] text-zinc-400">对话数</div>
+                  <div className="text-[10px] text-zinc-400">Chats</div>
                 </div>
               </div>
             </div>
@@ -391,7 +391,7 @@ export default function MyPetsPage() {
             <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
               {groupsFor(selectedPet).length === 0 ? (
                 <p className="py-4 text-center text-sm text-zinc-400">
-                  还没有记忆~
+                  No memories yet.
                 </p>
               ) : (
                 groupsFor(selectedPet).map((g) => (
@@ -427,7 +427,7 @@ export default function MyPetsPage() {
                             onClick={() => deleteFact(selectedPet, f.text)}
                             className="text-[10px] text-zinc-300 hover:text-red-500"
                           >
-                            删除
+                            Delete
                           </button>
                         </span>
                       </div>
@@ -447,7 +447,7 @@ export default function MyPetsPage() {
                 }
                 className="mt-4 w-full rounded-full bg-violet-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-violet-600"
               >
-                去聊天
+                Chat
               </button>
             )}
           </div>

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
     }
 
     await ensureDbSchemaOnce();
@@ -64,6 +64,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("[user/checkin] failed:", err);
-    return NextResponse.json({ ok: false, error: "签到失败，请稍后重试" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Check-in failed, please try again" }, { status: 500 });
   }
 }

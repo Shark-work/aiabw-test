@@ -25,10 +25,10 @@ export async function POST(req: Request) {
     const password = typeof body?.password === "string" ? body.password : "";
 
     if (!EMAIL_RE.test(email)) {
-      return NextResponse.json({ ok: false, error: "邮箱格式不正确" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Invalid email format" }, { status: 400 });
     }
     if (password.length < 6) {
-      return NextResponse.json({ ok: false, error: "密码至少 6 位" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
     await ensureDbSchemaOnce();
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
         );
       if (isDuplicate) {
         return NextResponse.json(
-          { ok: false, error: "该邮箱已注册，请直接登录" },
+          { ok: false, error: "This email is already registered - please sign in" },
           { status: 409 },
         );
       }
@@ -70,6 +70,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email }, dbg });
   } catch (err) {
     console.error("[auth/register] failed:", err);
-    return NextResponse.json({ ok: false, error: "注册失败，请稍后重试" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Registration failed, please try again" }, { status: 500 });
   }
 }

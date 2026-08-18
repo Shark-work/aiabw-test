@@ -40,7 +40,7 @@ test("buildPetLimitBody carries payment hint fields", () => {
   assert.equal(body.unlockAdoptionId, "adopt-123");
   assert.equal(body.petCount, 1);
   assert.equal(body.isUnlocked, false);
-  assert.match(body.error, /解锁/);
+  assert.match(body.error, /unlock/i);
   assert.ok(body.error.length > 0);
   assert.ok(PET_LIMIT_MESSAGE.length > 0);
 });

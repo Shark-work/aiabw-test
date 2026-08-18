@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
     }
 
     await ensureDbSchemaOnce();
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       .limit(1);
     if (!me?.isCreator) {
       return NextResponse.json(
-        { ok: false, error: "只有创作者才能发布 UGC 宠物" },
+        { ok: false, error: "Only creators can publish UGC pets" },
         { status: 403 },
       );
     }
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     if (!name || !imageUrl || !systemPrompt) {
       return NextResponse.json(
-        { ok: false, error: "name / imageUrl / systemPrompt 不能为空" },
+        { ok: false, error: "name / imageUrl / systemPrompt must not be empty" },
         { status: 400 },
       );
     }
@@ -61,6 +61,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, pet });
   } catch (err) {
     console.error("[creator/publish] failed:", err);
-    return NextResponse.json({ ok: false, error: "发布失败，请稍后重试" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Publish failed, please try again" }, { status: 500 });
   }
 }

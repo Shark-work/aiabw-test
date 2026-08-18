@@ -8,7 +8,7 @@ import { DEFAULT_PET_TYPE } from "@/lib/pet-config";
 import { resolvePetConfig } from "@/lib/ugc";
 
 const FALLBACK_WELCOME =
-  "太开心啦！以后我就是你的专属艾比了！有什么我可以帮你的吗？";
+  "So happy! I'm your very own Aibi now. How can I help you?";
 
 // 领养成功后进入的独立聊天页。
 // 服务端根据 URL 参数加载该线程的历史消息、艾比心情与宠物类型（petType），再交给客户端渲染。
@@ -69,18 +69,18 @@ export default async function ChatPage({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={pet.avatar}
-          alt={`艾比-${pet.name}`}
+          alt={`Aibi-${pet.name}`}
           className="h-10 w-10 rounded-full border border-orange-200 bg-orange-50 object-cover"
         />
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-zinc-900">艾比世界</span>
+            <span className="text-sm font-semibold text-zinc-900">Aibi World</span>
             {/* 养成：当前等级徽标 */}
             <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
               Lv.{level} {pet.name}
             </span>
           </div>
-          <div className="text-xs text-zinc-500">和{pet.name}聊聊吧~</div>
+          <div className="text-xs text-zinc-500">Chat with {pet.name}~</div>
         </div>
       </div>
 

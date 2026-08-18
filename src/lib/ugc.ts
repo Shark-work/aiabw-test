@@ -22,8 +22,8 @@ export async function getUgcPetConfig(petType: string): Promise<PetConfig | null
   return {
     name: pet.name,
     avatar: pet.imageUrl,
-    welcome: `嗨！我是创作者打造的「${pet.name}」，想和你做朋友！`,
-    personality: "创作者捏出来的独特伙伴",
+    welcome: `Hi! I'm "${pet.name}", a companion created by a creator - nice to meet you!`,
+    personality: "A unique companion crafted by a creator",
     systemPrompt: pet.systemPrompt,
   };
 }

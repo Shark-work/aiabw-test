@@ -105,10 +105,10 @@ export function ChatPanel({
       if (data?.ok) {
         setPay({ loading: false, qr: data.qr, payUrl: data.payUrl ?? null });
       } else {
-        setPay({ loading: false, error: data?.error ?? "下单失败，请稍后重试" });
+        setPay({ loading: false, error: data?.error ?? "Order creation failed, please try again" });
       }
     } catch {
-      setPay({ loading: false, error: "网络错误，请稍后重试" });
+      setPay({ loading: false, error: "Network error, please try again" });
     } finally {
       payBusyRef.current = false;
     }
@@ -126,12 +126,12 @@ export function ChatPanel({
         setBlockedDismissed(false);
         setPay({ loading: false });
         clearError?.();
-        alert("🎉 解锁成功！快去和宠物畅聊吧~");
+        alert("🎉 Unlocked! Go chat with your pet!");
       } else {
-        alert("还没检测到解锁，请确认已完成支付后再试~");
+        alert("Unlock not detected yet. Please make sure you completed the payment and try again.");
       }
     } catch {
-      alert("网络错误，请稍后重试");
+      alert("Network error, please try again");
     }
   };
 
@@ -298,7 +298,7 @@ export function ChatPanel({
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="text-xs font-medium text-zinc-500">
-                    {m.role === "user" ? "我" : pet.name}
+                    {m.role === "user" ? "You" : pet.name}
                   </div>
                   {parts.map((part, idx) => {
                     if (part.type === "text") {
@@ -339,7 +339,7 @@ export function ChatPanel({
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`和${pet.name}聊聊你的需求吧~`}
+            placeholder={`Tell ${pet.name} what you need~`}
             disabled={isLoading}
           />
           <Button type="submit" disabled={isLoading || !input.trim()}>
@@ -348,7 +348,7 @@ export function ChatPanel({
             ) : (
               <Send className="h-4 w-4" />
             )}
-            发送
+            Send
           </Button>
         </form>
       </CardContent>
@@ -361,11 +361,11 @@ export function ChatPanel({
               🧋
             </div>
             <h3 className="text-lg font-bold text-zinc-900">
-              {pet.name}需要充能啦~
+              {pet.name} needs an energy boost!
             </h3>
             <p className="mt-2 text-sm text-zinc-600">{blocked.message}</p>
             <p className="mt-1 text-xs text-zinc-400">
-              赞助一杯奶茶，即可解锁无限畅聊，还能带走专属限量皮肤哦~
+              Sponsor a milk tea to unlock unlimited chatting and get exclusive limited skins too!
             </p>
             {/* 支付流程 */}
             {pay.qr ? (
@@ -374,15 +374,15 @@ export function ChatPanel({
                   <QRCodeSVG value={pay.qr} size={176} />
                 </div>
                 <p className="text-xs text-zinc-500">
-                  请使用支付宝 / 微信扫描上方二维码完成支付~
+                  Scan the QR code above with Alipay / WeChat to complete the payment.
                 </p>
                 {payTimeout ? (
                   <p className="text-xs text-amber-600">
-                    ⏱️ 支付状态未同步，请手动点击下方「确认解锁」，或稍后再试。
+                    ⏱️ Payment status not synced. Please tap &quot;Confirm unlock&quot; below or try again later.
                   </p>
                 ) : (
                   <p className="text-xs text-zinc-400">
-                    ⏳ 正在等待支付结果，完成后将自动解锁…
+                    ⏳ Waiting for the payment result - unlocks automatically once paid…
                   </p>
                 )}
                 {pay.payUrl && (
@@ -392,7 +392,7 @@ export function ChatPanel({
                     rel="noreferrer"
                     className="block text-xs text-blue-600 underline"
                   >
-                    打不开扫码？点这里打开支付页 →
+                    Can&apos;t scan? Open the payment page instead →
                   </a>
                 )}
                 <button
@@ -400,14 +400,14 @@ export function ChatPanel({
                   onClick={handleVerifyPay}
                   className="w-full rounded-full bg-amber-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-amber-600"
                 >
-                  ✅ 我已支付，确认解锁
+                  ✅ I&apos;ve paid - confirm unlock
                 </button>
                 <button
                   type="button"
                   onClick={() => setPay({ loading: false })}
                   className="w-full rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-50"
                 >
-                  返回
+                  Back
                 </button>
               </div>
             ) : (
@@ -421,14 +421,14 @@ export function ChatPanel({
                   disabled={pay.loading || !adoptionId}
                   className="w-full rounded-full bg-amber-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {pay.loading ? "⏳ 正在生成支付二维码..." : "🧋 赞助一杯奶茶 · 解锁畅聊"}
+                  {pay.loading ? "⏳ Generating payment QR code..." : "🧋 Sponsor a milk tea · Unlock chatting"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setBlockedDismissed(true)}
                   className="w-full rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-50"
                 >
-                  稍后再看
+                  Later
                 </button>
               </div>
             )}

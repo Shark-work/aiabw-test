@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const user = await getUserFromRequest(req);
   if (!user) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
   }
 
   const rows = await db

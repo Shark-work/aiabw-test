@@ -33,12 +33,12 @@ export function DiagnosticForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "推荐失败，请稍后重试");
+        throw new Error(data.error || "Recommendation failed, please try again");
       }
 
       setResult(data.result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "推荐失败，请稍后重试");
+      setError(err instanceof Error ? err.message : "Recommendation failed, please try again");
     } finally {
       setLoading(false);
     }
@@ -53,7 +53,7 @@ export function DiagnosticForm() {
             htmlFor="core-need"
             className="block text-sm font-medium text-zinc-800"
           >
-            1. 核心诉求
+            1. Core need
           </label>
           <select
             id="core-need"
@@ -62,25 +62,25 @@ export function DiagnosticForm() {
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
           >
             <option value="" disabled>
-              请选择你的核心诉求
+              Select your core need
             </option>
-            <option value="code">写代码</option>
-            <option value="writing">写文章</option>
-            <option value="data">数据分析</option>
-            <option value="other">其他</option>
+            <option value="code">Writing code</option>
+            <option value="writing">Writing articles</option>
+            <option value="data">Data analysis</option>
+            <option value="other">Other</option>
           </select>
         </div>
 
         {/* 期望程度 */}
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-zinc-800">
-            2. 期望程度
+            2. Expected level
           </legend>
           <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
             {[
-              { value: "idea", label: "给思路" },
-              { value: "draft", label: "生成草稿" },
-              { value: "auto", label: "全自动执行" },
+              { value: "idea", label: "Ideas only" },
+              { value: "draft", label: "Generate a draft" },
+              { value: "auto", label: "Full automation" },
             ].map((option) => (
               <label
                 key={option.value}
@@ -107,13 +107,13 @@ export function DiagnosticForm() {
         {/* 技术基础 */}
         <fieldset className="space-y-2">
           <legend className="block text-sm font-medium text-zinc-800">
-            3. 技术基础
+            3. Technical level
           </legend>
           <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
             {[
-              { value: "beginner", label: "纯小白" },
-              { value: "basic", label: "懂点基础" },
-              { value: "expert", label: "资深开发者" },
+              { value: "beginner", label: "Complete beginner" },
+              { value: "basic", label: "Some basics" },
+              { value: "expert", label: "Senior developer" },
             ].map((option) => (
               <label
                 key={option.value}
@@ -143,7 +143,7 @@ export function DiagnosticForm() {
           className="w-full rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
           disabled={!coreNeed || !expectation || !skillLevel || loading}
         >
-          {loading ? "AI 正在为你调配最佳方案..." : "开始探索 →"}
+          {loading ? "AI is preparing the best solution for you..." : "Start exploring →"}
         </button>
       </form>
 
@@ -153,7 +153,7 @@ export function DiagnosticForm() {
           {loading && (
             <div className="flex items-center justify-center gap-3 py-4 text-sm text-zinc-600">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
-              AI 正在为你分析推荐...
+              AI is analyzing and recommending...
             </div>
           )}
 
@@ -166,7 +166,7 @@ export function DiagnosticForm() {
           {result && !loading && (
             <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 space-y-3">
               <h2 className="text-lg font-semibold text-zinc-900">
-                你的专属 AI 工具处方单
+                Your personalized AI tool prescription
               </h2>
               <div className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
                 {result}

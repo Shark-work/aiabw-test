@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const user = await getUserFromRequest(req);
   if (!user) {
-    return NextResponse.json({ ok: false, error: "未登录或登录已过期" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "Not signed in or session expired" }, { status: 401 });
   }
 
   const [row] = await db

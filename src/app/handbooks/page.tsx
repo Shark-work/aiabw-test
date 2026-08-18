@@ -39,7 +39,7 @@ export default function HandbooksPage() {
       }).then((r) => r.json());
       if (p?.ok) setPets(p.pets.map((x: { id: string; petName: string }) => ({ id: x.id, petName: x.petName })));
     } catch {
-      setError("加载失败，请稍后重试");
+      setError("Failed to load, please try again");
     } finally {
       setLoading(false);
     }
@@ -101,9 +101,9 @@ export default function HandbooksPage() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold text-zinc-900">记忆手账</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Memory Journals</h1>
             <p className="text-xs text-zinc-500">
-              把和宠物相处的点滴，生成一本温暖的记忆手账~
+              Turn the moments with your pet into a warm memory journal.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -113,32 +113,32 @@ export default function HandbooksPage() {
               disabled={generating || !t || pets.length === 0}
               className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {generating ? "⏳ 生成中（后台进行）..." : "📔 为第一只宠物生成手账"}
+              {generating ? "⏳ Generating (in the background)..." : "📔 Generate a journal for your first pet"}
             </button>
             <Link
               href="/my-pets"
               className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
             >
-              我的宠物
+              My pets
             </Link>
           </div>
         </div>
 
         {!t && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-700">
-            请先{" "}
+            Please{" "}
             <Link href="/login?redirect=/handbooks" className="font-medium underline">
-              登录
+              sign in
             </Link>{" "}
-            查看你的记忆手账
+            to view your memory journals.
           </div>
         )}
 
-        {loading && <p className="py-10 text-center text-sm text-zinc-400">加载中…</p>}
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && t && handbooks.length === 0 && (
           <p className="py-10 text-center text-sm text-zinc-400">
-            还没有手账，点上方按钮为第一只宠物生成一本吧~
+            No journals yet - tap the button above to generate one for your first pet.
           </p>
         )}
 
@@ -152,21 +152,21 @@ export default function HandbooksPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-zinc-900">
-                  {hb.title ?? "（生成中）"}
+                  {hb.title ?? "(generating)"}
                 </span>
                 {hb.status === "processing" || hb.status === "generating" ? (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                    生成中
+                    Generating
                   </span>
                 ) : null}
                 {hb.status === "error" && (
                   <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-600">
-                    失败
+                    Failed
                   </span>
                 )}
                 {hb.status === "done" && (
                   <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                    完成
+                    Done
                   </span>
                 )}
               </div>
@@ -191,7 +191,7 @@ export default function HandbooksPage() {
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-zinc-900">
-                  {detail?.title ?? "记忆手账"}
+                  {detail?.title ?? "Memory journal"}
                 </h3>
                 <button
                   type="button"
@@ -200,13 +200,13 @@ export default function HandbooksPage() {
                     setDetail(null);
                   }}
                   className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-                  aria-label="关闭"
+                  aria-label="Close"
                 >
                   ×
                 </button>
               </div>
               <div className="mt-3 min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap text-sm leading-7 text-zinc-700">
-                {detail?.content ?? "加载中…"}
+                {detail?.content ?? "Loading…"}
               </div>
             </div>
           </div>

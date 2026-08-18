@@ -28,13 +28,13 @@ export async function POST(req: Request) {
   try {
     const user = await getUserFromRequest(req);
     if (!user) {
-      return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+      return NextResponse.json({ ok: false, error: "Please sign in first" }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
     const petId = typeof body?.petId === "string" ? body.petId.trim() : "";
     if (!petId) {
-      return NextResponse.json({ ok: false, error: "缺少 petId" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "petId is required" }, { status: 400 });
     }
 
     await ensureDbSchemaOnce();
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
       // 为买家创建领养记录 + 线程（petType 编码为 ugc:<id>）
       const [thread] = await tx
         .insert(threads)
-        .values({ userId: user.id, title: `${pet.name} 的家` })
+        .values({ userId: user.id, title: `${pet.name}'s Home` })
         .returning();
 
       const [adoption] = await tx
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         parts: [
           {
             type: "text",
-            text: `恭喜！你领养了创作者「${pet.name}」，它已经住进你的艾比世界啦~`,
+            text: `Congratulations! You adopted "${pet.name}" - it has moved into your Aibi World~`,
           },
         ],
       });
@@ -147,15 +147,15 @@ export async function POST(req: Request) {
     }
     const msg = err instanceof Error ? err.message : "";
     if (msg === "PET_NOT_FOUND") {
-      return NextResponse.json({ ok: false, error: "未找到该 UGC 宠物" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "UGC pet not found" }, { status: 404 });
     }
     if (msg === "BUY_OWN_PET") {
-      return NextResponse.json({ ok: false, error: "不能购买自己发布的宠物" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "You cannot buy your own published pet" }, { status: 400 });
     }
     if (msg === "INSUFFICIENT_POINTS") {
-      return NextResponse.json({ ok: false, error: "积分不足" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Not enough points" }, { status: 400 });
     }
     console.error("[pet/buy] failed:", err);
-    return NextResponse.json({ ok: false, error: "购买失败，请稍后重试" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "Purchase failed, please try again" }, { status: 500 });
   }
 }
