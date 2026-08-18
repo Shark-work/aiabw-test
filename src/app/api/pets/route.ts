@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
-import { apiError, resolveLocale } from "@/i18n/api-errors";
+import { apiError, petDisplayName, resolveLocale } from "@/i18n/api-errors";
 import { parseMemoryStore, type MemoryFact } from "@/lib/memory";
 import { getPet } from "@/lib/pet-config";
 
@@ -41,6 +41,7 @@ export async function GET(req: Request) {
       rows = [];
     }
 
+    const locale = resolveLocale(req);
     const pets = rows.map((a) => {
       const pet = getPet(a.petType);
       const store = parseMemoryStore(a.memoryContext);
@@ -52,6 +53,8 @@ export async function GET(req: Request) {
         id: a.id,
         petType: a.petType,
         petName: a.petName,
+        // 数据层映射：官方宠物按语言返回 display_name（不修改 DB 原始 petName）
+        displayName: petDisplayName(locale, a.petType, a.petName),
         avatar: pet.avatar,
         level: a.level,
         happiness: a.happiness,

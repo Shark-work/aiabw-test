@@ -8,12 +8,24 @@ import { ChatPanel } from "@/components/chat/chat-panel";
 import type { PetConfig } from "@/lib/pet-config";
 import { useTranslations } from "next-intl";
 
-/** 根据心情值返回对应的表情与文案。 */
+/** 根据心情值返回对应的表情与心情键（键再通过 t() 本地化）。 */
 export function moodInfo(happiness: number) {
-  if (happiness < 30) return { emoji: "😢", label: "Sad" };
-  if (happiness < 50) return { emoji: "😐", label: "OK" };
-  if (happiness < 80) return { emoji: "😊", label: "Happy" };
-  return { emoji: "🥰", label: "Ecstatic" };
+  if (happiness < 30) return { emoji: "😢", mood: "sad" };
+  if (happiness < 50) return { emoji: "😐", mood: "ok" };
+  if (happiness < 80) return { emoji: "😊", mood: "happy" };
+  return { emoji: "🥰", mood: "ecstatic" };
+}
+
+const MOOD_LABEL_KEY: Record<string, string> = {
+  sad: "moodSad",
+  ok: "moodOk",
+  happy: "moodHappy",
+  ecstatic: "moodEcstatic",
+};
+
+/** 把心情键翻译成当前语言的标签（t 为 useTranslations("chat") 返回值）。 */
+export function moodLabel(t: (key: string) => string, mood: string): string {
+  return t(MOOD_LABEL_KEY[mood] ?? "moodOk");
 }
 
 /** 记忆分类切换：用户 / 宠物 */
@@ -74,6 +86,7 @@ export function ChatClient({
 }) {
   const t = useTranslations("chatClient");
   const tc = useTranslations("common");
+  const tchat = useTranslations("chat");
   const [adoptionIdState] = useState(adoptionId);
   const [happiness, setHappiness] = useState(initialHappiness);
   const [level, setLevel] = useState(initialLevel);
@@ -358,9 +371,9 @@ export function ChatClient({
       footerInfo={
         <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2 text-sm">
           <span className="font-medium text-zinc-700">
-            {pet.name}&apos;s mood:
+            {tchat("mood", { name: pet.name })}
             <span className="text-lg">{mo.emoji}</span>
-            <span className="ml-1 text-zinc-500">({mo.label})</span>
+            <span className="ml-1 text-zinc-500">({moodLabel(tchat, mo.mood)})</span>
           </span>
           <span className="flex items-center gap-3">
             <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">

@@ -151,9 +151,9 @@
     "you": "我",
     "mood": "{name}现在的心情：",
     "moodSad": "难过",
-    "moodOk": "一般",
+    "moodOk": "平静",
     "moodHappy": "开心",
-    "moodEcstatic": "超幸福",
+    "moodEcstatic": "狂喜",
     "monthlyPoints": "本月活跃度积分：{points}",
     "refreshing": "刷新中…"
   },

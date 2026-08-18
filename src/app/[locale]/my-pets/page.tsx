@@ -5,13 +5,15 @@ import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 
-import { moodInfo } from "@/components/chat/chat-client";
+import { moodInfo, moodLabel } from "@/components/chat/chat-client";
 import { getAnonymousId } from "@/lib/anon-id";
 
 type PetItem = {
   id: string;
   petType: string;
   petName: string;
+  /** 数据层映射后的展示名（官方宠物按 locale 本地化；老数据不修改 DB） */
+  displayName?: string;
   avatar: string;
   level: number;
   happiness: number;
@@ -31,6 +33,7 @@ type SortKey = "recent" | "happiness" | "level" | "points";
 export default function MyPetsPage() {
   const t = useTranslations("myPets");
   const tc = useTranslations("common");
+  const tchat = useTranslations("chat");
   const router = useRouter();
   const [pets, setPets] = useState<PetItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -213,13 +216,13 @@ export default function MyPetsPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={pet.avatar}
-                    alt={pet.petName}
+                    alt={pet.displayName || pet.petName}
                     className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-zinc-900">
-                        {pet.petName}
+                        {pet.displayName || pet.petName}
                       </span>
                       <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-semibold text-white">
                         Lv.{pet.level}
@@ -231,7 +234,7 @@ export default function MyPetsPage() {
                       )}
                     </div>
                     <div className="mt-0.5 text-xs text-zinc-500">
-                      {t("statsLine", { emoji: mo.emoji, label: mo.label, points: pet.monthlyPoints, chats: pet.chatCount })}
+                      {t("statsLine", { emoji: mo.emoji, label: moodLabel(tchat, mo.mood), points: pet.monthlyPoints, chats: pet.chatCount })}
                     </div>
                   </div>
                   <button
@@ -319,13 +322,13 @@ export default function MyPetsPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedPet.avatar}
-                alt={selectedPet.petName}
+                alt={selectedPet.displayName || selectedPet.petName}
                 className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-zinc-900">
-                    {selectedPet.petName}
+                    {selectedPet.displayName || selectedPet.petName}
                   </span>
                   <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                     Lv.{selectedPet.level}
@@ -337,7 +340,7 @@ export default function MyPetsPage() {
                   )}
                 </div>
                 <div className="text-xs text-zinc-500">
-                  {t("adoptedLine", { emoji: moodInfo(selectedPet.happiness).emoji, label: moodInfo(selectedPet.happiness).label, date: selectedPet.adoptedAt ? new Date(selectedPet.adoptedAt).toLocaleDateString() : "—" })}
+                  {t("adoptedLine", { emoji: moodInfo(selectedPet.happiness).emoji, label: moodLabel(tchat, moodInfo(selectedPet.happiness).mood), date: selectedPet.adoptedAt ? new Date(selectedPet.adoptedAt).toLocaleDateString() : "—" })}
                 </div>
               </div>
               <button

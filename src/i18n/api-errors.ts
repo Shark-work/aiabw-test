@@ -37,3 +37,20 @@ export function apiError(
 ): string {
   return apiMessage(locale, key, params);
 }
+
+/**
+ * 老数据宠物名映射（数据层）：
+ * 官方宠物（fox/penguin/dog）按当前 locale 返回对应语言的名字（抱抱狐 / Huggy Fox），
+ * UGC 或未知宠物回退到数据库存储名。不修改数据库原始数据。
+ */
+export function petDisplayName(
+  locale: Locale,
+  petType: string,
+  fallback: string,
+): string {
+  const pets = (locale === "en" ? en : zh) as {
+    pets?: Record<string, { name?: string }>;
+  };
+  const localized = pets?.pets?.[petType]?.name;
+  return localized || fallback;
+}
