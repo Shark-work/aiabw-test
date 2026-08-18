@@ -202,11 +202,15 @@ export function ensureDbSchemaOnce(): Promise<void> {
       );
       const row = exists.rows[0] ?? {};
       if (row.u && row.a && row.t) {
-        // 表已存在：幂等补列（ALTER）+ 补索引（都必须在快速路径执行，
-        // 否则新增列/索引永远不会应用到已存在的生产库）
+        // 快速路径：核心表已存在 → 仍需幂等执行 CREATE TABLE IF NOT EXISTS
+        // （否则后续新增的表——如 agent_memories——永远不会被创建到已存在的生产库）
+        // + 幂等补列（ALTER）+ 补索引。
+        for (const statement of SCHEMA_CREATES) {
+          await client.query(statement);
+        }
         await runAlters(client);
         await runIndexes(client);
-        console.log("[db] schema present: columns & indexes ensured");
+        console.log("[db] schema present: tables ensured (create-if-not-exists + alters + indexes)");
         return;
       }
       for (const statement of SCHEMA_CREATES) {

@@ -26,9 +26,15 @@ jobs:
           echo "EOF" >> "$GITHUB_ENV"
 
       - name: call daily digest (summarize -> psychology copy -> post)
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "SKIP: CRON_SECRET not configured in GitHub Secrets. Add it (must equal the Vercel CRON_SECRET value) to enable the daily digest."
+            exit 0
+          fi
           curl -sS --max-time 180 -X POST https://www.aiabw.com/api/agent/daily-digest \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json" \
             -d "{\"updates\": $UPDATES_JSON, \"platforms\": \"both\"}" \
-            || echo "digest call failed (check CRON_SECRET secret + Vercel env)"
+            || echo "digest call failed (check CRON_SECRET matches Vercel + social env vars configured)"
