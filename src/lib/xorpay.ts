@@ -134,8 +134,14 @@ export async function createXorpayOrder(fields: {
       };
     }
 
-    // XorPay 以 status === 1 表示下单成功。
-    const ok = data?.status === 1 || data?.status === "1";
+    // XorPay 以 status === "ok" 表示下单成功（旧文档为 1，兼容两者）；
+    // 其它值为错误码（sign_error / fee_error / aid_not_exist / pay_type_error …）
+    const ok = data?.status === "ok" || data?.status === 1 || data?.status === "1";
+    if (!ok) {
+      const status = data?.status ?? "unknown";
+      const msg = data?.msg || data?.message || "";
+      return { ok: false, error: `XorPay order failed (${status}) ${msg}`.trim() };
+    }
     return { ok, data };
   } catch (err) {
     return {

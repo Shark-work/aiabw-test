@@ -121,7 +121,8 @@ export async function POST(req: Request) {
     }
 
     const d = (data ?? {}) as Record<string, unknown>;
-    const qr = (d.qr ?? d.qrcode ?? d.url ?? d.pay_url ?? d.payurl) as string | undefined;
+    const info = (d.info ?? {}) as Record<string, unknown>;
+    const qr = (d.qr ?? d.qrcode ?? d.url ?? d.pay_url ?? d.payurl ?? info.qr ?? info.url ?? info.payurl) as string | undefined;
 
     if (!qr) {
       console.error("[pay/create] XorPay returned no QR code:", JSON.stringify(d));
@@ -132,7 +133,7 @@ export async function POST(req: Request) {
       ok: true,
       orderId: order_id,
       qr,
-      payUrl: (d.url ?? d.pay_url ?? null) as string | null,
+      payUrl: (d.url ?? d.pay_url ?? info.url ?? null) as string | null,
       amount,
       payType: pay_type,
     });
