@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { users, ugcPets } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
+import { isBlobUrl } from "@/lib/blob-url";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
@@ -13,6 +14,9 @@ export const runtime = "nodejs";
  * 请求头：Authorization: Bearer <token>（需 is_creator）
  * 请求体：{ name, imageUrl, systemPrompt, priceOrPoints? }
  * 创作者发布自己的 UGC 艾比。
+ *
+ * 头像安全策略：imageUrl 必须为 Vercel Blob 第一方链接（经 /api/creator/upload 上传），
+ * 拒绝一切外部图床 URL（防盗链失效 + 违规内容风险）。
  */
 export async function POST(req: Request) {
   try {
@@ -45,6 +49,14 @@ export async function POST(req: Request) {
     if (!name || !imageUrl || !systemPrompt) {
       return NextResponse.json(
         { ok: false, error: "name / imageUrl / systemPrompt must not be empty" },
+        { status: 400 },
+      );
+    }
+
+    // Blob-only：拒绝外部图床 URL，头像必须由 /api/creator/upload 上传到 Vercel Blob。
+    if (!isBlobUrl(imageUrl)) {
+      return NextResponse.json(
+        { ok: false, error: apiError(resolveLocale(req), "blobOnly") },
         { status: 400 },
       );
     }

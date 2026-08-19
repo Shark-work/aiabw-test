@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 
-import { db, ensureDbSchemaOnce } from "@/db/client";
+import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { signToken, verifyPassword } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
@@ -13,6 +13,10 @@ export const runtime = "nodejs";
  * POST /api/auth/login
  * 请求体：{ email, password }
  * 登录成功返回 { ok, token, user }。
+ *
+ * 性能优化：不再在登录热路径上 await ensureDbSchemaOnce()。
+ * 建表/补列/补索引的 DDL 由 db/client.ts 模块加载时的 `void ensureDbSchemaOnce()`
+ * 以及 /api/warmup（部署后主动预热一次）负责；登录只做业务查询。
  */
 export async function POST(req: Request) {
   const perf = timer("login");
@@ -27,10 +31,6 @@ export async function POST(req: Request) {
     if (!email || !password) {
       return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "emailPasswordRequired") }, { status: 400 });
     }
-
-    await ensureDbSchemaOnce();
-    perf("ensureSchema");
-    dbg["ensure"] = Date.now() - start;
 
     const [user] = await db
       .select({ id: users.id, email: users.email, passwordHash: users.passwordHash })

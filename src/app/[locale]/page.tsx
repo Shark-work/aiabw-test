@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { DiagnosticForm } from "@/components/diagnostic-form";
+import { PetAvatar } from "@/components/PetAvatar";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PETS, type PetType } from "@/lib/pet-config";
 import { getAnonymousId } from "@/lib/anon-id";
@@ -191,7 +192,7 @@ export default function Home() {
       <div
         aria-hidden
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/resources/background_clothing/bg1.png')" }}
+        style={{ backgroundImage: "url('/resources/background_clothing/bg1.webp')" }}
       />
       {/* 半透明白色遮罩，保证内容可读 */}
       <div aria-hidden className="absolute inset-0 bg-white/60" />
@@ -281,8 +282,8 @@ export default function Home() {
                 disabled={adoptingType !== null}
                 className="group flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-5 text-center shadow-sm backdrop-blur transition hover:scale-[1.03] hover:border-orange-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                {/* 宠物头像：next/image 自动 WebP/AVIF 转码 */}
+                <PetAvatar
                   src={pet.avatar}
                   alt={`${tc("appName")}-${petName}`}
                   className="h-24 w-24 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"

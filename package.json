@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs tests/agent-embedding.test.mjs tests/referral.test.mjs",
+    "check:assets": "node scripts/check-assets.js",
+    "assets:optimize": "node scripts/optimize-images.mjs",
+    "migrate:pets-to-blob": "node scripts/migrate-pets-to-blob.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -21,6 +24,7 @@
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-slot": "^1.2.3",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/blob": "^2.8.0",
     "ai": "^5.0.60",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -46,6 +50,7 @@
     "eslint": "9.23.0",
     "eslint-config-next": "15.1.3",
     "postcss": "8.5.3",
+    "sharp": "^0.35.3",
     "tailwindcss": "^3.4.17",
     "typescript": "5.8.2"
   }

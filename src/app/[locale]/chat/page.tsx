@@ -5,6 +5,7 @@ import type { UIMessage } from "ai";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ChatClient } from "@/components/chat/chat-client";
+import { PetAvatar } from "@/components/PetAvatar";
 import { PETS, DEFAULT_PET_TYPE, type PetConfig } from "@/lib/pet-config";
 import { resolvePetConfig } from "@/lib/ugc";
 
@@ -84,8 +85,7 @@ export default async function ChatPage({
   return (
     <main className="flex h-dvh w-full flex-col gap-2 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
       <div className="flex items-center gap-3 px-1">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <PetAvatar
           src={pet.avatar}
           alt={`${tc("appName")}-${pet.name}`}
           className="h-10 w-10 rounded-full border border-orange-200 bg-orange-50 object-cover"

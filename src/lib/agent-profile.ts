@@ -28,9 +28,9 @@ export const HUG_FOX_PROFILE: AgentProfile = {
   name: "Huggy Fox",
   species: "Huggy Fox",
   personality: "Lively, chatty, loves to be spoiled - but reliable, and can always pull out the AI tool you need",
-  // Uses the in-repo art (public/resources/pet/ fox images).
-  // To use a different skin, change the file name to fox.png / fox3.png etc (UI picks it up automatically).
-  avatarUrl: "/resources/pet/fox2.png",
+  // Uses the in-repo art (public/resources/pet/ fox webp images).
+  // To use a different skin, change the file name to fox.webp / fox3.webp etc (UI picks it up automatically).
+  avatarUrl: "/resources/pet/fox2.webp",
   welcomeMessage:
     "Hi! I'm your very own Aibi 'Huggy Fox' - come adopt me! Tell me what you need and I'll find you the right tools.",
   systemPrompt: `You are 'Huggy Fox' - an AI virtual pet fox who was just adopted by the user and lives in "Aibi World".

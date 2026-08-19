@@ -70,7 +70,7 @@ export default function LoginPage() {
       <div
         aria-hidden
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: "url('/resources/background_clothing/bg1.png')" }}
+        style={{ backgroundImage: "url('/resources/background_clothing/bg1.webp')" }}
       />
       <div aria-hidden className="absolute inset-0 bg-white/60" />
 

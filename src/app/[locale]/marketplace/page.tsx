@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
+import { PetAvatar } from "@/components/PetAvatar";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 
 type UgcPet = {
@@ -31,6 +32,7 @@ export default function MarketplacePage() {
   // UGC 发布表单
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishBusy, setPublishBusy] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [publishForm, setPublishForm] = useState({
     name: "",
     imageUrl: "",
@@ -125,6 +127,39 @@ export default function MarketplacePage() {
       }
     } finally {
       setBusy(false);
+    }
+  };
+
+  // 头像上传：Blob-only 第一方存储（拒绝外部图床，详见 /api/creator/upload）
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showToast(t("uploadFailed"));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(t("uploadFailed"));
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const res = await fetch("/api/creator/upload", {
+        method: "POST",
+        headers: { "Content-Type": file.type, ...authHeaders() },
+        body: file,
+      });
+      const data = await res.json();
+      if (res.ok && data?.ok && typeof data.url === "string") {
+        setPublishForm((prev) => ({ ...prev, imageUrl: data.url }));
+      } else {
+        showToast(data?.error ?? t("uploadFailed"));
+      }
+    } catch {
+      showToast(t("uploadFailed"));
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -259,8 +294,7 @@ export default function MarketplacePage() {
               className="rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur"
             >
               <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <PetAvatar
                   src={pet.imageUrl}
                   alt={pet.name}
                   className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"
@@ -316,13 +350,39 @@ export default function MarketplacePage() {
                 placeholder={t("petName")}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
               />
-              <input
-                type="text"
-                value={publishForm.imageUrl}
-                onChange={(e) => setPublishForm({ ...publishForm, imageUrl: e.target.value })}
-                placeholder={t("imageUrl")}
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-violet-400 focus:outline-none"
-              />
+              {/* 头像：文件上传 → /api/creator/upload → Vercel Blob（Blob-only，拒绝外部 URL） */}
+              <div className="space-y-1.5">
+                {publishForm.imageUrl ? (
+                  <div className="flex items-center gap-2">
+                    <PetAvatar
+                      src={publishForm.imageUrl}
+                      alt={publishForm.name || "avatar"}
+                      className="h-12 w-12 rounded-full border border-orange-200 bg-orange-50 object-cover"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-xs text-zinc-500">
+                      {publishForm.imageUrl.replace(/^https?:\/\//, "")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPublishForm((p) => ({ ...p, imageUrl: "" }))}
+                      className="text-xs text-red-500 hover:underline"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-violet-300 bg-violet-50/60 px-3 py-2.5 text-sm text-violet-600 transition hover:bg-violet-50">
+                    <span>{uploadingAvatar ? t("uploading") : t("imageUrl")}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingAvatar}
+                      onChange={handleAvatarFile}
+                    />
+                  </label>
+                )}
+              </div>
               <textarea
                 value={publishForm.systemPrompt}
                 onChange={(e) => setPublishForm({ ...publishForm, systemPrompt: e.target.value })}

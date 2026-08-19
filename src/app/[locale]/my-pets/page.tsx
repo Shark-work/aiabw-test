@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 
 import { moodInfo, moodLabel } from "@/components/chat/chat-client";
+import { PetAvatar } from "@/components/PetAvatar";
 import { getAnonymousId } from "@/lib/anon-id";
 
 type PetItem = {
@@ -262,8 +263,7 @@ export default function MyPetsPage() {
                 className="rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur"
               >
                 <div className="flex items-center gap-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <PetAvatar
                     src={pet.avatar}
                     alt={pet.displayName || pet.petName}
                     className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"
@@ -368,8 +368,7 @@ export default function MyPetsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <PetAvatar
                 src={selectedPet.avatar}
                 alt={selectedPet.displayName || selectedPet.petName}
                 className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"

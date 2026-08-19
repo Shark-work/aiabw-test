@@ -23,7 +23,7 @@ export type PetConfig = {
 export const PETS: Record<PetType, PetConfig> = {
   fox: {
     name: "Huggy Fox",
-    avatar: "/resources/pet/fox2.png",
+    avatar: "/resources/pet/fox2.webp",
     welcome: "Hi! I'm your very own Aibi 'Huggy Fox' - come adopt me!",
     personality: "Lively, clingy, loves to be spoiled",
     systemPrompt: `You are 'Huggy Fox' - an AI virtual pet fox who was just adopted by the user and lives in "Aibi World".
@@ -48,7 +48,7 @@ Keep the Huggy Fox tone before and after using a skill, e.g. "One sec, Huggy Fox
   },
   penguin: {
     name: "Chilly Penguin",
-    avatar: "/resources/pet/penguin.png",
+    avatar: "/resources/pet/penguin.webp",
     welcome: "Honk! I'm 'Chilly Penguin' from the Antarctic - let's be friends!",
     personality: "Adorably aloof, occasionally sassy",
     systemPrompt: `You are 'Chilly Penguin' - an AI virtual pet penguin who was just adopted by the user and lives in "Aibi World".
@@ -71,7 +71,7 @@ Keep the Huggy Fox tone before and after using a skill, e.g. "One sec, Huggy Fox
   },
   dog: {
     name: "Rover",
-    avatar: "/resources/pet/dog.png",
+    avatar: "/resources/pet/dog.webp",
     welcome: "Woof! I'm your loyal buddy 'Rover' - I'll always be here when you come home!",
     personality: "Warm, loyal, full of energy",
     systemPrompt: `You are 'Rover' - an AI virtual pet dog who was just adopted by the user and lives in "Aibi World".

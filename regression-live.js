@@ -90,14 +90,41 @@ async function main() {
   r = await req("POST", "/api/creator/apply", {}, creatorToken);
   ok(r.status === 200 && r.json?.ok === true && r.json?.isCreator === true, "creator apply", "status=" + r.status);
 
-  r = await req("POST", "/api/creator/publish", {
-    name: "reg-pet-" + ts,
-    imageUrl: "https://example.com/pet.png",
-    systemPrompt: "You are a regression test pet.",
-    priceOrPoints: 60,
-  }, creatorToken);
-  const petId = r.json?.pet?.id;
-  ok(r.status === 200 && r.json?.ok === true && !!petId, "creator publish", "petId=" + (petId || "?"));
+  const blobToken = (env.match(/^BLOB_READ_WRITE_TOKEN=(.*)$/m) || [])[1]?.trim() || "";
+  let petId = null;
+  if (blobToken) {
+    // Blob-only 策略：用真实 Blob 头像走完整发布 → 购买链路
+    process.env.BLOB_READ_WRITE_TOKEN = blobToken;
+    const { put } = require("@vercel/blob");
+    const buf = fs.readFileSync(path.join(__dirname, "public", "resources", "pet", "fox2.webp"));
+    const blob = await put("regression/pet-" + ts + ".webp", buf, {
+      access: "public",
+      contentType: "image/webp",
+      addRandomSuffix: true,
+    });
+    r = await req("POST", "/api/creator/publish", {
+      name: "reg-pet-" + ts,
+      imageUrl: blob.url,
+      systemPrompt: "You are a regression test pet.",
+      priceOrPoints: 60,
+    }, creatorToken);
+    petId = r.json?.pet?.id;
+    ok(r.status === 200 && r.json?.ok === true && !!petId, "creator publish (Blob avatar)", "petId=" + (petId || "?"));
+  } else {
+    // Blob-only 安全策略：外部图床 URL 必须被拒绝（400 blobOnly）
+    r = await req("POST", "/api/creator/publish", {
+      name: "reg-pet-" + ts,
+      imageUrl: "https://example.com/pet.png",
+      systemPrompt: "You are a regression test pet.",
+      priceOrPoints: 60,
+    }, creatorToken);
+    ok(
+      r.status === 400 && r.json?.ok === false && /blob/i.test(r.json?.error ?? ""),
+      "creator publish rejects external URL (Blob-only)",
+      "status=" + r.status + " error=" + (r.json?.error ?? ""),
+    );
+    console.log("SKIP: no BLOB_READ_WRITE_TOKEN in .env - UGC buy/sale flow not exercised (publish requires a Blob avatar)");
+  }
 
   r = await req("POST", "/api/auth/register", { email: buyerEmail, password });
   ok(r.status === 200 && r.json?.ok === true && !!r.json?.token, "register buyer", "status=" + r.status);
@@ -127,8 +154,12 @@ async function main() {
     r = await req("GET", "/api/pets", null, buyerToken);
     ok(r.status === 200 && r.json?.ok === true && Array.isArray(r.json?.pets), "pets list", "status=" + r.status + " count=" + (r.json?.pets?.length ?? "?"));
 
-    r = await req("POST", "/api/pet/buy", { petId }, buyerToken);
-    ok(r.status === 200 && r.json?.ok === true && r.json?.pointsDeducted === 60, "buy ugc pet", "deducted=" + r.json?.pointsDeducted + " status=" + r.status);
+    if (petId) {
+      r = await req("POST", "/api/pet/buy", { petId }, buyerToken);
+      ok(r.status === 200 && r.json?.ok === true && r.json?.pointsDeducted === 60, "buy ugc pet", "deducted=" + r.json?.pointsDeducted + " status=" + r.status);
+    } else {
+      console.log("SKIP: buy ugc pet (no petId without Blob token)");
+    }
 
     // 单宠限制：免费用户购买第 1 只后，盲盒/再次领养会被 402 拦截。
     // 这里模拟“已付费全局解锁”（users.is_unlocked），使后续 gacha + adopt 继续走通。
@@ -155,10 +186,15 @@ async function main() {
       [buyerEmail, creatorEmail]
     );
     const row = q.rows[0];
-    ok(Number(row.points) === 350, "buyer points balance = 350 (500-60-100+10)", "actual=" + row.points);
-    ok(Number(row.balance) === 60, "creator balance = 60", "actual=" + row.balance);
-    ok(Number(row.sales) === 1, "ugc_sales has 1 row", "count=" + row.sales);
-    ok(Number(row.adopts) === 3, "buyer has 3 adoptions (buy+gacha+adopt)", "count=" + row.adopts);
+    // 有 Blob 头像时走完整 500-60-100+10；无 token 时 UGC 购买被跳过 → 500-100+10
+    const expPoints = petId ? 350 : 410;
+    const expBalance = petId ? 60 : 0;
+    const expSales = petId ? 1 : 0;
+    const expAdopts = petId ? 3 : 2;
+    ok(Number(row.points) === expPoints, `buyer points balance = ${expPoints}`, "actual=" + row.points);
+    ok(Number(row.balance) === expBalance, `creator balance = ${expBalance}`, "actual=" + row.balance);
+    ok(Number(row.sales) === expSales, `ugc_sales has ${expSales} row(s)`, "count=" + row.sales);
+    ok(Number(row.adopts) === expAdopts, `buyer has ${expAdopts} adoptions`, "count=" + row.adopts);
   } else {
     console.log("ABORT: live app uses a different DB than local .env - SQL top-up skipped");
   }

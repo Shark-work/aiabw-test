@@ -18,6 +18,9 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@v5
 
+      - name: asset size budget gate
+        run: node scripts/check-assets.js
+
       - name: run resource check
         id: check
         env:
