@@ -74,3 +74,5 @@ Thumbs.db
 check-resources-report.json
 check-resources-report.md
 .env*
+
+scripts/_realpay.*
