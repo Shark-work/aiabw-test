@@ -89,8 +89,11 @@ export async function POST(req: Request) {
     // 归一化支付方式：兼容旧版数字配置（Vercel 环境变量可能仍是 "2"）
     const pay_type = getXorpayPayType();
     const price = amount.toFixed(2);
-    // order_id 内嵌 adoptionId（UUID 带横线也用前缀截取法，避免按 - 拆分出错）
-    const order_id = `unlock-${adoptionId}`;
+    // order_id 内嵌 adoptionId + 每次下单的随机 nonce：
+    // XorPay 对同一 order_id 只接受一次（重复下单返回 order_exist/order_expire），
+    // 加 nonce 确保用户未支付/过期后仍可重新发起支付。
+    const nonce = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    const order_id = `unlock-${adoptionId}-${nonce}`;
     // 回调地址：优先环境变量，占位符/缺失时回退到生产公网地址
     const notify_url = resolveNotifyUrl();
 

@@ -52,11 +52,11 @@ export async function POST(req: Request) {
     pay_time,
   });
 
-  // 2) 从 order_id 解析 adoptionId（下单时格式：unlock-<adoptionId>）
-  const PREFIX = "unlock-";
-  const adoptionId = order_id.startsWith(PREFIX)
-    ? order_id.slice(PREFIX.length)
-    : "";
+  // 2) 从 order_id 解析 adoptionId（下单时格式：unlock-<adoptionId(uuid)>-<nonce>）
+  const adoptionMatch = order_id.match(
+    /^unlock-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  const adoptionId = adoptionMatch ? adoptionMatch[1] : "";
 
   // 首次访问自动建表（幂等）
   await ensureDbSchemaOnce();

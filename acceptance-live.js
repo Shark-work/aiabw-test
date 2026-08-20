@@ -115,7 +115,8 @@ function ok(cond, label, extra) {
 
   // ---------- B. notify signature probes ----------
   // B1: correct XorPay callback format: aoid+order_id+pay_price+pay_time+app_secret
-  const orderId = orderIdOf(petAId);
+  // 使用 pay/create 返回的真实 order_id（含随机 nonce），与下单时的 order_id 一致。
+  const orderId = r.json?.orderId || orderIdOf(petAId);
   const aoid = "acc" + ts;
   const payTime = new Date().toISOString().replace("T", " ").slice(0, 19);
   const signCorrect = md5(`${aoid}${orderId}0.01${payTime}${XORPAY_SECRET}`);
