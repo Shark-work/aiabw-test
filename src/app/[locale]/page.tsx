@@ -31,6 +31,8 @@ export default function Home() {
     unlockAdoptionId: string | null;
   }>({ petCount: 0, hasUnlocked: false, unlockAdoptionId: null });
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  // 用户想领养但被单宠限制拦截的类型；支付解锁后自动完成领养并跳转聊天
+  const [pendingAdoptType, setPendingAdoptType] = useState<PetType | null>(null);
   const petLimitReached = petState.petCount >= 1 && !petState.hasUnlocked;
 
   // 从 localStorage 恢复登录态
@@ -164,6 +166,9 @@ export default function Home() {
               unlockAdoptionId: data.unlockAdoptionId,
             }));
           }
+          // 恢复卡片可点 + 记住解锁后要领养的宠物类型（支付成功 → 自动领养）
+          setAdoptingType(null);
+          setPendingAdoptType(petType);
           setUpgradeOpen(true);
           return;
         }
@@ -326,8 +331,14 @@ export default function Home() {
         petCount={petState.petCount}
         onClose={() => setUpgradeOpen(false)}
         onUnlocked={() => {
-          void refreshPetState();
+          // 支付成功：刷新解锁状态 + 自动完成被拦截的领养并跳转聊天页
+          const pending = pendingAdoptType;
+          setPendingAdoptType(null);
           setError("");
+          void refreshPetState();
+          if (pending) {
+            void handleAdopt(pending);
+          }
         }}
       />
     </main>
