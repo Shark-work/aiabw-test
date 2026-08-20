@@ -127,11 +127,19 @@ export async function GET(req: Request) {
     ownerLabel: maskOwner(r.owner_email ?? null),
   }));
 
-  return NextResponse.json({
+  const body = {
     ok: true,
     date: dateKey,
     zodiacElement: element,
     lucky,
     recent,
-  });
+  };
+  // 首页模块数据：每日变化，但允许 Vercel CDN 缓存 60s（s-maxage 只作用于 CDN，
+  // 浏览器不带 max-age 不缓存，保证「最新诞生」相对实时）。
+  const res = NextResponse.json(body);
+  res.headers.set(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=60",
+  );
+  return res;
 }
