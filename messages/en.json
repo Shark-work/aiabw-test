@@ -255,7 +255,8 @@
     "saving": "Saving...",
     "saveFailed": "Failed to save",
     "descriptionPlaceholder": "Write a one-of-a-kind description (≤50 chars)",
-    "emptyRestoresDefault": "Saving an empty description restores the default"
+    "emptyRestoresDefault": "Saving an empty description restores the default",
+    "customDescription": "My words"
   },
   "petsCatalog": {
     "title": "Pet Catalog",
@@ -270,7 +271,16 @@
     "loading": "Loading...",
     "empty": "No pets match these filters",
     "generation": "Gen {n}",
-    "loginFirst": "Please sign in to synthesize"
+    "loginFirst": "Please sign in to synthesize",
+    "interact": "🍖 Feed & cuddle",
+    "interacting": "Interacting...",
+    "hungry": "Hungry",
+    "lonely": "Missing you",
+    "firstSoul": "You gave it a real soul!",
+    "shareCard": "🖼️ Share card",
+    "cardDownloaded": "Card ready - long-press/right-click to save",
+    "birth": "✨ A radiant birth!",
+    "daysAgo": "You haven't visited for {n} days"
   },
   "api": {
     "signInFirst": "Please sign in first",

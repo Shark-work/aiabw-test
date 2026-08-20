@@ -62,7 +62,7 @@ export async function GET(req: Request) {
 
   const { rows } = await pool.query(
     `SELECT p.id, p.species_id, p.image_url, p.traits, p.generation, p.parent_ids,
-            p.custom_description, p.owner_id, p.adopted_at,
+            p.custom_description, p.owner_id, p.adopted_at, p.last_interaction_time,
             d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.habitat,
             d.default_description_zh AS "defaultDescriptionZh",
             d.default_description_en AS "defaultDescriptionEn"
@@ -98,6 +98,7 @@ export async function GET(req: Request) {
       defaultDescription: renderPetDescription(speciesRow, r.traits, locale),
       owned: r.owner_id != null,
       adoptedAt: r.adopted_at,
+      lastInteractionTime: r.last_interaction_time,
     };
   });
 

@@ -157,6 +157,9 @@ export const pets = pgTable('pets', {
   ownerId: uuid('owner_id').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   adoptedAt: timestamp('adopted_at'),
+  /** 上次互动时间（喂食/互动）；NULL 视为与 adopted_at 相同。
+   *  损失厌恶：超过 3 天未互动 → 前端展示灰暗滤镜 + 💧/🍖 状态提示。 */
+  lastInteractionTime: timestamp('last_interaction_time'),
 });
 
 

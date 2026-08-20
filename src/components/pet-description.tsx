@@ -75,13 +75,31 @@ export function PetDescription({
   };
 
   if (!editing) {
+    const isCustom = !isDefault;
     return (
-      <div className="group relative rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2">
-        <p className="text-sm leading-relaxed text-zinc-700">{showing}</p>
+      <div
+        className={`group relative rounded-xl border px-3 py-2 ${
+          isCustom
+            ? "border-orange-200 bg-orange-50"
+            : "border-zinc-200 bg-zinc-50"
+        }`}
+      >
+        <p
+          className={`text-sm leading-relaxed ${
+            isCustom ? "font-medium text-orange-800" : "text-zinc-700"
+          }`}
+        >
+          {showing}
+        </p>
         <div className="mt-1 flex items-center gap-2">
           {isDefault && (
             <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] text-zinc-500">
               {t("defaultDescription")}
+            </span>
+          )}
+          {isCustom && (
+            <span className="rounded bg-orange-200/70 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">
+              {t("customDescription")}
             </span>
           )}
           {owned && (

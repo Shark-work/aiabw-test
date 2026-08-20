@@ -253,7 +253,8 @@
     "saving": "保存中...",
     "saveFailed": "保存失败",
     "descriptionPlaceholder": "写一段独一无二的介绍（≤50 字）",
-    "emptyRestoresDefault": "清空后保存将恢复默认介绍"
+    "emptyRestoresDefault": "清空后保存将恢复默认介绍",
+    "customDescription": "我的介绍"
   },
   "petsCatalog": {
     "title": "宠物图鉴",
@@ -268,7 +269,16 @@
     "loading": "加载中...",
     "empty": "该筛选条件下暂无宠物",
     "generation": "第 {n} 代",
-    "loginFirst": "请先登录后合成"
+    "loginFirst": "请先登录后合成",
+    "interact": "🍖 喂食互动",
+    "interacting": "互动中...",
+    "hungry": "饿了",
+    "lonely": "想你了",
+    "firstSoul": "你赋予了它真正的灵魂！",
+    "shareCard": "🖼️ 生成名片",
+    "cardDownloaded": "名片已生成，长按/右键保存",
+    "birth": "✨ 高光诞生！",
+    "daysAgo": "{n} 天没来看它了"
   },
   "api": {
     "signInFirst": "请先登录",

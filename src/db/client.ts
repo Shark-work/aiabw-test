@@ -151,7 +151,8 @@ const SCHEMA_CREATES: string[] = [
     "custom_description" text,
     "owner_id" uuid REFERENCES "users"("id"),
     "created_at" timestamp DEFAULT now() NOT NULL,
-    "adopted_at" timestamp
+    "adopted_at" timestamp,
+    "last_interaction_time" timestamp
   )`,
 ];
 
@@ -180,6 +181,7 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invite_code" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invited_by" uuid REFERENCES "users"("id")`,
   `ALTER TABLE "agent_memories" ADD COLUMN IF NOT EXISTS "important" boolean DEFAULT false NOT NULL`,
+  `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "last_interaction_time" timestamp`,
 ];
 
 /**
@@ -207,6 +209,8 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_pets_owner_id ON "pets" ("owner_id")`,
   // 宠物字典分类浏览（按物种查看）
   `CREATE INDEX IF NOT EXISTS idx_pets_species_id ON "pets" ("species_id")`,
+  // 损失厌恶：批量查找“超过 N 天未互动”的宠物（状态反馈）
+  `CREATE INDEX IF NOT EXISTS idx_pets_last_interaction ON "pets" ("last_interaction_time")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
