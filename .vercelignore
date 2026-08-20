@@ -1,0 +1,11 @@
+# 本地临时/日志文件不上传（避免 secrets 或调试文件进部署）
+deploy.log
+scripts/_.*
+scripts/_*.cjs
+scripts/_*.js
+scripts/_*.mjs
+scripts/*.tmp
+*.log
+.env
+.env.*
+!.env.example
