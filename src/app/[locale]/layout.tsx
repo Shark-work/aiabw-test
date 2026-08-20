@@ -53,9 +53,11 @@ export default async function LocaleLayout({
             throw Error（线上曾因此报 “Application error: a client-side exception”）。 */}
         <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="flex flex-1 flex-col">{children}</div>
+          {/* Footer（含 LanguageSwitcher）与 Analytics 必须在 Provider 内部：
+              否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}
+          <Footer />
+          <Analytics />
         </NextIntlClientProvider>
-        <Footer />
-        <Analytics />
       </body>
     </html>
   );
