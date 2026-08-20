@@ -246,7 +246,31 @@
   "pets": {
     "fox": { "name": "Huggy Fox", "personality": "Lively, clingy, loves to be spoiled", "welcome": "Hi! I'm your very own Aibi 'Huggy Fox' - come adopt me!" },
     "penguin": { "name": "Chilly Penguin", "personality": "Adorably aloof, occasionally sassy", "welcome": "Honk! I'm 'Chilly Penguin' from the Antarctic - let's be friends!" },
-    "dog": { "name": "Rover", "personality": "Warm, loyal, full of energy", "welcome": "Woof! I'm your loyal buddy 'Rover' - I'll always be here when you come home!" }
+    "dog": { "name": "Rover", "personality": "Warm, loyal, full of energy", "welcome": "Woof! I'm your loyal buddy 'Rover' - I'll always be here when you come home!" },
+    "defaultDescription": "Default",
+    "editDescription": "Edit description",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "saveFailed": "Failed to save",
+    "descriptionPlaceholder": "Write a one-of-a-kind description (≤50 chars)",
+    "emptyRestoresDefault": "Saving an empty description restores the default"
+  },
+  "petsCatalog": {
+    "title": "Pet Catalog",
+    "subtitle": "Precomputed · Dictionary species · Gene filtering",
+    "all": "All",
+    "synthesize": "🔮 Synthesize",
+    "synthesizeOk": "🎉 Synthesized! Welcome your new companion!",
+    "synthesizeFailed": "Synthesis failed",
+    "unowned": "Unowned",
+    "owned": "Owned",
+    "mine": "Mine",
+    "loading": "Loading...",
+    "empty": "No pets match these filters",
+    "generation": "Gen {n}",
+    "loginFirst": "Please sign in to synthesize"
   },
   "api": {
     "signInFirst": "Please sign in first",

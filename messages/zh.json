@@ -244,7 +244,31 @@
   "pets": {
     "fox": { "name": "抱抱狐", "personality": "活泼粘人，喜欢撒娇", "welcome": "嗨！我是你的专属艾比「抱抱狐」，快来领养我吧！" },
     "penguin": { "name": "小企鹅", "personality": "呆萌高冷，偶尔毒舌", "welcome": "嘎嘎！我是来自南极的「小企鹅」，想和你做朋友！" },
-    "dog": { "name": "修勾", "personality": "热情忠诚，精力旺盛", "welcome": "汪！我是你的忠诚伙伴「修勾」，永远等你回家！" }
+    "dog": { "name": "修勾", "personality": "热情忠诚，精力旺盛", "welcome": "汪！我是你的忠诚伙伴「修勾」，永远等你回家！" },
+    "defaultDescription": "默认",
+    "editDescription": "编辑介绍",
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "saving": "保存中...",
+    "saveFailed": "保存失败",
+    "descriptionPlaceholder": "写一段独一无二的介绍（≤50 字）",
+    "emptyRestoresDefault": "清空后保存将恢复默认介绍"
+  },
+  "petsCatalog": {
+    "title": "宠物图鉴",
+    "subtitle": "预计算生成 · 字典物种 · 基因筛选",
+    "all": "全部",
+    "synthesize": "🔮 合成",
+    "synthesizeOk": "🎉 合成成功，欢迎新伙伴！",
+    "synthesizeFailed": "合成失败",
+    "unowned": "未领养",
+    "owned": "已领养",
+    "mine": "我的",
+    "loading": "加载中...",
+    "empty": "该筛选条件下暂无宠物",
+    "generation": "第 {n} 代",
+    "loginFirst": "请先登录后合成"
   },
   "api": {
     "signInFirst": "请先登录",
