@@ -31,6 +31,20 @@ export function UpgradePetModal({
   const [payUrl, setPayUrl] = useState<string | null>(null);
   const [error, setError] = useState("");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 防重入：loading 一旦作为 useCallback 依赖，会在 setLoading(true) 后重建函数引用，
+  // 进而让下面的 useEffect([open, createOrder, ...]) 反复触发 → 弹窗/二维码闪动 + 重复建单。
+  const creatingRef = useRef(false);
+  // 父组件每次渲染都会重建内联的 onClose/onUnlocked；若直接放进依赖，
+  // 轮询 effect 会反复重启（clearInterval+重开），甚至打断扫码后的解锁判定。
+  // 用 ref 保存最新引用，effect 只依赖稳定值。
+  const onUnlockedRef = useRef(onUnlocked);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onUnlockedRef.current = onUnlocked;
+  }, [onUnlocked]);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const stopPolling = useCallback(() => {
     if (timerRef.current !== null) {
@@ -41,6 +55,7 @@ export function UpgradePetModal({
 
   const reset = useCallback(() => {
     stopPolling();
+    creatingRef.current = false;
     setLoading(false);
     setQr(null);
     setPayUrl(null);
@@ -49,7 +64,8 @@ export function UpgradePetModal({
 
   // Create the order automatically when the modal opens
   const createOrder = useCallback(async () => {
-    if (!adoptionId || loading) return;
+    if (!adoptionId || creatingRef.current) return;
+    creatingRef.current = true;
     setLoading(true);
     setError("");
     try {
@@ -64,18 +80,18 @@ export function UpgradePetModal({
       });
       const data = await res.json();
       if (data?.ok) {
-        setLoading(false);
         setQr(data.qr);
         setPayUrl(data.payUrl ?? null);
       } else {
-        setLoading(false);
         setError(data?.error ?? t("orderFailed"));
       }
     } catch {
-      setLoading(false);
       setError(tc("networkError"));
+    } finally {
+      creatingRef.current = false;
+      setLoading(false);
     }
-  }, [adoptionId, loading, t, tc]);
+  }, [adoptionId, t, tc]);
 
   useEffect(() => {
     if (open) {
@@ -100,8 +116,8 @@ export function UpgradePetModal({
         if (data?.ok && data.isUnlocked) {
           stopPolling();
           alert(t("unlockedOk"));
-          onUnlocked?.();
-          onClose();
+          onUnlockedRef.current?.();
+          onCloseRef.current?.();
           return;
         }
       } catch {
@@ -110,7 +126,7 @@ export function UpgradePetModal({
       if (count >= 90) stopPolling();
     }, 2000);
     return stopPolling;
-  }, [open, qr, adoptionId, onUnlocked, onClose, stopPolling]);
+  }, [open, qr, adoptionId, stopPolling, t]);
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
