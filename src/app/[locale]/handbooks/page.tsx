@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 
@@ -16,6 +16,7 @@ type PetOption = { id: string; petName: string };
 
 export default function HandbooksPage() {
   const trans = useTranslations("handbooks");
+  const locale = useLocale();
   const tc = useTranslations("common");
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
   const [pets, setPets] = useState<PetOption[]>([]);
@@ -174,7 +175,7 @@ export default function HandbooksPage() {
                 )}
               </div>
               <div className="mt-1 text-xs text-zinc-400">
-                {new Date(hb.createdAt).toLocaleString()}
+                {new Date(hb.createdAt).toLocaleString(locale)}
               </div>
             </button>
           ))}

@@ -388,7 +388,7 @@ export default function MyPetsPage() {
                   )}
                 </div>
                 <div className="text-xs text-zinc-500">
-                  {t("adoptedLine", { emoji: moodInfo(selectedPet.happiness).emoji, label: moodLabel(tchat, moodInfo(selectedPet.happiness).mood), date: selectedPet.adoptedAt ? new Date(selectedPet.adoptedAt).toLocaleDateString() : "—" })}
+                  {t("adoptedLine", { emoji: moodInfo(selectedPet.happiness).emoji, label: moodLabel(tchat, moodInfo(selectedPet.happiness).mood), date: selectedPet.adoptedAt ? new Date(selectedPet.adoptedAt).toLocaleDateString(locale) : "—" })}
                 </div>
               </div>
               <button

@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 
 type Log = { id: string; amount: number; reason: string; createdAt: string };
 
 export default function PointsPage() {
+  const locale = useLocale();
   const t = useTranslations("points");
   const tc = useTranslations("common");
   const [logs, setLogs] = useState<Log[]>([]);
@@ -84,7 +85,7 @@ export default function PointsPage() {
                   {reasonLabel(l.reason)}
                 </div>
                 <div className="text-xs text-zinc-400">
-                  {new Date(l.createdAt).toLocaleString()}
+                  {new Date(l.createdAt).toLocaleString(locale)}
                 </div>
               </div>
               <span

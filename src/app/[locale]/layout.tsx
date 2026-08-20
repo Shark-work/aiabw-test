@@ -49,7 +49,9 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body className="antialiased bg-zinc-50 flex min-h-screen flex-col">
-        <NextIntlClientProvider messages={messages}>
+        {/* locale 必须显式传入：next-intl v4 客户端 bundle 在 hydration 时若缺失 locale 会直接
+            throw Error（线上曾因此报 “Application error: a client-side exception”）。 */}
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="flex flex-1 flex-col">{children}</div>
         </NextIntlClientProvider>
         <Footer />
