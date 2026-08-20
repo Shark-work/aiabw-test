@@ -118,6 +118,49 @@ export const adoptions = pgTable('adoptions', {
 });
 
 /**
+ * 宠物字典（Pet Dictionary）：现实动物物种清单 —— 所有预计算宠物的“基础模板”。
+ *  - id:            物种唯一标识（如 snow_leopard）
+ *  - category:      分类（犬科 / 猫科 / 海洋生物 / 鸟类 / 大型哺乳动物 / 爬行动物…）
+ *  - default_description_*: 默认介绍模板，含 {trait} 占位符，
+ *    展示时用宠物 traits 中的特质词替换（例：字典=雪豹、traits=勇敢 →
+ *    “这是一只来自高山的勇敢雪豹，眼神中透着不羁。”）
+ */
+export const petDictionary = pgTable('pet_dictionary', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  category: text('category').notNull(),
+  habitat: text('habitat'),
+  defaultDescriptionZh: text('default_description_zh').notNull(),
+  defaultDescriptionEn: text('default_description_en').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * 预计算宠物实例（高性能核心）：
+ *  - 由离线脚本（HashLips 类批量生成器）预先创建 N 万条，图片存 Vercel Blob；
+ *  - id:         唯一哈希 ID（如 #8A3F9C），离线生成保证全局唯一；
+ *  - owner_id:   NULL = 未被领养；/api/pets/synthesize 只做“分配”（UPDATE owner_id），
+ *                绝不实时拼图 / 生成图片，目标 < 50ms；
+ *  - traits:     JSON 基因（如 {"element":"fire","rarity":"rare"}），GIN 索引支持毫秒级筛选；
+ *  - custom_description: 用户自定义介绍；NULL = 展示字典默认介绍（Species + Traits 生成）。
+ */
+export const pets = pgTable('pets', {
+  id: text('id').primaryKey(),
+  speciesId: text('species_id').references(() => petDictionary.id).notNull(),
+  imageUrl: text('image_url').notNull(),
+  traits: jsonb('traits').notNull().default({}),
+  generation: integer('generation').notNull().default(1),
+  /** 族谱：合成它的父母 ID 数组，如 ["#A1B2C3", "#D4E5F6"] */
+  parentIds: jsonb('parent_ids'),
+  customDescription: text('custom_description'),
+  ownerId: uuid('owner_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  adoptedAt: timestamp('adopted_at'),
+});
+
+
+/**
  * 数字人 Agent 的长期记忆库（防止存储膨胀版）：
  *  - memory_type: fact(事实) / skill(技能) / user_preference(用户偏好)
  *  - embedding:   double precision[] 向量，用于语义去重与向量检索

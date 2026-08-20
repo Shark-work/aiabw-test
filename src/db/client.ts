@@ -126,6 +126,33 @@ const SCHEMA_CREATES: string[] = [
     "amount" integer DEFAULT 50 NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL
   )`,
+
+  // ===== 宠物系统底层架构（预计算生成 + 宠物字典）=====
+  // 宠物字典：现实动物物种（所有预计算宠物的基础模板）
+  `CREATE TABLE IF NOT EXISTS "pet_dictionary" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "category" text NOT NULL,
+    "habitat" text,
+    "default_description_zh" text NOT NULL,
+    "default_description_en" text NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
+  // 预计算宠物实例：离线批量生成（HashLips 类工具 + Vercel Blob），synthesize 只做分配
+  `CREATE TABLE IF NOT EXISTS "pets" (
+    "id" text PRIMARY KEY,
+    "species_id" text NOT NULL REFERENCES "pet_dictionary"("id"),
+    "image_url" text NOT NULL,
+    "traits" jsonb DEFAULT '{}' NOT NULL,
+    "generation" integer DEFAULT 1 NOT NULL,
+    "parent_ids" jsonb,
+    "custom_description" text,
+    "owner_id" uuid REFERENCES "users"("id"),
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "adopted_at" timestamp
+  )`,
 ];
 
 /**
@@ -174,6 +201,12 @@ const SCHEMA_INDEXES: string[] = [
   // 裂变防刷：同 IP / 同设备指纹最多一次奖励
   `CREATE INDEX IF NOT EXISTS idx_invite_rewards_ip ON "invite_rewards" ("ip")`,
   `CREATE INDEX IF NOT EXISTS idx_invite_rewards_device ON "invite_rewards" ("device_id")`,
+  // 宠物图鉴：traits JSONB 按基因筛选（GIN 索引，毫秒级）
+  `CREATE INDEX IF NOT EXISTS idx_pets_traits_gin ON "pets" USING gin ("traits")`,
+  // 合成分配：owner_id IS NULL 的池子查询 + “我的宠物”列表
+  `CREATE INDEX IF NOT EXISTS idx_pets_owner_id ON "pets" ("owner_id")`,
+  // 宠物字典分类浏览（按物种查看）
+  `CREATE INDEX IF NOT EXISTS idx_pets_species_id ON "pets" ("species_id")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
