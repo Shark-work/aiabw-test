@@ -99,9 +99,13 @@ export function ChatPanel({
     payBusyRef.current = true;
     setPay((prev) => ({ ...prev, loading: true, error: undefined }));
     try {
+      const token = localStorage.getItem("aiabw_token");
       const res = await fetch("/api/pay/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ adoptionId, amount: 9.9 }),
       });
       const data = await res.json();
