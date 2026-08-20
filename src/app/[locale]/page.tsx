@@ -271,6 +271,15 @@ export default function Home() {
           <p className="text-sm text-zinc-600">{t("subtitle")}</p>
         </div>
 
+        {/* 稀缺性：首屏稀有宠物入口（→ 动物全图鉴） */}
+        <Link
+          href="/pets"
+          className="block w-full rounded-2xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 p-4 text-left shadow-lg transition hover:scale-[1.01] hover:shadow-xl"
+        >
+          <p className="text-sm font-bold text-white">{t("rareBannerTitle")}</p>
+          <p className="mt-0.5 text-xs text-white/85">{t("rareBannerSub")}</p>
+        </Link>
+
         {/* 宠物选择卡片 */}
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
           {petEntries.map(([petType, pet]) => {

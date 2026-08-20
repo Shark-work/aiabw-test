@@ -40,7 +40,9 @@
     "adoptHint": "After adopting, you'll enter Aibi World and start chatting with your companion.",
     "adoptFailed": "Adoption failed, please try again",
     "unlockFirst": "Please unlock the Multi-Pet Collection first",
-    "diagnosticLink": "🔧 Advanced: AI tool diagnostics (legacy)"
+    "diagnosticLink": "🔧 Advanced: AI tool diagnostics (legacy)",
+    "rareBannerTitle": "👑 Rare Pets · Radiant Catalog",
+    "rareBannerSub": "Legend & epic Aibis hide in here — under 5% chance per synthesis"
   },
   "login": {
     "title": "Sign in to Aibi World",
@@ -93,7 +95,11 @@
     "inviteTitle": "🎁 Invite friends & earn points",
     "inviteHint": "Earn 50 points when a friend registers via your link (anti-abuse enabled)",
     "inviteFriends": "Copy invite link",
-    "inviteCopied": "Copied ✅"
+    "inviteCopied": "Copied ✅",
+    "imprintMark": "Endowment Mark",
+    "imprintDate": "Born for you on {date}",
+    "hungryHint": "🍖 It's hungry — go feed it!",
+    "feed": "🍖 Feed now"
   },
   "marketplace": {
     "title": "UGC Market",
@@ -134,8 +140,7 @@
     "gacha": "Mystery box draw",
     "ugcBuy": "UGC pet purchase",
     "inviteReward": "Invite reward"
-  }
-  ,
+  },
   "handbooks": {
     "title": "Memory Journals",
     "subtitle": "Turn the moments with your pet into a warm memory journal.",
@@ -239,14 +244,28 @@
   },
   "footer": {
     "copyright": "© 2025-2026 aiabw.com | v{version}",
-    "language": "Language"
-  }
-
-  ,
+    "language": "Language",
+    "about": "About",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "terms": "Terms"
+  },
   "pets": {
-    "fox": { "name": "Huggy Fox", "personality": "Lively, clingy, loves to be spoiled", "welcome": "Hi! I'm your very own Aibi 'Huggy Fox' - come adopt me!" },
-    "penguin": { "name": "Chilly Penguin", "personality": "Adorably aloof, occasionally sassy", "welcome": "Honk! I'm 'Chilly Penguin' from the Antarctic - let's be friends!" },
-    "dog": { "name": "Rover", "personality": "Warm, loyal, full of energy", "welcome": "Woof! I'm your loyal buddy 'Rover' - I'll always be here when you come home!" },
+    "fox": {
+      "name": "Huggy Fox",
+      "personality": "Lively, clingy, loves to be spoiled",
+      "welcome": "Hi! I'm your very own Aibi 'Huggy Fox' - come adopt me!"
+    },
+    "penguin": {
+      "name": "Chilly Penguin",
+      "personality": "Adorably aloof, occasionally sassy",
+      "welcome": "Honk! I'm 'Chilly Penguin' from the Antarctic - let's be friends!"
+    },
+    "dog": {
+      "name": "Rover",
+      "personality": "Warm, loyal, full of energy",
+      "welcome": "Woof! I'm your loyal buddy 'Rover' - I'll always be here when you come home!"
+    },
     "defaultDescription": "Default",
     "editDescription": "Edit description",
     "edit": "Edit",
@@ -331,6 +350,30 @@
     "journalTaskFailed": "Failed to create the journal task",
     "taskNotFound": "Task not found",
     "interactFailed": "Interaction update failed"
+  },
+  "nav": {
+    "home": "Home",
+    "catalog": "Pet Dictionary",
+    "myPets": "My Pets",
+    "market": "Market",
+    "journals": "Journals",
+    "points": "Points",
+    "login": "Sign in",
+    "register": "Register",
+    "logout": "Sign out",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "pages": {
+    "backHome": "← Back to home",
+    "aboutTitle": "About Aibi World",
+    "aboutBody": "Aibi World (aiabw.com) is an AI virtual pet platform: every Aibi has its own unique genes, personality and memories, chats with you, grows with you, and builds a bond that belongs to you alone.",
+    "faqTitle": "FAQ",
+    "faqBody": "Q: How do I adopt a second pet?\nA: Adopt your first Aibi, then pick your favorite companion on the home or dictionary page and unlock it (pay once, multi-pet forever).\n\nQ: What happens when a pet gets hungry?\nA: If you don't interact for over 3 days, it turns gray and shows \"Hungry / Missing you\". Tap \"Feed & cuddle\" to bring it back to life.\n\nQ: What are points for?\nA: Points buy UGC pets and gacha draws; check in daily to earn points.",
+    "contactTitle": "Contact us",
+    "contactBody": "For feedback or support, email us at:\nsupport@aiabw.com",
+    "termsTitle": "Terms of Service",
+    "termsBody": "By using Aibi World you agree to: respect others' content; virtual pets and points are in-game virtual assets; paid unlocks are non-refundable once completed; do not use the platform for any illegal activity."
   }
 }
-

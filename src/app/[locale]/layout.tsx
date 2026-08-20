@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "@/app/globals.css";
 
 import { Footer } from "@/components/layout/Footer";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import { routing } from "@/i18n/routing";
 
 // 本应用强依赖数据库 / Cookie / 请求上下文（认证、支付、Neon），
@@ -52,6 +53,8 @@ export default async function LocaleLayout({
         {/* locale 必须显式传入：next-intl v4 客户端 bundle 在 hydration 时若缺失 locale 会直接
             throw Error（线上曾因此报 “Application error: a client-side exception”）。 */}
         <NextIntlClientProvider locale={locale} messages={messages}>
+          {/* 全局固定顶部导航（所有页面可见，移动端折叠为汉堡菜单） */}
+          <SiteHeader />
           <div className="flex flex-1 flex-col">{children}</div>
           {/* Footer（含 LanguageSwitcher）与 Analytics 必须在 Provider 内部：
               否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}

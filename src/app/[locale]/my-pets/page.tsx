@@ -239,6 +239,16 @@ export default function MyPetsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {sortedPets.map((pet) => {
             const mo = moodInfo(pet.happiness);
+            // 禀赋效应：从 adoptions uuid 派生稳定的唯一哈希 ID（#RRGGBB 风格）
+            const petIdHash =
+              "#" + pet.id.replace(/-/g, "").slice(0, 6).toUpperCase();
+            const fmtDate = (d: string | null) => {
+              if (!d) return "—";
+              const x = new Date(d);
+              return `${x.getFullYear()}/${String(x.getMonth() + 1).padStart(2, "0")}/${String(
+                x.getDate(),
+              ).padStart(2, "0")}`;
+            };
             const facts = pet.memory.facts
               .filter((f) => (q ? f.text.toLowerCase().includes(q) : true))
               .sort(
@@ -285,6 +295,16 @@ export default function MyPetsPage() {
                     <div className="mt-0.5 text-xs text-zinc-500">
                       {t("statsLine", { emoji: mo.emoji, label: moodLabel(tchat, mo.mood), points: pet.monthlyPoints, chats: pet.chatCount })}
                     </div>
+                    {/* 禀赋效应：专属印记 + 唯一哈希 ID + 孕育日期 */}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-zinc-400">
+                      <span className="rounded bg-orange-50 px-1 py-0.5 text-[10px] font-semibold text-orange-600">
+                        {t("imprintMark")}
+                      </span>
+                      <span className="font-mono font-semibold text-orange-500">{petIdHash}</span>
+                      <span>
+                        · {t("imprintDate", { date: fmtDate(pet.adoptedAt) })}
+                      </span>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -303,6 +323,26 @@ export default function MyPetsPage() {
                     </button>
                   )}
                 </div>
+
+                {/* 损失厌恶：低心情（happiness<40）→ 醒目喂食提示 */}
+                {pet.happiness < 40 && (
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-orange-50 px-3 py-2">
+                    <span className="text-xs font-medium text-orange-700">
+                      {t("hungryHint")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        pet.threadId
+                          ? router.push(`/chat?thread=${pet.threadId}&adopt=${pet.id}`)
+                          : router.push("/pets")
+                      }
+                      className="shrink-0 rounded-full bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600"
+                    >
+                      {t("feed")}
+                    </button>
+                  </div>
+                )}
 
                 <div className="mt-3 border-t border-zinc-100 pt-2">
                   {groups.length === 0 ? (

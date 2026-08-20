@@ -40,7 +40,9 @@
     "adoptHint": "领养后将进入艾比世界，和你的伙伴开始聊天",
     "adoptFailed": "领养失败，请稍后重试",
     "unlockFirst": "请先解锁多宠图鉴",
-    "diagnosticLink": "🔧 高级：AI 工具诊断（旧版）"
+    "diagnosticLink": "🔧 高级：AI 工具诊断（旧版）",
+    "rareBannerTitle": "👑 稀有宠物 · 高光图鉴",
+    "rareBannerSub": "传说与史诗艾比就藏在这里，单次合成概率不到 5%"
   },
   "login": {
     "title": "登录艾比世界",
@@ -93,7 +95,11 @@
     "inviteTitle": "🎁 邀请好友，赚取积分",
     "inviteHint": "好友通过你的链接注册，你即可获得 50 积分（防刷保护已开启）",
     "inviteFriends": "复制邀请链接",
-    "inviteCopied": "已复制 ✅"
+    "inviteCopied": "已复制 ✅",
+    "imprintMark": "专属印记",
+    "imprintDate": "由你于 {date} 孕育",
+    "hungryHint": "🍖 它饿了，去喂食吧！",
+    "feed": "🍖 去喂食"
   },
   "marketplace": {
     "title": "UGC 广场",
@@ -134,8 +140,7 @@
     "gacha": "盲盒抽取",
     "ugcBuy": "购买 UGC 宠物",
     "inviteReward": "邀请好友奖励"
-  }
-  ,
+  },
   "handbooks": {
     "title": "记忆手账",
     "subtitle": "把和宠物相处的点滴，生成一本温暖的记忆手账~",
@@ -239,12 +244,28 @@
   },
   "footer": {
     "copyright": "© 2025-2026 aiabw.com | v{version}",
-    "language": "语言"
+    "language": "语言",
+    "about": "关于我们",
+    "faq": "常见问题",
+    "contact": "联系方式",
+    "terms": "用户协议"
   },
   "pets": {
-    "fox": { "name": "抱抱狐", "personality": "活泼粘人，喜欢撒娇", "welcome": "嗨！我是你的专属艾比「抱抱狐」，快来领养我吧！" },
-    "penguin": { "name": "小企鹅", "personality": "呆萌高冷，偶尔毒舌", "welcome": "嘎嘎！我是来自南极的「小企鹅」，想和你做朋友！" },
-    "dog": { "name": "修勾", "personality": "热情忠诚，精力旺盛", "welcome": "汪！我是你的忠诚伙伴「修勾」，永远等你回家！" },
+    "fox": {
+      "name": "抱抱狐",
+      "personality": "活泼粘人，喜欢撒娇",
+      "welcome": "嗨！我是你的专属艾比「抱抱狐」，快来领养我吧！"
+    },
+    "penguin": {
+      "name": "小企鹅",
+      "personality": "呆萌高冷，偶尔毒舌",
+      "welcome": "嘎嘎！我是来自南极的「小企鹅」，想和你做朋友！"
+    },
+    "dog": {
+      "name": "修勾",
+      "personality": "热情忠诚，精力旺盛",
+      "welcome": "汪！我是你的忠诚伙伴「修勾」，永远等你回家！"
+    },
     "defaultDescription": "默认",
     "editDescription": "编辑介绍",
     "edit": "编辑",
@@ -329,6 +350,30 @@
     "journalTaskFailed": "创建手账任务失败",
     "taskNotFound": "任务不存在",
     "interactFailed": "互动更新失败"
+  },
+  "nav": {
+    "home": "首页",
+    "catalog": "动物全图鉴",
+    "myPets": "我的宠物",
+    "market": "商城",
+    "journals": "手帐",
+    "points": "积分",
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出",
+    "menu": "菜单",
+    "openMenu": "打开菜单",
+    "closeMenu": "关闭菜单"
+  },
+  "pages": {
+    "backHome": "← 返回首页",
+    "aboutTitle": "关于艾比世界",
+    "aboutBody": "艾比世界（aiabw.com）是一个 AI 虚拟宠物养成平台：每一只艾比都拥有独一无二的基因、性格与记忆，会陪你聊天、成长，留下只属于你们的羁绊。",
+    "faqTitle": "常见问题",
+    "faqBody": "Q：怎么领养第二只宠物？\nA：先领养第一只艾比，然后在首页或图鉴页选择心仪的伙伴，按提示完成解锁（付费一次，永久多宠）。\n\nQ：宠物饿了会怎样？\nA：超过 3 天没互动，它会变成灰色并显示「饿了 / 想你了」，点击「喂食互动」即可恢复活力。\n\nQ：积分有什么用？\nA：积分可用于购买 UGC 宠物、参与盲盒抽卡；每天签到即可获得积分。",
+    "contactTitle": "联系我们",
+    "contactBody": "有任何建议或问题，欢迎通过邮件联系我们：\nsupport@aiabw.com",
+    "termsTitle": "用户协议",
+    "termsBody": "使用艾比世界即表示您同意：尊重他人创作内容；虚拟宠物与积分为站内虚拟资产；付费解锁一经完成不支持退款；请勿利用平台从事任何违法活动。"
   }
 }
-
