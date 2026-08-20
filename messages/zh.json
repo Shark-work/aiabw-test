@@ -42,7 +42,18 @@
     "unlockFirst": "请先解锁多宠图鉴",
     "diagnosticLink": "🔧 高级：AI 工具诊断（旧版）",
     "rareBannerTitle": "👑 稀有宠物 · 高光图鉴",
-    "rareBannerSub": "传说与史诗艾比就藏在这里，单次合成概率不到 5%"
+    "rareBannerSub": "传说与史诗艾比就藏在这里，单次合成概率不到 5%",
+    "dailyLoading": "每日灵感加载中…",
+    "fortune": "🔮 今日运势：{sign}星座的你，今天适合遇见一只【{name}】。它{trait}，能为你带来平静与灵感。",
+    "fortuneEmpty": "🔮 今天还没有幸运宠诞生，明天再来看看吧~",
+    "meet": "去遇见它",
+    "recentTitle": "🎉 刚刚诞生的伙伴",
+    "recentItem": "玩家 {user} 刚刚领养的 {name} {id}",
+    "recentEmpty": "今天还没有新伙伴诞生，快来成为第一个！",
+    "zodiacFire": "火象",
+    "zodiacEarth": "土象",
+    "zodiacAir": "风象",
+    "zodiacWater": "水象"
   },
   "login": {
     "title": "登录艾比世界",

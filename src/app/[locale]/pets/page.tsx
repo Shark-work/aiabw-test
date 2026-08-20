@@ -41,6 +41,8 @@ export default function PetsCatalogPage() {
   const [category, setCategory] = useState("");
   const [element, setElement] = useState("");
   const [rarity, setRarity] = useState("");
+  // 今日幸运宠等外部入口可通过 ?species=xxx 直达该物种
+  const [species, setSpecies] = useState("");
   const [mine, setMine] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,6 +62,7 @@ export default function PetsCatalogPage() {
       if (category) qs.set("category", category);
       if (element) qs.set("element", element);
       if (rarity) qs.set("rarity", rarity);
+      if (species) qs.set("species", species);
       if (mine) qs.set("mine", "1");
       const res = await fetch(`/api/pets/catalog?${qs.toString()}`);
       const data = await res.json();
@@ -74,11 +77,20 @@ export default function PetsCatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [category, element, rarity, mine, t]);
+  }, [category, element, rarity, species, mine, t]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  // 外部入口（今日幸运宠等）通过 URL 参数直达物种/稀有度
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    const s = qs.get("species");
+    const r = qs.get("rarity");
+    if (s) setSpecies(s);
+    if (r) setRarity(r);
+  }, []);
 
   const handleSynthesize = async () => {
     const token = localStorage.getItem("aiabw_token");

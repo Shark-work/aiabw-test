@@ -42,7 +42,18 @@
     "unlockFirst": "Please unlock the Multi-Pet Collection first",
     "diagnosticLink": "🔧 Advanced: AI tool diagnostics (legacy)",
     "rareBannerTitle": "👑 Rare Pets · Radiant Catalog",
-    "rareBannerSub": "Legend & epic Aibis hide in here — under 5% chance per synthesis"
+    "rareBannerSub": "Legend & epic Aibis hide in here — under 5% chance per synthesis",
+    "dailyLoading": "Loading today's inspiration…",
+    "fortune": "🔮 Today's fortune: a {sign} day — meet a {name} today. It is {trait}, bringing you calm and inspiration.",
+    "fortuneEmpty": "🔮 No lucky pet yet today — check back tomorrow!",
+    "meet": "Meet it now",
+    "recentTitle": "🎉 Just born companions",
+    "recentItem": "Player {user} just adopted {name} {id}",
+    "recentEmpty": "No new companions today — be the first!",
+    "zodiacFire": "Fire",
+    "zodiacEarth": "Earth",
+    "zodiacAir": "Air",
+    "zodiacWater": "Water"
   },
   "login": {
     "title": "Sign in to Aibi World",

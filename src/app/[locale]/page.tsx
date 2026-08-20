@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
-import { DiagnosticForm } from "@/components/diagnostic-form";
+import { DailyInspiration } from "@/components/daily-inspiration";
 import { PetAvatar } from "@/components/PetAvatar";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PETS, type PetType } from "@/lib/pet-config";
@@ -323,15 +323,8 @@ export default function Home() {
         {error && <p className="text-sm text-red-600">{error}</p>}
         <p className="text-xs text-zinc-400">{t("adoptHint")}</p>
 
-        {/* 次要功能：旧版 AI 工具诊断 */}
-        <details className="mt-6 w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white/70 p-4 text-left shadow-sm backdrop-blur">
-          <summary className="cursor-pointer text-sm font-medium text-zinc-700">
-            {t("diagnosticLink")}
-          </summary>
-          <div className="mt-4">
-            <DiagnosticForm />
-          </div>
-        </details>
+        {/* 艾比每日灵感：今日幸运宠 + 最新诞生（替代旧版 AI 工具诊断） */}
+        <DailyInspiration />
       </div>
 
       <UpgradePetModal
