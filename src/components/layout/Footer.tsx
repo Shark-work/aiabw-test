@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 /** 全局页脚：辅助导航 + 版权信息 + 自动版本号 + 语言切换。 */
 export async function Footer() {
@@ -62,12 +60,8 @@ export async function Footer() {
         <p className="leading-relaxed text-zinc-500">{t("disclaimer")}</p>
       </div>
 
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center">
         <span>{t("copyright", { version })}</span>
-        {/* useSearchParams 需要 Suspense 边界，否则 SSR 阶段会抛错 */}
-        <Suspense fallback={null}>
-          <LanguageSwitcher />
-        </Suspense>
       </div>
     </footer>
   );

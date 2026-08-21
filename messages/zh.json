@@ -1,8 +1,8 @@
 {
   "common": {
     "appName": "艾比世界",
-    "metaTitle": "艾比世界 - 领养你的 AI 虚拟宠物",
-    "metaDescription": "领养一只专属 AI 虚拟宠物艾比，通过陪伴式聊天解锁功能、获取 AI 工具推荐。",
+    "metaTitle": "艾比世界 Abi World - AI 虚拟宠物领养与养成",
+    "metaDescription": "领养专属 AI 虚拟宠物艾比：每天邂逅一只幸运灵宠与灵感签，用 3 合 1 灵力融合培育稀有伙伴。宠物会记住你的每一次互动，陪你慢慢长大。",
     "signIn": "登录",
     "register": "注册",
     "logout": "退出",

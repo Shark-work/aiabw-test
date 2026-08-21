@@ -1,43 +1,98 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { LOCALE_LABELS, LOCALES } from "@/lib/site";
 
 /**
- * 全局语言切换器（中 / EN）：
- *  - 写入 NEXT_LOCALE Cookie（next-intl 中间件据此持久化语言）；
- *  - 通过 next-intl 的 useRouter 无刷新切换到目标语言同路径；
- *  - 无刷新（客户端路由）切换，刷新后仍保持所选语言。
+ * 全局语言切换器（导航栏最右侧，独立单一元素）：
+ *  - 触发按钮展示当前语言的原生名称（中文 / English），首字母大写、不用国旗；
+ *  - 点击展开下拉菜单，列出全部可用语言；
+ *  - 切换时 router.replace 跳转到内容完全等价的同路径页面（绝不回首页）；
+ *  - 动态更新 <html lang>（屏幕阅读器 / 无障碍）并写入 NEXT_LOCALE Cookie 持久化；
+ *  - 点击外部 / ESC 关闭下拉。
  */
 export function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
 
-  const switchTo = (next: "zh" | "en") => {
+  // 点击外部或按 ESC 关闭下拉
+  useEffect(() => {
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  const switchTo = (next: (typeof LOCALES)[number]) => {
+    setOpen(false);
     if (next === locale) return;
     document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=31536000; SameSite=Lax`;
+    // 无障碍：切换语言后同步 <html lang>，确保屏幕阅读器正确发音
+    document.documentElement.lang = next;
+    // 等价页面：同路径无刷新切换，绝不跳首页
     const qs = searchParams.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   };
 
-  const btn = (active: boolean) =>
-    `rounded-full px-2 py-0.5 font-medium transition ${
-      active ? "bg-orange-500 text-white" : "text-zinc-500 hover:text-orange-600"
-    }`;
-
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-1 py-0.5 text-xs shadow-sm">
-      <button type="button" onClick={() => switchTo("zh")} className={btn(locale === "zh")} title="中文">
-        中
+    <div ref={boxRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Switch language / 切换语言"
+        className="flex h-9 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-orange-300 hover:text-orange-600"
+      >
+        <span aria-hidden className="text-base leading-none">
+          🌐
+        </span>
+        <span>{LOCALE_LABELS[locale]}</span>
+        <span aria-hidden className={`text-[9px] text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`}>
+          ▼
+        </span>
       </button>
-      <span className="text-zinc-300">|</span>
-      <button type="button" onClick={() => switchTo("en")} className={btn(locale === "en")} title="English">
-        EN
-      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-1 min-w-36 overflow-hidden rounded-xl border border-zinc-200 bg-white py-1 shadow-xl"
+        >
+          {LOCALES.map((l) => (
+            <button
+              key={l}
+              type="button"
+              role="menuitem"
+              onClick={() => switchTo(l)}
+              className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition ${
+                l === locale ? "bg-orange-50 font-semibold text-orange-600" : "text-zinc-700 hover:bg-zinc-50"
+              }`}
+            >
+              <span>{LOCALE_LABELS[l]}</span>
+              {l === locale && <span aria-hidden>✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+

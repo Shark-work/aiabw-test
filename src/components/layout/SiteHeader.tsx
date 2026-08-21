@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link, usePathname } from "@/i18n/navigation";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 type Me = { email: string; points: number };
 
@@ -127,6 +128,8 @@ export function SiteHeader() {
               </Link>
             </>
           )}
+          {/* 语言切换器：全局导航最右侧、独立单一元素 */}
+          <LanguageSwitcher />
         </div>
 
         {/* 移动端汉堡按钮 */}
@@ -207,6 +210,10 @@ export function SiteHeader() {
                   </Link>
                 </>
               )}
+            </div>
+            {/* 移动端：语言切换（独立行，原生名展示） */}
+            <div className="mt-3 flex items-center justify-center border-t border-zinc-100 pt-3">
+              <LanguageSwitcher />
             </div>
           </nav>
         </>

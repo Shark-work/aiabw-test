@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PetAvatar } from "@/components/PetAvatar";
 import { getRarityMeta } from "@/lib/pet-status";
+import { SITE_URL } from "@/lib/site";
 
 type CatalogPet = {
   id: string;
@@ -18,6 +19,20 @@ type CatalogPet = {
 
 const ELEMENTS = ["fire", "water", "earth", "air"];
 const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"];
+
+/** 图鉴收录的精选物种（GEO：JSON-LD ItemList 静态条目，SSR 可靠输出）。 */
+const LD_SPECIES = [
+  { id: "golden_retriever", zh: "金毛", en: "Golden Retriever" },
+  { id: "maine_coon", zh: "缅因猫", en: "Maine Coon" },
+  { id: "penguin", zh: "企鹅", en: "Penguin" },
+  { id: "parrot", zh: "鹦鹉", en: "Parrot" },
+  { id: "sea_otter", zh: "海獭", en: "Sea Otter" },
+  { id: "hedgehog", zh: "刺猬", en: "Hedgehog" },
+  { id: "corgi", zh: "柯基", en: "Corgi" },
+  { id: "red_panda", zh: "小熊猫", en: "Red Panda" },
+  { id: "tortoise", zh: "陆龟", en: "Tortoise" },
+  { id: "owl", zh: "猫头鹰", en: "Owl" },
+];
 
 /**
  * 动物图鉴（公共物种百科）：
@@ -82,6 +97,51 @@ export default function PetsCatalogPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
+      {/* GEO 结构化数据：图鉴 ItemList（物种条目）+ BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: locale === "en" ? "Aibi World Pet Encyclopedia" : "艾比世界动物图鉴",
+            description: t("subtitle"),
+            url: `${SITE_URL}/${locale}/pets`,
+            itemListElement: LD_SPECIES.map((s, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Product",
+                name: locale === "en" ? s.en : s.zh,
+                description:
+                  locale === "en"
+                    ? `${s.en} virtual pet in Aibi World - adopt, chat and fuse to level up.`
+                    : `${s.zh}——艾比世界虚拟宠物，可领养互动，3 合 1 灵力融合升级。`,
+                category: "Virtual Pet / 虚拟宠物",
+                url: `${SITE_URL}/${locale}/pets?species=${s.id}`,
+              },
+            })),
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: locale === "en" ? "Home" : "首页", item: `${SITE_URL}/${locale}` },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: locale === "en" ? "Pet Encyclopedia" : "动物图鉴",
+                item: `${SITE_URL}/${locale}/pets`,
+              },
+            ],
+          }),
+        }}
+      />
       <div className="mx-auto max-w-5xl">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
