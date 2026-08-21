@@ -10,7 +10,7 @@ export async function Footer() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
   return (
     <footer className="border-t border-zinc-200 bg-white/60 pb-4 pt-5 text-center text-xs text-muted-foreground">
-      {/* 页脚辅助导航（关于我们 / 常见问题 / 联系方式 / 用户协议） */}
+      {/* 页脚辅助导航（关于 / FAQ / 联系 + 法律合规三件套） */}
       <nav
         className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
         aria-label={t("language")}
@@ -24,8 +24,17 @@ export async function Footer() {
         <Link href="/contact" className="text-zinc-500 transition hover:text-orange-600">
           {t("contact")}
         </Link>
-        <Link href="/terms" className="text-zinc-500 transition hover:text-orange-600">
+        <span className="text-zinc-200" aria-hidden>
+          |
+        </span>
+        <Link href="/legal/terms" className="text-zinc-500 transition hover:text-orange-600">
           {t("terms")}
+        </Link>
+        <Link href="/legal/privacy" className="text-zinc-500 transition hover:text-orange-600">
+          {t("privacy")}
+        </Link>
+        <Link href="/legal/virtual-goods" className="text-zinc-500 transition hover:text-orange-600">
+          {t("virtualGoods")}
         </Link>
       </nav>
       <div className="flex items-center justify-center gap-3">
