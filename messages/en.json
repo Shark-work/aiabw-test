@@ -152,7 +152,19 @@
     "checkin": "Daily check-in",
     "gacha": "Mystery box draw",
     "ugcBuy": "UGC pet purchase",
-    "inviteReward": "Invite reward"
+    "inviteReward": "Invite reward",
+    "redeemTitle": "🎁 Points Redemption · New Companion",
+    "redeemSub": "Redeem a random common base pet with points (limit 1 per day)",
+    "redeemPrice": "Price",
+    "redeemBtn": "Redeem companion",
+    "redeeming": "Redeeming…",
+    "redeemProgress": "Earn {need} more points to redeem a new companion!",
+    "redeemProgressReady": "Enough points - redeem your new companion now!",
+    "redeemDailyLimit": "Limit: 1 per day",
+    "redeemOk": "🎉 Redeemed! Your new companion is ready",
+    "redeemFail": "Redemption failed, please try again",
+    "redeemNoPoints": "Not enough points (need 500)",
+    "redeemAlready": "Already redeemed today, come back tomorrow~"
   },
   "handbooks": {
     "title": "Memory Journals",
@@ -327,7 +339,8 @@
     "evolveFail": "Evolution failed",
     "maxEvolved": "👑 MAX",
     "evolveConfirm": "Consume these 3 {name}? This cannot be undone",
-    "confirmEvolve": "Confirm evolve"
+    "confirmEvolve": "Confirm evolve",
+    "backToCatalog": "Back to dictionary"
   },
   "api": {
     "signInFirst": "Please sign in first",
@@ -381,7 +394,9 @@
     "invalidEvolveSet": "Evolution needs 3 pets of the same species and rarity",
     "notSameGroup": "The 3 pets must share the same species and rarity",
     "legendaryTop": "Legendary is already the peak",
-    "evolveFailed": "Evolution failed, please try again"
+    "evolveFailed": "Evolution failed, please try again",
+    "redeemAlready": "Already redeemed today, come back tomorrow",
+    "redeemFailed": "Redemption failed, please try again"
   },
   "nav": {
     "home": "Home",

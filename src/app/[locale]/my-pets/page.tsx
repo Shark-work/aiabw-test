@@ -206,9 +206,9 @@ export default function MyPetsPage() {
           </div>
         </div>
 
-        {/* 进化入口横幅：引导到图鉴 mine 视图 */}
+        {/* 进化入口横幅：引导到我的宠物合成页 */}
         <Link
-          href="/pets?mine=1"
+          href="/pets/my"
           className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-100 to-fuchsia-50 p-4 transition hover:border-violet-300 hover:shadow-sm"
         >
           <span className="text-sm font-semibold text-violet-800">{t("evolveBanner")}</span>

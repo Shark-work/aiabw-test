@@ -152,7 +152,19 @@
     "checkin": "每日签到",
     "gacha": "盲盒抽取",
     "ugcBuy": "购买 UGC 宠物",
-    "inviteReward": "邀请好友奖励"
+    "inviteReward": "邀请好友奖励",
+    "redeemTitle": "🎁 积分兑换 · 新伙伴",
+    "redeemSub": "用积分兑换一只随机的普通级基础宠物（每天限 1 次）",
+    "redeemPrice": "兑换价格",
+    "redeemBtn": "兑换新伙伴",
+    "redeeming": "兑换中…",
+    "redeemProgress": "再获得 {need} 积分即可兑换一只新伙伴！",
+    "redeemProgressReady": "积分已满，快来兑换新伙伴吧！",
+    "redeemDailyLimit": "每天限兑换 1 次",
+    "redeemOk": "🎉 兑换成功！新伙伴已加入你的图鉴",
+    "redeemFail": "兑换失败，请稍后重试",
+    "redeemNoPoints": "积分不足（需要 500 积分）",
+    "redeemAlready": "今天已兑换过，明天再来吧~"
   },
   "handbooks": {
     "title": "记忆手账",
@@ -327,7 +339,8 @@
     "evolveFail": "进化失败",
     "maxEvolved": "👑 满级",
     "evolveConfirm": "确定要消耗这 3 只 {name} 吗？进化后不可撤销",
-    "confirmEvolve": "确认进化"
+    "confirmEvolve": "确认进化",
+    "backToCatalog": "返回图鉴"
   },
   "api": {
     "signInFirst": "请先登录",
@@ -381,11 +394,13 @@
     "invalidEvolveSet": "进化需要 3 只同物种同稀有度的宠物",
     "notSameGroup": "3 只宠物必须同物种且同稀有度",
     "legendaryTop": "传说级已是顶点，无需再进化",
-    "evolveFailed": "进化失败，请稍后重试"
+    "evolveFailed": "进化失败，请稍后重试",
+    "redeemAlready": "今天已兑换过，明天再来吧",
+    "redeemFailed": "兑换失败，请稍后重试"
   },
   "nav": {
     "home": "首页",
-    "catalog": "动物全图鉴",
+    "catalog": "动物图鉴",
     "myPets": "我的宠物",
     "market": "商城",
     "journals": "手帐",
