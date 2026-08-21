@@ -110,7 +110,9 @@
     "imprintMark": "专属印记",
     "imprintDate": "由你于 {date} 孕育",
     "hungryHint": "🍖 它饿了，去喂食吧！",
-    "feed": "🍖 去喂食"
+    "feed": "🍖 去喂食",
+    "evolveBanner": "🧪 发现你有 3 只相同的伙伴？去图鉴中心试试融合进化吧！",
+    "evolveGo": "去进化 →"
   },
   "marketplace": {
     "title": "UGC 广场",
@@ -310,7 +312,16 @@
     "shareCard": "🖼️ 生成名片",
     "cardDownloaded": "名片已生成，长按/右键保存",
     "birth": "✨ 高光诞生！",
-    "daysAgo": "{n} 天没来看它了"
+    "daysAgo": "{n} 天没来看它了",
+    "evolvable": "✨ 可进化",
+    "evolve": "融合进化",
+    "evolveHint": "集齐 3 只同物种、同稀有度的伙伴，即可融合升级！",
+    "evolveConsume": "将消耗 {count} 只 {name}",
+    "evolveSelect": "选择要融合的 3 只",
+    "evolving": "融合中…",
+    "evolveSuccess": "🎉 进化成功！",
+    "evolveFail": "进化失败",
+    "maxEvolved": "👑 满级"
   },
   "api": {
     "signInFirst": "请先登录",
@@ -360,7 +371,11 @@
     "journalNoPermission": "无权生成该宠物的手账",
     "journalTaskFailed": "创建手账任务失败",
     "taskNotFound": "任务不存在",
-    "interactFailed": "互动更新失败"
+    "interactFailed": "互动更新失败",
+    "invalidEvolveSet": "进化需要 3 只同物种同稀有度的宠物",
+    "notSameGroup": "3 只宠物必须同物种且同稀有度",
+    "legendaryTop": "传说级已是顶点，无需再进化",
+    "evolveFailed": "进化失败，请稍后重试"
   },
   "nav": {
     "home": "首页",

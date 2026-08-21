@@ -12,3 +12,93 @@ body {
     --muted-foreground: 215.4 16.3% 46.9%;
   }
 }
+
+/* ---- 合成进化动画（融合台） ---- */
+/* 3 张源图从左右/中心旋转聚拢到中心 */
+@keyframes fuse-l {
+  from {
+    transform: translateX(-96px) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(0) rotate(360deg) scale(0.18);
+    opacity: 0.5;
+  }
+}
+@keyframes fuse-m {
+  from {
+    transform: translateX(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(0) rotate(-360deg) scale(0.14);
+    opacity: 0.5;
+  }
+}
+@keyframes fuse-r {
+  from {
+    transform: translateX(96px) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(0) rotate(-360deg) scale(0.18);
+    opacity: 0.5;
+  }
+}
+/* 融合时的白色闪光 */
+@keyframes fuse-flash {
+  0% {
+    opacity: 0;
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* 新宠物浮现 */
+@keyframes born-pop {
+  0% {
+    transform: scale(0) rotate(-25deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.12) rotate(3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+/* 进化高光呼吸（满级勋章 / 新宠展示框） */
+@keyframes evolve-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(251, 146, 60, 0.85);
+  }
+}
+
+.fuse-l {
+  animation: fuse-l 1.6s ease-in forwards;
+}
+.fuse-m {
+  animation: fuse-m 1.6s ease-in forwards;
+}
+.fuse-r {
+  animation: fuse-r 1.6s ease-in forwards;
+}
+.fuse-flash {
+  animation: fuse-flash 1.2s ease-out forwards;
+}
+.born-pop {
+  animation: born-pop 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.evolve-glow {
+  animation: evolve-glow 2s ease-in-out infinite;
+}
+

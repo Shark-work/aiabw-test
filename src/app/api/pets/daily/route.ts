@@ -99,6 +99,7 @@ export async function GET(req: Request) {
        JOIN pet_dictionary d ON d.id = p.species_id
        LEFT JOIN users u ON u.id = p.owner_id
       WHERE p.owner_id IS NOT NULL
+        AND p.status = 'active'
         AND p.traits->>'rarity' IN ('rare', 'epic', 'legendary')
       ORDER BY p.adopted_at DESC NULLS LAST
       LIMIT 3`,

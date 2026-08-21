@@ -53,6 +53,16 @@ export default function PetsCatalogPage() {
   const [interactingId, setInteractingId] = useState<string | null>(null);
   const locale = useLocale();
   const cardRef = useRef<HTMLCanvasElement>(null);
+  // 合成进化：当前可进化组 / 选中的 3 只 / 融合动画 / 进化结果
+  const [evolveGroup, setEvolveGroup] = useState<{
+    speciesId: string;
+    rarity: string;
+    speciesName: string;
+    pets: CatalogPet[];
+  } | null>(null);
+  const [evolveSelected, setEvolveSelected] = useState<string[]>([]);
+  const [fusing, setFusing] = useState(false);
+  const [evolveResult, setEvolveResult] = useState<CatalogPet | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,7 +74,11 @@ export default function PetsCatalogPage() {
       if (rarity) qs.set("rarity", rarity);
       if (species) qs.set("species", species);
       if (mine) qs.set("mine", "1");
-      const res = await fetch(`/api/pets/catalog?${qs.toString()}`);
+      const token = localStorage.getItem("aiabw_token");
+      const res = await fetch(`/api/pets/catalog?${qs.toString()}`, {
+        // mine=1 时服务端按 token 判定归属，必须带上 Authorization
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = await res.json();
       if (data?.ok) {
         setPets(data.pets ?? []);
@@ -83,13 +97,14 @@ export default function PetsCatalogPage() {
     void load();
   }, [load]);
 
-  // 外部入口（今日幸运宠等）通过 URL 参数直达物种/稀有度
+  // 外部入口（今日幸运宠等）通过 URL 参数直达物种/稀有度/我的视图
   useEffect(() => {
     const qs = new URLSearchParams(window.location.search);
     const s = qs.get("species");
     const r = qs.get("rarity");
     if (s) setSpecies(s);
     if (r) setRarity(r);
+    if (qs.get("mine") === "1") setMine(true);
   }, []);
 
   const handleSynthesize = async () => {
@@ -251,6 +266,66 @@ export default function PetsCatalogPage() {
     setTimeout(() => setToast(""), 3000);
   };
 
+  // 合成进化：打开进化面板（选 3 只同物种同稀有度）
+  const startEvolve = (pet: CatalogPet) => {
+    const groupPets = pets.filter(
+      (p) =>
+        p.owned &&
+        p.speciesId === pet.speciesId &&
+        (p.traits.rarity ?? "") === (pet.traits.rarity ?? ""),
+    );
+    setEvolveResult(null);
+    setEvolveSelected(groupPets.slice(0, 3).map((p) => p.id));
+    setEvolveGroup({
+      speciesId: pet.speciesId,
+      rarity: String(pet.traits.rarity ?? ""),
+      speciesName: pet.speciesName,
+      pets: groupPets,
+    });
+  };
+
+  const toggleEvolveSelect = (id: string) => {
+    setEvolveSelected((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+  };
+
+  // 确认融合：先播动画，同时请求 /api/pets/evolve（事务原子），成功后展示新宠物
+  const confirmEvolve = async () => {
+    if (evolveSelected.length !== 3 || !evolveGroup || fusing) return;
+    setFusing(true);
+    setEvolveResult(null);
+    setError("");
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) {
+      router.push("/login?redirect=/pets");
+      return;
+    }
+    try {
+      const res = await fetch("/api/pets/evolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ petIds: evolveSelected }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setEvolveResult(data.pet);
+        setToast(t("evolveSuccess"));
+        setTimeout(() => setToast(""), 3000);
+        await load();
+      } else {
+        setError(data?.error ?? t("evolveFail"));
+      }
+    } catch {
+      setError(t("evolveFail"));
+    } finally {
+      // 动画播完（约 1.9s）后切出动画态，露出结果面板
+      setTimeout(() => setFusing(false), 1900);
+    }
+  };
+
   const chip = (active: boolean) =>
     `rounded-full px-3 py-1 text-xs transition ${
       active ? "bg-orange-500 text-white" : "bg-white text-zinc-600 border border-zinc-200 hover:border-orange-300"
@@ -340,13 +415,38 @@ export default function PetsCatalogPage() {
             const imprint = formatAdoptionImprint(pet.adoptedAt, locale);
             const lineage = formatGenealogy(pet.parentIds);
             const stale = st.stale && pet.owned;
+            // 进化：同物种同稀有度（owned 且 active）计数
+            const rar = String(pet.traits.rarity ?? "");
+            const evolvable =
+              pet.owned &&
+              rar !== "legendary" &&
+              pets.filter(
+                (x) => x.owned && x.speciesId === pet.speciesId && (x.traits.rarity ?? "") === rar,
+              ).length >= 3;
+            const maxed = pet.owned && rar === "legendary";
             return (
               <div
                 key={pet.id}
                 className={`relative rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur transition ${
                   stale ? "grayscale" : ""
-                }`}
+                } ${maxed ? "ring-2 ring-amber-300" : ""}`}
               >
+                {/* 满级勋章：Legendary 顶点 */}
+                {maxed && (
+                  <span className="evolve-glow absolute left-2 top-2 z-10 rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-bold text-white shadow">
+                    {t("maxEvolved")}
+                  </span>
+                )}
+                {/* 可进化角标 */}
+                {evolvable && (
+                  <button
+                    type="button"
+                    onClick={() => startEvolve(pet)}
+                    className="absolute left-2 top-2 z-10 animate-pulse rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow transition hover:scale-105"
+                  >
+                    {t("evolvable")}
+                  </button>
+                )}
                 {/* 状态提示：损失厌恶 */}
                 {stale && (
                   <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-zinc-800/80 px-2 py-0.5 text-[11px] font-medium text-white">
@@ -455,6 +555,134 @@ export default function PetsCatalogPage() {
                 {getRarityMeta(celebrate.rarity).emoji}{" "}
                 {locale === "en" ? getRarityMeta(celebrate.rarity).labelEn : getRarityMeta(celebrate.rarity).labelZh}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* 合成进化弹窗 */}
+        {evolveGroup && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 p-4 backdrop-blur-sm"
+            onClick={() => {
+              if (!fusing && !evolveResult) setEvolveGroup(null);
+            }}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {fusing ? (
+                /* 融合动画台：3 图旋转聚拢 → 白光 */
+                <div className="relative mx-auto flex h-56 w-56 items-center justify-center">
+                  {evolveSelected.slice(0, 3).map((id, i) => {
+                    const srcPet = evolveGroup.pets.find((p) => p.id === id);
+                    if (!srcPet) return null;
+                    const cls = i === 0 ? "fuse-l" : i === 1 ? "fuse-m" : "fuse-r";
+                    return (
+                      <PetAvatar
+                        key={id}
+                        src={srcPet.imageUrl}
+                        alt={srcPet.speciesName}
+                        className={`${cls} absolute h-20 w-20 rounded-2xl border-2 border-orange-200 object-cover shadow-lg`}
+                      />
+                    );
+                  })}
+                  <div className="fuse-flash absolute inset-6 rounded-full bg-white/80" />
+                  <p className="absolute inset-x-0 bottom-0 text-center text-sm font-semibold text-violet-600">
+                    {t("evolving")}
+                  </p>
+                </div>
+              ) : evolveResult ? (
+                /* 进化结果：新宠物浮现 */
+                <div className="flex flex-col items-center gap-3 py-2 text-center">
+                  <div className="evolve-glow rounded-full bg-orange-50">
+                    <PetAvatar
+                      src={evolveResult.imageUrl}
+                      alt={evolveResult.speciesName}
+                      className="born-pop h-32 w-32 rounded-full border-4 border-amber-300 object-cover shadow-xl"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-zinc-900">{t("evolveSuccess")}</p>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      {evolveResult.speciesName} ·{" "}
+                      <span className="font-mono font-medium text-orange-500">
+                        {evolveResult.id}
+                      </span>
+                    </p>
+                    <span
+                      className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${getRarityMeta(
+                        String(evolveResult.traits.rarity ?? ""),
+                      ).badgeClass}`}
+                    >
+                      {getRarityMeta(String(evolveResult.traits.rarity ?? "")).emoji}{" "}
+                      {locale === "en"
+                        ? getRarityMeta(String(evolveResult.traits.rarity ?? "")).labelEn
+                        : getRarityMeta(String(evolveResult.traits.rarity ?? "")).labelZh}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEvolveGroup(null);
+                      setEvolveResult(null);
+                      setEvolveSelected([]);
+                    }}
+                    className="rounded-full bg-orange-500 px-6 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+                  >
+                    {t("synthesizeOk")}
+                  </button>
+                </div>
+              ) : (
+                /* 选择 3 只融合 */
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-900">✨ {t("evolve")}</h3>
+                  <p className="mt-1 text-xs text-zinc-500">{t("evolveHint")}</p>
+                  <p className="mt-2 rounded-lg bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700">
+                    {t("evolveConsume", { count: 3, name: evolveGroup.speciesName })}
+                  </p>
+                  <div className="mt-3 grid max-h-56 grid-cols-3 gap-2 overflow-y-auto">
+                    {evolveGroup.pets.map((p) => {
+                      const sel = evolveSelected.includes(p.id);
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => toggleEvolveSelect(p.id)}
+                          className={`rounded-xl border-2 p-1.5 text-center transition ${
+                            sel
+                              ? "border-orange-500 bg-orange-50"
+                              : "border-zinc-100 bg-zinc-50 hover:border-orange-200"
+                          }`}
+                        >
+                          <PetAvatar
+                            src={p.imageUrl}
+                            alt={p.speciesName}
+                            className="h-12 w-12 rounded-full object-cover"
+                          />
+                          <span className="mt-1 block truncate font-mono text-[9px] text-zinc-500">
+                            {p.id}
+                          </span>
+                          {sel && (
+                            <span className="text-[9px] font-bold text-orange-600">✓</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-center text-[11px] text-zinc-400">
+                    {evolveSelected.length}/3
+                  </p>
+                  <button
+                    type="button"
+                    disabled={evolveSelected.length !== 3}
+                    onClick={() => void confirmEvolve()}
+                    className="mt-2 w-full rounded-full bg-violet-500 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-40"
+                  >
+                    {t("evolve")}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

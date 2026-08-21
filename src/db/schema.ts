@@ -160,6 +160,10 @@ export const pets = pgTable('pets', {
   /** 上次互动时间（喂食/互动）；NULL 视为与 adopted_at 相同。
    *  损失厌恶：超过 3 天未互动 → 前端展示灰暗滤镜 + 💧/🍖 状态提示。 */
   lastInteractionTime: timestamp('last_interaction_time'),
+  /** 进化状态：active=正常；consumed=已被进化消耗（软删除，保留族谱）。 */
+  status: text('status').notNull().default('active'),
+  /** 被消耗时指向进化结果宠物 id（evolution 链）。 */
+  evolutionId: text('evolution_id'),
 });
 
 

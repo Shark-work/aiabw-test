@@ -110,7 +110,9 @@
     "imprintMark": "Endowment Mark",
     "imprintDate": "Born for you on {date}",
     "hungryHint": "🍖 It's hungry — go feed it!",
-    "feed": "🍖 Feed now"
+    "feed": "🍖 Feed now",
+    "evolveBanner": "🧪 Got 3 identical companions? Try fusing them at the Dictionary!",
+    "evolveGo": "Evolve now →"
   },
   "marketplace": {
     "title": "UGC Market",
@@ -310,7 +312,16 @@
     "shareCard": "🖼️ Share card",
     "cardDownloaded": "Card ready - long-press/right-click to save",
     "birth": "✨ A radiant birth!",
-    "daysAgo": "You haven't visited for {n} days"
+    "daysAgo": "You haven't visited for {n} days",
+    "evolvable": "✨ Evolvable",
+    "evolve": "Fuse & evolve",
+    "evolveHint": "Collect 3 companions of the same species & rarity to fuse them up!",
+    "evolveConsume": "Consumes {count} × {name}",
+    "evolveSelect": "Pick 3 to fuse",
+    "evolving": "Fusing…",
+    "evolveSuccess": "🎉 Evolution success!",
+    "evolveFail": "Evolution failed",
+    "maxEvolved": "👑 MAX"
   },
   "api": {
     "signInFirst": "Please sign in first",
@@ -360,7 +371,11 @@
     "journalNoPermission": "You cannot generate a journal for this pet",
     "journalTaskFailed": "Failed to create the journal task",
     "taskNotFound": "Task not found",
-    "interactFailed": "Interaction update failed"
+    "interactFailed": "Interaction update failed",
+    "invalidEvolveSet": "Evolution needs 3 pets of the same species and rarity",
+    "notSameGroup": "The 3 pets must share the same species and rarity",
+    "legendaryTop": "Legendary is already the peak",
+    "evolveFailed": "Evolution failed, please try again"
   },
   "nav": {
     "home": "Home",

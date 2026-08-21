@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 100);
   const offset = Math.max(Number(url.searchParams.get("offset") ?? 0) || 0, 0);
 
-  const where: string[] = [];
+  const where: string[] = [`p.status = 'active'`];
   const params: unknown[] = [];
   if (mine) {
     const user = await getUserFromRequest(req);
