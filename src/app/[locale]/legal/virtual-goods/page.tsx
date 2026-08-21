@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { SupportContact } from "@/components/layout/SupportContact";
 
 export default async function LegalGoodsPage({
   params,
@@ -18,9 +19,11 @@ export default async function LegalGoodsPage({
         <div className="mt-4 whitespace-pre-line text-sm leading-relaxed text-zinc-600">
           {t("goodsBody")}
         </div>
+        {/* 意见反馈与客服联系 */}
+        <SupportContact />
         <Link
           href="/"
-          className="mt-6 inline-block text-sm font-medium text-orange-600 hover:underline"
+          className="mt-5 inline-block text-sm font-medium text-orange-600 hover:underline"
         >
           {t("backHome")}
         </Link>

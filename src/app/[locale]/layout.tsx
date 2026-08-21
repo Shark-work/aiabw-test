@@ -7,6 +7,7 @@ import "@/app/globals.css";
 
 import { Footer } from "@/components/layout/Footer";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { FloatingSupport } from "@/components/layout/FloatingSupport";
 import { routing } from "@/i18n/routing";
 
 // 本应用强依赖数据库 / Cookie / 请求上下文（认证、支付、Neon），
@@ -55,6 +56,8 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           {/* 全局固定顶部导航（所有页面可见，移动端折叠为汉堡菜单） */}
           <SiteHeader />
+          {/* 右下角悬浮客服按钮（/chat 页自动隐藏） */}
+          <FloatingSupport />
           <div className="flex flex-1 flex-col">{children}</div>
           {/* Footer（含 LanguageSwitcher）与 Analytics 必须在 Provider 内部：
               否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}

@@ -7,6 +7,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 /** 全局页脚：辅助导航 + 版权信息 + 自动版本号 + 语言切换。 */
 export async function Footer() {
   const t = await getTranslations("footer");
+  const ts = await getTranslations("support");
   const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
   return (
     <footer className="border-t border-zinc-200 bg-white/60 pb-4 pt-5 text-center text-xs text-muted-foreground">
@@ -37,6 +38,23 @@ export async function Footer() {
           {t("virtualGoods")}
         </Link>
       </nav>
+      {/* 客服联系方式（HTML5 <address> 语义化，便于屏幕阅读器与 SEO 识别） */}
+      <address className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 text-xs not-italic text-zinc-500">
+        <span>
+          {ts("supportEmail")}：
+          <a href="mailto:1206309834@qq.com" className="text-zinc-600 transition hover:text-orange-600">
+            1206309834@qq.com
+          </a>
+        </span>
+        <span aria-hidden className="text-zinc-200">
+          |
+        </span>
+        <span>
+          {ts("supportQQGroup")}：
+          <span className="font-mono text-zinc-600">1005445619</span>
+        </span>
+      </address>
+
       <div className="flex items-center justify-center gap-3">
         <span>{t("copyright", { version })}</span>
         {/* useSearchParams 需要 Suspense 边界，否则 SSR 阶段会抛错 */}
