@@ -197,7 +197,9 @@
     "later": "Later",
     "unlockedOk": "🎉 Unlocked! Go chat with your pet!",
     "unlockNotDetected": "Unlock not detected yet. Please make sure you completed the payment and try again.",
-    "orderFailed": "Order creation failed, please try again"
+    "orderFailed": "Order creation failed, please try again",
+    "placeholder": "Tell {name} what you need~",
+    "send": "Send"
   },
   "chatClient": {
     "memory": "🧠 Memory",
@@ -323,7 +325,9 @@
     "evolving": "Fusing…",
     "evolveSuccess": "🎉 Evolution success!",
     "evolveFail": "Evolution failed",
-    "maxEvolved": "👑 MAX"
+    "maxEvolved": "👑 MAX",
+    "evolveConfirm": "Consume these 3 {name}? This cannot be undone",
+    "confirmEvolve": "Confirm evolve"
   },
   "api": {
     "signInFirst": "Please sign in first",

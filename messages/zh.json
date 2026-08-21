@@ -197,7 +197,9 @@
     "later": "稍后再看",
     "unlockedOk": "🎉 解锁成功！快去和宠物畅聊吧~",
     "unlockNotDetected": "还没检测到解锁，请确认已完成支付后再试~",
-    "orderFailed": "下单失败，请稍后重试"
+    "orderFailed": "下单失败，请稍后重试",
+    "placeholder": "和{name}聊聊你的需求吧~",
+    "send": "发送"
   },
   "chatClient": {
     "memory": "🧠 记忆",
@@ -323,7 +325,9 @@
     "evolving": "融合中…",
     "evolveSuccess": "🎉 进化成功！",
     "evolveFail": "进化失败",
-    "maxEvolved": "👑 满级"
+    "maxEvolved": "👑 满级",
+    "evolveConfirm": "确定要消耗这 3 只 {name} 吗？进化后不可撤销",
+    "confirmEvolve": "确认进化"
   },
   "api": {
     "signInFirst": "请先登录",

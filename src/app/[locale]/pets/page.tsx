@@ -35,6 +35,7 @@ const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"];
 
 export default function PetsCatalogPage() {
   const t = useTranslations("petsCatalog");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [pets, setPets] = useState<CatalogPet[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -63,6 +64,8 @@ export default function PetsCatalogPage() {
   const [evolveSelected, setEvolveSelected] = useState<string[]>([]);
   const [fusing, setFusing] = useState(false);
   const [evolveResult, setEvolveResult] = useState<CatalogPet | null>(null);
+  // 防呆：不可逆消耗前的二次确认
+  const [evolveConfirming, setEvolveConfirming] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -673,14 +676,42 @@ export default function PetsCatalogPage() {
                   <p className="mt-2 text-center text-[11px] text-zinc-400">
                     {evolveSelected.length}/3
                   </p>
-                  <button
-                    type="button"
-                    disabled={evolveSelected.length !== 3}
-                    onClick={() => void confirmEvolve()}
-                    className="mt-2 w-full rounded-full bg-violet-500 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-40"
-                  >
-                    {t("evolve")}
-                  </button>
+                  {evolveConfirming ? (
+                    /* 防呆：不可逆消耗二次确认 */
+                    <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3">
+                      <p className="text-xs font-medium leading-relaxed text-red-700">
+                        {t("evolveConfirm", { name: evolveGroup.speciesName })}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEvolveConfirming(false);
+                            void confirmEvolve();
+                          }}
+                          className="flex-1 rounded-full bg-red-500 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+                        >
+                          {t("confirmEvolve")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEvolveConfirming(false)}
+                          className="flex-1 rounded-full border border-zinc-200 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50"
+                        >
+                          {tc("cancel")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={evolveSelected.length !== 3}
+                      onClick={() => setEvolveConfirming(true)}
+                      className="mt-2 w-full rounded-full bg-violet-500 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-40"
+                    >
+                      {t("evolve")}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
