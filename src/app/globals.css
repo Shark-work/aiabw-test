@@ -57,6 +57,22 @@ body {
     opacity: 0;
   }
 }
+/* 强光扩散（box-shadow 冲击波，合成爆点） */
+@keyframes fuse-burst {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+    transform: scale(0.2);
+  }
+  40% {
+    box-shadow: 0 0 90px 40px rgba(251, 146, 60, 0.75);
+    transform: scale(1.15);
+  }
+  100% {
+    box-shadow: 0 0 120px 80px rgba(217, 70, 239, 0);
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
 /* 新宠物浮现 */
 @keyframes born-pop {
   0% {
@@ -94,6 +110,9 @@ body {
 }
 .fuse-flash {
   animation: fuse-flash 1.2s ease-out forwards;
+}
+.fuse-burst {
+  animation: fuse-burst 1.7s ease-in-out forwards;
 }
 .born-pop {
   animation: born-pop 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;

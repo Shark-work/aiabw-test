@@ -340,7 +340,28 @@
     "maxEvolved": "👑 满级",
     "evolveConfirm": "确定要消耗这 3 只 {name} 吗？进化后不可撤销",
     "confirmEvolve": "确认进化",
-    "backToCatalog": "返回图鉴"
+    "backToCatalog": "返回图鉴",
+    "storageLabel": "持有",
+    "storageLimit": "仓库上限",
+    "onlyEvolvable": "🔮 仅显示可合成",
+    "noEvolvable": "暂无满足合成条件的伙伴（每种至少 3 只）",
+    "selectTitle": "选择要合成的伙伴",
+    "selectHint": "勾选 {count} 只同稀有度的伙伴进行 3 合 1 合成",
+    "selectedCount": "已选中 {count} 只 {name}",
+    "fuseNow": "✨ 立即合成",
+    "xCount": "x{count}",
+    "release": "🗑️ 放生",
+    "releaseConfirm": "确定要放生这只 {name} 吗？此操作不可撤销。",
+    "releasedOk": "🐦 已放生",
+    "fuseNormal": "基因重组成功！一只更强壮的 {name} 诞生了！",
+    "fuseCritical": "✨ 奇迹发生！基因突变，它变成了更高形态！",
+    "keepInBag": "放入背包",
+    "continueFuse": "继续合成",
+    "critical": "✨ 幸运暴击",
+    "redeemShop": "🎁 积分兑换所",
+    "redeemBlindHint": "基础宠物盲盒：必得常见级，小概率开出不凡级",
+    "redeemNeed": "还差 {need} 分即可兑换",
+    "deposit": "存入我的宠物"
   },
   "api": {
     "signInFirst": "请先登录",
@@ -396,7 +417,8 @@
     "legendaryTop": "传说级已是顶点，无需再进化",
     "evolveFailed": "进化失败，请稍后重试",
     "redeemAlready": "今天已兑换过，明天再来吧",
-    "redeemFailed": "兑换失败，请稍后重试"
+    "redeemFailed": "兑换失败，请稍后重试",
+    "releaseFailed": "放生失败，请稍后重试"
   },
   "nav": {
     "home": "首页",

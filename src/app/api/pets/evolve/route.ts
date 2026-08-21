@@ -64,7 +64,10 @@ export async function POST(req: Request) {
       if (idx === -1 || idx >= CHAIN.length - 1) {
         throw Object.assign(new Error("top"), { code: "legendaryTop" });
       }
-      const nextRarity = CHAIN[idx + 1];
+      // 幸运暴击：15% 概率稀有度额外 +1（如 common→rare），上限 legendary
+      const critical = Math.random() < 0.15;
+      const boost = critical ? 2 : 1;
+      const nextRarity = CHAIN[Math.min(idx + boost, CHAIN.length - 1)];
 
       // 3) 生成唯一新 id
       let newId = "";
@@ -125,6 +128,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ok: true,
         consumedIds: petIds,
+        critical,
         pet: {
           id: newPet.id,
           speciesId: newPet.species_id,

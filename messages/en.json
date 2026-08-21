@@ -340,7 +340,28 @@
     "maxEvolved": "👑 MAX",
     "evolveConfirm": "Consume these 3 {name}? This cannot be undone",
     "confirmEvolve": "Confirm evolve",
-    "backToCatalog": "Back to dictionary"
+    "backToCatalog": "Back to dictionary",
+    "storageLabel": "Owned",
+    "storageLimit": "Storage limit",
+    "onlyEvolvable": "🔮 Evolvable only",
+    "noEvolvable": "No evolvable companions yet (need 3+ of the same kind)",
+    "selectTitle": "Pick companions to fuse",
+    "selectHint": "Select {count} of the same rarity to fuse 3-in-1",
+    "selectedCount": "{count} × {name} selected",
+    "fuseNow": "✨ Fuse now",
+    "xCount": "x{count}",
+    "release": "🗑️ Release",
+    "releaseConfirm": "Release this {name}? This cannot be undone.",
+    "releasedOk": "🐦 Released",
+    "fuseNormal": "Genes recombined! A stronger {name} was born!",
+    "fuseCritical": "✨ A miracle! Gene mutation - it evolved into a higher form!",
+    "keepInBag": "Keep in bag",
+    "continueFuse": "Fuse more",
+    "critical": "✨ Lucky crit",
+    "redeemShop": "🎁 Points Shop",
+    "redeemBlindHint": "Base pet blind box: common guaranteed, small chance of uncommon",
+    "redeemNeed": "{need} more points to redeem",
+    "deposit": "Store to my pets"
   },
   "api": {
     "signInFirst": "Please sign in first",
@@ -396,7 +417,8 @@
     "legendaryTop": "Legendary is already the peak",
     "evolveFailed": "Evolution failed, please try again",
     "redeemAlready": "Already redeemed today, come back tomorrow",
-    "redeemFailed": "Redemption failed, please try again"
+    "redeemFailed": "Redemption failed, please try again",
+    "releaseFailed": "Release failed, please try again"
   },
   "nav": {
     "home": "Home",

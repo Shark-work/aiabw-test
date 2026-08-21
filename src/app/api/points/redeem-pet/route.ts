@@ -73,12 +73,13 @@ export async function POST(req: Request) {
         [user.id, -REDEEM_PRICE],
       );
 
-      // 5) 分配一只未领养 Common 宠物（预计算池原子领取）
+      // 5) 盲盒开奖：必得 Common，20% 概率 Uncommon
+      const roll = Math.random() < 0.2 ? "uncommon" : "common";
       const { rows: assigned } = await client.query(
         `WITH chosen AS (
            SELECT id FROM pets
             WHERE owner_id IS NULL AND status = 'active'
-              AND traits->>'rarity' = 'common'
+              AND traits->>'rarity' = $2
             ORDER BY random()
             LIMIT 1
             FOR UPDATE SKIP LOCKED
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
            FROM chosen c
           WHERE p.id = c.id
           RETURNING p.id, p.species_id, p.image_url, p.traits, p.generation, p.parent_ids, p.custom_description, p.adopted_at`,
-        [user.id],
+        [user.id, roll],
       );
 
       let pet = assigned[0];
@@ -118,7 +119,7 @@ export async function POST(req: Request) {
             newId,
             speciesId,
             img[0]?.image_url ?? "/resources/pet/fox2.webp",
-            JSON.stringify({ element: "earth", rarity: "common", personality: "温柔" }),
+            JSON.stringify({ element: "earth", rarity: roll, personality: "温柔" }),
             user.id,
           ],
         );
