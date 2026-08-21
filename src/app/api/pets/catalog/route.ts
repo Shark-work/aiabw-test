@@ -12,7 +12,7 @@ export const runtime = "nodejs";
  * 查询参数：
  *   category=猫科          按字典分类浏览
  *   species=snow_leopard   按物种浏览
- *   element=fire / rarity=rare / personality=勇敢  基因筛选（traits @> jsonb，命中 GIN 索引）
+ *   element=fire / rarity=rare / personality=勇敢  元素筛选（traits @> jsonb，命中 GIN 索引）
  *   mine=1                 只看当前登录用户已领养的
  *   limit=50 offset=0      分页
  * 返回每个宠物附带 species 信息 + 按 locale 渲染的默认介绍。

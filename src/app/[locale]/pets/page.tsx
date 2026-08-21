@@ -103,7 +103,7 @@ export default function PetsCatalogPage() {
           ))}
         </div>
 
-        {/* 基因筛选（GIN 索引） */}
+        {/* 元素筛选（GIN 索引） */}
         <div className="mb-4 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-zinc-400">element</span>

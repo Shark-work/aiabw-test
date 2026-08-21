@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PetAvatar } from "@/components/PetAvatar";
 import { getRarityMeta } from "@/lib/pet-status";
+import { PetWatermark } from "@/components/pets/pet-watermark";
 import type { AggPet } from "@/components/pets/aggregated-pet-card";
 
 /**
@@ -66,12 +67,13 @@ export function FusionOverlay({
             {t("critical")}
           </span>
         )}
-        <div className={`evolve-glow mx-auto rounded-full bg-orange-50`}>
+        <div className="evolve-glow relative mx-auto rounded-full bg-orange-50">
           <PetAvatar
             src={outcome.pet.imageUrl}
             alt={outcome.pet.speciesName}
             className="born-pop h-32 w-32 rounded-full border-4 border-amber-300 object-cover shadow-xl"
           />
+          <PetWatermark />
         </div>
         <p className="mt-3 text-sm font-bold text-zinc-900">
           {outcome.critical ? t("fuseCritical") : t("fuseNormal", { name: outcome.pet.speciesName })}

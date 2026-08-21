@@ -203,7 +203,7 @@ const SCHEMA_INDEXES: string[] = [
   // 裂变防刷：同 IP / 同设备指纹最多一次奖励
   `CREATE INDEX IF NOT EXISTS idx_invite_rewards_ip ON "invite_rewards" ("ip")`,
   `CREATE INDEX IF NOT EXISTS idx_invite_rewards_device ON "invite_rewards" ("device_id")`,
-  // 宠物图鉴：traits JSONB 按基因筛选（GIN 索引，毫秒级）
+  // 宠物图鉴：traits JSONB 按元素筛选（GIN 索引，毫秒级）
   `CREATE INDEX IF NOT EXISTS idx_pets_traits_gin ON "pets" USING gin ("traits")`,
   // 合成分配：owner_id IS NULL 的池子查询 + “我的宠物”列表
   `CREATE INDEX IF NOT EXISTS idx_pets_owner_id ON "pets" ("owner_id")`,

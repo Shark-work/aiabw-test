@@ -142,7 +142,7 @@ export const petDictionary = pgTable('pet_dictionary', {
  *  - id:         唯一哈希 ID（如 #8A3F9C），离线生成保证全局唯一；
  *  - owner_id:   NULL = 未被领养；/api/pets/synthesize 只做“分配”（UPDATE owner_id），
  *                绝不实时拼图 / 生成图片，目标 < 50ms；
- *  - traits:     JSON 基因（如 {"element":"fire","rarity":"rare"}），GIN 索引支持毫秒级筛选；
+ *  - traits:     JSON 元素/灵力（如 {"element":"fire","rarity":"rare"}），GIN 索引支持毫秒级筛选；
  *  - custom_description: 用户自定义介绍；NULL = 展示字典默认介绍（Species + Traits 生成）。
  */
 export const pets = pgTable('pets', {

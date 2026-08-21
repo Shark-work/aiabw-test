@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { PetAvatar } from "@/components/PetAvatar";
+import { PetWatermark } from "@/components/pets/pet-watermark";
 
 const REDEEM_PRICE = 500;
 
@@ -62,12 +63,13 @@ export function RedeemShopModal({
         {/* 兑换结果（成功后展示 + 闭环按钮） */}
         {redeemResult ? (
           <div className="text-center">
-            <div className="evolve-glow mx-auto rounded-full bg-violet-50">
+            <div className="evolve-glow relative mx-auto rounded-full bg-violet-50">
               <PetAvatar
                 src={redeemResult.imageUrl}
                 alt={redeemResult.speciesName}
                 className="born-pop h-28 w-28 rounded-full border-4 border-violet-300 object-cover shadow-xl"
               />
+              <PetWatermark />
             </div>
             <p className="mt-2 text-sm font-semibold text-zinc-800">{redeemResult.speciesName}</p>
             <p className="font-mono text-[11px] text-zinc-400">{redeemResult.id}</p>

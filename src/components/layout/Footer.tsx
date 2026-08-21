@@ -55,6 +55,13 @@ export async function Footer() {
         </span>
       </address>
 
+      {/* 版权声明与免责条款（上线前合规） */}
+      <div className="mx-auto mb-3 max-w-3xl space-y-1.5 border-t border-zinc-100 px-6 pt-4">
+        <p className="font-semibold text-zinc-600">{t("copyrightLine")}</p>
+        <p className="leading-relaxed text-zinc-500">{t("originalNotice")}</p>
+        <p className="leading-relaxed text-zinc-500">{t("disclaimer")}</p>
+      </div>
+
       <div className="flex items-center justify-center gap-3">
         <span>{t("copyright", { version })}</span>
         {/* useSearchParams 需要 Suspense 边界，否则 SSR 阶段会抛错 */}

@@ -112,7 +112,7 @@
     "hungryHint": "🍖 It's hungry — go feed it!",
     "feed": "🍖 Feed now",
     "evolveBanner": "🧪 Got 3 identical companions? Try fusing them at the Dictionary!",
-    "evolveGo": "Evolve now →"
+    "evolveGo": "Fuse now →"
   },
   "marketplace": {
     "title": "UGC Market",
@@ -277,7 +277,10 @@
     "contact": "Contact",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
-    "virtualGoods": "Virtual Goods & Recharge Rules"
+    "virtualGoods": "Virtual Goods & Recharge Rules",
+    "copyrightLine": "© 2026 Abi World. All Rights Reserved.",
+    "originalNotice": "All pet artwork, genetic settings, species descriptions and UI designs on this site are original or legally licensed and protected by copyright law. Any reproduction, scraping or commercial use without written permission is prohibited.",
+    "disclaimer": "This platform is a virtual interactive community. All pet data is for entertainment and collection only and has no real-world monetary value."
   },
   "pets": {
     "fox": {
@@ -308,7 +311,7 @@
   },
   "petsCatalog": {
     "title": "Pet Catalog",
-    "subtitle": "Precomputed · Dictionary species · Gene filtering",
+    "subtitle": "Precomputed · Dictionary species · Element filtering",
     "all": "All",
     "synthesize": "🔮 Synthesize",
     "synthesizeOk": "🎉 Synthesized! Welcome your new companion!",
@@ -329,22 +332,22 @@
     "cardDownloaded": "Card ready - long-press/right-click to save",
     "birth": "✨ A radiant birth!",
     "daysAgo": "You haven't visited for {n} days",
-    "evolvable": "✨ Evolvable",
-    "evolve": "Fuse & evolve",
+    "evolvable": "✨ Fusible",
+    "evolve": "Spirit fusion",
     "evolveHint": "Collect 3 companions of the same species & rarity to fuse them up!",
     "evolveConsume": "Consumes {count} × {name}",
     "evolveSelect": "Pick 3 to fuse",
     "evolving": "Fusing…",
-    "evolveSuccess": "🎉 Evolution success!",
-    "evolveFail": "Evolution failed",
+    "evolveSuccess": "🎉 Fusion success!",
+    "evolveFail": "Fusion failed",
     "maxEvolved": "👑 MAX",
     "evolveConfirm": "Consume these 3 {name}? This cannot be undone",
-    "confirmEvolve": "Confirm evolve",
+    "confirmEvolve": "Confirm fuse",
     "backToCatalog": "Back to dictionary",
     "storageLabel": "Owned",
     "storageLimit": "Storage limit",
-    "onlyEvolvable": "🔮 Evolvable only",
-    "noEvolvable": "No evolvable companions yet (need 3+ of the same kind)",
+    "onlyEvolvable": "🔮 Fusible only",
+    "noEvolvable": "No fusible companions yet (need 3+ of the same kind)",
     "selectTitle": "Pick companions to fuse",
     "selectHint": "Select {count} of the same rarity to fuse 3-in-1",
     "selectedCount": "{count} × {name} selected",
@@ -353,8 +356,8 @@
     "release": "🗑️ Release",
     "releaseConfirm": "Release this {name}? This cannot be undone.",
     "releasedOk": "🐦 Released",
-    "fuseNormal": "Genes recombined! A stronger {name} was born!",
-    "fuseCritical": "✨ A miracle! Gene mutation - it evolved into a higher form!",
+    "fuseNormal": "Spirit power fused! A stronger {name} was born!",
+    "fuseCritical": "✨ A miracle! Spirit awakening - it turned into a higher form!",
     "keepInBag": "Keep in bag",
     "continueFuse": "Fuse more",
     "critical": "✨ Lucky crit",
@@ -412,10 +415,10 @@
     "journalTaskFailed": "Failed to create the journal task",
     "taskNotFound": "Task not found",
     "interactFailed": "Interaction update failed",
-    "invalidEvolveSet": "Evolution needs 3 pets of the same species and rarity",
+    "invalidEvolveSet": "Fusion needs 3 pets of the same species and rarity",
     "notSameGroup": "The 3 pets must share the same species and rarity",
     "legendaryTop": "Legendary is already the peak",
-    "evolveFailed": "Evolution failed, please try again",
+    "evolveFailed": "Fusion failed, please try again",
     "redeemAlready": "Already redeemed today, come back tomorrow",
     "redeemFailed": "Redemption failed, please try again",
     "releaseFailed": "Release failed, please try again"
@@ -437,7 +440,7 @@
   "pages": {
     "backHome": "← Back to home",
     "aboutTitle": "About Aibi World",
-    "aboutBody": "Aibi World (aiabw.com) is an AI virtual pet platform: every Aibi has its own unique genes, personality and memories, chats with you, grows with you, and builds a bond that belongs to you alone.",
+    "aboutBody": "Aibi World (aiabw.com) is an AI virtual pet platform: every Aibi has its own unique spirit, personality and memories, chats with you, grows with you, and builds a bond that belongs to you alone.",
     "faqTitle": "FAQ",
     "faqBody": "Q: How do I adopt a second pet?\nA: Adopt your first Aibi, then pick your favorite companion on the home or dictionary page and unlock it (pay once, multi-pet forever).\n\nQ: What happens when a pet gets hungry?\nA: If you don't interact for over 3 days, it turns gray and shows \"Hungry / Missing you\". Tap \"Feed & cuddle\" to bring it back to life.\n\nQ: What are points for?\nA: Points buy UGC pets and gacha draws; check in daily to earn points.",
     "contactTitle": "Contact us",
@@ -449,11 +452,11 @@
     "backHome": "← Back to home",
     "lastUpdated": "Last updated: 2026-08-21",
     "termsTitle": "Aibi World Terms of Service",
-    "termsBody": "Aibi World (aiabw.com, \"the Platform\") is an online service for AI virtual pet raising, interaction and content sharing. Please read these Terms carefully before using the Platform; by registering, logging in or continuing to use the service, you agree to these Terms.\n1. Services\n1.1 The Platform provides AI virtual pet adoption, synthesis, evolution, chat, points and virtual goods;\n1.2 The Platform may adjust or suspend part of the services based on business needs, with advance notice via in-app announcements.\n2. Account\n2.1 Users register with a valid email and are responsible for all activity under their account;\n2.2 Users must not transfer, lend, sell or otherwise share accounts;\n2.3 Contact support@aiabw.com immediately if the account shows abnormal activity.\n3. Virtual Pets & Virtual Assets\n3.1 Virtual pets and points are in-game virtual assets usable only within Platform rules;\n3.2 Users hold usage rights per Platform rules; the Platform reserves the right to handle rule-violating accounts and assets.\n4. User Conduct\n4.1 No bots, scripts or automation that interfere with normal operations;\n4.2 No data manipulation, fake traffic, attacks or service sabotage;\n4.3 No use of the Platform for any unlawful activity.\n5. Service Changes, Interruption & Termination\n5.1 The Platform will announce maintenance in advance where possible and restore service promptly;\n5.2 Serious violations may lead to warnings, feature restrictions or account suspension.\n6. Disclaimer & Disputes\n6.1 To the extent permitted by law, the Platform is not liable for interruptions caused by force majeure or third parties;\n6.2 These Terms are governed by the laws of the People's Republic of China; disputes shall be settled by friendly negotiation first, otherwise submitted to the competent court at the Platform operator's domicile.",
+    "termsBody": "Aibi World (aiabw.com, \"the Platform\") is an online service for AI virtual pet raising, interaction and content sharing. Please read these Terms carefully before using the Platform; by registering, logging in or continuing to use the service, you agree to these Terms.\n1. Services\n1.1 The Platform provides AI virtual pet adoption, synthesis, fusion, chat, points and virtual goods;\n1.2 The Platform may adjust or suspend part of the services based on business needs, with advance notice via in-app announcements.\n2. Account\n2.1 Users register with a valid email and are responsible for all activity under their account;\n2.2 Users must not transfer, lend, sell or otherwise share accounts;\n2.3 Contact support@aiabw.com immediately if the account shows abnormal activity.\n3. Virtual Pets & Virtual Assets\n3.1 Virtual pets and points are in-game virtual assets usable only within Platform rules;\n3.2 Users hold usage rights per Platform rules; the Platform reserves the right to handle rule-violating accounts and assets.\n4. User Conduct\n4.1 No bots, scripts or automation that interfere with normal operations;\n4.2 No data manipulation, fake traffic, attacks or service sabotage;\n4.3 No use of the Platform for any unlawful activity.\n5. Service Changes, Interruption & Termination\n5.1 The Platform will announce maintenance in advance where possible and restore service promptly;\n5.2 Serious violations may lead to warnings, feature restrictions or account suspension.\n6. Disclaimer & Disputes\n6.1 To the extent permitted by law, the Platform is not liable for interruptions caused by force majeure or third parties;\n6.2 These Terms are governed by the laws of the People's Republic of China; disputes shall be settled by friendly negotiation first, otherwise submitted to the competent court at the Platform operator's domicile.",
     "privacyTitle": "Aibi World Privacy Policy",
-    "privacyBody": "The Platform values your personal information and applies appropriate security measures in accordance with laws and regulations. This policy explains how we collect, use, store and protect your information.\n1. Information We Collect\n1.1 Account: the email address you register with;\n1.2 Device: an anonymous device id (anonymousId) for guest-mode data attribution and migration;\n1.3 Interaction data: chat content with virtual pets, adoption/synthesis/evolution records, and points changes, used to provide core services.\n2. Purposes of Use\n2.1 To provide core features such as pet raising, chat and marketplace;\n2.2 To protect account security and detect abnormal logins or abuse;\n2.3 To improve the product through de-identified analytics.\n3. Storage & Protection\n3.1 Data is stored in secured cloud environments with encrypted transport and storage;\n3.2 Data is retained only as long as necessary for the service purpose;\n3.3 Without your consent we do not sell or rent your personal information to third parties, except as required by law.\n4. Your Rights\n4.1 You may review and edit your profile and pet memories anytime after signing in;\n4.2 To delete your account and related data, contact support@aiabw.com.\n5. Children\nUsers under 14 must use the Platform under a guardian's supervision; guardians are responsible for minors' usage.\n6. Policy Updates\nThis policy may be updated from time to time and will be announced on the Platform; material changes will be notified prominently.",
+    "privacyBody": "The Platform values your personal information and applies appropriate security measures in accordance with laws and regulations. This policy explains how we collect, use, store and protect your information.\n1. Information We Collect\n1.1 Account: the email address you register with;\n1.2 Device: an anonymous device id (anonymousId) for guest-mode data attribution and migration;\n1.3 Interaction data: chat content with virtual pets, adoption/synthesis/fusion records, and points changes, used to provide core services.\n2. Purposes of Use\n2.1 To provide core features such as pet raising, chat and marketplace;\n2.2 To protect account security and detect abnormal logins or abuse;\n2.3 To improve the product through de-identified analytics.\n3. Storage & Protection\n3.1 Data is stored in secured cloud environments with encrypted transport and storage;\n3.2 Data is retained only as long as necessary for the service purpose;\n3.3 Without your consent we do not sell or rent your personal information to third parties, except as required by law.\n4. Your Rights\n4.1 You may review and edit your profile and pet memories anytime after signing in;\n4.2 To delete your account and related data, contact support@aiabw.com.\n5. Children\nUsers under 14 must use the Platform under a guardian's supervision; guardians are responsible for minors' usage.\n6. Policy Updates\nThis policy may be updated from time to time and will be announced on the Platform; material changes will be notified prominently.",
     "goodsTitle": "Virtual Goods & Recharge Rules",
-    "goodsBody": "These rules apply to the acquisition, synthesis, recharge, use and disposal of virtual pets, points and other virtual goods on the Platform. Please read carefully before purchase or use.\n1. Nature of Virtual Goods\n1.1 Virtual pets and points are in-game virtual assets, not currency, and cannot be exchanged for legal tender;\n1.2 Legally obtained virtual assets are usable only within Platform rules.\n2. Recharge\n2.1 Recharge only through official Platform channels and confirm the amount and receiving account;\n2.2 Network delay may occur; if crediting takes too long, contact support@aiabw.com.\n3. No Refunds for Virtual Pets\n3.1 Once adopted, synthesized, evolved or purchased, virtual pets are delivered and consumed - no refunds or returns;\n3.2 Spent points (synthesis, gacha, UGC purchases) are non-refundable;\n3.3 Mandatory legal provisions, if any, prevail.\n4. Transparent Synthesis & Evolution Rules\n4.1 Synthesis follows a 3:1 rule: consuming 3 pets of the same species and rarity yields 1 pet one rarity tier higher;\n4.2 Evolution chain: Common -> Uncommon -> Rare -> Epic -> Legendary; Legendary is the peak and cannot be consumed;\n4.3 Rarity probabilities are published in the Dictionary; results are determined randomly under the published rules and are auditable.\n5. Data Loss & Fault Recovery\n5.1 If user virtual assets are lost or wrongly deducted due to Platform bugs, faults or operational errors, the Platform will verify, restore the data, or grant equivalent compensation;\n5.2 Users should report anomalies promptly and the Platform will handle them after verification.\n6. No Offline Resale or Illegal Trading\n6.1 Any form of offline resale, transfer or selling of virtual pets, points or accounts is prohibited;\n6.2 Using virtual assets for gambling, money laundering or other illegal activities is prohibited;\n6.3 Violations may lead to asset freezing, account suspension and legal liability.\n7. Miscellaneous\n7.1 These rules and the Terms of Service together form the complete agreement; in case of conflict, these rules prevail;\n7.2 The Platform may update these rules as needed; updates take effect upon announcement on the Platform."
+    "goodsBody": "These rules apply to the acquisition, synthesis, recharge, use and disposal of virtual pets, points and other virtual goods on the Platform. Please read carefully before purchase or use.\n1. Nature of Virtual Goods\n1.1 Virtual pets and points are in-game virtual assets, not currency, and cannot be exchanged for legal tender;\n1.2 Legally obtained virtual assets are usable only within Platform rules.\n2. Recharge\n2.1 Recharge only through official Platform channels and confirm the amount and receiving account;\n2.2 Network delay may occur; if crediting takes too long, contact support@aiabw.com.\n3. No Refunds for Virtual Pets\n3.1 Once adopted, synthesized, fused or purchased, virtual pets are delivered and consumed - no refunds or returns;\n3.2 Spent points (synthesis, gacha, UGC purchases) are non-refundable;\n3.3 Mandatory legal provisions, if any, prevail.\n4. Transparent Synthesis & Fusion Rules\n4.1 Synthesis follows a 3:1 rule: consuming 3 pets of the same species and rarity yields 1 pet one rarity tier higher;\n4.2 Fusion chain: Common -> Uncommon -> Rare -> Epic -> Legendary; Legendary is the peak and cannot be consumed;\n4.3 Rarity probabilities are published in the Dictionary; results are determined randomly under the published rules and are auditable.\n5. Data Loss & Fault Recovery\n5.1 If user virtual assets are lost or wrongly deducted due to Platform bugs, faults or operational errors, the Platform will verify, restore the data, or grant equivalent compensation;\n5.2 Users should report anomalies promptly and the Platform will handle them after verification.\n6. No Offline Resale or Illegal Trading\n6.1 Any form of offline resale, transfer or selling of virtual pets, points or accounts is prohibited;\n6.2 Using virtual assets for gambling, money laundering or other illegal activities is prohibited;\n6.3 Violations may lead to asset freezing, account suspension and legal liability.\n7. Miscellaneous\n7.1 These rules and the Terms of Service together form the complete agreement; in case of conflict, these rules prevail;\n7.2 The Platform may update these rules as needed; updates take effect upon announcement on the Platform."
   },
   "support": {
     "supportTitle": "Feedback & Support",

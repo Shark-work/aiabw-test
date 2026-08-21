@@ -64,7 +64,7 @@ en.footer.terms = "Terms";
 zh.pages = {
   backHome: "← 返回首页",
   aboutTitle: "关于艾比世界",
-  aboutBody: "艾比世界（aiabw.com）是一个 AI 虚拟宠物养成平台：每一只艾比都拥有独一无二的基因、性格与记忆，会陪你聊天、成长，留下只属于你们的羁绊。",
+  aboutBody: "艾比世界（aiabw.com）是一个 AI 虚拟宠物养成平台：每一只艾比都拥有独一无二的灵力、性格与记忆，会陪你聊天、成长，留下只属于你们的羁绊。",
   faqTitle: "常见问题",
   faqBody: "Q：怎么领养第二只宠物？\nA：先领养第一只艾比，然后在首页或图鉴页选择心仪的伙伴，按提示完成解锁（付费一次，永久多宠）。\n\nQ：宠物饿了会怎样？\nA：超过 3 天没互动，它会变成灰色并显示「饿了 / 想你了」，点击「喂食互动」即可恢复活力。\n\nQ：积分有什么用？\nA：积分可用于购买 UGC 宠物、参与盲盒抽卡；每天签到即可获得积分。",
   contactTitle: "联系我们",
@@ -75,7 +75,7 @@ zh.pages = {
 en.pages = {
   backHome: "← Back to home",
   aboutTitle: "About Aibi World",
-  aboutBody: "Aibi World (aiabw.com) is an AI virtual pet platform: every Aibi has its own unique genes, personality and memories, chats with you, grows with you, and builds a bond that belongs to you alone.",
+  aboutBody: "Aibi World (aiabw.com) is an AI virtual pet platform: every Aibi has its own unique spirit, personality and memories, chats with you, grows with you, and builds a bond that belongs to you alone.",
   faqTitle: "FAQ",
   faqBody: "Q: How do I adopt a second pet?\nA: Adopt your first Aibi, then pick your favorite companion on the home or dictionary page and unlock it (pay once, multi-pet forever).\n\nQ: What happens when a pet gets hungry?\nA: If you don't interact for over 3 days, it turns gray and shows \"Hungry / Missing you\". Tap \"Feed & cuddle\" to bring it back to life.\n\nQ: What are points for?\nA: Points buy UGC pets and gacha draws; check in daily to earn points.",
   contactTitle: "Contact us",

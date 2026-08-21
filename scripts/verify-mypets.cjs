@@ -1,4 +1,4 @@
-﻿// 我的宠物页 PRD 场景自检（puppeteer-core 浏览器 E2E + SQL 数据准备）
+// 我的宠物页 PRD 场景自检（puppeteer-core 浏览器 E2E + SQL 数据准备）
 // 用户视角：新用户，300 积分，合成组 x3 + 互斥组 x2
 // 覆盖：聚合卡片 xN → 仅显示可合成 → 子选择层勾选 → 互斥置灰 → 底部操作台
 //       → 合成仪式动画 → 结果页 → 放生二次确认 → 兑换所进度条/不足可点/兑换/每日限次
@@ -112,11 +112,15 @@ async function waitForText(page, text, timeout = 8000) {
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await pg.evaluate((tk) => localStorage.setItem("aiabw_token", tk), reg.token);
   await pg.goto(BASE + "/zh/pets/my", { waitUntil: "domcontentloaded", timeout: 30000 });
-  await wait(3600);
+  assert(await waitForText(pg, "x3", 12000), "页面加载（x3 聚合卡片出现）");
+  await wait(300);
 
   // 1) 顶部状态栏 + 聚合卡片
   let txt = await innerText(pg);
   assert(txt.includes("我的宠物"), "页面标题「我的宠物」");
+  assert(txt.includes("© 2026 艾比世界 (Abi World). All Rights Reserved."), "Footer 版权标识");
+  assert(txt.includes("受著作权法保护") && txt.includes("禁止任何形式的转载、抓取或商业使用"), "Footer 原创声明");
+  assert(txt.includes("不具备现实货币价值"), "Footer 免责声明");
   assert(/持有\s*5\s*\/\s*100/.test(txt.replace(/\s/g, " ")), "持有数 5/100");
   const cards = await pg.$$eval("button", (btns) =>
     btns
@@ -202,10 +206,14 @@ async function waitForText(page, text, timeout = 8000) {
   assert(await waitForText(pg, "放入背包", 10000), "结果页：出现（放入背包按钮）");
   txt = await innerText(pg);
   assert(
-    txt.includes("基因重组成功") || txt.includes("奇迹发生") || txt.includes("更高形态"),
+    txt.includes("灵力融合成功") || txt.includes("奇迹发生") || txt.includes("更高形态"),
     "结果页：合成文案（普通/暴击）",
   );
   assert(txt.includes("继续合成"), "结果页：继续合成按钮");
+  const hasWatermark = await pg.evaluate(() => !!document.querySelector(".pet-watermark"));
+  assert(hasWatermark, "结果页：宠物大图带 © 水印");
+  const wmText = await pg.evaluate(() => document.querySelector(".pet-watermark")?.textContent ?? "");
+  assert(wmText.includes("© 艾比世界"), "水印文案：© 艾比世界");
   await pg.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("放入背包"));
     if (b) b.click();
@@ -260,14 +268,16 @@ async function waitForText(page, text, timeout = 8000) {
   // 8) 充值 500 → 兑换成功 → 存入
   await pool.query("UPDATE users SET points = 500 WHERE email = $1", [email]);
   await pg.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
-  await wait(3000);
+  assert(await waitForText(pg, "积分兑换所", 9000), "reload 完成（兑换所按钮出现）");
+  await wait(2500); // 等待 React 水合完成，避免点击无效
   await pg.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("积分兑换所"));
     if (b) b.click();
   });
-  await wait(400);
-  txt = await innerText(pg);
-  assert(txt.includes("500 / 500") || txt.includes("500/500"), "充值后进度条满");
+  assert(
+    await waitForText(pg, "500 / 500", 8000) || (await innerText(pg)).includes("500/500"),
+    "充值后进度条满",
+  );
   await pg.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find(
       (x) => x.innerText.includes("兑换新伙伴"),

@@ -1,7 +1,7 @@
 // Browser E2E for the evolution UI on the dictionary page + my-pets banner.
 // 1) assign 3 unowned same-species/same-rarity pets to qapay_6969222 via SQL
 // 2) /zh/my-pets: check evolve banner
-// 3) /zh/pets?mine=1: check "可进化" badge, click -> picker modal -> click evolve
+// 3) /zh/pets?mine=1: check "可融合" badge, click -> picker modal -> click evolve
 // 4) fusion animation plays (.fuse-l) then result panel with upgraded rarity
 const fs = require("fs");
 const path = require("path");
@@ -64,7 +64,7 @@ const pool = new Pool({ connectionString: url, max: 2 });
   await mp.evaluate((tk) => localStorage.setItem("aiabw_token", tk), login.token);
   await mp.goto(BASE + "/zh/my-pets", { waitUntil: "domcontentloaded", timeout: 30000 });
   await new Promise((r) => setTimeout(r, 2500));
-  const banner = await mp.evaluate(() => document.body.innerText.includes("融合进化") || document.body.innerText.includes("fusing"));
+  const banner = await mp.evaluate(() => document.body.innerText.includes("灵力融合") || document.body.innerText.includes("fusing"));
   console.log("my-pets evolve banner:", banner);
   await mp.close();
 
@@ -79,11 +79,11 @@ const pool = new Pool({ connectionString: url, max: 2 });
 
   const badge = await pg.evaluate(() => {
     const t = document.body.innerText;
-    const b = Array.from(document.querySelectorAll("button")).find((x) => x.innerText.includes("可进化"));
+    const b = Array.from(document.querySelectorAll("button")).find((x) => x.innerText.includes("可融合"));
     if (b) { b.click(); return { ok: true }; }
     return {
       ok: false,
-      hasText: t.includes("可进化"),
+      hasText: t.includes("可融合"),
       hasGolden: t.includes("#2F0D16"),
       btnCount: document.querySelectorAll("button").length,
       textHead: t.slice(0, 120),
@@ -99,7 +99,7 @@ const pool = new Pool({ connectionString: url, max: 2 });
 
   // 4) 点融合 → 动画 → 结果
   const clicked = await pg.evaluate(() => {
-    const btn = Array.from(document.querySelectorAll("button")).find((x) => x.innerText.trim() === "融合进化");
+    const btn = Array.from(document.querySelectorAll("button")).find((x) => x.innerText.trim() === "灵力融合");
     if (!btn) return false;
     btn.click();
     return true;
@@ -115,7 +115,7 @@ const pool = new Pool({ connectionString: url, max: 2 });
   const result = await pg.evaluate(() => {
     const txt = document.body.innerText;
     const newPet = (txt.match(/#[0-9A-F]{6}/g) || []).slice(-1)[0];
-    return { success: txt.includes("进化成功"), rare: /稀有|rare/i.test(txt), newId: newPet ?? null };
+    return { success: txt.includes("融合成功"), rare: /稀有|rare/i.test(txt), newId: newPet ?? null };
   });
   console.log("result:", JSON.stringify(result));
 
