@@ -38,7 +38,13 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     console.log("  WARN pageerror:", String(e).slice(0, 140));
   });
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
-  await wait(3500);
+  // 生产冷启动较慢：轮询等待动态推荐宠卡片出现（最多 20s）
+  for (let i = 0; i < 40; i++) {
+    const has = await pg.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.innerText.includes("获得它")));
+    if (has) break;
+    await wait(500);
+  }
+  await wait(800);
 
   const home = await pg.evaluate(() => {
     const txt = document.body.innerText;
