@@ -1,22 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { DailyInspiration } from "@/components/daily-inspiration";
 import { PetAvatar } from "@/components/PetAvatar";
+import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
-import { PETS, type PetType } from "@/lib/pet-config";
+import { getRarityMeta } from "@/lib/pet-status";
+import { type PetType, DEFAULT_PET_TYPE } from "@/lib/pet-config";
 import { getAnonymousId } from "@/lib/anon-id";
 
 export default function Home() {
   const router = useRouter();
   const t = useTranslations("home");
   const tc = useTranslations("common");
-  const tp = useTranslations("pets");
+  const locale = useLocale();
 
   const [adoptingType, setAdoptingType] = useState<PetType | null>(null);
+  // 首页动态推荐宠（替代硬编码 抱抱狐/企鹅/修狗）：
+  // 池 = 稀缺（rare/epic/legendary）OR 高领养物种，每次刷新随机 3 只
+  const [featured, setFeatured] = useState<FeaturedPet[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  const [detailPet, setDetailPet] = useState<FeaturedPet | null>(null);
   const [error, setError] = useState("");
   const [user, setUser] = useState<{
     id: string;
@@ -86,6 +93,22 @@ export default function Home() {
   useEffect(() => {
     void refreshPetState();
   }, [refreshPetState]);
+
+  // 拉取动态推荐宠（每次刷新随机 3 只）
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/pets/featured?count=3")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        if (d?.ok && Array.isArray(d.pets)) setFeatured(d.pets);
+      })
+      .catch(() => {})
+      .finally(() => alive && setFeaturedLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("aiabw_token");
@@ -189,7 +212,16 @@ export default function Home() {
     }
   };
 
-  const petEntries = Object.entries(PETS) as [PetType, (typeof PETS)[PetType]][];
+  // 详情弹窗 CTA「获得它」：单宠限制 → 支付解锁；可领养 → 直接领养默认伙伴（闭环）
+  const handleGetPet = () => {
+    if (!detailPet) return;
+    setDetailPet(null);
+    if (petLimitReached) {
+      setUpgradeOpen(true);
+      return;
+    }
+    void handleAdopt(DEFAULT_PET_TYPE);
+  };
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-hidden p-4 sm:p-6">
@@ -281,51 +313,63 @@ export default function Home() {
         </Link>
 
         {/* 宠物选择卡片 */}
-        <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
-          {petEntries.map(([petType, pet]) => {
-            const busy = adoptingType === petType;
-            const petName = tp(`${petType}.name`);
-            const petPersonality = tp(`${petType}.personality`);
-            return (
-              <button
-                key={petType}
-                type="button"
-                onClick={() =>
-                  petLimitReached ? setUpgradeOpen(true) : handleAdopt(petType)
-                }
-                disabled={adoptingType !== null}
-                className="group flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-5 text-center shadow-sm backdrop-blur transition hover:scale-[1.03] hover:border-orange-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {/* 宠物头像：next/image 自动 WebP/AVIF 转码 */}
-                <PetAvatar
-                  src={pet.avatar}
-                  alt={`${tc("appName")}-${petName}`}
-                  className="h-24 w-24 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"
-                />
-                <div className="space-y-1">
-                  <div className="text-lg font-semibold text-zinc-900">{petName}</div>
-                  <div className="text-xs text-zinc-500">{petPersonality}</div>
-                </div>
-                <span
-                  className={`rounded-full px-5 py-2 text-sm font-semibold text-white shadow transition ${
-                    petLimitReached
-                      ? "bg-zinc-400 group-hover:bg-zinc-500"
-                      : "bg-orange-500 group-hover:bg-orange-600"
-                  }`}
+        {/* 今日运势（悬浮叠加：z-20 + 负下边距，覆盖在推荐卡上方增加视觉层次） */}
+        <div className="relative z-20 w-full -mb-8">
+          <DailyInspiration />
+        </div>
+
+        {/* 动态推荐宠（替代硬编码：稀缺 OR 高领养物种，每次刷新随机 3 只） */}
+        <div className="relative z-10 grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+          {featuredLoading ? (
+            <p className="col-span-full py-8 text-sm text-zinc-400">{t("featuredLoading")}</p>
+          ) : featured.length > 0 ? (
+            featured.map((p) => {
+              const meta = getRarityMeta(String(p.traits.rarity ?? "common"));
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setDetailPet(p)}
+                  className="group flex flex-col items-center gap-3 rounded-2xl border border-zinc-200 bg-white/80 p-5 text-center shadow-sm backdrop-blur transition hover:scale-[1.03] hover:border-orange-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2"
                 >
-                  {busy ? t("crafting") : petLimitReached ? t("upgrade") : t("adopt")}
-                </span>
-              </button>
-            );
-          })}
+                  <PetAvatar
+                    src={p.imageUrl}
+                    alt={`${tc("appName")}-${p.speciesName}`}
+                    className="h-24 w-24 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"
+                  />
+                  <div className="space-y-1">
+                    <div className="text-lg font-semibold text-zinc-900">{p.speciesName}</div>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badgeClass}`}>{meta.emoji} {locale === "en" ? meta.labelEn : meta.labelZh}</span>
+                      {p.isRare && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">{t("detailRare")}</span>}
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white shadow transition group-hover:bg-orange-600">
+                    {t("get")}
+                  </span>
+                </button>
+              );
+            })
+          ) : (
+            <p className="col-span-full py-8 text-sm text-zinc-400">{t("featuredEmpty")}</p>
+          )}
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <p className="text-xs text-zinc-400">{t("adoptHint")}</p>
 
         {/* 艾比每日灵感：今日幸运宠 + 最新诞生（替代旧版 AI 工具诊断） */}
-        <DailyInspiration />
       </div>
+
+      {/* 动态推荐宠详情半屏弹窗（转化 CTA） */}
+      {detailPet && (
+        <PetDetailModal
+          pet={detailPet}
+          busy={adoptingType !== null}
+          onAdopt={handleGetPet}
+          onClose={() => setDetailPet(null)}
+        />
+      )}
 
       <UpgradePetModal
         open={upgradeOpen}

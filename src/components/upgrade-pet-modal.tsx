@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { QRCodeSVG } from "qrcode.react";
+import { PayQr } from "@/components/pay-qr";
 
 type Props = {
   open: boolean;
@@ -177,12 +177,7 @@ export function UpgradePetModal({
 
         {qr ? (
           <div className="flex flex-col items-center gap-3 py-2">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-              <QRCodeSVG value={qr} size={200} />
-            </div>
-            <p className="text-xs text-zinc-500">
-              {t("scanHint")}
-            </p>
+            <PayQr value={qr} size={200} />
             {payUrl ? (
               <a
                 href={payUrl}

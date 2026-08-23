@@ -23,7 +23,8 @@ const BASE = process.argv[2] || "http://localhost:3100";
     };
   });
   console.log("[home]", JSON.stringify(homeInfo));
-  if (!homeInfo.hasAddress || !homeInfo.hasMailto || !homeInfo.floatBtn) fails.push("home footer/float broken");
+  if (!homeInfo.hasAddress || homeInfo.hasMailto || !homeInfo.floatBtn) fails.push("home footer/float broken");
+  if (homeInfo.addrText && !/X \(Twitter\)/.test(homeInfo.addrText)) fails.push("home footer social X missing");
 
   // ---- open floating panel ----
   await home.evaluate(() => {
@@ -35,13 +36,13 @@ const BASE = process.argv[2] || "http://localhost:3100";
     const t = document.body.innerText;
     return {
       hasPanel: t.includes("意见反馈与客服联系") || t.includes("Feedback & Support"),
-      hasEmail: t.includes("1206309834@qq.com"),
-      hasGroup: t.includes("1005445619"),
-      hasCopyBtn: Array.from(document.querySelectorAll("button")).some((b) => b.innerText.includes("复制") || b.innerText.includes("Copy")),
+      hasX: t.includes("X (Twitter)"),
+      hasTelegram: t.includes("Telegram"),
+      hasQQ: t.includes("1005445619") || t.includes("1206309834@qq.com"),
     };
   });
   console.log("[panel]", JSON.stringify(panel));
-  if (!panel.hasPanel || !panel.hasEmail || !panel.hasGroup || !panel.hasCopyBtn) fails.push("floating panel broken");
+  if (!panel.hasPanel || !panel.hasX || !panel.hasTelegram || panel.hasQQ) fails.push("floating panel broken");
   await home.close();
 
   // ---- chat page: hidden ----
@@ -61,10 +62,10 @@ const BASE = process.argv[2] || "http://localhost:3100";
     await new Promise((r) => setTimeout(r, 1500));
     const m = await pg.evaluate(() => {
       const t = document.body.innerText;
-      return { hasModule: t.includes("意见反馈与客服联系"), hasEmail: t.includes("1206309834@qq.com"), hasGroup: t.includes("1005445619") };
+      return { hasModule: t.includes("意见反馈与客服联系"), hasX: t.includes("X (Twitter)"), hasTelegram: t.includes("Telegram"), hasQQ: t.includes("1005445619") };
     });
     console.log("[" + p + "]", JSON.stringify(m));
-    if (!m.hasModule || !m.hasEmail || !m.hasGroup) fails.push(p + " support module missing");
+    if (!m.hasModule || !m.hasX || !m.hasTelegram || m.hasQQ) fails.push(p + " support module missing");
     await pg.close();
   }
 

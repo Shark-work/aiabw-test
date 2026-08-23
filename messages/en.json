@@ -53,7 +53,14 @@
     "zodiacFire": "Fire",
     "zodiacEarth": "Earth",
     "zodiacAir": "Air",
-    "zodiacWater": "Water"
+    "zodiacWater": "Water",
+    "get": "Get it now",
+    "getHint": "Adopt it and chat with your new friend right away",
+    "detailRare": "✨ Rare",
+    "detailAdopted": "Adopted by {count} owners",
+    "detailGeneration": "Gen {gen}",
+    "featuredLoading": "Picking featured pets…",
+    "featuredEmpty": "No featured pets yet - browse the encyclopedia"
   },
   "login": {
     "title": "Sign in to Aibi World",
@@ -246,7 +253,9 @@
     "openCashier": "Open payment page",
     "notNow": "Not now",
     "unlockedOk": "🎉 Unlocked! You can now adopt more companions.",
-    "orderFailed": "Order creation failed, please try again"
+    "orderFailed": "Order creation failed, please try again",
+    "qrAlt": "WeChat Pay QR code",
+    "longPressHint": "👆 Long-press the image to scan with WeChat"
   },
   "diagnostic": {
     "coreNeed": "1. Core need",
@@ -460,10 +469,8 @@
   },
   "support": {
     "supportTitle": "Feedback & Support",
-    "supportBody": "If you run into any issue with virtual goods, synthesis, account or data, please reach us anytime:",
-    "supportEmail": "Support email",
-    "supportQQGroup": "QQ Group",
-    "copy": "Copy",
-    "copied": "✓ Copied"
+    "supportBody": "If you run into any issue with virtual goods, account or data, please reach us on X or Telegram:",
+    "socialX": "X (Twitter)",
+    "socialTelegram": "Telegram"
   }
 }

@@ -4,38 +4,26 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { usePathname } from "@/i18n/navigation";
-
-const SUPPORT_EMAIL = "1206309834@qq.com";
-const QQ_GROUP = "1005445619";
+import { TelegramIcon, XIcon } from "@/components/social-icons";
+import { SOCIAL } from "@/lib/config";
 
 /**
  * 右下角悬浮客服按钮（高转化兜底）：
  *  - fixed bottom-6 right-6，z-40（高于普通内容、低于 z-50 弹窗）；
  *  - /chat 全屏聊天页自动隐藏，避免遮挡聊天界面；
- *  - 点击展开轻量面板：QQ 邮箱（一键复制）+ QQ 群号；
+ *  - 点击展开轻量面板：X (Twitter) 官方账号 + Telegram 官方群；
  *  - 移动端按钮缩小，不遮挡核心内容。
  */
 export function FloatingSupport() {
   const t = useTranslations("support");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   // 聊天页（全屏）隐藏悬浮客服
   const hidden = pathname.startsWith("/chat");
   useEffect(() => {
     if (hidden) setOpen(false);
   }, [hidden]);
-
-  const copyEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(SUPPORT_EMAIL);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // 剪贴板不可用时静默（用户仍可手动复制）
-    }
-  };
 
   if (hidden) return null;
 
@@ -46,30 +34,32 @@ export function FloatingSupport() {
           <p className="text-sm font-bold text-zinc-900">🎧 {t("supportTitle")}</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">{t("supportBody")}</p>
           <div className="mt-3 space-y-2">
-            {/* QQ 邮箱（一键复制） */}
-            <div className="flex items-center justify-between gap-2 rounded-xl bg-orange-50 px-3 py-2">
-              <span className="min-w-0">
-                <span className="block text-[10px] text-zinc-400">{t("supportEmail")}</span>
-                <a
-                  href={`mailto:${SUPPORT_EMAIL}`}
-                  className="break-all text-xs font-medium text-orange-600 hover:underline"
-                >
-                  {SUPPORT_EMAIL}
-                </a>
+            {/* X (Twitter) */}
+            <a
+              href={SOCIAL.x}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 rounded-xl bg-zinc-50 px-3 py-2.5 transition hover:bg-zinc-100"
+            >
+              <span className="flex items-center gap-2 text-xs font-medium text-zinc-700">
+                <XIcon className="h-4 w-4 text-zinc-800" />
+                {t("socialX")}
               </span>
-              <button
-                type="button"
-                onClick={() => void copyEmail()}
-                className="shrink-0 rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-orange-600"
-              >
-                {copied ? t("copied") : t("copy")}
-              </button>
-            </div>
-            {/* QQ 群号 */}
-            <div className="rounded-xl bg-zinc-50 px-3 py-2">
-              <span className="block text-[10px] text-zinc-400">{t("supportQQGroup")}</span>
-              <span className="font-mono text-sm font-semibold text-zinc-700">{QQ_GROUP}</span>
-            </div>
+              <span className="text-[10px] text-zinc-400">↗</span>
+            </a>
+            {/* Telegram */}
+            <a
+              href={SOCIAL.telegram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 rounded-xl bg-sky-50 px-3 py-2.5 transition hover:bg-sky-100"
+            >
+              <span className="flex items-center gap-2 text-xs font-medium text-zinc-700">
+                <TelegramIcon className="h-4 w-4 text-sky-600" />
+                {t("socialTelegram")}
+              </span>
+              <span className="text-[10px] text-zinc-400">↗</span>
+            </a>
           </div>
         </div>
       )}

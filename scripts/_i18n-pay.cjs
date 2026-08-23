@@ -1,24 +1,19 @@
-// 国际化客服：移除 QQ，替换为 X (Twitter) 与 Telegram
+// pay i18n：二维码长按识别提示
 const fs = require("fs");
 const zh = JSON.parse(fs.readFileSync("messages/zh.json", "utf8"));
 const en = JSON.parse(fs.readFileSync("messages/en.json", "utf8"));
 
-zh.support = {
-  supportTitle: "意见反馈与客服联系",
-  supportBody: "如您遇到虚拟物品、账号或数据方面的问题，欢迎通过 X 或 Telegram 与我们联系：",
-  socialX: "X (Twitter)",
-  socialTelegram: "Telegram",
+zh.pay = { ...zh.pay,
+  qrAlt: "微信支付二维码",
+  longPressHint: "👆 长按图片可识别微信支付",
 };
-en.support = {
-  supportTitle: "Feedback & Support",
-  supportBody: "If you run into any issue with virtual goods, account or data, please reach us on X or Telegram:",
-  socialX: "X (Twitter)",
-  socialTelegram: "Telegram",
+en.pay = { ...en.pay,
+  qrAlt: "WeChat Pay QR code",
+  longPressHint: "👆 Long-press the image to scan with WeChat",
 };
 
 fs.writeFileSync("messages/zh.json", JSON.stringify(zh, null, 2) + "\n", "utf8");
 fs.writeFileSync("messages/en.json", JSON.stringify(en, null, 2) + "\n", "utf8");
-
 const flat = (o, p = "") =>
   Object.entries(o).flatMap(([k, v]) => (v && typeof v === "object" ? flat(v, p + k + ".") : [p + k]));
 const zd = new Set(flat(zh));

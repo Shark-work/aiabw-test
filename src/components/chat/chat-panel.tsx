@@ -13,7 +13,7 @@ import { ToolCallCard } from "@/components/chat/tool-call-card";
 import { EXAMPLE_PROMPTS } from "@/lib/utils";
 import type { PetConfig } from "@/lib/pet-config";
 import { useTranslations } from "next-intl";
-import { QRCodeSVG } from "qrcode.react";
+import { PayQr } from "@/components/pay-qr";
 
 function AgentAvatar({
   pet,
@@ -374,15 +374,10 @@ export function ChatPanel({
             <p className="mt-1 text-xs text-zinc-400">
               {t("sponsorHint")}
             </p>
-            {/* 支付流程 */}
+            {/* 支付流程（移动端长按识别优化） */}
             {pay.qr ? (
               <div className="mt-4 space-y-3">
-                <div className="mx-auto flex w-fit rounded-xl border border-zinc-200 bg-white p-3">
-                  <QRCodeSVG value={pay.qr} size={176} />
-                </div>
-                <p className="text-xs text-zinc-500">
-                  {t("scanHint")}
-                </p>
+                <PayQr value={pay.qr} size={176} />
                 {payTimeout ? (
                   <p className="text-xs text-amber-600">
                     {t("timeoutHint")}

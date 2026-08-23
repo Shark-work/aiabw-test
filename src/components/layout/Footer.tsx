@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { TelegramIcon, XIcon } from "@/components/social-icons";
+import { SOCIAL } from "@/lib/config";
 
 /** 全局页脚：辅助导航 + 版权信息 + 自动版本号 + 语言切换。 */
 export async function Footer() {
@@ -36,21 +38,29 @@ export async function Footer() {
           {t("virtualGoods")}
         </Link>
       </nav>
-      {/* 客服联系方式（HTML5 <address> 语义化，便于屏幕阅读器与 SEO 识别） */}
+      {/* 国际化客服联系（X / Telegram 官方 SVG 图标，新窗口打开） */}
       <address className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 text-xs not-italic text-zinc-500">
-        <span>
-          {ts("supportEmail")}：
-          <a href="mailto:1206309834@qq.com" className="text-zinc-600 transition hover:text-orange-600">
-            1206309834@qq.com
-          </a>
-        </span>
+        <a
+          href={SOCIAL.x}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
+        >
+          <XIcon className="h-4 w-4" />
+          {ts("socialX")}
+        </a>
         <span aria-hidden className="text-zinc-200">
           |
         </span>
-        <span>
-          {ts("supportQQGroup")}：
-          <span className="font-mono text-zinc-600">1005445619</span>
-        </span>
+        <a
+          href={SOCIAL.telegram}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
+        >
+          <TelegramIcon className="h-4 w-4" />
+          {ts("socialTelegram")}
+        </a>
       </address>
 
       {/* 版权声明与免责条款（上线前合规） */}

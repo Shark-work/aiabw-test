@@ -53,7 +53,14 @@
     "zodiacFire": "火象",
     "zodiacEarth": "土象",
     "zodiacAir": "风象",
-    "zodiacWater": "水象"
+    "zodiacWater": "水象",
+    "get": "获得它",
+    "getHint": "领养后即可在聊天中与它互动",
+    "detailRare": "✨ 稀缺",
+    "detailAdopted": "已有 {count} 位主人领养",
+    "detailGeneration": "第 {gen} 代",
+    "featuredLoading": "正在挑选推荐伙伴…",
+    "featuredEmpty": "暂无推荐伙伴，去图鉴逛逛吧"
   },
   "login": {
     "title": "登录艾比世界",
@@ -246,7 +253,9 @@
     "openCashier": "点击前往收银台支付",
     "notNow": "暂不解锁",
     "unlockedOk": "🎉 解锁成功！现在可以领养更多宠物啦~",
-    "orderFailed": "下单失败，请稍后重试"
+    "orderFailed": "下单失败，请稍后重试",
+    "qrAlt": "微信支付二维码",
+    "longPressHint": "👆 长按图片可识别微信支付"
   },
   "diagnostic": {
     "coreNeed": "1. 核心诉求",
@@ -460,10 +469,8 @@
   },
   "support": {
     "supportTitle": "意见反馈与客服联系",
-    "supportBody": "如您在虚拟物品合成、账号数据等方面遇到问题，请随时通过以下方式联系我们：",
-    "supportEmail": "客服邮箱",
-    "supportQQGroup": "QQ 群号",
-    "copy": "复制",
-    "copied": "✓ 已复制"
+    "supportBody": "如您遇到虚拟物品、账号或数据方面的问题，欢迎通过 X 或 Telegram 与我们联系：",
+    "socialX": "X (Twitter)",
+    "socialTelegram": "Telegram"
   }
 }
