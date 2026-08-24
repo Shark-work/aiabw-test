@@ -154,6 +154,14 @@ const SCHEMA_CREATES: string[] = [
     "adopted_at" timestamp,
     "last_interaction_time" timestamp
   )`,
+
+  // 站点访问计数：单行汇总（id=1），原子自增 visit_count / unique_count
+  `CREATE TABLE IF NOT EXISTS "site_visits" (
+    "id" integer PRIMARY KEY DEFAULT 1 NOT NULL,
+    "visit_count" bigint DEFAULT 0 NOT NULL,
+    "unique_count" bigint DEFAULT 0 NOT NULL,
+    "last_updated" timestamp DEFAULT now() NOT NULL
+  )`,
 ];
 
 /**

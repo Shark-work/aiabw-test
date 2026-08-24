@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const maxDuration = 120;
 
 const DEFAULT_UPDATES =
-  "Aibi World 本周持续优化：AI 陪伴聊天、多宠图鉴与记忆手账都在变得更懂你。";
+  "AIABW 本周持续优化：AI 陪伴聊天、多宠图鉴与记忆手账都在变得更懂你。";
 
 function parsePlatforms(v: unknown): SocialPlatform[] {
   if (v === "x" || v === "xhs") return [v];

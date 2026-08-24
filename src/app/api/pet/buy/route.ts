@@ -127,7 +127,7 @@ export async function POST(req: Request) {
         parts: [
           {
             type: "text",
-            text: `Congratulations! You adopted "${pet.name}" - it has moved into your Aibi World~`,
+            text: `Congratulations! You adopted "${pet.name}" - it has moved into your AIABW~`,
           },
         ],
       });

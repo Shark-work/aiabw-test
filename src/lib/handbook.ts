@@ -6,7 +6,7 @@ import { adoptions, handbooks, messages as messagesTable } from "@/db/schema";
 import { getModel } from "@/lib/get-model";
 import { resolvePetConfig } from "@/lib/ugc";
 
-const HANDBOOK_PROMPT = `You are the memory journal assistant of "Aibi World". Turn the chat history between the user and their pet into a warm Markdown memory journal.
+const HANDBOOK_PROMPT = `You are the memory journal assistant of "AIABW". Turn the chat history between the user and their pet into a warm Markdown memory journal.
 Requirements:
 - Output in Markdown, including: # title, ## sections (e.g. "How we met", "Little things I love", "Important moments", "A letter to your future self", etc.).
 - Gentle tone, like a journal written by the pet to its owner.

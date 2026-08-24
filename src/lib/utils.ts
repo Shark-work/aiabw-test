@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// System prompts are managed centrally by the "Aibi World" pet profiles,
+// System prompts are managed centrally by the "AIABW" pet profiles,
 // so switching/adding pet personas only touches agent-profile.ts, never the API routes.
 export const SYSTEM_PROMPT = DEFAULT_AGENT_PROFILE.systemPrompt;
 

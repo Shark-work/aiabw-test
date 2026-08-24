@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { TelegramIcon, XIcon } from "@/components/social-icons";
+import { VisitCounter } from "@/components/visit-counter";
 import { SOCIAL } from "@/lib/config";
 
 /** 全局页脚：辅助导航 + 版权信息 + 自动版本号 + 语言切换。 */
@@ -73,6 +74,8 @@ export async function Footer() {
       <div className="flex items-center justify-center">
         <span>{t("copyright", { version })}</span>
       </div>
+      {/* 访问计数（人气感）：客户端加载，失败静默 */}
+      <VisitCounter />
     </footer>
   );
 }

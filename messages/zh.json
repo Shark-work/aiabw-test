@@ -1,7 +1,7 @@
 {
   "common": {
     "appName": "艾比世界",
-    "metaTitle": "艾比世界 Abi World - AI 虚拟宠物领养与养成",
+    "metaTitle": "艾比世界 AIABW - AI 虚拟宠物领养与养成",
     "metaDescription": "领养专属 AI 虚拟宠物艾比：每天邂逅一只幸运灵宠与灵感签，用 3 合 1 灵力融合培育稀有伙伴。宠物会记住你的每一次互动，陪你慢慢长大。",
     "signIn": "登录",
     "register": "注册",
@@ -287,9 +287,10 @@
     "terms": "用户服务协议",
     "privacy": "隐私政策",
     "virtualGoods": "虚拟物品与充值规则",
-    "copyrightLine": "© 2026 艾比世界 (Abi World). All Rights Reserved.",
+    "copyrightLine": "© 2026 艾比世界 (AIABW). All Rights Reserved.",
     "originalNotice": "本站所有宠物形象、基因设定、物种描述及UI设计均为原创或经合法授权生成，受著作权法保护。未经书面许可，禁止任何形式的转载、抓取或商业使用。",
-    "disclaimer": "本平台为虚拟互动社区，所有宠物数据仅用于娱乐与收藏，不具备现实货币价值。"
+    "disclaimer": "本平台为虚拟互动社区，所有宠物数据仅用于娱乐与收藏，不具备现实货币价值。",
+    "visitsLine": "📊 本站累计访问 {total} 次 | 独立访客 {unique} 人"
   },
   "pets": {
     "fox": {
@@ -472,5 +473,10 @@
     "supportBody": "如您遇到虚拟物品、账号或数据方面的问题，欢迎通过 X 或 Telegram 与我们联系：",
     "socialX": "X (Twitter)",
     "socialTelegram": "Telegram"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "desc": "抱歉，你要找的页面不存在或已被移动。",
+    "backHome": "← 返回首页"
   }
 }

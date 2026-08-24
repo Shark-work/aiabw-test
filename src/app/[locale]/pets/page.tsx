@@ -104,7 +104,7 @@ export default function PetsCatalogPage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "ItemList",
-            name: locale === "en" ? "Aibi World Pet Encyclopedia" : "艾比世界动物图鉴",
+            name: locale === "en" ? "AIABW Pet Encyclopedia" : "艾比世界动物图鉴",
             description: t("subtitle"),
             url: `${SITE_URL}/${locale}/pets`,
             itemListElement: LD_SPECIES.map((s, i) => ({
@@ -115,7 +115,7 @@ export default function PetsCatalogPage() {
                 name: locale === "en" ? s.en : s.zh,
                 description:
                   locale === "en"
-                    ? `${s.en} virtual pet in Aibi World - adopt, chat and fuse to level up.`
+                    ? `${s.en} virtual pet in AIABW - adopt, chat and fuse to level up.`
                     : `${s.zh}——艾比世界虚拟宠物，可领养互动，3 合 1 灵力融合升级。`,
                 category: "Virtual Pet / 虚拟宠物",
                 url: `${SITE_URL}/${locale}/pets?species=${s.id}`,

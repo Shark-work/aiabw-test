@@ -56,7 +56,7 @@ function SiteJsonLd({ locale, name, description }: { locale: string; name: strin
     description,
     publisher: {
       "@type": "Organization",
-      name: "艾比世界 Abi World",
+      name: "艾比世界 AIABW",
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",

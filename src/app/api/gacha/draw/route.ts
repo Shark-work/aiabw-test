@@ -88,7 +88,7 @@ export async function POST(req: Request) {
           petType: t,
           name: PETS[t].name,
           avatar: PETS[t].avatar,
-          welcome: `🎁 The mystery box opened and you got "${PETS[t].name}"! It has moved into your Aibi World~`,
+          welcome: `🎁 The mystery box opened and you got "${PETS[t].name}"! It has moved into your AIABW~`,
         }));
       const ugcRows = await tx.select().from(ugcPets);
       for (const u of ugcRows) {
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
           petType: `ugc:${u.id}`,
           name: u.name,
           avatar: u.imageUrl,
-          welcome: `🎁 The mystery box opened a creator's work "${u.name}"! It has moved into your Aibi World~`,
+          welcome: `🎁 The mystery box opened a creator's work "${u.name}"! It has moved into your AIABW~`,
         });
       }
       if (pool.length === 0) {
