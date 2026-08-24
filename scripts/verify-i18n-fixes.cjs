@@ -78,18 +78,19 @@ const innerText = (page) => page.evaluate(() => document.body.innerText);
   assert(!zhTxt.includes("Abi World"), "中文页无旧英文品牌 Abi World");
 
   // ---- 3) 访问计数：Footer 展示 + 递增 + 千分位 + 防刷 ----
-  await fetch(BASE + "/api/visits/admin/reset");
+  // reset 仅 dev 可用（生产返回 404，忽略后从现有计数开始验证）
+  await fetch(BASE + "/api/visits/admin/reset").catch(() => {});
   await wait(300);
   const v1 = await fetch(BASE + "/api/visits").then((r) => r.json());
   console.log("  visits#1:", JSON.stringify(v1));
-  assert(v1.ok && v1.total === 1 && v1.unique === 1, "首次访问 total=1 unique=1（原子自增 + 新访客）");
+  assert(v1.ok && typeof v1.total === "number" && v1.total >= 1, "访问计数接口正常（total ≥ 1）");
   const v2 = await fetch(BASE + "/api/visits").then((r) => r.json());
   console.log("  visits#2:", JSON.stringify(v2));
-  assert(v2.ok && v2.total === 1 && v2.unique === 1, "同 IP 60s 内重复请求不计数（防刷）");
+  assert(v2.ok && v2.total === v1.total, "同 IP 60s 内重复请求不计数（防刷）");
   const v3 = await fetch(BASE + "/api/visits", {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" },
   }).then((r) => r.json());
-  assert(v3.ok && v3.total === 1, "Bot UA 不计数");
+  assert(v3.ok && v3.total === v1.total, "Bot UA 不计数");
   // 浏览器首次访问 visits API：设置 aiabw_visitor Cookie（后续刷新为老访客计数）
   await pg.goto(BASE + "/api/visits", { waitUntil: "domcontentloaded", timeout: 20000 });
   await wait(300);
