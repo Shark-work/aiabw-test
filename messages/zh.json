@@ -290,7 +290,7 @@
     "copyrightLine": "© 2026 艾比世界 (AIABW). All Rights Reserved.",
     "originalNotice": "本站所有宠物形象、基因设定、物种描述及UI设计均为原创或经合法授权生成，受著作权法保护。未经书面许可，禁止任何形式的转载、抓取或商业使用。",
     "disclaimer": "本平台为虚拟互动社区，所有宠物数据仅用于娱乐与收藏，不具备现实货币价值。",
-    "visitsLine": "📊 本站累计访问 {total} 次 | 独立访客 {unique} 人"
+    "visitsLine": "📊 本站累计访问 {total} 次"
   },
   "pets": {
     "fox": {

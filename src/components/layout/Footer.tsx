@@ -64,15 +64,13 @@ export async function Footer() {
         </a>
       </address>
 
-      {/* 版权声明与免责条款（上线前合规） */}
-      <div className="mx-auto mb-3 max-w-3xl space-y-1.5 border-t border-zinc-100 px-6 pt-4">
-        <p className="font-semibold text-zinc-600">{t("copyrightLine")}</p>
-        <p className="leading-relaxed text-zinc-500">{t("originalNotice")}</p>
-        <p className="leading-relaxed text-zinc-500">{t("disclaimer")}</p>
-      </div>
-
-      <div className="flex items-center justify-center">
-        <span>{t("copyright", { version })}</span>
+      {/* 版权声明与免责条款（紧凑排版：版权主体加粗，法律条款缩小浅灰弱化） */}
+      <div className="mx-auto max-w-3xl space-y-1.5 border-t border-zinc-100 px-6 pb-2 pt-3">
+        <p className="text-sm font-semibold text-zinc-600">{t("copyrightLine")}</p>
+        <p className="text-[11px] leading-snug text-slate-500">{t("originalNotice")}</p>
+        <p className="text-[11px] leading-snug text-slate-500">{t("disclaimer")}</p>
+        {/* 版权行 + 语义化版本号（v1.2.0），弱化视觉存在感 */}
+        <p className="pt-1 text-[11px] text-slate-400">{t("copyright", { version })}</p>
       </div>
       {/* 访问计数（人气感）：客户端加载，失败静默 */}
       <VisitCounter />

@@ -290,7 +290,7 @@
     "copyrightLine": "© 2026 AIABW. All Rights Reserved.",
     "originalNotice": "All pet artwork, genetic settings, species descriptions and UI designs on this site are original or legally licensed and protected by copyright law. Any reproduction, scraping or commercial use without written permission is prohibited.",
     "disclaimer": "This platform is a virtual interactive community. All pet data is for entertainment and collection only and has no real-world monetary value.",
-    "visitsLine": "📊 Total Visits: {total} | Unique Visitors: {unique}"
+    "visitsLine": "📊 Total visits: {total}"
   },
   "pets": {
     "fox": {

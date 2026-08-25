@@ -3,8 +3,16 @@ import { execSync } from "child_process";
 import { readFileSync } from "fs";
 import createNextIntlPlugin from "next-intl/plugin";
 
-/** 自动版本号： */
+/** 自动版本号：优先使用 package.json 的语义化版本（v1.2.0），git hash 兑底。 */
 function resolveAppVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
+      version?: string;
+    };
+    if (pkg.version && /^\d+\.\d+\.\d+/.test(pkg.version)) return pkg.version;
+  } catch {
+    // 忽略
+  }
   try {
     const hash = execSync("git rev-parse --short HEAD", {
       encoding: "utf8",
@@ -13,14 +21,6 @@ function resolveAppVersion(): string {
     if (hash) return hash;
   } catch {
     // 没有 .git 时忽略
-  }
-  try {
-    const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
-      version?: string;
-    };
-    if (pkg.version) return pkg.version;
-  } catch {
-    // 忽略
   }
   return "dev";
 }

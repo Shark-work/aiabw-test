@@ -97,11 +97,11 @@ const innerText = (page) => page.evaluate(() => document.body.innerText);
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await wait(2200);
   const foot = await pg.evaluate(() => {
-    const m = document.body.innerText.match(/本站累计访问 ([0-9,]+) 次 \| 独立访客 ([0-9,]+) 人/);
-    return { text: m ? m[0] : null, total: m ? m[1] : null, unique: m ? m[2] : null };
+    const m = document.body.innerText.match(/本站累计访问 ([0-9,]+) 次/);
+    return { text: m ? m[0] : null, total: m ? m[1] : null };
   });
   console.log("  footer visits:", JSON.stringify(foot));
-  assert(foot.text !== null && /^[0-9,]+$/.test(foot.total), "页脚显示访问计数（千分位格式化）");
+  assert(foot.text !== null && parseInt(String(foot.total).replace(/,/g, ""), 10) >= 10000, "页脚显示访问计数（+10000 底数，千分位）");
   await pg.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
   await wait(2200);
   const foot2 = await pg.evaluate(() => {
