@@ -455,7 +455,20 @@
     "redeemFailed": "兑换失败，请稍后重试",
     "releaseFailed": "放生失败，请稍后重试",
     "petUnavailable": "这只宠物已经被其他主人领养啦，去图鉴看看别的吧~",
-    "claimFailed": "领养失败，请稍后再试"
+    "claimFailed": "领养失败，请稍后再试",
+    "invalidBreedSet": "请选择恰好 2 只宠物进行繁育",
+    "parentNotFound": "亲本不存在或不属于你",
+    "breedDifferentSpecies": "暂只支持同物种繁育",
+    "breedCooldown": "亲本仍在繁育冷却期，请稍后再试",
+    "nfrSupplyExhausted": "该藏品发行量已售罄",
+    "breedFailed": "繁育失败，请稍后再试",
+    "invalidTransfer": "请提供藏品与接收者",
+    "collectibleNotFound": "藏品不存在",
+    "collectibleInactive": "藏品已失效",
+    "noPermissionTransfer": "只能转赠自己拥有的藏品",
+    "transferCooldown": "藏品仍在转赠冷却期，请稍后再试",
+    "receiverNotFound": "接收者账号不存在",
+    "transferFailed": "转赠失败，请稍后再试"
   },
   "nav": {
     "home": "首页",

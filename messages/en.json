@@ -455,7 +455,20 @@
     "redeemFailed": "Redemption failed, please try again",
     "releaseFailed": "Release failed, please try again",
     "petUnavailable": "This pet has already been adopted by another owner - check out the others!",
-    "claimFailed": "Adoption failed, please try again later"
+    "claimFailed": "Adoption failed, please try again later",
+    "invalidBreedSet": "Please choose exactly 2 pets to breed",
+    "parentNotFound": "Parent not found or not owned by you",
+    "breedDifferentSpecies": "Only same-species breeding is supported",
+    "breedCooldown": "Parents are in breeding cooldown, please try again later",
+    "nfrSupplyExhausted": "This collectible is sold out",
+    "breedFailed": "Breeding failed, please try again later",
+    "invalidTransfer": "Please provide a collectible and a receiver",
+    "collectibleNotFound": "Collectible not found",
+    "collectibleInactive": "Collectible is inactive",
+    "noPermissionTransfer": "You can only transfer collectibles you own",
+    "transferCooldown": "Collectible is in transfer cooldown, please try again later",
+    "receiverNotFound": "Receiver account does not exist",
+    "transferFailed": "Transfer failed, please try again later"
   },
   "nav": {
     "home": "Home",
