@@ -175,6 +175,15 @@ const SCHEMA_CREATES: string[] = [
     "url" text
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_hotnews_source_title ON "hotnews" ("source", "title")`,
+
+  // 登录审计：记录失败尝试（防暴力破解，保留最近记录用于审计）
+  `CREATE TABLE IF NOT EXISTS "login_attempts" (
+    "id" serial PRIMARY KEY,
+    "ip" text NOT NULL,
+    "email" text,
+    "attempted_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_time ON "login_attempts" ("ip", "attempted_at")`,
 ];
 
 /**
@@ -208,6 +217,9 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "visible" boolean DEFAULT true NOT NULL`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'visible' NOT NULL`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "pinned" boolean DEFAULT false NOT NULL`,
+  // ===== 账号安全（防暴力破解）=====
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "locked_until" timestamp`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_at" timestamp`,
 ];
 
 /**

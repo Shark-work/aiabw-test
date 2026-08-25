@@ -23,20 +23,24 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
-    const toLogin = () => {
-      window.location.href = `/login?redirect=${encodeURIComponent(pathname)}`;
+    const toLogin = (reauth = false) => {
+      window.location.href = `/login?redirect=${encodeURIComponent(pathname)}${reauth ? "&reauth=true" : ""}`;
     };
     if (!token) {
       toLogin();
       return;
     }
     fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then((d) => {
+      .then(async (r) => {
+        const d = await r.json();
+        if (r.status === 401) {
+          // 会话过期（JWT 失效 / 超过 24h 未登录）：要求重新登录
+          toLogin(true);
+          return;
+        }
         if (d?.ok && d.user?.role === "admin") {
           setAuthed(true);
         } else {
-          // 鏈櫥褰曟垨闈炵鐞嗗憳锛氱‖璺宠浆鐧诲綍椤碉紙瑙勯伩 SPA 璺敱鍦ㄤ腑杞椂鐨勭珵鎬侊級
           toLogin();
         }
       })
