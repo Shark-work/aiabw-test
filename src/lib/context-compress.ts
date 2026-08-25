@@ -23,8 +23,8 @@ export type CompressResult = {
   compressedTurns: number;
 };
 
-export const DEFAULT_MAX_TURNS = 12;
-export const DEFAULT_KEEP_RECENT = 8;
+export const DEFAULT_MAX_TURNS = 10;
+export const DEFAULT_KEEP_RECENT = 5;
 
 /** 统计消息中的用户轮数（user 消息条数）。 */
 export function countUserTurns(messages: UIMessage[]): number {
