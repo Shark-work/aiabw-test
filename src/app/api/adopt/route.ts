@@ -15,6 +15,7 @@ import {
   PetLimitError,
 } from "@/lib/pet-limit";
 import { mintCollectible, drizzleQueryable } from "@/lib/nfr";
+import { releaseInviteReward } from "@/lib/referral-reward";
 
 /** 官方宠物中文名（NFR 藏品定义用）。 */
 const OFFICIAL_ZH: Record<string, string> = {
@@ -177,6 +178,11 @@ export async function POST(req: Request) {
       return { adoption, threadId: thread.id };
     });
     perf("transaction");
+
+    // 裂变活跃验证：被邀请人完成首次领养 → 释放冻结的邀请奖励（后台异步，失败不影响领养）
+    if (authed) {
+      void releaseInviteReward(authed.id).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {

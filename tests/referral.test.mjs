@@ -4,12 +4,14 @@ import {
   generateInviteCode,
   getClientIp,
   INVITE_REWARD_POINTS,
+  WELCOME_BONUS_POINTS,
+  INVITE_DAILY_LIMIT,
 } from "../src/lib/referral.ts";
 
-test("referral: invite code has fixed length and safe charset", () => {
+test("referral: invite code is 6 chars uppercase alphanumeric", () => {
   const code = generateInviteCode();
-  assert.equal(code.length, 8);
-  assert.match(code, /^[a-z0-9]{8}$/);
+  assert.equal(code.length, 6);
+  assert.match(code, /^[A-Z0-9]{6}$/);
 });
 
 test("referral: invite codes are unique in practice", () => {
@@ -25,8 +27,10 @@ test("referral: custom length works", () => {
   assert.equal(generateInviteCode(12).length, 12);
 });
 
-test("referral: reward amount is 50 points", () => {
+test("referral: reward amount is 50 points / welcome bonus 20", () => {
   assert.equal(INVITE_REWARD_POINTS, 50);
+  assert.equal(WELCOME_BONUS_POINTS, 20);
+  assert.equal(INVITE_DAILY_LIMIT, 3);
 });
 
 test("referral: getClientIp parses x-forwarded-for (first hop)", () => {

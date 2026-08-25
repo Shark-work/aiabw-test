@@ -11,6 +11,7 @@ import {
 import { renderPetDescription } from "@/lib/pet-dictionary";
 import { SPECIES_PET_TYPE_PREFIX } from "@/lib/species-prompt";
 import { mintCollectible } from "@/lib/nfr";
+import { releaseInviteReward } from "@/lib/referral-reward";
 
 export const runtime = "nodejs";
 
@@ -158,6 +159,9 @@ export async function POST(req: Request) {
       });
 
       await client.query("COMMIT");
+
+      // 裂变活跃验证：被邀请人完成首次领养 → 释放冻结的邀请奖励（后台异步，失败不影响领养）
+      void releaseInviteReward(user.id).catch(() => {});
 
       return NextResponse.json({
         ok: true,

@@ -247,6 +247,10 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_checkin_date" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invite_code" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invited_by" uuid REFERENCES "users"("id")`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "checkin_streak" integer DEFAULT 0 NOT NULL`,
+  // 裂变奖励状态机：pending=冻结等待活跃验证 / credited=已发放 / expired=超时作废
+  `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'credited' NOT NULL`,
+  `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "claimed_at" timestamp`,
   `ALTER TABLE "agent_memories" ADD COLUMN IF NOT EXISTS "important" boolean DEFAULT false NOT NULL`,
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "last_interaction_time" timestamp`,
   // ===== 站长后台（Admin Dashboard）=====
@@ -287,6 +291,11 @@ const SCHEMA_INDEXES: string[] = [
   // 裂变防刷：同 IP / 同设备指纹最多一次奖励
   `CREATE INDEX IF NOT EXISTS idx_invite_rewards_ip ON "invite_rewards" ("ip")`,
   `CREATE INDEX IF NOT EXISTS idx_invite_rewards_device ON "invite_rewards" ("device_id")`,
+  // 裂变防刷：24h 窗口内同 IP/设备 最多 3 次（含时间列复合索引）
+  `CREATE INDEX IF NOT EXISTS idx_invite_rewards_ip_time ON "invite_rewards" ("ip", "created_at")`,
+  `CREATE INDEX IF NOT EXISTS idx_invite_rewards_status ON "invite_rewards" ("status", "invited_user_id")`,
+  // 排行榜：战力分查询（代数降序）
+  `CREATE INDEX IF NOT EXISTS idx_uc_power ON "user_collectibles" ("generation" DESC, "collectible_id")`,
   // 宠物图鉴：traits JSONB 按元素筛选（GIN 索引，毫秒级）
   `CREATE INDEX IF NOT EXISTS idx_pets_traits_gin ON "pets" USING gin ("traits")`,
   // 合成分配：owner_id IS NULL 的池子查询 + “我的宠物”列表

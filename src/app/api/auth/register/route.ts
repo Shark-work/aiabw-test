@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { users } from "@/db/schema";
+import { users, pointsLog } from "@/db/schema";
 import { hashPassword, signToken } from "@/lib/auth";
 import {
-  creditInviteReward,
+  createPendingInviteReward,
   findUserByInviteCode,
 } from "@/lib/referral-reward";
-import { generateInviteCode, getClientIp } from "@/lib/referral";
+import { generateInviteCode, getClientIp, WELCOME_BONUS_POINTS } from "@/lib/referral";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { timer } from "@/lib/perf";
 
@@ -81,24 +81,35 @@ export async function POST(req: Request) {
     }
     dbg["insert"] = Date.now() - start;
 
-    // 邀请绑定 + 奖励（防刷：同 IP / 同设备指纹最多一次）
+    // 邀请绑定 + 冻结奖励（防刷：同 IP / 同设备指纹 24h 内 ≤3 次；被邀请人活跃后发放）
     let invitedBy: string | null = null;
-    let inviteRewardCredited = false;
+    let invitePending = false;
     if (ref) {
       const inviter = await findUserByInviteCode(ref);
       if (inviter && inviter.id !== user.id) {
         invitedBy = inviter.id;
         await db.update(users).set({ invitedBy: inviter.id }).where(eq(users.id, user.id));
-        const res = await creditInviteReward({
+        const res = await createPendingInviteReward({
           inviterId: inviter.id,
           invitedUserId: user.id,
           ip: getClientIp(req),
           deviceId,
         });
-        inviteRewardCredited = res.credited;
+        invitePending = res.ok;
         dbg["invite"] = Date.now() - start;
       }
     }
+
+    // 新手礼包：注册即 +20 积分（points_log reason='welcome'）
+    await db.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({ points: sql`${users.points} + ${WELCOME_BONUS_POINTS}` })
+        .where(eq(users.id, user.id));
+      await tx
+        .insert(pointsLog)
+        .values({ userId: user.id, amount: WELCOME_BONUS_POINTS, reason: "welcome" });
+    });
 
     const token = await signToken({ id: user.id, email: user.email });
     perf("signToken");
@@ -109,7 +120,8 @@ export async function POST(req: Request) {
       token,
       user: { id: user.id, email: user.email, inviteCode: user.inviteCode ?? null },
       invitedBy,
-      inviteRewardCredited,
+      invitePending,
+      welcomeBonus: WELCOME_BONUS_POINTS,
       dbg,
     });
   } catch (err) {

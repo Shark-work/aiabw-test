@@ -396,7 +396,9 @@
     "knowledgeInteract": "如何与它互动",
     "interactSay": "你可以对它说",
     "goChat": "💬 去和它聊天",
-    "knowledgeLater": "稍后再说"
+    "knowledgeLater": "稍后再说",
+    "tabCatalog": "图鉴",
+    "tabLeaderboard": "排行榜"
   },
   "api": {
     "signInFirst": "请先登录",
@@ -468,7 +470,11 @@
     "noPermissionTransfer": "只能转赠自己拥有的藏品",
     "transferCooldown": "藏品仍在转赠冷却期，请稍后再试",
     "receiverNotFound": "接收者账号不存在",
-    "transferFailed": "转赠失败，请稍后再试"
+    "transferFailed": "转赠失败，请稍后再试",
+    "invalidInviteCode": "邀请码无效",
+    "alreadyInvited": "你已经绑定过邀请码啦",
+    "selfInvite": "不能绑定自己的邀请码",
+    "bindFailed": "绑定失败，请稍后再试"
   },
   "nav": {
     "home": "首页",
@@ -515,5 +521,16 @@
     "title": "页面未找到",
     "desc": "抱歉，你要找的页面不存在或已被移动。",
     "backHome": "← 返回首页"
+  },
+  "leaderboard": {
+    "title": "宠物排行榜",
+    "tabPets": "最强宠物",
+    "tabBreeders": "繁育达人",
+    "loading": "榜单加载中…",
+    "loadFailed": "榜单加载失败",
+    "owner": "主人 {email}",
+    "generation": "第 {gen} 代",
+    "power": "战力",
+    "minted": "本周新藏品"
   }
 }

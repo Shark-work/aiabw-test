@@ -18,13 +18,18 @@ export const users = pgTable('users', {
   points: integer('points').notNull().default(0),
   /** 最近签到日期（YYYY-MM-DD，用于每日签到判断） */
   lastCheckinDate: text('last_checkin_date'),
+  /** 连续签到天数（每日签到 +1，断签重置为 1） */
+  checkinStreak: integer('checkin_streak').notNull().default(0),
   /** 裂变邀请：唯一邀请码（注册时自动生成） */
   inviteCode: text('invite_code').unique(),
   /** 裂变邀请：由谁邀请（邀请人 user id） */
   invitedBy: uuid('invited_by').references((): AnyPgColumn => users.id),
 });
 
-/** 邀请奖励发放记录（用于防刷：同一 IP 或同一设备指纹最多触发一次） */
+/**
+ * 邀请奖励发放记录（防刷：同 IP / 设备指纹 24h 内 ≤3 次；
+ * status: pending=冻结等待活跃验证 / credited=已发放 / expired=超时作废）。
+ */
 export const inviteRewards = pgTable('invite_rewards', {
   id: uuid('id').defaultRandom().primaryKey(),
   inviterId: uuid('inviter_id').references(() => users.id).notNull(),
@@ -32,6 +37,8 @@ export const inviteRewards = pgTable('invite_rewards', {
   ip: text('ip'),
   deviceId: text('device_id'),
   amount: integer('amount').notNull().default(50),
+  status: text('status').notNull().default('credited'),
+  claimedAt: timestamp('claimed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

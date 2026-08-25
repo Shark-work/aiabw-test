@@ -396,7 +396,9 @@
     "knowledgeInteract": "How to interact",
     "interactSay": "Try saying",
     "goChat": "💬 Chat now",
-    "knowledgeLater": "Maybe later"
+    "knowledgeLater": "Maybe later",
+    "tabCatalog": "Encyclopedia",
+    "tabLeaderboard": "Ranking"
   },
   "api": {
     "signInFirst": "Please sign in first",
@@ -468,7 +470,11 @@
     "noPermissionTransfer": "You can only transfer collectibles you own",
     "transferCooldown": "Collectible is in transfer cooldown, please try again later",
     "receiverNotFound": "Receiver account does not exist",
-    "transferFailed": "Transfer failed, please try again later"
+    "transferFailed": "Transfer failed, please try again later",
+    "invalidInviteCode": "Invalid invite code",
+    "alreadyInvited": "You have already been invited",
+    "selfInvite": "You cannot bind your own invite code",
+    "bindFailed": "Bind failed, please try again later"
   },
   "nav": {
     "home": "Home",
@@ -515,5 +521,16 @@
     "title": "Page not found",
     "desc": "Sorry, the page you are looking for does not exist or has been moved.",
     "backHome": "← Back to home"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "tabPets": "Top Pets",
+    "tabBreeders": "Top Breeders",
+    "loading": "Loading…",
+    "loadFailed": "Failed to load",
+    "owner": "owner {email}",
+    "generation": "Gen {gen}",
+    "power": "Power",
+    "minted": "New this week"
   }
 }
