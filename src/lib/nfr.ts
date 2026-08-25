@@ -57,9 +57,8 @@ type Queryable = {
  *  - 在 Drizzle 事务连接上执行 → 与事务内其它 Drizzle 操作共享同一事务，
  *    任何一方失败都会触发整个事务 ROLLBACK。
  */
-export function drizzleQueryable(tx: {
-  execute: (q: unknown) => Promise<{ rows?: unknown[]; rowCount?: number | null } | undefined>;
-}): Queryable {
+export function drizzleQueryable(tx: unknown): Queryable {
+  const execute = (tx as { execute: (q: unknown) => Promise<unknown> }).execute.bind(tx);
   return {
     query: async (text: string, params: unknown[] = []) => {
       const parts = text.split(/\$(\d+)/);
@@ -72,7 +71,9 @@ export function drizzleQueryable(tx: {
           chunks.push(sql.raw(parts[i]));
         }
       }
-      const res = await tx.execute(sql.join(chunks));
+      const res = (await execute(sql.join(chunks))) as
+        | { rows?: unknown[]; rowCount?: number | null }
+        | undefined;
       return {
         rows: ((res?.rows ?? []) as Array<Record<string, unknown>>).map((r) =>
           Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v as unknown])),
