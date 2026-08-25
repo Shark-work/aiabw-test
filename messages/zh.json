@@ -60,7 +60,10 @@
     "detailAdopted": "已有 {count} 位主人领养",
     "detailGeneration": "第 {gen} 代",
     "featuredLoading": "正在挑选推荐伙伴…",
-    "featuredEmpty": "暂无推荐伙伴，去图鉴逛逛吧"
+    "featuredEmpty": "暂无推荐伙伴，去图鉴逛逛吧",
+    "newsTitle": "🐾 动物世界头条",
+    "newsHot": "🔥 {hot} 热度",
+    "newsCopyright": "资讯内容聚合自公开网络，版权归原作者所有。如有侵犯您的权益，请联系客服处理。"
   },
   "login": {
     "title": "登录艾比世界",

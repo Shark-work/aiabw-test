@@ -162,6 +162,19 @@ const SCHEMA_CREATES: string[] = [
     "unique_count" bigint DEFAULT 0 NOT NULL,
     "last_updated" timestamp DEFAULT now() NOT NULL
   )`,
+
+  // 动物世界头条（Animal News）：全网动物趣闻聚合，热度分排序
+  `CREATE TABLE IF NOT EXISTS "hotnews" (
+    "id" serial PRIMARY KEY,
+    "source" text NOT NULL,
+    "title" text NOT NULL,
+    "desc" text,
+    "cover" text,
+    "hot" double precision DEFAULT 0 NOT NULL,
+    "timestamp" bigint DEFAULT 0 NOT NULL,
+    "url" text
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_hotnews_source_title ON "hotnews" ("source", "title")`,
 ];
 
 /**

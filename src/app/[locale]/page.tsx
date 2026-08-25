@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { DailyInspiration } from "@/components/daily-inspiration";
+import { NewsCarousel } from "@/components/news-carousel";
 import { PetAvatar } from "@/components/PetAvatar";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
@@ -316,6 +317,11 @@ export default function Home() {
         {/* 今日运势（悬浮叠加：z-20 + 负下边距，覆盖在推荐卡上方增加视觉层次） */}
         <div className="relative z-20 w-full -mb-8">
           <DailyInspiration />
+        </div>
+
+        {/* 🐾 动物世界头条（今日运势下方）：Top5 轮播，5s 自动切换 + 悬停暂停 */}
+        <div className="relative z-10 w-full">
+          <NewsCarousel />
         </div>
 
         {/* 动态推荐宠（替代硬编码：稀缺 OR 高领养物种，每次刷新随机 3 只） */}
