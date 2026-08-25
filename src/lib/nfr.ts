@@ -4,6 +4,9 @@
 //    · 锁定定义行校验发行量（total_supply>0 且已铸造达标 → 拒绝超发）
 //    · 生成唯一 hash_id，插入 user_collectibles，置转赠/繁育冷却期
 //    · minted 原子 +1
+//  - drizzleQueryable：把 Drizzle 事务（tx）适配成 { query(sql, params) } 接口，
+//    使 mintCollectible 可在 db.transaction 内与 Drizzle 查询共处同一事务。
+import { sql } from "drizzle-orm";
 import {
   makeNfrHashId,
   FIRST_MINT_COOLDOWN_MS,
@@ -47,6 +50,38 @@ type Queryable = {
     params?: unknown[],
   ) => Promise<{ rows: Array<Record<string, unknown>>; rowCount: number | null }>;
 };
+
+/**
+ * 将 Drizzle 事务（tx）适配为 { query(sql, params) } 接口：
+ *  - 把 "…$1…$2…" 形式的 SQL 按序解析，参数用 drizzle sql`${value}` 绑定；
+ *  - 在 Drizzle 事务连接上执行 → 与事务内其它 Drizzle 操作共享同一事务，
+ *    任何一方失败都会触发整个事务 ROLLBACK。
+ */
+export function drizzleQueryable(tx: {
+  execute: (q: unknown) => Promise<{ rows?: unknown[]; rowCount?: number | null } | undefined>;
+}): Queryable {
+  return {
+    query: async (text: string, params: unknown[] = []) => {
+      const parts = text.split(/\$(\d+)/);
+      const chunks: ReturnType<typeof sql.raw>[] = [];
+      for (let i = 0; i < parts.length; i++) {
+        if (i % 2 === 1) {
+          const p = params[Number(parts[i]) - 1];
+          chunks.push(sql`${p}`);
+        } else if (parts[i].length > 0) {
+          chunks.push(sql.raw(parts[i]));
+        }
+      }
+      const res = await tx.execute(sql.join(chunks));
+      return {
+        rows: ((res?.rows ?? []) as Array<Record<string, unknown>>).map((r) =>
+          Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v as unknown])),
+        ),
+        rowCount: res?.rowCount ?? null,
+      };
+    },
+  };
+}
 
 /** 在已开启的事务客户端上铸造一件 NFR（不负责 COMMIT，由调用方统一提交/回滚）。 */
 export async function mintCollectible(

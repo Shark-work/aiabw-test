@@ -159,7 +159,7 @@ const SCHEMA_CREATES: string[] = [
   // 藏品定义表：物种×稀有度 = 一种 NFR 藏品类型（含总发行量/已铸造数）
   `CREATE TABLE IF NOT EXISTS "digital_collectibles" (
     "id" text PRIMARY KEY,
-    "species_id" text NOT NULL REFERENCES "pet_dictionary"("id"),
+    "species_id" text NOT NULL,
     "name_zh" text NOT NULL,
     "name_en" text NOT NULL,
     "category" text NOT NULL,
@@ -252,6 +252,8 @@ const SCHEMA_ALTERS: string[] = [
   // ===== 站长后台（Admin Dashboard）=====
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "role" text DEFAULT 'user' NOT NULL`,
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "visible" boolean DEFAULT true NOT NULL`,
+  // NFR：官方品牌宠物（fox/penguin/dog）不在 pet_dictionary，藏品 species_id 无需 FK
+  `ALTER TABLE "digital_collectibles" DROP CONSTRAINT IF EXISTS "digital_collectibles_species_id_fkey"`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'visible' NOT NULL`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "pinned" boolean DEFAULT false NOT NULL`,
   // ===== 账号安全（防暴力破解）=====

@@ -14,6 +14,14 @@ import {
   isPetLimitError,
   PetLimitError,
 } from "@/lib/pet-limit";
+import { mintCollectible, drizzleQueryable } from "@/lib/nfr";
+
+/** 官方宠物中文名（NFR 藏品定义用）。 */
+const OFFICIAL_ZH: Record<string, string> = {
+  fox: "抱抱狐",
+  penguin: "小企鹅",
+  dog: "修狗",
+};
 
 export const runtime = "nodejs";
 
@@ -141,6 +149,30 @@ export async function POST(req: Request) {
         role: "assistant",
         parts: [{ type: "text", text: welcomeMessage }],
       });
+
+      // —— NFR 确权：官方宠物领养成功同步铸造（与 Drizzle 事务同连接，失败即整体 ROLLBACK）——
+      // 仅登录用户铸造（游客无账号资产归属，不确权）
+      if (authed) {
+        const petCfg = getPet(petType);
+        await mintCollectible(drizzleQueryable(tx), {
+          ownerId: authed.id,
+          species: {
+            speciesId: petType,
+            nameZh: OFFICIAL_ZH[petType] ?? petCfg.name,
+            nameEn: petCfg.name,
+            category: "official",
+            habitat: null,
+            rarity: "common",
+            element: undefined,
+            imageUrl: petCfg.avatar,
+          },
+          dna: { personality: petCfg.personality, rarity: "common" },
+          generation: 1,
+          parentHashIds: null,
+          sourcePetId: null,
+          adoptionId: adoption.id,
+        });
+      }
 
       return { adoption, threadId: thread.id };
     });
