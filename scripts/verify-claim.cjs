@@ -160,12 +160,13 @@ async function req(method, apiPath, body, token) {
   const uidQ = await pool.query("SELECT id FROM users WHERE email = $1", [emailA]);
   const uidA = uidQ.rows[0]?.id;
   if (uidA) {
+    await pool.query(`DELETE FROM user_collectibles WHERE owner_id = $1`, [uidA]);
     await pool.query(
-      `DELETE FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id = $1)`,
+      `DELETE FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id = $1::text)`,
       [uidA],
     );
-    await pool.query(`DELETE FROM adoptions WHERE user_id = $1`, [uidA]);
-    await pool.query(`DELETE FROM threads WHERE user_id = $1`, [uidA]);
+    await pool.query(`DELETE FROM adoptions WHERE user_id = $1::text`, [uidA]);
+    await pool.query(`DELETE FROM threads WHERE user_id = $1::text`, [uidA]);
     await pool.query(
       `UPDATE pets SET owner_id = NULL, adopted_at = NULL, last_interaction_time = NULL WHERE owner_id = $1`,
       [uidA],
@@ -174,12 +175,13 @@ async function req(method, apiPath, body, token) {
   const uidQ2 = await pool.query("SELECT id FROM users WHERE email = $1", [emailB]);
   const uidB = uidQ2.rows[0]?.id;
   if (uidB) {
+    await pool.query(`DELETE FROM user_collectibles WHERE owner_id = $1`, [uidB]);
     await pool.query(
-      `DELETE FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id = $1)`,
+      `DELETE FROM messages WHERE thread_id IN (SELECT id FROM threads WHERE user_id = $1::text)`,
       [uidB],
     );
-    await pool.query(`DELETE FROM adoptions WHERE user_id = $1`, [uidB]);
-    await pool.query(`DELETE FROM threads WHERE user_id = $1`, [uidB]);
+    await pool.query(`DELETE FROM adoptions WHERE user_id = $1::text`, [uidB]);
+    await pool.query(`DELETE FROM threads WHERE user_id = $1::text`, [uidB]);
     await pool.query(
       `UPDATE pets SET owner_id = NULL, adopted_at = NULL, last_interaction_time = NULL WHERE owner_id = $1`,
       [uidB],
