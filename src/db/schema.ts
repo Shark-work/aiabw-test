@@ -6,6 +6,8 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  /** 用户角色：user（普通）| admin（站长后台） */
+  role: text('role').notNull().default('user'),
   /** 是否创作者（可发布 UGC 宠物） */
   isCreator: boolean('is_creator').notNull().default(false),
   /** 是否全局解锁：付过一次款即为 true，永久解锁多宠权限（不再限制数量） */

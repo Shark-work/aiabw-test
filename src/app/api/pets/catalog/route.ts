@@ -38,6 +38,9 @@ export async function GET(req: Request) {
     }
     params.push(user.id);
     where.push(`p.owner_id = $${params.length}`);
+  } else {
+    // 站长下架的宠物对普通用户图鉴不可见（管理员后台控制上架/下架）
+    where.push(`p.visible = true`);
   }
   if (category) {
     params.push(category);

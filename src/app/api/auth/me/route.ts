@@ -21,6 +21,7 @@ export async function GET(req: Request) {
   const [row] = await db
     .select({
       points: users.points,
+      role: users.role,
       isCreator: users.isCreator,
       creatorBalance: users.creatorBalance,
       lastCheckinDate: users.lastCheckinDate,
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
     user: {
       id: user.id,
       email: user.email,
+      role: row?.role ?? "user",
       points: row?.points ?? 0,
       isCreator: !!row?.isCreator,
       creatorBalance: row?.creatorBalance ?? 0,

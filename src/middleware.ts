@@ -21,6 +21,7 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // 排除 api/_next/_vercel/带扩展名路径；admin 后台路由不参与 locale 前缀化
+  matcher: ["/((?!api|_next|_vercel|admin|.*\\..*).*)"],
 };
 
