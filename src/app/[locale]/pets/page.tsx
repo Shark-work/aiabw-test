@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { PetAvatar } from "@/components/PetAvatar";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PetKnowledgeModal, type KnowledgePet } from "@/components/pet-knowledge-modal";
+import { LeaderboardPanel } from "@/components/leaderboard-panel";
 import { getRarityMeta } from "@/lib/pet-status";
 import { SITE_URL } from "@/lib/site";
 
@@ -58,6 +59,8 @@ export default function PetsCatalogPage() {
   const [species, setSpecies] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // 图鉴 / 排行榜 Tab
+  const [tab, setTab] = useState<"catalog" | "leaderboard">("catalog");
   // —— 核心领养（图鉴交互）——
   const [petState, setPetState] = useState<{
     petCount: number;
@@ -269,6 +272,18 @@ export default function PetsCatalogPage() {
           </div>
         </div>
 
+        {/* 图鉴 / 排行榜 Tab */}
+        <div className="mb-3 flex gap-2">
+          <button type="button" onClick={() => setTab("catalog")} className={chip(tab === "catalog")}>
+            {t("tabCatalog")}
+          </button>
+          <button type="button" onClick={() => setTab("leaderboard")} className={chip(tab === "leaderboard")}>
+            {t("tabLeaderboard")}
+          </button>
+        </div>
+
+        {tab === "catalog" ? (
+          <>
         {/* 字典分类导航 */}
         <div className="mb-3 flex flex-wrap gap-2">
           <button type="button" onClick={() => setCategory("")} className={chip(!category)}>
@@ -377,6 +392,10 @@ export default function PetsCatalogPage() {
             );
           })}
         </div>
+          </>
+        ) : (
+          <LeaderboardPanel />
+        )}
       </div>
 
       {/* 领养成功祝贺动画 */}
