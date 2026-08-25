@@ -155,6 +155,43 @@ const SCHEMA_CREATES: string[] = [
     "last_interaction_time" timestamp
   )`,
 
+  // ===== NFR 数字藏品合规架构 =====
+  // 藏品定义表：物种×稀有度 = 一种 NFR 藏品类型（含总发行量/已铸造数）
+  `CREATE TABLE IF NOT EXISTS "digital_collectibles" (
+    "id" text PRIMARY KEY,
+    "species_id" text NOT NULL REFERENCES "pet_dictionary"("id"),
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "category" text NOT NULL,
+    "habitat" text,
+    "rarity" text NOT NULL DEFAULT 'common',
+    "element" text,
+    "base_image_url" text NOT NULL,
+    "total_supply" integer NOT NULL DEFAULT 0,
+    "minted" integer NOT NULL DEFAULT 0,
+    "description_zh" text,
+    "description_en" text,
+    "is_visible" boolean NOT NULL DEFAULT true,
+    "created_at" timestamp NOT NULL DEFAULT now()
+  )`,
+  // 用户资产确权表：用户持有的每一件 NFR 个体（DNA/世代/哈希/冷却期）
+  `CREATE TABLE IF NOT EXISTS "user_collectibles" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "owner_id" uuid NOT NULL REFERENCES "users"("id"),
+    "collectible_id" text NOT NULL REFERENCES "digital_collectibles"("id"),
+    "source_pet_id" text REFERENCES "pets"("id"),
+    "adoption_id" uuid REFERENCES "adoptions"("id"),
+    "dna_sequence" jsonb NOT NULL,
+    "generation" integer NOT NULL DEFAULT 1,
+    "hash_id" text NOT NULL UNIQUE,
+    "parent_hash_ids" jsonb,
+    "locked_until" timestamp NOT NULL DEFAULT now(),
+    "breed_cooldown_until" timestamp NOT NULL DEFAULT now(),
+    "status" text NOT NULL DEFAULT 'active',
+    "minted_at" timestamp NOT NULL DEFAULT now(),
+    "transferred_count" integer NOT NULL DEFAULT 0
+  )`,
+
   // 站点访问计数：单行汇总（id=1），原子自增 visit_count / unique_count
   `CREATE TABLE IF NOT EXISTS "site_visits" (
     "id" integer PRIMARY KEY DEFAULT 1 NOT NULL,
@@ -232,6 +269,13 @@ const SCHEMA_ALTERS: string[] = [
 const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_adoptions_user_id ON "adoptions" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_adoptions_anonymous_id ON "adoptions" ("anonymous_id")`,
+  // NFR 藏品：确权/查询索引
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_dc_species_rarity ON "digital_collectibles" ("species_id", "rarity")`,
+  `CREATE INDEX IF NOT EXISTS idx_dc_rarity ON "digital_collectibles" ("rarity")`,
+  `CREATE INDEX IF NOT EXISTS idx_uc_owner ON "user_collectibles" ("owner_id", "status")`,
+  `CREATE INDEX IF NOT EXISTS idx_uc_collectible ON "user_collectibles" ("collectible_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_uc_hash ON "user_collectibles" ("hash_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_uc_locked ON "user_collectibles" ("locked_until")`,
   `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
   // 数字人记忆：清理低频记忆（last_accessed 超过 30 天）按索引扫描，避免全表扫
