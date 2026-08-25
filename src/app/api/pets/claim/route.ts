@@ -10,6 +10,7 @@ import {
 } from "@/lib/pet-limit";
 import { renderPetDescription } from "@/lib/pet-dictionary";
 import { SPECIES_PET_TYPE_PREFIX } from "@/lib/species-prompt";
+import { mintCollectible } from "@/lib/nfr";
 
 export const runtime = "nodejs";
 
@@ -133,12 +134,42 @@ export async function POST(req: Request) {
         [threadId, JSON.stringify([{ type: "text", text: welcome }])],
       );
 
+      // —— NFR 确权：领养成功同步铸造数字藏品 ——
+      const traits = (pet.traits ?? {}) as Record<string, unknown>;
+      const minted = await mintCollectible(client, {
+        ownerId: user.id,
+        species: {
+          speciesId: pet.species_id,
+          nameZh: pet.nameZh,
+          nameEn: pet.nameEn,
+          category: pet.category,
+          habitat: pet.habitat,
+          rarity: String(traits.rarity ?? "common"),
+          element: traits.element ? String(traits.element) : undefined,
+          imageUrl: pet.image_url,
+        },
+        dna: traits,
+        generation: Number(pet.generation ?? 1),
+        parentHashIds: Array.isArray(pet.parent_ids)
+          ? pet.parent_ids.map(String)
+          : null,
+        sourcePetId: pet.id,
+        adoptionId: String(ad.rows[0].id),
+      });
+
       await client.query("COMMIT");
 
       return NextResponse.json({
         ok: true,
         adoption: { id: ad.rows[0].id, petType, petName },
         threadId,
+        nfr: {
+          id: minted.id,
+          hashId: minted.hashId,
+          collectibleId: minted.collectibleId,
+          generation: Number(pet.generation ?? 1),
+          lockedUntil: minted.lockedUntil,
+        },
         pet: {
           id: pet.id,
           speciesId: pet.species_id,
