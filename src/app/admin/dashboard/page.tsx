@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/components/ui/toast";
 
@@ -16,6 +16,9 @@ const CARDS: { key: keyof Stats; label: string; suffix: string }[] = [
 /** 📊 数据看板：核心运营指标。 */
 export default function AdminDashboardPage() {
   const { toast, toastsNode } = useToast();
+  // toast 对象每次渲染新建（引用不稳定），用 ref 持有稳定访问，避免 deps 循环。
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -25,9 +28,9 @@ export default function AdminDashboardPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d?.ok) setStats(d.stats);
-        else toast.error(d?.error ?? "加载失败");
+        else toastRef.current.error(d?.error ?? "加载失败");
       })
-      .catch(() => toast.error("网络错误"))
+      .catch(() => toastRef.current.error("网络错误"))
       .finally(() => setLoading(false));
   }, []);
 

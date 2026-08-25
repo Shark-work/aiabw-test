@@ -119,10 +119,10 @@ export function ChatClient({
   // 搜索
   const [memorySearch, setMemorySearch] = useState("");
 
-  const applyFacts = (facts: MemoryFactView[]) => {
+  const applyFacts = useCallback((facts: MemoryFactView[]) => {
     setMemoryFacts(facts);
     setMemoryUsedChars(facts.reduce((s, f) => s + f.text.length, 0));
-  };
+  }, []);
 
   const openMemory = useCallback(async () => {
     setMemoryOpen(true);
@@ -143,7 +143,7 @@ export function ChatClient({
     } finally {
       setMemoryLoading(false);
     }
-  }, [adoptionIdState]);
+  }, [adoptionIdState, applyFacts, t, tc]);
 
   const addMemoryFact = useCallback(async () => {
     const text = newFactText.trim();
@@ -167,7 +167,7 @@ export function ChatClient({
     } catch {
       // 忽略
     }
-  }, [adoptionIdState, newFactText, newFactCategory]);
+  }, [adoptionIdState, newFactText, newFactCategory, applyFacts]);
 
   const startEditFact = (f: MemoryFactView) => {
     setEditingOldText(f.text);
@@ -198,7 +198,7 @@ export function ChatClient({
     } catch {
       // 忽略
     }
-  }, [adoptionIdState, editingOldText, editFactText, editFactCategory]);
+  }, [adoptionIdState, editingOldText, editFactText, editFactCategory, applyFacts]);
 
   const deleteMemoryFact = useCallback(
     async (text: string) => {
@@ -218,7 +218,7 @@ export function ChatClient({
         // 忽略
       }
     },
-    [adoptionIdState, editingOldText],
+    [adoptionIdState, editingOldText, applyFacts],
   );
 
   const togglePinFact = useCallback(
@@ -240,7 +240,7 @@ export function ChatClient({
         // 忽略
       }
     },
-    [adoptionIdState],
+    [adoptionIdState, applyFacts],
   );
 
   const clearMemory = useCallback(async () => {
@@ -260,7 +260,7 @@ export function ChatClient({
     } catch {
       // 忽略
     }
-  }, [adoptionIdState]);
+  }, [adoptionIdState, applyFacts, t]);
 
   // 游客检测：没有登录 token 时提示引导登录
   useEffect(() => {

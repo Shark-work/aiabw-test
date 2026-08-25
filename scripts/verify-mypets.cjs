@@ -118,7 +118,7 @@ async function waitForText(page, text, timeout = 8000) {
   // 1) 顶部状态栏 + 聚合卡片
   let txt = await innerText(pg);
   assert(txt.includes("我的宠物"), "页面标题「我的宠物」");
-  assert(txt.includes("© 2026 艾比世界 (Abi World). All Rights Reserved."), "Footer 版权标识");
+  assert(txt.includes("© 2026 艾比世界 (AIABW). All Rights Reserved."), "Footer 版权标识");
   assert(txt.includes("受著作权法保护") && txt.includes("禁止任何形式的转载、抓取或商业使用"), "Footer 原创声明");
   assert(txt.includes("不具备现实货币价值"), "Footer 免责声明");
   assert(/持有\s*5\s*\/\s*100/.test(txt.replace(/\s/g, " ")), "持有数 5/100");

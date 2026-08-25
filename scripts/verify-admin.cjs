@@ -28,7 +28,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // ---- 1) 未登录访问 /admin/dashboard → 重定向登录页 ----
   await pg.goto(BASE + "/admin/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
-  await wait(2500);
+  await pg.waitForFunction(() => /login/.test(location.pathname), { timeout: 15000, polling: 250 }).catch(() => {});
   const url1 = await pg.evaluate(() => location.pathname + location.search);
   console.log("  guest ->", url1);
   assert(/login/.test(url1), "未登录访问后台被重定向到登录页");
@@ -44,7 +44,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await pg.evaluate((tk) => localStorage.setItem("aiabw_token", tk), reg.token);
   await pg.goto(BASE + "/admin/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
-  await wait(2500);
+  // 等待客户端鉴权重定向完成（避免导航中 evaluate 的 Execution context 竞态）
+  await pg.waitForFunction(() => /login/.test(location.pathname), { timeout: 15000, polling: 250 }).catch(() => {});
   const url2 = await pg.evaluate(() => location.pathname);
   console.log("  normal user ->", url2);
   assert(/login/.test(url2), "普通用户访问后台被重定向到登录页");
@@ -63,7 +64,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await pg.evaluate((tk) => localStorage.setItem("aiabw_token", tk), login.token);
   await pg.goto(BASE + "/admin/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
-  await wait(3000);
+  // 等待看板内容渲染完成（label + 数值都出现，避免 loading 态假失败）
+  await pg
+    .waitForFunction(
+      () => {
+        const m = document.body.innerText.match(/总用户数\s*([\d,]+)/);
+        return !!m && m[1] !== null;
+      },
+      { timeout: 20000, polling: 400 },
+    )
+    .catch(() => {});
   const dash = await pg.evaluate(() => {
     const t = document.body.innerText;
     const aside = document.querySelector("aside");

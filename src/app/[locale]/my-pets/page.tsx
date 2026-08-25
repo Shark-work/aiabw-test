@@ -64,7 +64,7 @@ export default function MyPetsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tc]);
 
   useEffect(() => {
     loadPets();

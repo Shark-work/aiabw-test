@@ -80,7 +80,8 @@ export function NewsCarousel() {
           rel="noopener noreferrer"
           className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-white p-3 transition hover:border-orange-300"
         >
-          {/* 封面缩略图：防盗链失败回退占位图，避免轮播图裂开 */}
+          {/* 封面缩略图：远程新闻域名不可控（next/image 需逐一配置 remotePatterns 且不支持 onError 回退），保留原生 img。 */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={item.cover ?? FALLBACK_COVER}
             alt={item.title}

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 
 import { Badge, Table, Td } from "@/components/ui/table";
@@ -151,7 +152,7 @@ export default function AdminPetsPage() {
                 <Badge tone="violet">{p.traits.rarity ?? "?"}</Badge>
               </Td>
               <Td>
-                <img src={p.imageUrl} alt="" width={36} height={36} className="h-9 w-9 rounded object-cover" />
+                <Image src={p.imageUrl} alt="" width={36} height={36} className="h-9 w-9 rounded object-cover" />
               </Td>
               <Td className="max-w-[220px] truncate text-[11px] text-zinc-500">
                 {p.customDescription ?? "—"}
