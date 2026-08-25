@@ -377,7 +377,26 @@
     "redeemShop": "🎁 Points Shop",
     "redeemBlindHint": "Base pet blind box: common guaranteed, small chance of uncommon",
     "redeemNeed": "{need} more points to redeem",
-    "deposit": "Store to my pets"
+    "deposit": "Store to my pets",
+    "get": "Get it",
+    "getHint": "Adopt to collect it in My Pets and chat with it in real time",
+    "claiming": "Adopting…",
+    "claimSuccess": "Adopted!",
+    "celebrate": "🎉 Congrats! {name} is now your companion",
+    "claimed": "Owned",
+    "claimFailed": "Adoption failed, please try again later",
+    "needLogin": "Sign in to adopt a pet",
+    "needLoginHint": "Sign in or register to take your favorite pet home and start your AI companion~",
+    "loginNow": "Sign in",
+    "registerNow": "Register",
+    "knowledgeTitle": "📖 Pet Knowledge Encyclopedia",
+    "knowledgeSpecies": "Real species encyclopedia",
+    "knowledgeHabitat": "Habitat",
+    "knowledgeTraits": "AI personality tags",
+    "knowledgeInteract": "How to interact",
+    "interactSay": "Try saying",
+    "goChat": "💬 Chat now",
+    "knowledgeLater": "Maybe later"
   },
   "api": {
     "signInFirst": "Please sign in first",
@@ -434,7 +453,9 @@
     "evolveFailed": "Fusion failed, please try again",
     "redeemAlready": "Already redeemed today, come back tomorrow",
     "redeemFailed": "Redemption failed, please try again",
-    "releaseFailed": "Release failed, please try again"
+    "releaseFailed": "Release failed, please try again",
+    "petUnavailable": "This pet has already been adopted by another owner - check out the others!",
+    "claimFailed": "Adoption failed, please try again later"
   },
   "nav": {
     "home": "Home",

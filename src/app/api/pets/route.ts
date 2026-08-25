@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 
-import { db, ensureDbSchemaOnce } from "@/db/client";
+import { db, pool, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, petDisplayName, resolveLocale } from "@/i18n/api-errors";
 import { parseMemoryStore, type MemoryFact } from "@/lib/memory";
 import { getPet } from "@/lib/pet-config";
+import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,29 @@ export async function GET(req: Request) {
     }
 
     const locale = resolveLocale(req);
+    // 图鉴物种宠物（species:<id>）头像：批量查询该物种的示例图（避免狐狸头像）
+    const speciesIds = [
+      ...new Set(
+        rows
+          .map((a) => (isSpeciesPetType(a.petType) ? speciesIdOf(a.petType) : null))
+          .filter((v): v is string => !!v),
+      ),
+    ];
+    const speciesAvatar = new Map<string, string>();
+    if (speciesIds.length) {
+      try {
+        const { rows: imgs } = await pool.query(
+          `SELECT DISTINCT ON (species_id) species_id, image_url
+             FROM pets
+            WHERE species_id = ANY($1) AND image_url IS NOT NULL`,
+          [speciesIds],
+        );
+        for (const r of imgs) speciesAvatar.set(r.species_id, r.image_url);
+      } catch {
+        // 查询失败时回退默认头像，不影响列表
+      }
+    }
+
     const pets = rows.map((a) => {
       const pet = getPet(a.petType);
       const store = parseMemoryStore(a.memoryContext);
@@ -49,13 +73,17 @@ export async function GET(req: Request) {
         ...f,
         pinned: !!f.pinned,
       }));
+      const avatar =
+        isSpeciesPetType(a.petType) && speciesAvatar.has(speciesIdOf(a.petType))
+          ? speciesAvatar.get(speciesIdOf(a.petType))!
+          : pet.avatar;
       return {
         id: a.id,
         petType: a.petType,
         petName: a.petName,
         // 数据层映射：官方宠物按语言返回 display_name（不修改 DB 原始 petName）
         displayName: petDisplayName(locale, a.petType, a.petName),
-        avatar: pet.avatar,
+        avatar,
         level: a.level,
         happiness: a.happiness,
         chatCount: a.chatCount,

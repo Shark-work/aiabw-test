@@ -377,7 +377,26 @@
     "redeemShop": "🎁 积分兑换所",
     "redeemBlindHint": "基础宠物盲盒：必得常见级，小概率开出不凡级",
     "redeemNeed": "还差 {need} 分即可兑换",
-    "deposit": "存入我的宠物"
+    "deposit": "存入我的宠物",
+    "get": "获得它",
+    "getHint": "领养后可收藏到「我的宠物」，还能和它实时聊天",
+    "claiming": "领养中…",
+    "claimSuccess": "领养成功！",
+    "celebrate": "🎉 恭喜！{name} 已经成为你的伙伴了",
+    "claimed": "已拥有",
+    "claimFailed": "领养失败，请稍后再试",
+    "needLogin": "登录后才能领养宠物",
+    "needLoginHint": "登录或注册后，即可把喜欢的宠物领养回家，开始专属 AI 陪伴~",
+    "loginNow": "去登录",
+    "registerNow": "去注册",
+    "knowledgeTitle": "📖 宠物知识百科",
+    "knowledgeSpecies": "真实物种百科",
+    "knowledgeHabitat": "栖息地",
+    "knowledgeTraits": "AI 性格标签",
+    "knowledgeInteract": "如何与它互动",
+    "interactSay": "你可以对它说",
+    "goChat": "💬 去和它聊天",
+    "knowledgeLater": "稍后再说"
   },
   "api": {
     "signInFirst": "请先登录",
@@ -434,7 +453,9 @@
     "evolveFailed": "融合失败，请稍后重试",
     "redeemAlready": "今天已兑换过，明天再来吧",
     "redeemFailed": "兑换失败，请稍后重试",
-    "releaseFailed": "放生失败，请稍后重试"
+    "releaseFailed": "放生失败，请稍后重试",
+    "petUnavailable": "这只宠物已经被其他主人领养啦，去图鉴看看别的吧~",
+    "claimFailed": "领养失败，请稍后再试"
   },
   "nav": {
     "home": "首页",

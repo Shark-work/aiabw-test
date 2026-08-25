@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs tests/agent-embedding.test.mjs tests/referral.test.mjs",
+    "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs tests/agent-embedding.test.mjs tests/referral.test.mjs tests/species-prompt.test.mjs",
     "check:assets": "node scripts/check-assets.js",
     "assets:optimize": "node scripts/optimize-images.mjs",
     "migrate:pets-to-blob": "node scripts/migrate-pets-to-blob.js",

@@ -25,8 +25,9 @@ export async function POST(req: Request) {
   const locale = resolveLocale(req);
 
   // 根据 petType 动态切换宠物人设（系统提示词），未提供时回退到狐狸。
-  // UGC 宠物（petType=ugc:<id>）从数据库读取创作者设置的人设。
-  const pet = await resolvePetConfig(petType);
+  // UGC 宠物（petType=ugc:<id>）从数据库读取创作者设置的人设；
+  // 图鉴物种（petType=species:<id>）用字典物种知识动态构建人设。
+  const pet = await resolvePetConfig(petType, locale);
 
   // 首次访问自动建表（幂等）
   await ensureDbSchemaOnce();

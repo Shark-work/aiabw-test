@@ -67,8 +67,8 @@ export default async function ChatPage({
     }
   }
 
-  // 根据 petType 解析宠物配置（UGC 宠物读取数据库；未知类型自动回退狐狸）
-  const basePet = await resolvePetConfig(petType);
+  // 根据 petType 解析宠物配置（UGC 宠物读取数据库；图鉴物种动态构建；未知类型自动回退狐狸）
+  const basePet = await resolvePetConfig(petType, locale as "zh" | "en");
 
   // 官方宠物：展示名/性格/欢迎语本地化（中文默认 → 抱抱狐；英文 → Huggy Fox）
   let pet: PetConfig = basePet;

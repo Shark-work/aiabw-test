@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
 import { PetAvatar } from "@/components/PetAvatar";
+import { UpgradePetModal } from "@/components/upgrade-pet-modal";
+import { PetKnowledgeModal, type KnowledgePet } from "@/components/pet-knowledge-modal";
 import { getRarityMeta } from "@/lib/pet-status";
 import { SITE_URL } from "@/lib/site";
 
@@ -12,9 +15,12 @@ type CatalogPet = {
   speciesId: string;
   speciesName: string;
   category: string;
+  habitat?: string | null;
   imageUrl: string;
   traits: { element?: string; rarity?: string; personality?: string; [k: string]: unknown };
   defaultDescription: string;
+  /** 是否已被领养（owner_id 非空） */
+  owned?: boolean;
 };
 
 const ELEMENTS = ["fire", "water", "earth", "air"];
@@ -52,6 +58,18 @@ export default function PetsCatalogPage() {
   const [species, setSpecies] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // —— 核心领养（图鉴交互）——
+  const [petState, setPetState] = useState<{
+    petCount: number;
+    hasUnlocked: boolean;
+    unlockAdoptionId: string | null;
+  }>({ petCount: 0, hasUnlocked: false, unlockAdoptionId: null });
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [celebratePet, setCelebratePet] = useState<CatalogPet | null>(null);
+  const [knowledgePet, setKnowledgePet] = useState<KnowledgePet | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [pendingPetId, setPendingPetId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +98,106 @@ export default function PetsCatalogPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // —— 当前用户宠物数量 / 解锁状态（单宠限制提示）——
+  const refreshPetState = useCallback(async () => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/pets", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.ok && Array.isArray(data.pets)) {
+        const pets = data.pets as { id: string; isUnlocked: boolean }[];
+        setPetState({
+          petCount: pets.length,
+          hasUnlocked: pets.some((p) => p.isUnlocked),
+          unlockAdoptionId: pets[0]?.id ?? null,
+        });
+      }
+    } catch {
+      // 静默失败，不影响浏览
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPetState();
+  }, [refreshPetState]);
+
+  // 领养成功祝贺动画：约 1.8s 后自动消失（知识弹窗由 handleClaim 同步打开）
+  useEffect(() => {
+    if (!celebratePet) return;
+    const timer = setTimeout(() => setCelebratePet(null), 1800);
+    return () => clearTimeout(timer);
+  }, [celebratePet]);
+
+  // —— 核心领养流程：游客引导 / 免费领养 / 402 支付解锁 ——
+  const handleClaim = async (pet: CatalogPet) => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) {
+      setShowLogin(true);
+      return;
+    }
+    setClaimingId(pet.id);
+    setError("");
+    try {
+      const res = await fetch("/api/pets/claim", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ petId: pet.id }),
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        // 领养成功 → 祝贺动画 + 知识百科弹窗（含专属对话入口）
+        setCelebratePet(pet);
+        setKnowledgePet({
+          id: pet.id,
+          speciesId: pet.speciesId,
+          speciesName: pet.speciesName,
+          category: pet.category,
+          habitat: pet.habitat,
+          imageUrl: pet.imageUrl,
+          traits: pet.traits,
+          defaultDescription: pet.defaultDescription,
+          threadId: data.threadId,
+          adoptionId: data.adoption?.id ?? null,
+        });
+        void refreshPetState();
+        void load();
+      } else if (data?.needPayment) {
+        // 单宠限制：引导 0.01 元支付解锁无限领养
+        setPetState((prev) => ({
+          ...prev,
+          petCount: data.petCount ?? prev.petCount,
+          hasUnlocked: false,
+          unlockAdoptionId: data.unlockAdoptionId ?? prev.unlockAdoptionId,
+        }));
+        setPendingPetId(pet.id);
+        setUpgradeOpen(true);
+      } else {
+        setError(data?.error ?? t("claimFailed"));
+      }
+    } catch {
+      setError(t("claimFailed"));
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  // 支付成功后：刷新解锁状态 + 自动完成被拦截的领养
+  const handleUpgradeUnlocked = () => {
+    const pending = pendingPetId;
+    setPendingPetId(null);
+    void refreshPetState();
+    if (pending) {
+      const p = pets.find((x) => x.id === pending);
+      if (p) void handleClaim(p);
+    }
+  };
 
   // 外部入口（今日幸运宠等）通过 URL 参数直达物种/稀有度
   useEffect(() => {
@@ -234,11 +352,103 @@ export default function PetsCatalogPage() {
                 <p className="mt-3 border-t border-zinc-100 pt-2 text-xs leading-relaxed text-zinc-600">
                   {pet.defaultDescription}
                 </p>
+
+                {/* 核心领养 CTA */}
+                <button
+                  type="button"
+                  disabled={!!pet.owned || claimingId === pet.id}
+                  onClick={() => void handleClaim(pet)}
+                  className={`mt-3 w-full rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    pet.owned
+                      ? "cursor-not-allowed bg-zinc-100 text-zinc-400"
+                      : "bg-orange-500 text-white shadow hover:bg-orange-600 disabled:opacity-60"
+                  }`}
+                >
+                  {pet.owned
+                    ? t("claimed")
+                    : claimingId === pet.id
+                      ? t("claiming")
+                      : t("get")}
+                </button>
+                {!pet.owned && (
+                  <p className="mt-1 text-center text-[10px] text-zinc-400">{t("getHint")}</p>
+                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* 领养成功祝贺动画 */}
+      {celebratePet && (
+        <div className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center bg-zinc-900/40 backdrop-blur-sm">
+          <div className="animate-bounce rounded-3xl border border-orange-200 bg-white px-8 py-6 text-center shadow-2xl">
+            <div className="text-4xl">🎉</div>
+            <div className="mt-2 text-lg font-bold text-orange-600">{t("claimSuccess")}</div>
+            <div className="mt-1 text-sm text-zinc-600">
+              {t("celebrate", { name: celebratePet.speciesName })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 游客登录引导弹窗 */}
+      {showLogin && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-900/60 p-4 backdrop-blur-sm"
+          onClick={() => setShowLogin(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold text-zinc-900">🔑 {t("needLogin")}</h3>
+            <p className="mt-1 text-sm text-zinc-500">{t("needLoginHint")}</p>
+            <div className="mt-4 flex gap-2">
+              <Link
+                href="/login"
+                className="flex-1 rounded-full bg-orange-500 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-orange-600"
+              >
+                {t("loginNow")}
+              </Link>
+              <Link
+                href="/register"
+                className="flex-1 rounded-full bg-zinc-100 px-4 py-2 text-center text-sm text-zinc-600 transition hover:bg-zinc-200"
+              >
+                {t("registerNow")}
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowLogin(false)}
+              className="mt-3 w-full text-center text-xs text-zinc-400 hover:text-zinc-600"
+            >
+              {t("knowledgeLater")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 宠物知识百科弹窗（领养成功后弹出） */}
+      {knowledgePet && (
+        <PetKnowledgeModal
+          pet={knowledgePet}
+          onClose={() => setKnowledgePet(null)}
+          onGoChat={(threadId, adoptionId) => {
+            setKnowledgePet(null);
+            window.location.href = `/${locale}/chat?thread=${threadId}&adopt=${adoptionId}`;
+          }}
+        />
+      )}
+
+      {/* 0.01 元支付解锁无限领养（单宠限制触发） */}
+      <UpgradePetModal
+        open={upgradeOpen}
+        adoptionId={petState.unlockAdoptionId}
+        petCount={petState.petCount}
+        onClose={() => setUpgradeOpen(false)}
+        onUnlocked={handleUpgradeUnlocked}
+      />
     </main>
   );
 }
