@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { agentTools } from "@/lib/agent-tools";
 import { getModel } from "@/lib/get-model";
 import { buildMemorySection, updateMemory } from "@/lib/memory";
+import { compressConversation } from "@/lib/context-compress";
 import { resolvePetConfig } from "@/lib/ugc";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { db, ensureDbSchemaOnce } from "@/db/client";
@@ -64,21 +65,31 @@ export async function POST(req: Request) {
     memoryContext = adoption?.memoryContext ?? null;
   }
 
-  // 长期记忆注入：把 memory_context 追加到 System Prompt
+  // —— Token 优化：上下文压缩 ——
+  // 对话超过阈值（默认 12 轮）时，把早期轮次归档为一条规则化语义摘要（零 Token），
+  // 仅保留最近若干轮原始对话，避免完整历史原封不动发给模型。
+  const { messages: recentMessages, summary } = compressConversation(messages);
+
+  // 长期记忆注入 + 早期对话摘要 → 拼入 System Prompt（会话内仅发送一次，不随每轮重复）
   const memorySection = buildMemorySection(memoryContext);
-  const system = memorySection
-    ? `${pet.systemPrompt}\n\n${memorySection}`
-    : pet.systemPrompt;
+  const system = [
+    pet.systemPrompt,
+    memorySection || null,
+    summary ? `\n\n# 早期对话摘要（已归档）\n${summary}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   const result = streamText({
     model: getModel(),
     system,
-    messages: convertToModelMessages(messages),
+    messages: convertToModelMessages(recentMessages),
     tools: agentTools,
     // Agent loop: model may call tools, observe results, and respond
     // across up to 5 steps in a single turn.
     stopWhen: stepCountIs(5),
-    // 对话流结束后：异步提取长期记忆（不阻塞回复）
+    // 对话流结束后：异步提取长期记忆（不阻塞回复）。
+    // 记忆提取基于完整原始对话（messages），保证记忆质量不受上下文压缩影响。
     onFinish: async (event) => {
       if (typeof adoptionId === "string" && adoptionId) {
         void updateMemory(adoptionId, messages, event.text ?? "").catch((err) =>
