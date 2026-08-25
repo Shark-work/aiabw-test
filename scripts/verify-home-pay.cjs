@@ -46,6 +46,18 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   }
   await wait(800);
 
+  // 今日运势为客户端异步组件（fetch /api/pets/daily 后渲染）：
+  // 等待其出现再断言，避免时序竞态导致假失败
+  for (let i = 0; i < 30; i++) {
+    const has = await pg.evaluate(
+      () =>
+        document.body.innerText.includes("今日运势") ||
+        document.body.innerText.includes("幸运"),
+    );
+    if (has) break;
+    await wait(500);
+  }
+
   const home = await pg.evaluate(() => {
     const txt = document.body.innerText;
     // 动态推荐卡片：含「获得它」按钮的卡片数量
