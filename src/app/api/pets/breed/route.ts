@@ -10,6 +10,7 @@ import {
   type Dna,
 } from "@/lib/genetics";
 import { mintCollectible } from "@/lib/nfr";
+import { postBreedShare } from "@/lib/social-poster";
 
 export const runtime = "nodejs";
 
@@ -201,6 +202,18 @@ export async function POST(req: Request) {
       );
 
       await client.query("COMMIT");
+
+      // 社交炫耀：繁育出传说/史诗级宠物 → 异步非阻塞发帖。
+      // 发帖失败仅记录错误日志，绝不影响已提交的繁育事务。
+      if (childDna.rarity === "legendary" || childDna.rarity === "epic") {
+        void postBreedShare({
+          speciesName: petName,
+          rarity: String(childDna.rarity),
+          element: childDna.element ? String(childDna.element) : undefined,
+          generation,
+          hashId: minted.hashId,
+        }).catch((err) => console.error("[social] 发帖异常(非阻塞):", err));
+      }
 
       return NextResponse.json({
         ok: true,
