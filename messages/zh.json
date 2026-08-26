@@ -475,7 +475,11 @@
     "invalidInviteCode": "邀请码无效",
     "alreadyInvited": "你已经绑定过邀请码啦",
     "selfInvite": "不能绑定自己的邀请码",
-    "bindFailed": "绑定失败，请稍后再试"
+    "bindFailed": "绑定失败，请稍后再试",
+    "invalidBlindboxPool": "请选择奖池",
+    "blindboxUnavailable": "该奖池已下架",
+    "blindboxSpeciesMissing": "奖池物种缺失，请稍后再试",
+    "blindboxFailed": "抽奖失败，请稍后再试"
   },
   "nav": {
     "home": "首页",

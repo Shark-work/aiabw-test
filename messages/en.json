@@ -475,7 +475,11 @@
     "invalidInviteCode": "Invalid invite code",
     "alreadyInvited": "You have already been invited",
     "selfInvite": "You cannot bind your own invite code",
-    "bindFailed": "Bind failed, please try again later"
+    "bindFailed": "Bind failed, please try again later",
+    "invalidBlindboxPool": "Please choose a pool",
+    "blindboxUnavailable": "This pool is unavailable",
+    "blindboxSpeciesMissing": "Pool species missing, try again later",
+    "blindboxFailed": "Draw failed, please try again later"
   },
   "nav": {
     "home": "Home",
