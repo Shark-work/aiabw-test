@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { DailyInspiration } from "@/components/daily-inspiration";
 import { NewsCarousel } from "@/components/news-carousel";
+import { BlindboxPlaza } from "@/components/blindbox-plaza";
 import { PetAvatar } from "@/components/PetAvatar";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
@@ -359,6 +360,11 @@ export default function Home() {
           ) : (
             <p className="col-span-full py-8 text-sm text-zinc-400">{t("featuredEmpty")}</p>
           )}
+        </div>
+
+        {/* 盲盒广场（营收引擎：积分/支付抽奖 + 爆率公示） */}
+        <div className="relative z-10 mt-6 w-full">
+          <BlindboxPlaza />
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

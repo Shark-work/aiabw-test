@@ -551,5 +551,20 @@
     "scanHint": "Scan to pay",
     "processing": "Processing…",
     "empty": "No cosmetics available"
+  },
+  "blindbox": {
+    "title": "Blind Box Plaza",
+    "loading": "Loading…",
+    "empty": "No box available",
+    "draw": "Draw",
+    "drawing": "Opening…",
+    "points": "pts",
+    "odds": "Odds",
+    "oddsHint": "View disclosed odds",
+    "opening": "Opening…",
+    "legendaryTitle": "🌟 Legendary!",
+    "normalTitle": "🎉 New Pet!",
+    "shareX": "Share to X",
+    "drawFailed": "Draw failed, try again later"
   }
 }

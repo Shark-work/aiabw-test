@@ -551,5 +551,20 @@
     "scanHint": "请扫码支付",
     "processing": "处理中…",
     "empty": "暂无可售装扮"
+  },
+  "blindbox": {
+    "title": "盲盒广场",
+    "loading": "奖池加载中…",
+    "empty": "暂无可抽盲盒",
+    "draw": "抽一发",
+    "drawing": "开箱中…",
+    "points": "积分",
+    "odds": "爆率",
+    "oddsHint": "查看爆率公示（合规透明）",
+    "opening": "开箱中…",
+    "legendaryTitle": "🌟 传说降临！",
+    "normalTitle": "🎉 获得新宠物",
+    "shareX": "一键分享到 X",
+    "drawFailed": "抽奖失败，请稍后再试"
   }
 }
