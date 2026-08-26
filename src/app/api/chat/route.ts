@@ -11,7 +11,8 @@ import { resolvePetConfig } from "@/lib/ugc";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { adoptions } from "@/db/schema";
+import { adoptions, users } from "@/db/schema";
+import { compressForPremium, isPremium } from "@/lib/premium";
 
 export const maxDuration = 60;
 
@@ -93,9 +94,19 @@ export async function POST(req: Request) {
   }
 
   // —— Token 优化：上下文压缩 ——
-  // 对话超过阈值（默认 12 轮）时，把早期轮次归档为一条规则化语义摘要（零 Token），
+  // 对话超过阈值时，把早期轮次归档为一条规则化语义摘要（零 Token），
   // 仅保留最近若干轮原始对话，避免完整历史原封不动发给模型。
-  const { messages: recentMessages, summary } = compressConversation(messages);
+  // 高级公民特权：解锁更长上下文记忆（普通 10 轮/保留 5；会员 20 轮/保留 12）。
+  const [me] = await db
+    .select({ premiumUntil: users.premiumUntil })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+  const premium = isPremium(me?.premiumUntil);
+  const { messages: recentMessages, summary } = compressConversation(
+    messages,
+    compressForPremium(premium),
+  );
 
   // 长期记忆注入 + 早期对话摘要 → 拼入 System Prompt（会话内仅发送一次，不随每轮重复）
   const memorySection = buildMemorySection(memoryContext);

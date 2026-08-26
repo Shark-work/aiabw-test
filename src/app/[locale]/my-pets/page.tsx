@@ -7,6 +7,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 
 import { moodInfo, moodLabel } from "@/components/chat/chat-client";
 import { PetAvatar } from "@/components/PetAvatar";
+import { CosmeticsShopModal } from "@/components/cosmetics-shop-modal";
 import { getAnonymousId } from "@/lib/anon-id";
 
 type PetItem = {
@@ -45,6 +46,8 @@ export default function MyPetsPage() {
   const [selectedPet, setSelectedPet] = useState<PetItem | null>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+  // 装扮商城（情绪与特权消费）
+  const [shopOpen, setShopOpen] = useState(false);
 
   const loadPets = useCallback(async () => {
     setLoading(true);
@@ -551,9 +554,26 @@ export default function MyPetsPage() {
                 {tc("chat")}
               </button>
             )}
+            {/* 情绪与特权消费：装扮商城入口 */}
+            {selectedPet.threadId && (
+              <button
+                type="button"
+                onClick={() => setShopOpen(true)}
+                className="mt-2 w-full rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
+              >
+                🛍️ {t("shop")}
+              </button>
+            )}
           </div>
         </div>
       )}
+
+      {/* 装扮商城（购买皮肤/特效 + 高级公民月卡） */}
+      <CosmeticsShopModal
+        open={shopOpen}
+        adoptionId={selectedPet?.id ?? null}
+        onClose={() => setShopOpen(false)}
+      />
     </main>
   );
 }

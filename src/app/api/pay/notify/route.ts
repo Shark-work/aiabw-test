@@ -1,5 +1,5 @@
 import { db, ensureDbSchemaOnce, pool } from "@/db/client";
-import { adoptions } from "@/db/schema";
+import { adoptions, cosmetics } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { XORPAY_APP_SECRET, md5 } from "@/lib/xorpay";
 
@@ -52,16 +52,59 @@ export async function POST(req: Request) {
     pay_time,
   });
 
-  // 2) 从 order_id 解析 adoptionId（下单时格式：unlock-<adoptionId(uuid)>-<nonce>）
+  // 2) 从 order_id 解析订单类型与业务参数（unlock / cosmetic / premium）
   const adoptionMatch = order_id.match(
     /^unlock-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  const cosmeticMatch = order_id.match(
+    /^cosmetic-([^-]+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  const premiumMatch = order_id.match(
+    /^premium-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
   const adoptionId = adoptionMatch ? adoptionMatch[1] : "";
 
   // 首次访问自动建表（幂等）
   await ensureDbSchemaOnce();
 
-  if (adoptionId) {
+  if (cosmeticMatch) {
+    // —— 装扮购买：为宠物绑定外观（幂等：唯一索引 ON CONFLICT DO NOTHING）——
+    const cosmeticId = cosmeticMatch[1];
+    const petAdoptionId = cosmeticMatch[2];
+    const [cosmetic] = await db
+      .select({ id: cosmetics.id })
+      .from(cosmetics)
+      .where(eq(cosmetics.id, cosmeticId))
+      .limit(1);
+    if (cosmetic) {
+      // 通过领养记录反查买家（排除游客）
+      const { rows } = await pool.query(
+        `SELECT user_id::uuid AS "userId" FROM adoptions WHERE id = $1 AND user_id <> 'anonymous' LIMIT 1`,
+        [petAdoptionId],
+      );
+      const userId = rows[0]?.userId;
+      if (userId) {
+        await pool.query(
+          `INSERT INTO user_cosmetics (user_id, cosmetic_id, adoption_id)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (user_id, cosmetic_id, adoption_id) DO NOTHING`,
+          [userId, cosmeticId, petAdoptionId],
+        );
+        console.log("[pay/notify] cosmetic granted", { cosmeticId, adoptionId: petAdoptionId, userId });
+      }
+    }
+  } else if (premiumMatch) {
+    // —— 高级公民月卡：premium_until 向后顺延 30 天（续费累计，不因重复回调缩短）——
+    const userId = premiumMatch[1];
+    await pool.query(
+      `UPDATE users
+          SET premium_until = GREATEST(COALESCE(premium_until, now()), now())
+                              + interval '30 days'
+        WHERE id = $1::uuid`,
+      [userId],
+    );
+    console.log("[pay/notify] premium granted", { userId });
+  } else if (adoptionId) {
     // 解锁该宠物（畅聊解锁）
     await db
       .update(adoptions)

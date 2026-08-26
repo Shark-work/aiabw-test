@@ -192,6 +192,29 @@ const SCHEMA_CREATES: string[] = [
     "transferred_count" integer NOT NULL DEFAULT 0
   )`,
 
+  // ===== 情绪与特权消费 =====
+  // 装扮商品定义（皮肤 / 特效），人民币购买
+  `CREATE TABLE IF NOT EXISTS "cosmetics" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "kind" text NOT NULL DEFAULT 'skin',
+    "image_url" text,
+    "price_cny" numeric DEFAULT 1 NOT NULL,
+    "is_visible" boolean NOT NULL DEFAULT true,
+    "created_at" timestamp NOT NULL DEFAULT now()
+  )`,
+  // 用户已购装扮（可绑定到具体宠物；adoption_id 为空 = 账号全局）
+  `CREATE TABLE IF NOT EXISTS "user_cosmetics" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "cosmetic_id" text NOT NULL REFERENCES "cosmetics"("id"),
+    "adoption_id" uuid REFERENCES "adoptions"("id"),
+    "status" text NOT NULL DEFAULT 'active',
+    "created_at" timestamp NOT NULL DEFAULT now()
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_uc_cosmetic_uniq ON "user_cosmetics" ("user_id", "cosmetic_id", "adoption_id")`,
+
   // 站点访问计数：单行汇总（id=1），原子自增 visit_count / unique_count
   `CREATE TABLE IF NOT EXISTS "site_visits" (
     "id" integer PRIMARY KEY DEFAULT 1 NOT NULL,
@@ -248,6 +271,8 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invite_code" text`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "invited_by" uuid REFERENCES "users"("id")`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "checkin_streak" integer DEFAULT 0 NOT NULL`,
+  // 高级公民月卡到期时间（NULL=非会员；到期后自动降级为普通用户）
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "premium_until" timestamp`,
   // 裂变奖励状态机：pending=冻结等待活跃验证 / credited=已发放 / expired=超时作废
   `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'credited' NOT NULL`,
   `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "claimed_at" timestamp`,

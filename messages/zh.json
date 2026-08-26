@@ -122,7 +122,8 @@
     "hungryHint": "🍖 它饿了，去喂食吧！",
     "feed": "🍖 去喂食",
     "evolveBanner": "🧪 发现你有 3 只相同的伙伴？试试灵力融合吧！",
-    "evolveGo": "去融合 →"
+    "evolveGo": "去融合 →",
+    "shop": "装扮商城"
   },
   "marketplace": {
     "title": "UGC 广场",
@@ -532,5 +533,19 @@
     "generation": "第 {gen} 代",
     "power": "战力",
     "minted": "本周新藏品"
+  },
+  "cosmetics": {
+    "title": "装扮商城",
+    "premiumTitle": "高级公民月卡",
+    "premiumDesc": "解锁更长上下文记忆特权（AI 更懂你）",
+    "buy": "购买",
+    "owned": "已购",
+    "equipped": "已装备",
+    "loading": "装扮加载中…",
+    "loadFailed": "加载失败",
+    "orderFailed": "下单失败",
+    "scanHint": "请扫码支付",
+    "processing": "处理中…",
+    "empty": "暂无可售装扮"
   }
 }

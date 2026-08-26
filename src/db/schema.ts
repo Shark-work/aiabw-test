@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision, numeric, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /** 账号：注册用户 */
 export const users = pgTable('users', {
@@ -20,6 +20,8 @@ export const users = pgTable('users', {
   lastCheckinDate: text('last_checkin_date'),
   /** 连续签到天数（每日签到 +1，断签重置为 1） */
   checkinStreak: integer('checkin_streak').notNull().default(0),
+  /** 高级公民月卡到期时间（NULL=非会员） */
+  premiumUntil: timestamp('premium_until'),
   /** 裂变邀请：唯一邀请码（注册时自动生成） */
   inviteCode: text('invite_code').unique(),
   /** 裂变邀请：由谁邀请（邀请人 user id） */
@@ -39,6 +41,28 @@ export const inviteRewards = pgTable('invite_rewards', {
   amount: integer('amount').notNull().default(50),
   status: text('status').notNull().default('credited'),
   claimedAt: timestamp('claimed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 装扮商品定义（皮肤 / 特效），人民币购买 */
+export const cosmetics = pgTable('cosmetics', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  kind: text('kind').notNull().default('skin'),
+  imageUrl: text('image_url'),
+  priceCny: numeric('price_cny').notNull().default('1'),
+  isVisible: boolean('is_visible').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 用户已购装扮（adoption_id 空 = 账号全局） */
+export const userCosmetics = pgTable('user_cosmetics', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  cosmeticId: text('cosmetic_id').references(() => cosmetics.id).notNull(),
+  adoptionId: uuid('adoption_id').references(() => adoptions.id),
+  status: text('status').notNull().default('active'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

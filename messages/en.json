@@ -122,7 +122,8 @@
     "hungryHint": "🍖 It's hungry — go feed it!",
     "feed": "🍖 Feed now",
     "evolveBanner": "🧪 Got 3 identical companions? Try fusing them at the Dictionary!",
-    "evolveGo": "Fuse now →"
+    "evolveGo": "Fuse now →",
+    "shop": "Cosmetic Shop"
   },
   "marketplace": {
     "title": "UGC Market",
@@ -532,5 +533,19 @@
     "generation": "Gen {gen}",
     "power": "Power",
     "minted": "New this week"
+  },
+  "cosmetics": {
+    "title": "Cosmetic Shop",
+    "premiumTitle": "Premium Monthly Card",
+    "premiumDesc": "Unlock longer AI memory (smarter companion)",
+    "buy": "Buy",
+    "owned": "Owned",
+    "equipped": "Equipped",
+    "loading": "Loading…",
+    "loadFailed": "Failed to load",
+    "orderFailed": "Order failed",
+    "scanHint": "Scan to pay",
+    "processing": "Processing…",
+    "empty": "No cosmetics available"
   }
 }
