@@ -6,6 +6,8 @@ import {
   oauth1Header,
   publishToWeibo,
   publishToTwitter,
+  publishToTelegram,
+  publishToSocialecho,
   postBreedShare,
 } from "../src/lib/social-poster.ts";
 
@@ -31,8 +33,9 @@ test("social: fallback text includes rarity & hashtags", () => {
 
 test("social: not configured when no credentials", () => {
   const cfg = isSocialConfigured();
+  assert.equal(cfg.x, false);
+  assert.equal(cfg.telegram, false);
   assert.equal(cfg.weibo, false);
-  assert.equal(cfg.twitter, false);
 });
 
 test("social: publishToWeibo without token returns ok:false (no throw)", async () => {
@@ -70,10 +73,91 @@ test("social: publishToWeibo failure (timeout) returns ok:false (no throw)", asy
   }
 });
 
-test("social: publishToTwitter without token returns ok:false (no throw)", async () => {
+test("social: publishToTwitter without any token returns ok:false (no throw)", async () => {
   const r = await publishToTwitter("hello");
   assert.equal(r.ok, false);
   assert.match(r.error ?? "", /not configured/);
+});
+
+test("social: publishToTelegram without token returns ok:false (no throw)", async () => {
+  const r = await publishToTelegram("hello");
+  assert.equal(r.ok, false);
+  assert.match(r.error ?? "", /not configured/);
+});
+
+test("social: publishToTelegram success when fetch ok (mock)", async () => {
+  process.env.TELEGRAM_BOT_TOKEN = "123:ABC";
+  process.env.TELEGRAM_CHAT_ID = "-100123";
+  const orig = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({ ok: true }), { status: 200 });
+  try {
+    const r = await publishToTelegram("hello 电报");
+    assert.equal(r.ok, true);
+  } finally {
+    global.fetch = orig;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_CHAT_ID;
+  }
+});
+
+test("social: publishToTelegram failure (timeout) returns ok:false (no throw)", async () => {
+  process.env.TELEGRAM_BOT_TOKEN = "123:ABC";
+  process.env.TELEGRAM_CHAT_ID = "-100123";
+  const orig = global.fetch;
+  global.fetch = async () => {
+    throw new Error("telegram timeout");
+  };
+  try {
+    const r = await publishToTelegram("hello");
+    assert.equal(r.ok, false);
+    assert.match(r.error ?? "", /timeout/);
+  } finally {
+    global.fetch = orig;
+    delete process.env.TELEGRAM_BOT_TOKEN;
+    delete process.env.TELEGRAM_CHAT_ID;
+  }
+});
+
+test("social: publishToSocialecho without key returns ok:false (no throw)", async () => {
+  const r = await publishToSocialecho("hello");
+  assert.equal(r.ok, false);
+  assert.match(r.error ?? "", /not configured/);
+});
+
+test("social: publishToSocialecho uses configured key (mock success)", async () => {
+  process.env.SOCIALECHO_KEY = "se-key";
+  process.env.SOCIALECHO_X_ACCOUNT_ID = "x-account";
+  const orig = global.fetch;
+  global.fetch = async (url, init) => {
+    assert.match(String(url), /socialecho/);
+    const body = JSON.parse(String(init.body));
+    assert.equal(body.accountId, "x-account");
+    assert.equal(body.platform, "x");
+    return new Response(JSON.stringify({ id: 1 }), { status: 200 });
+  };
+  try {
+    const r = await publishToSocialecho("hello");
+    assert.equal(r.ok, true);
+  } finally {
+    global.fetch = orig;
+    delete process.env.SOCIALECHO_KEY;
+    delete process.env.SOCIALECHO_X_ACCOUNT_ID;
+  }
+});
+
+test("social: publishToTwitter prefers Socialecho when configured", async () => {
+  process.env.SOCIALECHO_KEY = "se-key";
+  process.env.SOCIALECHO_X_ACCOUNT_ID = "x-account";
+  const orig = global.fetch;
+  global.fetch = async () => new Response(JSON.stringify({ id: 1 }), { status: 200 });
+  try {
+    const r = await publishToTwitter("hello");
+    assert.equal(r.ok, true, "Socialecho 通道优先");
+  } finally {
+    global.fetch = orig;
+    delete process.env.SOCIALECHO_KEY;
+    delete process.env.SOCIALECHO_X_ACCOUNT_ID;
+  }
 });
 
 test("social: oauth1Header produces OAuth signature header", () => {
@@ -97,3 +181,4 @@ test("social: postBreedShare with no config resolves (posted:false, no throw)", 
   assert.equal(r.posted, false);
   assert.equal(r.results.length, 0);
 });
+

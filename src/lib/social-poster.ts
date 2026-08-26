@@ -1,8 +1,8 @@
-// 社交分享模块：微博 / X(Twitter) 自动发布（供「繁育出传说/史诗宠物」炫耀动态触发）。
+// 社交分享模块：微博 / X(Twitter) / Telegram 自动推送（供「繁育出传说/史诗宠物」炫耀动态触发）。
 //
 // 安全规范：
-//  - 凭证仅通过 process.env 动态读取（支持 WEIBO_* / TWITTER_* / X_* 多套命名），
-//    绝不硬编码；未配置时优雅降级（返回 ok:false，不抛异常）。
+//  - 凭证仅通过 process.env 动态读取（支持 X_* / TWITTER_* / WEIBO_* / TELEGRAM_* /
+//    SOCIALECHO_* 多套命名），绝不硬编码；未配置时优雅降级（返回 ok:false，不抛异常）。
 //  - 所有发布调用均为异步非阻塞；调用方需 catch，失败只记录错误日志。
 //
 // 发帖文案：优先调用 AI（getModel）按宠物基因/稀有度生成带话题标签的炫耀文案，
@@ -21,19 +21,38 @@ function env(names: string[]): string {
 
 // 微博（OAuth2 简化：access_token 直调）
 const weiboToken = () => env(["WEIBO_ACCESS_TOKEN", "WEIBO_TOKEN", "WEIBO_API_KEY"]);
-// X / Twitter（OAuth1.0a）
+// X / Twitter —— OAuth1.0a（API Key 体系）
 const xKey = () => env(["X_API_KEY", "TWITTER_API_KEY"]);
 const xSecret = () => env(["X_API_SECRET", "TWITTER_API_SECRET"]);
 const xAccessToken = () => env(["X_ACCESS_TOKEN", "TWITTER_ACCESS_TOKEN"]);
 const xAccessTokenSecret = () => env(["X_ACCESS_TOKEN_SECRET", "TWITTER_ACCESS_SECRET"]);
+// X / Twitter —— OAuth2 Client Credentials（Client ID / Secret）
+const xClientId = () => env(["X_Client_ID", "TWITTER_CLIENT_ID"]);
+const xClientSecret = () => env(["X_Client_Secret", "TWITTER_CLIENT_SECRET"]);
+// X —— Socialecho 聚合通道
+const socialechoKey = () => env(["SOCIALECHO_KEY"]);
+const socialechoXAccountId = () => env(["SOCIALECHO_X_ACCOUNT_ID"]);
+// Telegram
+const telegramBotToken = () => env(["TELEGRAM_BOT_TOKEN"]);
+const telegramChatId = () => env(["TELEGRAM_CHAT_ID"]);
 
-export type SocialPlatformConfig = { weibo: boolean; twitter: boolean };
+/** Socialecho 发布端点（如官方端点不同可在部署环境覆盖 SOCIALECHO_ENDPOINT）。 */
+const socialechoEndpoint = () =>
+  env(["SOCIALECHO_ENDPOINT"]) || "https://api.socialecho.app/v1/publish";
+
+export type SocialPlatformConfig = {
+  /** X：任意一种凭证通道可用即为 true */
+  x: boolean;
+  telegram: boolean;
+  weibo: boolean;
+};
 
 /** 当前社交凭证配置状态。 */
 export function isSocialConfigured(): SocialPlatformConfig {
   return {
+    x: !!(xKey() && xAccessToken()) || !!(xClientId() && xClientSecret()) || !!(socialechoKey() && socialechoXAccountId()),
+    telegram: !!(telegramBotToken() && telegramChatId()),
     weibo: !!weiboToken(),
-    twitter: !!(xKey() && xAccessToken()),
   };
 }
 
@@ -111,37 +130,123 @@ export function oauth1Header(opts: {
   return `OAuth ${header}`;
 }
 
-/** 发布到 X / Twitter（未配置 / 网络失败 → 返回 ok:false，绝不抛异常）。 */
-export async function publishToTwitter(text: string): Promise<{ ok: boolean; error?: string }> {
-  const key = xKey();
-  const token = xAccessToken();
-  if (!key || !token) return { ok: false, error: "twitter not configured" };
+/** 通过 Socialecho 聚合通道发布到 X（未配置 / 失败 → ok:false，绝不抛异常）。 */
+export async function publishToSocialecho(text: string): Promise<{ ok: boolean; error?: string }> {
+  const key = socialechoKey();
+  const accountId = socialechoXAccountId();
+  if (!key || !accountId) return { ok: false, error: "socialecho not configured" };
   try {
-    const url = "https://api.twitter.com/2/tweets";
-    const auth = oauth1Header({
+    const res = await fetch(socialechoEndpoint(), {
       method: "POST",
-      url,
-      params: {},
-      consumerKey: key,
-      consumerSecret: xSecret(),
-      token,
-      tokenSecret: xAccessTokenSecret(),
-    });
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { Authorization: auth, "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({ accountId, platform: "x", text }),
       signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) return { ok: false, error: `twitter status ${res.status}` };
+    if (!res.ok) return { ok: false, error: `socialecho status ${res.status}` };
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "twitter request failed" };
+    return { ok: false, error: err instanceof Error ? err.message : "socialecho request failed" };
+  }
+}
+
+/** 通过 X OAuth2 Client Credentials 获取 Bearer Token。 */
+async function getXBearerToken(): Promise<string> {
+  const body = new URLSearchParams({ grant_type: "client_credentials" }).toString();
+  const res = await fetch("https://api.twitter.com/oauth2/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${Buffer.from(`${xClientId()}:${xClientSecret()}`).toString("base64")}`,
+    },
+    body,
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) throw new Error(`oauth2 token status ${res.status}`);
+  const data = (await res.json()) as { access_token?: string };
+  if (!data.access_token) throw new Error("oauth2 no access_token");
+  return data.access_token;
+}
+
+/**
+ * 发布到 X / Twitter（多通道降级）：
+ *  ① Socialecho（SOCIALECHO_KEY + SOCIALECHO_X_ACCOUNT_ID）
+ *  ② OAuth1.0a（X_API_KEY + X_ACCESS_TOKEN 体系）
+ *  ③ OAuth2 Client Credentials（X_Client_ID + X_Client_Secret）
+ * 任一通道成功即 ok；全部失败/未配置 → ok:false，绝不抛异常。
+ */
+export async function publishToTwitter(text: string): Promise<{ ok: boolean; error?: string }> {
+  // ① Socialecho
+  if (socialechoKey() && socialechoXAccountId()) {
+    return publishToSocialecho(text);
+  }
+  // ② OAuth1.0a
+  if (xKey() && xAccessToken()) {
+    try {
+      const url = "https://api.twitter.com/2/tweets";
+      const auth = oauth1Header({
+        method: "POST",
+        url,
+        params: {},
+        consumerKey: xKey(),
+        consumerSecret: xSecret(),
+        token: xAccessToken(),
+        tokenSecret: xAccessTokenSecret(),
+      });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: auth, "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return { ok: false, error: `twitter status ${res.status}` };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : "twitter request failed" };
+    }
+  }
+  // ③ OAuth2 Client Credentials
+  if (xClientId() && xClientSecret()) {
+    try {
+      const bearer = await getXBearerToken();
+      const res = await fetch("https://api.twitter.com/2/tweets", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${bearer}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return { ok: false, error: `twitter v2 status ${res.status}` };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : "twitter oauth2 failed" };
+    }
+  }
+  return { ok: false, error: "twitter not configured" };
+}
+
+/** 通过 Telegram Bot API 发送消息（未配置 / 失败 → ok:false，绝不抛异常）。 */
+export async function publishToTelegram(text: string): Promise<{ ok: boolean; error?: string }> {
+  const token = telegramBotToken();
+  const chatId = telegramChatId();
+  if (!token || !chatId) return { ok: false, error: "telegram not configured" };
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return { ok: false, error: `telegram status ${res.status}` };
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "telegram request failed" };
   }
 }
 
 /**
- * 组合发帖：生成文案 → 依次发布到已配置平台。
+ * 组合发帖：生成文案 → 依次发布到已配置平台（X / Telegram / 微博）。
  * 全程非阻塞容错：任何一步失败只记录错误日志，绝不抛出。
  */
 export async function postBreedShare(
@@ -150,8 +255,9 @@ export async function postBreedShare(
   const text = await generateShareText(meta);
   const cfg = isSocialConfigured();
   const results: Array<{ ok: boolean; error?: string }> = [];
+  if (cfg.x) results.push(await publishToTwitter(text));
+  if (cfg.telegram) results.push(await publishToTelegram(text));
   if (cfg.weibo) results.push(await publishToWeibo(text));
-  if (cfg.twitter) results.push(await publishToTwitter(text));
   if (results.length === 0) {
     console.log("[social] 未配置社交凭证，跳过发帖（不影响业务）");
   } else {
