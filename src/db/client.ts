@@ -215,6 +215,34 @@ const SCHEMA_CREATES: string[] = [
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_uc_cosmetic_uniq ON "user_cosmetics" ("user_id", "cosmetic_id", "adoption_id")`,
 
+  // ===== AIGC 盲盒引擎 =====
+  // 盲盒奖池定义（概率 JSONB + 物种白名单）
+  `CREATE TABLE IF NOT EXISTS "blindbox_pools" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "price_cny" numeric NOT NULL DEFAULT 1,
+    "price_points" integer NOT NULL DEFAULT 200,
+    "probabilities" jsonb NOT NULL,
+    "species_ids" jsonb NOT NULL DEFAULT '[]',
+    "is_active" boolean NOT NULL DEFAULT true,
+    "created_at" timestamp NOT NULL DEFAULT now()
+  )`,
+  // 抽奖流水（审计 / 防超发 / 幂等）
+  `CREATE TABLE IF NOT EXISTS "blindbox_logs" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "pool_id" text NOT NULL REFERENCES "blindbox_pools"("id"),
+    "result_collectible_id" text NOT NULL,
+    "result_hash_id" text NOT NULL,
+    "is_legendary" boolean NOT NULL DEFAULT false,
+    "pay_method" text NOT NULL,
+    "cost" numeric NOT NULL DEFAULT 0,
+    "created_at" timestamp NOT NULL DEFAULT now()
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_blindbox_logs_user ON "blindbox_logs" ("user_id", "created_at")`,
+  `CREATE INDEX IF NOT EXISTS idx_blindbox_logs_pool ON "blindbox_logs" ("pool_id")`,
+
   // 站点访问计数：单行汇总（id=1），原子自增 visit_count / unique_count
   `CREATE TABLE IF NOT EXISTS "site_visits" (
     "id" integer PRIMARY KEY DEFAULT 1 NOT NULL,

@@ -66,6 +66,32 @@ export const userCosmetics = pgTable('user_cosmetics', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+/** 盲盒奖池定义（概率 JSONB + 物种白名单） */
+export const blindboxPools = pgTable('blindbox_pools', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  priceCny: numeric('price_cny').notNull().default('1'),
+  pricePoints: integer('price_points').notNull().default(200),
+  probabilities: jsonb('probabilities').notNull(),
+  speciesIds: jsonb('species_ids').notNull().default([]),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 抽奖流水（审计 / 防超发） */
+export const blindboxLogs = pgTable('blindbox_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  poolId: text('pool_id').references(() => blindboxPools.id).notNull(),
+  resultCollectibleId: text('result_collectible_id').notNull(),
+  resultHashId: text('result_hash_id').notNull(),
+  isLegendary: boolean('is_legendary').notNull().default(false),
+  payMethod: text('pay_method').notNull(),
+  cost: numeric('cost').notNull().default('0'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 /** UGC 宠物（创作者上传） */
 export const ugcPets = pgTable('ugc_pets', {
   id: uuid('id').defaultRandom().primaryKey(),
