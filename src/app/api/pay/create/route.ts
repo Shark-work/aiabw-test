@@ -81,8 +81,8 @@ export async function POST(req: Request) {
     // 首次访问自动建表（幂等）
     await ensureDbSchemaOnce();
 
-    // 校验领养记录存在，且属于当前登录用户（premium 月卡无需宠物）
-    if (kind !== "premium") {
+    // 校验领养记录存在，且属于当前登录用户（premium 月卡 / blindbox 盲盒无需宠物）
+    if (kind !== "premium" && kind !== "blindbox") {
       const [a] = await db
         .select({ id: adoptions.id, userId: adoptions.userId })
         .from(adoptions)
