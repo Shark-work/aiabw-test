@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { adoptions, cosmetics } from "@/db/schema";
+import { adoptions, cosmetics, blindboxPools } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { PREMIUM_PRICE_CNY } from "@/lib/premium";
@@ -34,15 +34,25 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const locale = resolveLocale(req);
     // 商品类型：unlock（多宠解锁，默认）/ cosmetic（宠物装扮）/ premium（高级公民月卡）
-    const kind: "unlock" | "cosmetic" | "premium" =
-      body?.kind === "cosmetic" ? "cosmetic" : body?.kind === "premium" ? "premium" : "unlock";
+    // / blindbox（盲盒抽奖）
+    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" =
+      body?.kind === "cosmetic" ? "cosmetic"
+      : body?.kind === "premium" ? "premium"
+      : body?.kind === "blindbox" ? "blindbox"
+      : "unlock";
     const adoptionId =
       typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
     const cosmeticId =
       typeof body?.cosmeticId === "string" ? body.cosmeticId.trim() : "";
+    const poolId =
+      typeof body?.poolId === "string" ? body.poolId.trim() : "";
 
-    // unlock / cosmetic 需要宠物；premium 无需
-    if (kind !== "premium" && !adoptionId) {
+    // unlock / cosmetic 需要宠物；premium 无需；blindbox 需要奖池
+    if (kind === "blindbox") {
+      if (!poolId) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "invalidBlindboxPool") }, { status: 400 });
+      }
+    } else if (kind !== "premium" && !adoptionId) {
       return NextResponse.json({ ok: false, error: apiError(locale, "missingAdoptionId") }, { status: 400 });
     }
     if (kind === "cosmetic" && !cosmeticId) {
@@ -111,6 +121,18 @@ export async function POST(req: Request) {
       name = locale === "en" ? c.nameEn : c.nameZh;
       price = Number(c.priceCny).toFixed(2);
       order_id = `cosmetic-${cosmeticId}-${adoptionId}-${nonce}`;
+    } else if (kind === "blindbox") {
+      const [bp] = await db
+        .select()
+        .from(blindboxPools)
+        .where(and(eq(blindboxPools.id, poolId), eq(blindboxPools.isActive, true)))
+        .limit(1);
+      if (!bp) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "blindboxUnavailable") }, { status: 404 });
+      }
+      name = locale === "en" ? bp.nameEn : bp.nameZh;
+      price = Number(bp.priceCny).toFixed(2);
+      order_id = `blindbox-${poolId}-${user.id}-${nonce}`;
     } else {
       const rawAmount = body?.amount ?? DEFAULT_AMOUNT;
       amount = Number(rawAmount);

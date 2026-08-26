@@ -2,6 +2,8 @@ import { db, ensureDbSchemaOnce, pool } from "@/db/client";
 import { adoptions, cosmetics } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { XORPAY_APP_SECRET, md5 } from "@/lib/xorpay";
+import { executeBlindboxDraw } from "@/lib/blindbox-draw";
+import { postBreedShare } from "@/lib/social-poster";
 
 export const runtime = "nodejs";
 
@@ -62,6 +64,9 @@ export async function POST(req: Request) {
   const premiumMatch = order_id.match(
     /^premium-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
+  const blindboxMatch = order_id.match(
+    /^blindbox-([^-]+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
   const adoptionId = adoptionMatch ? adoptionMatch[1] : "";
 
   // 首次访问自动建表（幂等）
@@ -104,6 +109,44 @@ export async function POST(req: Request) {
       [userId],
     );
     console.log("[pay/notify] premium granted", { userId });
+  } else if (blindboxMatch) {
+    // —— 盲盒抽奖（XorPay 通道）：支付确认后，事务内抽奖 + 铸造 + 写流水 ——
+    const bbPoolId = blindboxMatch[1];
+    const bbUserId = blindboxMatch[2];
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      // 幂等：同一 order_id 重复回调 → executeBlindboxDraw 返回 null（不重复抽）
+      const result = await executeBlindboxDraw(client, {
+        userId: bbUserId,
+        poolId: bbPoolId,
+        payMethod: "xorpay",
+        cost: Number(pay_price || 0),
+        orderId: order_id,
+      });
+      await client.query("COMMIT");
+      if (result) {
+        if (result.isLegendary) {
+          void postBreedShare({
+            speciesName: result.speciesNameZh,
+            rarity: "legendary",
+            element: result.element,
+            generation: 1,
+            hashId: result.hashId,
+          }).catch((err) => console.error("[pay/notify] blindbox 社交分享异常(非阻塞):", err));
+        }
+        console.log("[pay/notify] blindbox drawn", { poolId: bbPoolId, hashId: result.hashId, isLegendary: result.isLegendary });
+      } else {
+        console.log("[pay/notify] blindbox idempotent skip (already drawn)", { orderId: order_id });
+      }
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      // 真实失败 → 返回非 success 让 XorPay 重试；已抽（幂等 null）不在此路径
+      console.error("[pay/notify] blindbox draw failed:", err);
+      return new Response("fail", { status: 200 });
+    } finally {
+      client.release();
+    }
   } else if (adoptionId) {
     // 解锁该宠物（畅聊解锁）
     await db

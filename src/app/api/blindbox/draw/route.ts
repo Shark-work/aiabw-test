@@ -3,8 +3,7 @@ import { NextResponse } from "next/server";
 import { pool, ensureDbSchemaOnce } from "@/db/client";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
-import { weightedPick, randomDna } from "@/lib/blindbox";
-import { mintCollectible } from "@/lib/nfr";
+import { executeBlindboxDraw } from "@/lib/blindbox-draw";
 import { postBreedShare } from "@/lib/social-poster";
 
 export const runtime = "nodejs";
@@ -70,68 +69,29 @@ export async function POST(req: Request) {
         `INSERT INTO points_log (user_id, amount, reason) VALUES ($1, $2, 'blindbox')`,
         [user.id, -pricePoints],
       );
-      // 3) 加权随机抽取稀有度
-      const probabilities = (poolRow.probabilities ?? {}) as Record<string, number>;
-      const rarity = weightedPick(probabilities);
-      const isLegendary = rarity === "legendary";
-
-      // 4) 随机选物种（白名单优先，空 = 全部字典物种）
-      const speciesList = Array.isArray(poolRow.speciesIds) && poolRow.speciesIds.length > 0
-        ? (poolRow.speciesIds as string[])
-        : (await client.query(`SELECT id FROM pet_dictionary`)).rows.map((r) => String(r.id));
-      const speciesId = speciesList[Math.floor(Math.random() * speciesList.length)];
-      const { rows: spRows } = await client.query(
-        `SELECT d.id, d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.habitat,
-                (SELECT p.image_url FROM pets p
-                  WHERE p.species_id = d.id AND p.image_url IS NOT NULL LIMIT 1) AS "imageUrl"
-           FROM pet_dictionary d WHERE d.id = $1 LIMIT 1`,
-        [speciesId],
-      );
-      const sp = spRows[0];
-      if (!sp) {
-        await client.query("ROLLBACK");
-        return NextResponse.json({ ok: false, error: apiError(locale, "blindboxSpeciesMissing") }, { status: 500 });
-      }
-
-      // 5) 铸造 NFR（复用 mintCollectible，同一事务）
-      const dna = randomDna();
-      const minted = await mintCollectible(client, {
-        ownerId: user.id,
-        species: {
-          speciesId: String(sp.id),
-          nameZh: String(sp.nameZh),
-          nameEn: String(sp.nameEn),
-          category: String(sp.category),
-          habitat: sp.habitat ? String(sp.habitat) : null,
-          rarity,
-          element: dna.element,
-          imageUrl: String(sp.imageUrl ?? ""),
-        },
-        dna: { ...dna, rarity },
-        generation: 1,
-        parentHashIds: null,
-        sourcePetId: null,
-        adoptionId: null,
+      // 3) 执行抽奖（概率 / 物种 / 铸造 / 流水，同一事务）
+      const result = await executeBlindboxDraw(client, {
+        userId: user.id,
+        poolId,
+        payMethod: "points",
+        cost: pricePoints,
       });
-
-      // 6) 写抽奖流水（同一事务）
-      await client.query(
-        `INSERT INTO blindbox_logs
-           (user_id, pool_id, result_collectible_id, result_hash_id, is_legendary, pay_method, cost)
-         VALUES ($1, $2, $3, $4, $5, 'points', $6)`,
-        [user.id, poolId, minted.collectibleId, minted.hashId, isLegendary, pricePoints],
-      );
+      if (!result) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ ok: false, error: apiError(locale, "blindboxFailed") }, { status: 500 });
+      }
+      const { rarity, isLegendary } = result;
 
       await client.query("COMMIT");
 
-      // 7) 社交炫耀：传说级 → 异步非阻塞（失败仅记录日志，不影响抽奖结果）
+      // 4) 社交炫耀：传说级 → 异步非阻塞（失败仅记录日志，不影响抽奖结果）
       if (isLegendary) {
         void postBreedShare({
-          speciesName: String(sp.nameZh),
+          speciesName: result.speciesNameZh,
           rarity: "legendary",
-          element: dna.element,
+          element: result.element,
           generation: 1,
-          hashId: minted.hashId,
+          hashId: result.hashId,
         }).catch((err) => console.error("[blindbox] 社交分享异常(非阻塞):", err));
       }
 
@@ -141,16 +101,16 @@ export async function POST(req: Request) {
         rarity,
         poolId,
         nfr: {
-          id: minted.id,
-          hashId: minted.hashId,
-          collectibleId: minted.collectibleId,
-          speciesId: String(sp.id),
-          speciesName: locale === "en" ? String(sp.nameEn) : String(sp.nameZh),
+          id: result.mintedId,
+          hashId: result.hashId,
+          collectibleId: result.collectibleId,
+          speciesId: result.speciesId,
+          speciesName: locale === "en" ? result.speciesNameEn : result.speciesNameZh,
           rarity,
-          element: dna.element,
+          element: result.element,
           generation: 1,
-          imageUrl: String(sp.imageUrl ?? ""),
-          lockedUntil: minted.lockedUntil,
+          imageUrl: result.imageUrl,
+          lockedUntil: result.lockedUntil,
         },
       });
     } catch (err) {

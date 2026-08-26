@@ -89,6 +89,8 @@ export const blindboxLogs = pgTable('blindbox_logs', {
   isLegendary: boolean('is_legendary').notNull().default(false),
   payMethod: text('pay_method').notNull(),
   cost: numeric('cost').notNull().default('0'),
+  /** XorPay 订单号（回调幂等键，积分通道为 NULL） */
+  orderId: text('order_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

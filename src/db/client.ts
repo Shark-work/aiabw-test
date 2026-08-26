@@ -242,6 +242,9 @@ const SCHEMA_CREATES: string[] = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_blindbox_logs_user ON "blindbox_logs" ("user_id", "created_at")`,
   `CREATE INDEX IF NOT EXISTS idx_blindbox_logs_pool ON "blindbox_logs" ("pool_id")`,
+  // XorPay 盲盒通道：order_id 唯一（回调幂等，防重复抽奖）
+  `ALTER TABLE "blindbox_logs" ADD COLUMN IF NOT EXISTS "order_id" text`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_blindbox_logs_order ON "blindbox_logs" ("order_id")`,
 
   // 站点访问计数：单行汇总（id=1），原子自增 visit_count / unique_count
   `CREATE TABLE IF NOT EXISTS "site_visits" (
