@@ -59,7 +59,12 @@ export function BlindboxPlaza() {
     try {
       const res = await fetch("/api/blindbox");
       const data = await res.json();
-      if (data?.ok) setPools(data.pools ?? []);
+      if (data?.ok) {
+        const list = data.pools ?? [];
+        // 运营排序：新手福利箱置顶（首抽钩子），赛博神话箱次之，其余按服务端顺序
+        const rank: Record<string, number> = { newbie_welcome: 0, cyber_myth: 1 };
+        setPools([...list].sort((a, b) => (rank[a.id] ?? 9) - (rank[b.id] ?? 9)));
+      }
     } catch {
       /* 静默 */
     } finally {
@@ -121,9 +126,26 @@ export function BlindboxPlaza() {
         {pools.map((p) => (
           <div
             key={p.id}
-            className="rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-4"
+            className={`rounded-xl border p-4 ${
+              p.id === "cyber_myth"
+                ? "border-amber-400 bg-gradient-to-br from-violet-50 via-fuchsia-50 to-amber-50 shadow-lg ring-1 ring-amber-200"
+                : p.id === "newbie_welcome"
+                  ? "border-red-200 bg-gradient-to-br from-red-50 to-orange-50"
+                  : "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50"
+            }`}
           >
             <div className="text-3xl">🎁</div>
+            {(p.id === "newbie_welcome" || p.id === "cyber_myth") && (
+              <span
+                className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold text-white shadow ${
+                  p.id === "newbie_welcome"
+                    ? "bg-gradient-to-r from-red-500 to-orange-500"
+                    : "bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                }`}
+              >
+                {p.id === "newbie_welcome" ? t("newbieTag") : t("hotTag")}
+              </span>
+            )}
             <div className="mt-1 text-base font-bold text-zinc-900">{p.name}</div>
             <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500">
               <span className="rounded-full bg-orange-100 px-2 py-0.5 font-semibold text-orange-700">

@@ -565,6 +565,8 @@
     "legendaryTitle": "🌟 传说降临！",
     "normalTitle": "🎉 获得新宠物",
     "shareX": "一键分享到 X",
-    "drawFailed": "抽奖失败，请稍后再试"
+    "drawFailed": "抽奖失败，请稍后再试",
+    "newbieTag": "🔥 新人首抽",
+    "hotTag": "✨ 高爆率"
   }
 }

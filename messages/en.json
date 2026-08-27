@@ -565,6 +565,8 @@
     "legendaryTitle": "🌟 Legendary!",
     "normalTitle": "🎉 New Pet!",
     "shareX": "Share to X",
-    "drawFailed": "Draw failed, try again later"
+    "drawFailed": "Draw failed, try again later",
+    "newbieTag": "🔥 First Draw",
+    "hotTag": "✨ High Odds"
   }
 }
