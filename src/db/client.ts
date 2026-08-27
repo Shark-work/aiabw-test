@@ -316,6 +316,9 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "digital_collectibles" DROP CONSTRAINT IF EXISTS "digital_collectibles_species_id_fkey"`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'visible' NOT NULL`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "pinned" boolean DEFAULT false NOT NULL`,
+  // SEO：sitemap lastModified 依赖（DEFAULT now()，现有行自动回填，幂等无需迁移）
+  `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now() NOT NULL`,
+  `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now() NOT NULL`,
   // ===== 账号安全（防暴力破解）=====
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "locked_until" timestamp`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_at" timestamp`,

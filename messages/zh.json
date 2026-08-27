@@ -588,6 +588,11 @@
     "newsCopyright": "资讯内容聚合自公开网络，版权归原作者所有。如有侵犯您的权益，请联系客服处理。",
     "petBack": "← 返回动物图鉴",
     "petAdopt": "🐾 去图鉴领养 {name}",
-    "viewAll": "查看全部"
+    "viewAll": "查看全部",
+    "newsDetailBack": "← 返回新闻列表",
+    "newsReadOriginal": "阅读原文 →",
+    "newsSourceLabel": "来源",
+    "newsPublishedAt": "发布于 {time}",
+    "newsNotFound": "新闻不存在或已下线"
   }
 }

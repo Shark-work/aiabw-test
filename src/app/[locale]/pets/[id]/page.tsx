@@ -74,6 +74,28 @@ export default async function PetSpeciesPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
+      {/* Product 结构化数据（SEO：搜索结果展示名称/图片/价格） */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: `${species.nameZh}｜${species.nameEn} - 艾比世界 AI 虚拟宠物`,
+            image: s.imageUrl ? String(s.imageUrl) : `${SITE_URL}/icon.svg`,
+            description: desc.slice(0, 200),
+            brand: { "@type": "Brand", name: "艾比世界" },
+            category: "虚拟宠物",
+            offers: {
+              "@type": "Offer",
+              price: "0",
+              priceCurrency: "CNY",
+              availability: "https://schema.org/InStock",
+              url: `${SITE_URL}/${locale}/pets/${species.id}`,
+            },
+          }),
+        }}
+      />
       <div className="mx-auto max-w-3xl">
         <Link href="/pets" className="text-xs text-zinc-500 transition hover:text-orange-600">
           {t("petBack")}

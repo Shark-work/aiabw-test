@@ -81,9 +81,12 @@ export default async function NewsPage({ params }: Props) {
                 >
                   <span className="mt-0.5 w-5 shrink-0 text-sm font-bold text-zinc-300">{i + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600">
+                    <Link
+                      href={`/news/${n.id}`}
+                      className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600"
+                    >
                       {n.title}
-                    </p>
+                    </Link>
                     <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-400">
                       <span className="line-clamp-1">{n.source}</span>
                       <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-orange-50 px-1.5 py-0.5 font-semibold text-orange-600">

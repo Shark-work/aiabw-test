@@ -588,6 +588,11 @@
     "newsCopyright": "Content aggregated from public sources; all rights belong to the original authors.",
     "petBack": "← Back to Pet Encyclopedia",
     "petAdopt": "🐾 Adopt {name}",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "newsDetailBack": "← Back to News",
+    "newsReadOriginal": "Read Original →",
+    "newsSourceLabel": "Source",
+    "newsPublishedAt": "Published {time}",
+    "newsNotFound": "News not found or removed"
   }
 }
