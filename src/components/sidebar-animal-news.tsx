@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
 import { formatHot } from "@/lib/news";
 
 type NewsItem = {
@@ -43,6 +44,7 @@ function rankTextClass(rank: number): string {
  */
 export function SidebarAnimalNews() {
   const t = useTranslations("home");
+  const ts = useTranslations("seo");
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,9 +67,17 @@ export function SidebarAnimalNews() {
 
   return (
     <section className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm backdrop-blur">
-      <h3 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-zinc-800">
-        {t("newsRankTitle")}
-      </h3>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-bold text-zinc-800">
+          {t("newsRankTitle")}
+        </h3>
+        <Link
+          href="/news"
+          className="shrink-0 text-[11px] font-medium text-orange-500 transition hover:text-orange-600"
+        >
+          {ts("viewAll")} →
+        </Link>
+      </div>
 
       {/* 骨架屏：防止首屏白屏 */}
       {loading ? (

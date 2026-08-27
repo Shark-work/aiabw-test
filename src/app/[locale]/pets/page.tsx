@@ -368,6 +368,14 @@ export default function PetsCatalogPage() {
                   {pet.defaultDescription}
                 </p>
 
+                {/* SEO 详情页内链（独立落地页） */}
+                <Link
+                  href={`/pets/${pet.speciesId}`}
+                  className="mt-2 inline-block text-[11px] font-medium text-orange-500 transition hover:text-orange-600"
+                >
+                  {t("detail")} →
+                </Link>
+
                 {/* 核心领养 CTA */}
                 <button
                   type="button"

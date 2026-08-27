@@ -328,6 +328,7 @@
     "title": "Pet Catalog",
     "subtitle": "Precomputed · Dictionary species · Element filtering",
     "all": "All",
+    "detail": "Details",
     "synthesize": "🔮 Synthesize",
     "synthesizeOk": "🎉 Synthesized! Welcome your new companion!",
     "synthesizeFailed": "Synthesis failed",
@@ -569,5 +570,24 @@
     "drawFailed": "Draw failed, try again later",
     "newbieTag": "🔥 First Draw",
     "hotTag": "✨ High Odds"
+  },
+  "seo": {
+    "petDetailTitle": "{name} - AI Virtual Pet Encyclopedia | AIABW",
+    "petDetailDesc": "Adopt your own AI virtual pet {name}: {category} · {habitat}. Chat, daily check-in and 3-to-1 fusing to level up rare pets.",
+    "blindboxTitle": "Blind Box Plaza - {legendary}% Legendary Odds | AIABW",
+    "blindboxDesc": "Blind boxes from $0.1 with transparent odds: {common}% Common · {rare}% Rare · {epic}% Epic · {legendary}% Legendary. Rare pets instantly.",
+    "blindboxH1": "Blind Box Plaza",
+    "blindboxIntro": "Instant AI virtual pets with transparent, verifiable drop rates.",
+    "blindboxCta": "🎁 Blind Box Plaza",
+    "newsTitle": "Animal News Hot List | AIABW",
+    "newsDesc": "Top animal news: {top} (via {source}). Fresh pet & wildlife stories updated daily.",
+    "newsDescFallback": "Fresh animal news: pet, wildlife and conservation stories updated daily.",
+    "newsListTitle": "🐾 Animal News Hot List",
+    "newsListEmpty": "No news yet, check back later",
+    "newsBackHome": "← Back to Home",
+    "newsCopyright": "Content aggregated from public sources; all rights belong to the original authors.",
+    "petBack": "← Back to Pet Encyclopedia",
+    "petAdopt": "🐾 Adopt {name}",
+    "viewAll": "View all"
   }
 }

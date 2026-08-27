@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
 import { PetAvatar } from "@/components/PetAvatar";
 import { getRarityMeta } from "@/lib/pet-status";
 
@@ -48,6 +49,7 @@ const RARITY_ZH: Record<string, string> = {
 export function BlindboxPlaza() {
   const t = useTranslations("blindbox");
   const tc = useTranslations("common");
+  const ts = useTranslations("seo");
   const [pools, setPools] = useState<BlindboxPool[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawing, setDrawing] = useState(false);
@@ -115,7 +117,15 @@ export function BlindboxPlaza() {
 
   return (
     <section className="w-full max-w-3xl rounded-2xl border border-orange-200 bg-white/90 p-4 shadow-sm backdrop-blur">
-      <h3 className="mb-3 text-sm font-bold text-zinc-800">🎁 {t("title")}</h3>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-bold text-zinc-800">🎁 {t("title")}</h3>
+        <Link
+          href="/blindbox"
+          className="shrink-0 text-[11px] font-medium text-orange-500 transition hover:text-orange-600"
+        >
+          {ts("viewAll")} →
+        </Link>
+      </div>
 
       {loading && <p className="py-6 text-center text-sm text-zinc-400">{t("loading")}</p>}
       {!loading && pools.length === 0 && (

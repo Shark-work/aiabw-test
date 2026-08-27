@@ -328,6 +328,7 @@
     "title": "宠物图鉴",
     "subtitle": "预计算生成 · 字典物种 · 元素筛选",
     "all": "全部",
+    "detail": "详情页",
     "synthesize": "🔮 合成",
     "synthesizeOk": "🎉 合成成功，欢迎新伙伴！",
     "synthesizeFailed": "合成失败",
@@ -569,5 +570,24 @@
     "drawFailed": "抽奖失败，请稍后再试",
     "newbieTag": "🔥 新人首抽",
     "hotTag": "✨ 高爆率"
+  },
+  "seo": {
+    "petDetailTitle": "{name} - AI 虚拟宠物图鉴 | 艾比世界",
+    "petDetailDesc": "领养专属 AI 虚拟宠物「{name}」：{category} · {habitat}。专属记忆、每日签到与互动养成，3 合 1 灵力融合可升级为稀有宠物。",
+    "blindboxTitle": "盲盒广场 - 传说 {legendary}% 高爆率开箱 | 艾比世界",
+    "blindboxDesc": "盲盒广场：新手福利箱 0.1 元起抽，赛博神话箱传说爆率 {legendary}%。爆率公示透明：普通 {common}% · 稀有 {rare}% · 史诗 {epic}%，稀有宠物即刻拥有。",
+    "blindboxH1": "盲盒广场",
+    "blindboxIntro": "开箱即得的 AI 虚拟宠物：稀有度与爆率公示透明，结果可追溯。",
+    "blindboxCta": "🎁 去盲盒广场",
+    "newsTitle": "动物新闻热榜 | 艾比世界",
+    "newsDesc": "最新动物趣闻速递：{top}（来源 {source}）。每天更新宠物、野生动物与动物保护故事。",
+    "newsDescFallback": "最新动物趣闻速递：宠物、野生动物与动物保护暖心故事，每天更新。",
+    "newsListTitle": "🐾 动物新闻热榜",
+    "newsListEmpty": "暂无新闻，稍后再来看看",
+    "newsBackHome": "← 返回首页",
+    "newsCopyright": "资讯内容聚合自公开网络，版权归原作者所有。如有侵犯您的权益，请联系客服处理。",
+    "petBack": "← 返回动物图鉴",
+    "petAdopt": "🐾 去图鉴领养 {name}",
+    "viewAll": "查看全部"
   }
 }
