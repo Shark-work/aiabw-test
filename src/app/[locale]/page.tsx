@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { DailyInspiration } from "@/components/daily-inspiration";
 import { NewsCarousel } from "@/components/news-carousel";
+import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
 import { BlindboxPlaza } from "@/components/blindbox-plaza";
 import { PetAvatar } from "@/components/PetAvatar";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
@@ -323,6 +324,11 @@ export default function Home() {
         {/* 🐾 动物世界头条（今日运势下方）：Top5 轮播，5s 自动切换 + 悬停暂停 */}
         <div className="relative z-10 w-full">
           <NewsCarousel />
+        </div>
+
+        {/* 🔥 动物新闻热榜（移动端折叠版：PC 走全局侧边栏，<lg 展示在首页信息流） */}
+        <div className="relative z-10 mt-4 w-full lg:hidden">
+          <SidebarAnimalNews />
         </div>
 
         {/* 动态推荐宠（替代硬编码：稀缺 OR 高领养物种，每次刷新随机 3 只） */}

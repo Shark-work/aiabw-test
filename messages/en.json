@@ -62,6 +62,7 @@
     "featuredLoading": "Picking featured pets…",
     "featuredEmpty": "No featured pets yet - browse the encyclopedia",
     "newsTitle": "🐾 Animal News Headlines",
+    "newsRankTitle": "🔥 Animal News Hot List",
     "newsHot": "🔥 {hot} hot",
     "newsCopyright": "Content aggregated from public sources; all rights belong to the original authors. Please contact support if any rights are infringed."
   },

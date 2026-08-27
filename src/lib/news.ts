@@ -87,6 +87,13 @@ export function isAnimalRelated(text: string): boolean {
 const cache = new Map<string, { value: HotNews[]; expiresAt: number }>();
 const CACHE_TTL_MS = 60_000;
 
+/** 热度格式化：≥10000 显示 x.xw，≥100 取整，<100 保留一位小数。 */
+export function formatHot(hot: number): string {
+  if (hot >= 10000) return (hot / 10000).toFixed(1) + "w";
+  if (hot >= 100) return String(Math.round(hot));
+  return hot.toFixed(1);
+}
+
 export function newsCacheGet(key: string): HotNews[] | null {
   const e = cache.get(key);
   if (!e) return null;

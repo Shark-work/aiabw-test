@@ -9,6 +9,7 @@ import "@/app/globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { FloatingSupport } from "@/components/layout/FloatingSupport";
+import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
 import { routing } from "@/i18n/routing";
 import { SITE_URL, getAlternates } from "@/lib/site";
 
@@ -106,7 +107,16 @@ export default async function LocaleLayout({
           <SiteHeader />
           {/* 右下角悬浮客服按钮（/chat 页自动隐藏） */}
           <FloatingSupport />
-          <div className="flex flex-1 flex-col">{children}</div>
+          {/* 内容 + 全局右侧边栏（任务二：PC ≥lg 显示新闻热榜，sticky 跟随滚动）；
+              移动端 <lg 侧边栏隐藏，折叠到首页信息流（见 page.tsx） */}
+          <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-3 sm:px-4 lg:flex-row lg:px-6 lg:py-6">
+            <div className="min-w-0 flex-1">{children}</div>
+            <aside className="hidden w-72 shrink-0 lg:block">
+              <div className="sticky top-20">
+                <SidebarAnimalNews />
+              </div>
+            </aside>
+          </div>
           {/* Footer（含 LanguageSwitcher）与 Analytics 必须在 Provider 内部：
               否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}
           <Footer />
