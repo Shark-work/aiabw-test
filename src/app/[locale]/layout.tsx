@@ -3,6 +3,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "@/app/globals.css";
 
@@ -122,6 +123,36 @@ export default async function LocaleLayout({
           <Footer />
           <Analytics />
         </NextIntlClientProvider>
+
+        {/* ============ 第三方统计（全站生效：根布局，所有页面自动加载）============
+            - Google Analytics (gtag.js)：G-11LB54EX3D（紧跟 <head> 后的标准 gtag 初始化）
+            - 百度统计：d97499256780667049488b3c8dd15ce6
+            均使用 strategy="afterInteractive"：hydration 后异步加载，不阻塞首屏。
+            注意：next/script 需放在 <body> 内（App Router 自动管理 <head>），
+            且仅此一处定义，不会重复注入。 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-11LB54EX3D"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-11LB54EX3D');
+          `}
+        </Script>
+        <Script id="baidu-analytics" strategy="afterInteractive">
+          {`
+            var _hmt = _hmt || [];
+            (function() {
+              var hm = document.createElement("script");
+              hm.src = "https://hm.baidu.com/hm.js?d97499256780667049488b3c8dd15ce6";
+              var s = document.getElementsByTagName("script")[0];
+              s.parentNode.insertBefore(hm, s);
+            })();
+          `}
+        </Script>
       </body>
     </html>
   );
