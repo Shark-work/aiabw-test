@@ -570,7 +570,13 @@
     "shareX": "一键分享到 X",
     "drawFailed": "抽奖失败，请稍后再试",
     "newbieTag": "🔥 新人首抽",
-    "hotTag": "✨ 高爆率"
+    "hotTag": "✨ 高爆率",
+    "needLogin": "请先登录后再抽盲盒",
+    "payNeed": "积分不足，可扫码支付 ¥{price} 直接开箱",
+    "payQrHint": "扫码支付，到账后自动开箱，请耐心等待",
+    "payOpenCashier": "打开收银台",
+    "payWaiting": "正在等待支付确认…",
+    "payCancel": "暂不支付"
   },
   "seo": {
     "petDetailTitle": "{name} - AI 虚拟宠物图鉴 | 艾比世界",

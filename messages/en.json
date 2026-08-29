@@ -570,7 +570,13 @@
     "shareX": "Share to X",
     "drawFailed": "Draw failed, try again later",
     "newbieTag": "🔥 First Draw",
-    "hotTag": "✨ High Odds"
+    "hotTag": "✨ High Odds",
+    "needLogin": "Please sign in before drawing",
+    "payNeed": "Not enough points - scan to pay ¥{price} and draw now",
+    "payQrHint": "Scan to pay; the box opens automatically after payment",
+    "payOpenCashier": "Open Cashier",
+    "payWaiting": "Waiting for payment confirmation…",
+    "payCancel": "Not now"
   },
   "seo": {
     "petDetailTitle": "{name} - AI Virtual Pet Encyclopedia | AIABW",
