@@ -319,6 +319,13 @@ const SCHEMA_ALTERS: string[] = [
   // SEO：sitemap lastModified 依赖（DEFAULT now()，现有行自动回填，幂等无需迁移）
   `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now() NOT NULL`,
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "updated_at" timestamp DEFAULT now() NOT NULL`,
+  // 国际化：新闻语言列 + 宠物分类双语列（幂等补列）
+  `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "locale" text DEFAULT 'en' NOT NULL`,
+  `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "category_en" text`,
+  `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "habitat_en" text`,
+  // 新闻唯一索引改为 (locale, source, title)：同源同题中英各行互不冲突
+  `DROP INDEX IF EXISTS idx_hotnews_source_title`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_hotnews_locale_source_title ON "hotnews" ("locale", "source", "title")`,
   // ===== 账号安全（防暴力破解）=====
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "locked_until" timestamp`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_at" timestamp`,

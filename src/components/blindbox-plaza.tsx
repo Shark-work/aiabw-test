@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { PetAvatar } from "@/components/PetAvatar";
@@ -42,6 +42,15 @@ const RARITY_ZH: Record<string, string> = {
   legendary: "传说",
 };
 
+/** 爆率 → 英文标签（en 页面用，严格语言跟随）。 */
+const RARITY_EN: Record<string, string> = {
+  common: "Common",
+  uncommon: "Uncommon",
+  rare: "Rare",
+  epic: "Epic",
+  legendary: "Legendary",
+};
+
 type PayState = {
   orderId: string;
   qr?: string;
@@ -59,6 +68,7 @@ type PayState = {
 function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
   const t = useTranslations("blindbox");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [drawing, setDrawing] = useState(false);
   const [opening, setOpening] = useState(false);
   const [result, setResult] = useState<DrawResult | null>(null);
@@ -245,7 +255,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
                 .map(([rarity, p]) => (
                   <li key={rarity} className="flex items-center justify-between text-sm">
                     <span className="text-zinc-600">
-                      {getRarityMeta(rarity).emoji} {RARITY_ZH[rarity] ?? rarity}
+                      {getRarityMeta(rarity).emoji} {(locale === "en" ? RARITY_EN : RARITY_ZH)[rarity] ?? rarity}
                     </span>
                     <span className="font-semibold text-orange-600">{p}%</span>
                   </li>

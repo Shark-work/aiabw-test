@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { pool } from "@/db/client";
-import { newsCacheGet, newsCacheSet, seedHotNews, type HotNews } from "@/lib/news";
+import { newsCacheGet, newsCacheSet, resolveNewsLocale, seedHotNews, type HotNews } from "@/lib/news";
 
 export const runtime = "nodejs";
 
@@ -10,19 +10,20 @@ const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 20;
 
 /**
- * GET /api/news/animal-feed?limit=10
- * 侧边栏新闻排行榜数据源（与 /api/news/hot 同构，但返回更多条供列表展示）：
- *  - 按热度分降序取 Top N（默认 10，上限 20）；
- *  - 命中内存缓存（TTL 60s）直接返回；
- *  - 数据库无数据（抓取未跑）时回退种子内容；
- *  - 字段：id/source/title/desc/cover/hot/timestamp/url。
+ * GET /api/news/animal-feed?limit=10&locale=zh|en
+ * 侧边栏新闻排行榜数据源（**严格语言隔离**）：
+ *  - locale：显式参数优先，缺省按 NEXT_LOCALE Cookie，默认 zh；
+ *  - SQL 强制 WHERE locale = $1 —— 中文页绝不可能返回英文新闻；
+ *  - 查无对应语言数据 → 返回空数组（不降级其他语言）；DB 全空才回退该语言种子；
+ *  - 缓存 key 含 locale + limit。
  */
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
+    const locale = resolveNewsLocale(req);
     const parsed = Number(url.searchParams.get("limit") ?? DEFAULT_LIMIT);
     const limit = Number.isFinite(parsed) ? Math.min(Math.max(Math.round(parsed), 1), MAX_LIMIT) : DEFAULT_LIMIT;
-    const cacheKey = `${CACHE_KEY}_${limit}`;
+    const cacheKey = `${CACHE_KEY}_${locale}_${limit}`;
 
     const cached = newsCacheGet(cacheKey);
     if (cached) {
@@ -34,9 +35,10 @@ export async function GET(req: Request) {
       const { rows } = await pool.query(
         `SELECT id, source, title, "desc", cover, hot, timestamp, url
            FROM hotnews
+          WHERE locale = $1 AND status = 'visible'
           ORDER BY hot DESC
-          LIMIT $1`,
-        [limit],
+          LIMIT $2`,
+        [locale, limit],
       );
       news = rows.map((r) => ({
         id: Number(r.id),
@@ -49,12 +51,12 @@ export async function GET(req: Request) {
         url: r.url,
       }));
     } catch {
-      // 表尚未就绪等异常：静默回退种子
+      // 表尚未就绪等异常：静默回退该语言种子
       news = [];
     }
 
     if (!news.length) {
-      news = seedHotNews().slice(0, limit);
+      news = seedHotNews(locale).slice(0, limit);
     }
 
     newsCacheSet(cacheKey, news);

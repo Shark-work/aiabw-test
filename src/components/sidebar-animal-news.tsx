@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { formatHot } from "@/lib/news";
@@ -45,12 +45,13 @@ function rankTextClass(rank: number): string {
 export function SidebarAnimalNews() {
   const t = useTranslations("home");
   const ts = useTranslations("seo");
+  const locale = useLocale();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/news/animal-feed")
+    fetch(`/api/news/animal-feed?locale=${locale}`)
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;

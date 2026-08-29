@@ -87,6 +87,19 @@ export function isAnimalRelated(text: string): boolean {
 const cache = new Map<string, { value: HotNews[]; expiresAt: number }>();
 const CACHE_TTL_MS = 60_000;
 
+/** 从请求解析新闻语言：?locale= 显式参数优先，否则 NEXT_LOCALE Cookie，默认 zh。 */
+export function resolveNewsLocale(req: Request): "zh" | "en" {
+  try {
+    const q = new URL(req.url).searchParams.get("locale");
+    if (q === "en" || q === "zh") return q;
+  } catch {
+    // 忽略 URL 解析异常
+  }
+  const cookie = req.headers.get("cookie") ?? "";
+  const m = cookie.match(/(?:^|;\s*)NEXT_LOCALE=(zh|en)/);
+  return m ? (m[1] as "zh" | "en") : "zh";
+}
+
 /** 热度格式化：≥10000 显示 x.xw，≥100 取整，<100 保留一位小数。 */
 export function formatHot(hot: number): string {
   if (hot >= 10000) return (hot / 10000).toFixed(1) + "w";
@@ -152,10 +165,55 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot">[] = [
   },
 ];
 
-/** 种子内容兜底（含热度分计算，timestamp 相对当前时间衰减）。 */
-export function seedHotNews(): HotNews[] {
+/** 英文种子内容池（供 en 页面兜底，与中文 SEED_NEWS 一一对应）。 */
+export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot">[] = [
+  {
+    source: "Seed · Animal News",
+    title: "First wild giant panda fitted with a satellite collar, tracking data tops 10,000 km",
+    desc: "Researchers track panda migration routes via satellite, providing new data for habitat protection.",
+    cover: null,
+    timestamp: Date.now() - 3 * 3_600_000,
+    url: "https://www.aiabw.com/pets?species=giant_panda",
+  },
+  {
+    source: "Seed · Animal News",
+    title: "A cat cafe's orange tabby honored as lifetime resident after 12 years on the job",
+    desc: "Clocking in daily and posing for photos, this tabby became the neighborhood's most beloved 'manager'.",
+    cover: null,
+    timestamp: Date.now() - 7 * 3_600_000,
+    url: "https://www.aiabw.com/pets?species=maine_coon",
+  },
+  {
+    source: "Seed · Animal News",
+    title: "Scientists discover humpback whales 'teach': calves learn hunting by following mothers",
+    desc: "Underwater footage shows humpback mothers demonstrating bubble-net feeding, calves practicing repeatedly.",
+    cover: null,
+    timestamp: Date.now() - 15 * 3_600_000,
+    url: "https://www.aiabw.com/pets?species=whale",
+  },
+  {
+    source: "Seed · Animal News",
+    title: "Chengdu Giant Panda Base welcomes its 20th newborn panda cub this year",
+    desc: "Keepers share a photo of sleeping cub 'Tuanzi' - netizens say it's an overload of cuteness.",
+    cover: null,
+    timestamp: Date.now() - 26 * 3_600_000,
+    url: "https://www.aiabw.com/pets?species=giant_panda",
+  },
+  {
+    source: "Seed · Animal News",
+    title: "Australian koala rescue center saves 300 bushfire survivors, setting a record",
+    desc: "Volunteer teams work 24-hour shifts to feed and rehabilitate, helping more koalas return to the wild.",
+    cover: null,
+    timestamp: Date.now() - 40 * 3_600_000,
+    url: "https://www.aiabw.com/pets?species=koala",
+  },
+];
+
+/** 种子内容兜底（含热度分计算，timestamp 相对当前时间衰减）；按语言返回对应种子。 */
+export function seedHotNews(locale: "zh" | "en" = "zh"): HotNews[] {
   const now = Date.now();
-  return SEED_NEWS.map((n, i) => ({
+  const pool = locale === "en" ? SEED_NEWS_EN : SEED_NEWS;
+  return pool.map((n, i) => ({
     ...n,
     id: i + 1,
     hot: computeHotScore(1200 - i * 120, n.timestamp, now),

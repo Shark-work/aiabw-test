@@ -51,7 +51,8 @@ export default async function PetSpeciesPage({ params }: Props) {
   const t = await getTranslations("seo");
 
   const { rows } = await pool.query(
-    `SELECT d.id, d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.habitat,
+    `SELECT d.id, d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.category_en AS "categoryEn",
+            d.habitat, d.habitat_en AS "habitatEn",
             d.default_description_zh AS "descZh", d.default_description_en AS "descEn",
             (SELECT image_url FROM pets WHERE species_id = d.id AND image_url IS NOT NULL LIMIT 1) AS "imageUrl"
        FROM pet_dictionary d WHERE d.id = $1 LIMIT 1`,
@@ -64,8 +65,8 @@ export default async function PetSpeciesPage({ params }: Props) {
     id: String(s.id),
     nameZh: String(s.nameZh),
     nameEn: String(s.nameEn),
-    category: String(s.category),
-    habitat: s.habitat ? String(s.habitat) : null,
+    category: locale === "en" ? String(s.categoryEn ?? s.category) : String(s.category),
+    habitat: locale === "en" ? (s.habitatEn ? String(s.habitatEn) : s.habitat ? String(s.habitat) : null) : s.habitat ? String(s.habitat) : null,
     defaultDescriptionZh: String(s.descZh),
     defaultDescriptionEn: String(s.descEn),
   };

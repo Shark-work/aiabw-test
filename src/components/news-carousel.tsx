@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 type NewsItem = {
   id: number;
@@ -33,6 +33,7 @@ function formatHot(hot: number): string {
  */
 export function NewsCarousel() {
   const t = useTranslations("home");
+  const locale = useLocale();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -40,7 +41,7 @@ export function NewsCarousel() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/news/hot")
+    fetch(`/api/news/hot?locale=${locale}`)
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;

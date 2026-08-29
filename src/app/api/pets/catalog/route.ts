@@ -66,7 +66,8 @@ export async function GET(req: Request) {
   const { rows } = await pool.query(
     `SELECT p.id, p.species_id, p.image_url, p.traits, p.generation, p.parent_ids,
             p.custom_description, p.owner_id, p.adopted_at, p.last_interaction_time,
-            d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.habitat,
+            d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.category_en AS "categoryEn",
+            d.habitat, d.habitat_en AS "habitatEn",
             d.default_description_zh AS "defaultDescriptionZh",
             d.default_description_en AS "defaultDescriptionEn"
        FROM pets p
@@ -91,8 +92,8 @@ export async function GET(req: Request) {
       id: r.id,
       speciesId: r.species_id,
       speciesName: locale === "en" ? r.nameEn : r.nameZh,
-      category: r.category,
-      habitat: r.habitat,
+      category: locale === "en" ? (r.categoryEn ?? r.category) : r.category,
+      habitat: locale === "en" ? (r.habitatEn ?? r.habitat) : r.habitat,
       imageUrl: r.image_url,
       traits: r.traits ?? {},
       generation: Number(r.generation),
