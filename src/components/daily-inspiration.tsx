@@ -26,19 +26,24 @@ type RecentBorn = {
   ownerLabel: string;
 };
 
+function elementKey(t: (k: string) => string, element: string): string {
+  if (element === "fire") return t("zodiacFire");
+  if (element === "air") return t("zodiacAir");
+  if (element === "water") return t("zodiacWater");
+  return t("zodiacEarth");
+}
+
 /**
- * 「艾比每日灵感」组合模块（替换首页旧版 AI 工具诊断）：
- *  上半：🔮 今日运势·幸运宠（每日更新，日期确定性选宠 + 星座元素呼应）
- *  下半：✨ 高光时刻·最新诞生（最近 3 只稀有宠实时滚动）
- * 移动端上下自动堆叠；无新数据时展示兜底文案。
+ * 🔮 顶部通告栏（Alert Banner，首页重构版）：今日运势 · 幸运宠。
+ *  - 紧凑单行横幅，放在页面最顶端，不再抢占头条视觉重心；
+ *  - 数据源 /api/pets/daily（每日日期确定性选宠）。
  */
-export function DailyInspiration() {
+export function FortuneBanner() {
   const t = useTranslations("home");
   const locale = useLocale();
   const [lucky, setLucky] = useState<LuckyPet | null>(null);
-  const [recent, setRecent] = useState<RecentBorn[]>([]);
   const [element, setElement] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -47,10 +52,61 @@ export function DailyInspiration() {
       .then((d) => {
         if (!alive) return;
         if (d?.ok) {
-          setLucky(d.lucky);
-          setRecent(d.recent ?? []);
+          setLucky(d.lucky ?? null);
           setElement(d.zodiacElement ?? "");
         }
+      })
+      .catch(() => {})
+      .finally(() => alive && setReady(true));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // 加载中/无幸运宠：通告栏直接让位，不占页面高度
+  if (!ready || !lucky) return null;
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 px-4 py-2.5 shadow-sm">
+      <span className="shrink-0 text-xl" aria-hidden>
+        🔮
+      </span>
+      <p className="min-w-0 flex-1 truncate text-sm text-zinc-700">
+        {t("fortune", {
+          sign: elementKey(t, element),
+          name: lucky.speciesName,
+          trait: locale === "en" ? lucky.traitEn : lucky.trait,
+        })}
+      </p>
+      <Link
+        href={`/pets?species=${encodeURIComponent(lucky.speciesId)}`}
+        className="shrink-0 rounded-full bg-orange-500 px-3.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-orange-600"
+      >
+        {t("meet")} →
+      </Link>
+    </div>
+  );
+}
+
+/**
+ * 🐾 实时动态 · 刚刚诞生的伙伴（首页重构版）：横向滚动跑马灯。
+ *  - 紧贴盲盒卡片下方，营造「很多人正在玩」的热闹氛围；
+ *  - 内容 ×2 拼接 + CSS translateX(-50%) 实现无缝循环（尊重 prefers-reduced-motion）；
+ *  - 数据源 /api/pets/daily 的 recent（最近 3 只稀有宠）。
+ */
+export function RecentBornMarquee() {
+  const t = useTranslations("home");
+  const ts = useTranslations("seo");
+  const [recent, setRecent] = useState<RecentBorn[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/pets/daily")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        if (d?.ok) setRecent(d.recent ?? []);
       })
       .catch(() => {})
       .finally(() => alive && setLoading(false));
@@ -59,88 +115,58 @@ export function DailyInspiration() {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white/70 p-5 text-center text-sm text-zinc-400 shadow-sm backdrop-blur">
-        {t("dailyLoading")}
-      </div>
-    );
-  }
+  if (loading || recent.length === 0) return null;
 
-  // 星座元素 → i18n 文案键（zh：水象；en：Water sign）
-  const elementKey =
-    element === "fire"
-      ? t("zodiacFire")
-      : element === "air"
-        ? t("zodiacAir")
-        : element === "water"
-          ? t("zodiacWater")
-          : t("zodiacEarth");
+  // 数据翻倍拼接实现无缝循环滚动
+  const items = recent.length > 1 ? [...recent, ...recent] : recent;
 
   return (
-    <section className="w-full max-w-2xl space-y-3">
-      {/* 上半部分：今日运势 · 幸运宠 */}
-      <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50 p-4 shadow-sm">
-        <div className="flex items-center gap-4">
-          {lucky ? (
-            <PetAvatar
-              src={lucky.imageUrl}
-              alt={lucky.speciesName}
-              className="h-16 w-16 shrink-0 rounded-2xl border-2 border-orange-200 bg-white object-cover shadow-sm"
-            />
-          ) : (
-            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-orange-100 text-2xl">
-              🐾
-            </span>
-          )}
-          <p className="min-w-0 flex-1 text-sm leading-relaxed text-zinc-700">
-            {lucky
-              ? t("fortune", {
-                  sign: elementKey,
-                  name: lucky.speciesName,
-                  trait: locale === "en" ? lucky.traitEn : lucky.trait,
-                })
-              : t("fortuneEmpty")}
-          </p>
+    <div className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm backdrop-blur">
+      <h3 className="mb-3 flex items-center justify-between gap-2 text-sm font-semibold text-zinc-800">
+        {t("recentTitle")}
+        <Link
+          href="/pets"
+          className="shrink-0 text-[11px] font-medium text-orange-500 transition hover:text-orange-600"
+        >
+          {ts("viewAll")} →
+        </Link>
+      </h3>
+      <div className="overflow-hidden">
+        <div className="marquee-track flex w-max gap-3">
+          {items.map((p, i) => (
+            <Link
+              key={`${p.id}-${i}`}
+              href={`/pets?rarity=${encodeURIComponent(p.rarity)}`}
+              className="flex w-44 shrink-0 items-center gap-2 rounded-xl border border-zinc-100 bg-orange-50/60 p-2 transition hover:border-orange-300"
+            >
+              <PetAvatar
+                src={p.imageUrl}
+                alt={p.speciesName}
+                className="h-9 w-9 shrink-0 rounded-full border border-orange-200 bg-white object-cover"
+              />
+              <span className="min-w-0 text-[11px] leading-snug text-zinc-600">
+                {t("recentItem", { user: p.ownerLabel, name: p.speciesName, id: p.id })}
+              </span>
+            </Link>
+          ))}
         </div>
-        {lucky && (
-          <Link
-            href={`/pets?species=${encodeURIComponent(lucky.speciesId)}`}
-            className="mt-3 block w-full rounded-full bg-orange-500 py-2.5 text-center text-sm font-semibold text-white shadow transition hover:bg-orange-600 hover:shadow-md"
-          >
-            {t("meet")}
-          </Link>
-        )}
       </div>
-
-      {/* 下半部分：高光时刻 · 最新诞生 */}
-      <div className="rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm backdrop-blur">
-        <h3 className="mb-2 text-sm font-semibold text-zinc-800">{t("recentTitle")}</h3>
-        {recent.length === 0 ? (
-          <p className="rounded-xl bg-orange-50 py-5 text-center text-xs text-zinc-500">
-            {t("recentEmpty")}
-          </p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-3">
-            {recent.map((p) => (
-              <Link
-                key={p.id}
-                href={`/pets?rarity=${encodeURIComponent(p.rarity)}`}
-                className="group flex items-center gap-2.5 rounded-xl border border-zinc-100 bg-orange-50/60 p-2.5 transition hover:border-orange-300 hover:bg-orange-50"
-              >
-                <PetAvatar
-                  src={p.imageUrl}
-                  alt={p.speciesName}
-                  className="h-9 w-9 shrink-0 rounded-full border border-orange-200 bg-white object-cover"
-                />
-                <span className="min-w-0 text-xs leading-snug text-zinc-600">
-                  {t("recentItem", { user: p.ownerLabel, name: p.speciesName, id: p.id })}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+      <style jsx>{`
+        @keyframes bxMarquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .marquee-track {
+          animation: bxMarquee 28s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .marquee-track {
+            animation: none;
+            overflow-x: auto;
+          }
+        }
+      `}</style>
+    </div>
   );
 }
+

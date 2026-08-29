@@ -168,7 +168,7 @@ export function BlindboxPlaza() {
                 type="button"
                 disabled={drawing}
                 onClick={() => void draw(p)}
-                className="flex-1 rounded-full bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-orange-600 disabled:opacity-60"
+                className="flex-1 rounded-full bg-orange-500 px-3 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-lg active:scale-95 disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {drawing ? t("drawing") : t("draw")}
               </button>

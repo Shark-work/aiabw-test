@@ -72,35 +72,34 @@ export function NewsCarousel() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* 当前新闻卡片 */}
+        {/* 当前新闻大卡片（Featured News Card）：移动端图上文下，桌面图左文右 */}
         <a
           key={item.id}
           href={item.url ?? "#"}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-white p-3 transition hover:border-orange-300"
+          className="group flex flex-col overflow-hidden rounded-xl border border-zinc-100 bg-white transition hover:border-orange-300 hover:shadow-md sm:flex-row"
         >
-          {/* 封面缩略图：远程新闻域名不可控（next/image 需逐一配置 remotePatterns 且不支持 onError 回退），保留原生 img。 */}
+          {/* 高清封面图：移动端全宽（h-44），桌面左侧半宽 */}
+          {/* 远程新闻域名不可控（next/image 需逐一配置 remotePatterns 且不支持 onError 回退），保留原生 img。 */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={item.cover ?? FALLBACK_COVER}
             alt={item.title}
             loading="lazy"
-            width={72}
-            height={72}
-            className="h-[72px] w-[72px] shrink-0 rounded-lg border border-zinc-100 object-cover"
+            className="h-44 w-full shrink-0 object-cover sm:h-52 sm:w-1/2"
             onError={(e) => {
               const el = e.currentTarget;
               if (el.src !== window.location.origin + FALLBACK_COVER) el.src = FALLBACK_COVER;
             }}
           />
-          <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800">
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-4">
+            <p className="line-clamp-2 text-lg font-bold leading-snug text-zinc-900 transition group-hover:text-orange-600 sm:text-xl">
               {item.title}
             </p>
-            <p className="mt-1 line-clamp-1 text-[11px] text-zinc-400">{item.source}</p>
-            <span className="mt-1.5 inline-block rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
-              {t("newsHot", { hot: formatHot(item.hot) })}
+            <p className="line-clamp-1 text-xs text-zinc-400">{item.source}</p>
+            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
+              🔥 {t("newsHot", { hot: formatHot(item.hot) })}
             </span>
           </div>
         </a>
