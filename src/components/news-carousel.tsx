@@ -65,7 +65,7 @@ export function NewsCarousel() {
   const item = news[idx];
 
   return (
-    <section className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm backdrop-blur">
+    <section className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-6 shadow-sm backdrop-blur">
       <h3 className="mb-2 text-sm font-semibold text-zinc-800">{t("newsTitle")}</h3>
       <div
         className="overflow-hidden rounded-xl"

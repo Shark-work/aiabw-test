@@ -9,6 +9,7 @@ import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PetKnowledgeModal, type KnowledgePet } from "@/components/pet-knowledge-modal";
 import { LeaderboardPanel } from "@/components/leaderboard-panel";
 import { getRarityMeta } from "@/lib/pet-status";
+import { unlockPriceCnyLabel } from "@/lib/pricing";
 import { SITE_URL } from "@/lib/site";
 
 type CatalogPet = {
@@ -358,6 +359,10 @@ export default function PetsCatalogPage() {
                     <div className="mt-0.5 flex flex-wrap gap-1 text-[10px] text-zinc-500">
                       <span className="rounded bg-orange-50 px-1 py-0.5">⚡{pet.traits.element ?? "?"}</span>
                       <span className="rounded bg-violet-50 px-1 py-0.5">❤️{pet.traits.personality ?? "?"}</span>
+                    </div>
+                    {/* 动态解锁定价：按稀有度阶梯（N/R/SR/SSR/UR） */}
+                    <div className="mt-0.5 text-[10px] font-semibold text-orange-500">
+                      {t("unlockPrice", { price: unlockPriceCnyLabel(String(pet.traits.rarity ?? "common")) })}
                     </div>
                     <div className="mt-0.5 font-mono text-[10px] text-zinc-300">{pet.id}</div>
                   </div>

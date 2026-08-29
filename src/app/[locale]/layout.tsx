@@ -98,7 +98,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className="antialiased bg-zinc-50 flex min-h-screen flex-col">
+      <body className="antialiased flex min-h-screen flex-col">
         {/* 全局结构化数据（WebSite + Organization，GEO 优化） */}
         <SiteJsonLd locale={locale} name={t("appName")} description={t("metaDescription")} />
         {/* locale 必须显式传入：next-intl v4 客户端 bundle 在 hydration 时若缺失 locale 会直接
@@ -110,7 +110,7 @@ export default async function LocaleLayout({
           <FloatingSupport />
           {/* 内容 + 全局右侧边栏（任务二：PC ≥lg 显示新闻热榜，sticky 跟随滚动）；
               移动端 <lg 侧边栏隐藏，折叠到首页信息流（见 page.tsx） */}
-          <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-3 sm:px-4 lg:flex-row lg:px-6 lg:py-6">
+          <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 sm:px-6 lg:flex-row lg:py-6">
             <div className="min-w-0 flex-1">{children}</div>
             <aside className="hidden w-72 shrink-0 lg:block">
               <div className="sticky top-20">

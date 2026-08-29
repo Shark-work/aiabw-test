@@ -5,8 +5,9 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { PetAvatar } from "@/components/PetAvatar";
-import { PayQr } from "@/components/pay-qr";
+import { PaymentModal } from "@/components/payment-modal";
 import { getRarityMeta } from "@/lib/pet-status";
+import { unlockPriceCnyLabel } from "@/lib/pricing";
 
 type BlindboxPool = {
   id: string;
@@ -178,7 +179,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
   return (
     <>
       <div
-        className={`rounded-xl border p-4 ${
+        className={`rounded-xl border p-6 ${
           isHot
             ? "border-amber-400 bg-gradient-to-br from-violet-50 via-fuchsia-50 to-amber-50 shadow-lg ring-1 ring-amber-200"
             : isNewbie
@@ -261,48 +262,17 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
         </div>
       )}
 
-      {/* 现金支付弹窗（积分不足兜底）：扫码支付 → 到账后自动开箱 */}
-      {pay && (
-        <div
-          className="fixed inset-0 z-[75] flex items-center justify-center bg-zinc-900/70 p-4 backdrop-blur"
-          onClick={() => setPay(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border-2 border-orange-300 bg-white p-5 text-center shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-2xl">💳</div>
-            <h4 className="mt-1 text-lg font-bold text-zinc-900">
-              {t("payNeed", { price: pay.amount.toFixed(2) })}
-            </h4>
-            {pay.qr ? (
-              <>
-                <PayQr value={pay.qr} size={180} />
-                <p className="text-xs text-zinc-400">{t("payQrHint")}</p>
-                {pay.payUrl && (
-                  <a
-                    href={pay.payUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
-                  >
-                    {t("payOpenCashier")}
-                  </a>
-                )}
-              </>
-            ) : (
-              <p className="py-6 text-sm text-zinc-500">{t("payWaiting")}</p>
-            )}
-            <button
-              type="button"
-              onClick={() => setPay(null)}
-              className="mt-3 w-full rounded-full bg-zinc-100 py-2 text-sm text-zinc-600 transition hover:bg-zinc-200"
-            >
-              {t("payCancel")}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 现金支付弹窗（积分不足兜底）：统一 PaymentModal */}
+      <PaymentModal
+        open={!!pay}
+        title={t("payNeed", { price: (pay?.amount ?? 0).toFixed(2) })}
+        amount={pay?.amount ?? 0}
+        description={t("payQrHint")}
+        qr={pay?.qr}
+        payUrl={pay?.payUrl ?? null}
+        pending={!!pay}
+        onClose={() => setPay(null)}
+      />
 
       {/* 开箱动画（约 3s 发光震动） */}
       {opening && (
@@ -362,6 +332,10 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
                       <span className="rounded-full bg-zinc-50 px-2 py-0.5 text-[10px] text-zinc-500">
                         ⚡{result.nfr.element}
                       </span>
+                    </div>
+                    {/* 动态解锁定价：按稀有度展示（N/R/SR/SSR/UR 阶梯） */}
+                    <div className="mt-0.5 text-[10px] font-semibold text-orange-500">
+                      {t("unlockPrice", { price: unlockPriceCnyLabel(result.nfr.rarity) })}
                     </div>
                     <div className="mt-0.5 font-mono text-[10px] text-zinc-300">
                       #{result.nfr.hashId.slice(0, 10)}
@@ -446,7 +420,7 @@ export function BlindboxPlaza() {
   }, [load]);
 
   return (
-    <section className="w-full rounded-2xl border border-orange-200 bg-white/90 p-4 shadow-sm backdrop-blur">
+    <section className="w-full rounded-2xl border border-orange-200 bg-white/90 p-6 shadow-sm backdrop-blur">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-zinc-800">🎁 {t("title")}</h3>
         <Link

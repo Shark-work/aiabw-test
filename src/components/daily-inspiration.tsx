@@ -121,7 +121,7 @@ export function RecentBornMarquee() {
   const items = recent.length > 1 ? [...recent, ...recent] : recent;
 
   return (
-    <div className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm backdrop-blur">
+    <div className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-6 shadow-sm backdrop-blur">
       <h3 className="mb-3 flex items-center justify-between gap-2 text-sm font-semibold text-zinc-800">
         {t("recentTitle")}
         <Link

@@ -256,6 +256,13 @@
     "priceHint": "Sponsor a milk tea for ¥9.9 and unlock all pet slots (one-time, permanent).",
     "generatingQr": "Generating payment QR code...",
     "scanHint": "Scan with WeChat / Alipay. Your account unlocks automatically after payment.",
+    "payAmount": "Amount",
+    "orPoints": "or {points} pts",
+    "payMethod": "Payment method",
+    "pointsMethod": "Points",
+    "wechatMethod": "WeChat Pay",
+    "cancelPay": "Cancel payment",
+    "payWaiting": "Waiting for payment…",
     "openCashier": "Open payment page",
     "notNow": "Not now",
     "unlockedOk": "🎉 Unlocked! You can now adopt more companions.",
@@ -330,6 +337,7 @@
     "subtitle": "Precomputed · Dictionary species · Element filtering",
     "all": "All",
     "detail": "Details",
+    "unlockPrice": "Unlock ¥{price}",
     "synthesize": "🔮 Synthesize",
     "synthesizeOk": "🎉 Synthesized! Welcome your new companion!",
     "synthesizeFailed": "Synthesis failed",
@@ -576,7 +584,8 @@
     "payQrHint": "Scan to pay; the box opens automatically after payment",
     "payOpenCashier": "Open Cashier",
     "payWaiting": "Waiting for payment confirmation…",
-    "payCancel": "Not now"
+    "payCancel": "Not now",
+    "unlockPrice": "Unlock ¥{price}"
   },
   "seo": {
     "petDetailTitle": "{name} - AI Virtual Pet Encyclopedia | AIABW",

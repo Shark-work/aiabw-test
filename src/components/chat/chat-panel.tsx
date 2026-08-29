@@ -13,7 +13,7 @@ import { ToolCallCard } from "@/components/chat/tool-call-card";
 import { EXAMPLE_PROMPTS } from "@/lib/utils";
 import type { PetConfig } from "@/lib/pet-config";
 import { useTranslations } from "next-intl";
-import { PayQr } from "@/components/pay-qr";
+import { PaymentModal } from "@/components/payment-modal";
 
 function AgentAvatar({
   pet,
@@ -121,26 +121,7 @@ export function ChatPanel({
     }
   };
 
-  // 支付完成后校验是否已解锁
-  const handleVerifyPay = async () => {
-    if (!adoptionId) return;
-    try {
-      const res = await fetch(`/api/pet/status?id=${adoptionId}`);
-      const data = await res.json();
-      if (data?.ok && data.isUnlocked) {
-        stopPolling();
-        setBlocked(null);
-        setBlockedDismissed(false);
-        setPay({ loading: false });
-        clearError?.();
-        alert(t("unlockedOk"));
-      } else {
-        alert(t("unlockNotDetected"));
-      }
-    } catch {
-      alert(tc("networkError"));
-    }
-  };
+  // 支付完成后校验是否已解锁（PaymentModal 内「等待确认」由轮询自动处理）
 
   // —— 支付后自动轮询解锁 ——
   // 每 2 秒轮询一次 /api/pet/status，检测到 isUnlocked 后自动关闭卡片并继续聊天；
@@ -374,49 +355,9 @@ export function ChatPanel({
             <p className="mt-1 text-xs text-zinc-400">
               {t("sponsorHint")}
             </p>
-            {/* 支付流程（移动端长按识别优化） */}
-            {pay.qr ? (
-              <div className="mt-4 space-y-3">
-                <PayQr value={pay.qr} size={176} />
-                {payTimeout ? (
-                  <p className="text-xs text-amber-600">
-                    {t("timeoutHint")}
-                  </p>
-                ) : (
-                  <p className="text-xs text-zinc-400">
-                    {t("waiting")}
-                  </p>
-                )}
-                {pay.payUrl && (
-                  <a
-                    href={pay.payUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block text-xs text-blue-600 underline"
-                  >
-                    {t("openPayUrl")}
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={handleVerifyPay}
-                  className="w-full rounded-full bg-amber-500 px-4 py-2.5 font-semibold text-white shadow transition hover:bg-amber-600"
-                >
-                  {t("confirmPaid")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPay({ loading: false })}
-                  className="w-full rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-500 transition hover:bg-zinc-50"
-                >
-                  {t("back")}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-5 space-y-2">
-                {pay.error && (
-                  <p className="text-xs text-red-500">{pay.error}</p>
-                )}
+            {/* 支付流程：扫码区统一由 PaymentModal 弹出（下方） */}
+            <div className="mt-5 space-y-2">
+              {pay.error && <p className="text-xs text-red-500">{pay.error}</p>}
                 <button
                   type="button"
                   onClick={handleStartPay}
@@ -433,10 +374,21 @@ export function ChatPanel({
                   {t("later")}
                 </button>
               </div>
-            )}
           </div>
         </div>
       )}
+
+      {/* 统一支付弹窗（微信扫码 + 金额 + 取消） */}
+      <PaymentModal
+        open={!!pay.qr}
+        title={t("needEnergy", { name: pet.name })}
+        amount={9.9}
+        qr={pay.qr}
+        payUrl={pay.payUrl ?? null}
+        pending={!payTimeout}
+        error={pay.error}
+        onClose={() => setPay({ loading: false })}
+      />
     </Card>
   );
 }

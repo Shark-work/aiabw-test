@@ -256,6 +256,13 @@
     "priceHint": "赞助一杯奶茶 ¥9.9，解锁全部宠物位置（1 次解锁长期有效）",
     "generatingQr": "正在生成支付二维码...",
     "scanHint": "请使用微信 / 支付宝扫码支付，支付成功后自动解锁",
+    "payAmount": "支付金额",
+    "orPoints": "或 {points} 积分",
+    "payMethod": "支付方式",
+    "pointsMethod": "积分支付",
+    "wechatMethod": "微信支付",
+    "cancelPay": "取消支付",
+    "payWaiting": "正在等待支付确认…",
     "openCashier": "点击前往收银台支付",
     "notNow": "暂不解锁",
     "unlockedOk": "🎉 解锁成功！现在可以领养更多宠物啦~",
@@ -330,6 +337,7 @@
     "subtitle": "预计算生成 · 字典物种 · 元素筛选",
     "all": "全部",
     "detail": "详情页",
+    "unlockPrice": "解锁需 ¥{price}",
     "synthesize": "🔮 合成",
     "synthesizeOk": "🎉 合成成功，欢迎新伙伴！",
     "synthesizeFailed": "合成失败",
@@ -576,7 +584,8 @@
     "payQrHint": "扫码支付，到账后自动开箱，请耐心等待",
     "payOpenCashier": "打开收银台",
     "payWaiting": "正在等待支付确认…",
-    "payCancel": "暂不支付"
+    "payCancel": "暂不支付",
+    "unlockPrice": "解锁需 ¥{price}"
   },
   "seo": {
     "petDetailTitle": "{name} - AI 虚拟宠物图鉴 | 艾比世界",

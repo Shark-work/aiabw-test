@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { PayQr } from "@/components/pay-qr";
+import { PaymentModal } from "@/components/payment-modal";
 
 type Cosmetic = {
   id: string;
@@ -36,6 +36,7 @@ export function CosmeticsShopModal({
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payingPremium, setPayingPremium] = useState(false);
   const [qr, setQr] = useState<string | null>(null);
+  const [payAmount, setPayAmount] = useState(0);
   const [error, setError] = useState("");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -97,8 +98,10 @@ export function CosmeticsShopModal({
       body.cosmeticId = cosmeticId;
       body.adoptionId = adoptionId;
       setPayingId(cosmeticId);
+      setPayAmount(Number(items.find((c) => c.id === cosmeticId)?.priceCny ?? 1));
     } else {
       setPayingPremium(true);
+      setPayAmount(1);
     }
     try {
       const res = await fetch("/api/pay/create", {
@@ -166,12 +169,7 @@ export function CosmeticsShopModal({
         {loading && <p className="py-6 text-center text-sm text-zinc-400">{t("loading")}</p>}
         {error && <p className="py-2 text-center text-sm text-red-500">{error}</p>}
 
-        {qr ? (
-          <div className="py-3 text-center">
-            <div className="mb-2 text-sm text-zinc-600">{t("scanHint")}</div>
-            <PayQr value={qr} size={200} />
-          </div>
-        ) : (
+        {!qr && (
           <div className="grid grid-cols-2 gap-3">
             {items.map((c) => (
               <div
@@ -217,6 +215,23 @@ export function CosmeticsShopModal({
             )}
           </div>
         )}
+
+        {/* 统一支付弹窗（金额 / 扫码 / 取消） */}
+        <PaymentModal
+          open={!!qr}
+          title={payingPremium ? t("premiumTitle") : t("title")}
+          amount={payAmount}
+          qr={qr ?? undefined}
+          pending={!!qr}
+          error={error || undefined}
+          onClose={() => {
+            stopPolling();
+            setQr(null);
+            setPayingId(null);
+            setPayingPremium(false);
+            setError("");
+          }}
+        />
       </div>
     </div>
   );

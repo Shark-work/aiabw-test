@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { PayQr } from "@/components/pay-qr";
+import { PaymentModal } from "@/components/payment-modal";
 
 type Props = {
   open: boolean;
@@ -133,74 +133,17 @@ export function UpgradePetModal({
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-zinc-900">{t("title")}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xl leading-none text-zinc-400 hover:text-zinc-600"
-            aria-label={tc("close")}
-          >
-            ×
-          </button>
-        </div>
-
-        <p className="mb-1 text-sm text-zinc-600">
-          {petCount != null && petCount >= 1
-            ? t("descCount", { count: petCount })
-            : t("desc")}
-        </p>
-        <p className="mb-4 text-xs text-zinc-400">
-          {t("priceHint")}
-        </p>
-
-        {error ? (
-          <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
-            {error}
-          </div>
-        ) : null}
-
-        {loading && (
-          <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-500">
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-            {t("generatingQr")}
-          </div>
-        )}
-
-        {qr ? (
-          <div className="flex flex-col items-center gap-3 py-2">
-            <PayQr value={qr} size={200} />
-            {payUrl ? (
-              <a
-                href={payUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full bg-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-600"
-              >
-                {t("openCashier")}
-              </a>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full bg-zinc-100 px-4 py-2 text-sm text-zinc-600 transition hover:bg-zinc-200"
-          >
-            {t("notNow")}
-          </button>
-        </div>
-      </div>
-    </div>
+    <PaymentModal
+      open={open}
+      title={t("title")}
+      amount={9.9}
+      description={petCount != null && petCount >= 1 ? t("descCount", { count: petCount }) : t("desc")}
+      qr={qr ?? undefined}
+      payUrl={payUrl}
+      pending={!!qr}
+      busy={loading}
+      error={error || undefined}
+      onClose={onClose}
+    />
   );
 }

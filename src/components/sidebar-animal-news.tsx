@@ -66,7 +66,7 @@ export function SidebarAnimalNews() {
   }, []);
 
   return (
-    <section className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-4 shadow-sm backdrop-blur">
+    <section className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-6 shadow-sm backdrop-blur">
       <div className="mb-2 flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-sm font-bold text-zinc-800">
           {t("newsRankTitle")}
