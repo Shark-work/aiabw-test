@@ -15,6 +15,8 @@ type BlindboxPool = {
   priceCny: string;
   pricePoints: number;
   probabilities: Record<string, number>;
+  /** 每日福利箱今日是否已领取（仅登录用户、daily 池返回） */
+  todayClaimed?: boolean;
 };
 
 type DrawResult = {
@@ -202,7 +204,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
           <span
             className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold text-white shadow ${
               isNewbie
-                ? "bg-gradient-to-r from-red-500 to-orange-500"
+                ? "bg-gradient-to-r from-amber-400 to-orange-400"
                 : "bg-gradient-to-r from-violet-500 to-fuchsia-500"
             }`}
           >
@@ -214,16 +216,16 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
           <span className="rounded-full bg-orange-100 px-2 py-0.5 font-semibold text-orange-700">
             {pool.pricePoints} {t("points")}
           </span>
-          <span className="text-zinc-400">/ ¥{pool.priceCny}</span>
+          <span className="text-zinc-400">/ ¥{Math.max(Number(pool.priceCny), 1).toFixed(2)}</span>
         </div>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
-            disabled={drawing}
+            disabled={drawing || !!pool.todayClaimed}
             onClick={() => void draw()}
             className="flex-1 rounded-full bg-orange-500 px-3 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600 hover:shadow-lg active:scale-95 disabled:opacity-60 disabled:hover:translate-y-0"
           >
-            {drawing ? t("drawing") : t("draw")}
+            {pool.todayClaimed ? t("dailyClaimed") : drawing ? t("drawing") : t("draw")}
           </button>
           <button
             type="button"

@@ -100,6 +100,11 @@ export async function POST(req: Request) {
     const priceCny = Number(poolRow.priceCny ?? 0);
     const pricePoints = Number(poolRow.pricePoints ?? 200);
 
+    // 价格红线：全站最低 1 元（运营硬校验，防 0.x 元残留）
+    if (priceCny < 1) {
+      return NextResponse.json({ ok: false, error: apiError(locale, "blindboxPriceInvalid") }, { status: 400 });
+    }
+
     // ============ 现金通道（积分不足兜底）============
     if (paymentMethod === "cash") {
       // 1) 结果轮询：orderId 已支付且已抽取 → 返回该次开箱结果（幂等）
@@ -148,7 +153,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: true, needPayment: true, orderId: orderIdParam, amount: priceCny });
       }
 
-      // 2) 创建新现金订单
+      // 2) 每日福利箱：现金通道每日限购 1 次（复用 blindbox_logs.created_at 判定）
+      if (poolId === "newbie_welcome") {
+        const claimed = await pool.query(
+          `SELECT 1 FROM blindbox_logs
+            WHERE user_id = $1 AND pool_id = $2
+              AND created_at::date = CURRENT_DATE
+            LIMIT 1`,
+          [user.id, poolId],
+        );
+        if (claimed.rows.length > 0) {
+          return NextResponse.json({ ok: false, error: apiError(locale, "dailyBonusClaimed") }, { status: 429 });
+        }
+      }
+
+      // 3) 创建新现金订单
       try {
         const order = await createCashOrder(locale, poolRow, user.id);
         return NextResponse.json({ ok: true, needPayment: true, ...order, poolId });

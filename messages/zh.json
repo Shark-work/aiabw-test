@@ -490,7 +490,9 @@
     "invalidBlindboxPool": "请选择奖池",
     "blindboxUnavailable": "该奖池已下架",
     "blindboxSpeciesMissing": "奖池物种缺失，请稍后再试",
-    "blindboxFailed": "抽奖失败，请稍后再试"
+    "blindboxFailed": "抽奖失败，请稍后再试",
+    "blindboxPriceInvalid": "价格配置错误，最低需 1 元",
+    "dailyBonusClaimed": "今日福利已领取，可购买其他盲盒"
   },
   "nav": {
     "home": "首页",
@@ -577,9 +579,10 @@
     "normalTitle": "🎉 获得新宠物",
     "shareX": "一键分享到 X",
     "drawFailed": "抽奖失败，请稍后再试",
-    "newbieTag": "🔥 新人首抽",
+    "newbieTag": "🎁 每日福利",
     "hotTag": "✨ 高爆率",
     "needLogin": "请先登录后再抽盲盒",
+    "dailyClaimed": "明日再来",
     "payNeed": "积分不足，可扫码支付 ¥{price} 直接开箱",
     "payQrHint": "扫码支付，到账后自动开箱，请耐心等待",
     "payOpenCashier": "打开收银台",
@@ -591,7 +594,7 @@
     "petDetailTitle": "{name} - AI 虚拟宠物图鉴 | 艾比世界",
     "petDetailDesc": "领养专属 AI 虚拟宠物「{name}」：{category} · {habitat}。专属记忆、每日签到与互动养成，3 合 1 灵力融合可升级为稀有宠物。",
     "blindboxTitle": "盲盒广场 - 传说 {legendary}% 高爆率开箱 | 艾比世界",
-    "blindboxDesc": "盲盒广场：新手福利箱 0.1 元起抽，赛博神话箱传说爆率 {legendary}%。爆率公示透明：普通 {common}% · 稀有 {rare}% · 史诗 {epic}%，稀有宠物即刻拥有。",
+    "blindboxDesc": "盲盒广场：每日福利箱 1 元起抽，赛博神话箱传说爆率 {legendary}%。爆率公示透明：普通 {common}% · 稀有 {rare}% · 史诗 {epic}%，稀有宠物即刻拥有。",
     "blindboxH1": "盲盒广场",
     "blindboxIntro": "开箱即得的 AI 虚拟宠物：稀有度与爆率公示透明，结果可追溯。",
     "blindboxCta": "🎁 去盲盒广场",

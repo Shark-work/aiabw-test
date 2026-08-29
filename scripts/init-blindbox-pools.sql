@@ -8,10 +8,10 @@
 DELETE FROM blindbox_logs WHERE pool_id LIKE 'bx\_%';
 DELETE FROM blindbox_pools WHERE id LIKE 'bx\_%';
 
--- 1) 奖池 A：新手福利箱 —— 0.1 元 / 10 积分，新手首抽钩子
+-- 1) 奖池 A：每日福利箱 —— 1 元 / 10 积分，每日限购 1 次（cash 通道）
 --    普通 80% · 稀有 15% · 史诗 4.9% · 传说 0.1%
 INSERT INTO blindbox_pools (id, name_zh, name_en, price_cny, price_points, probabilities, species_ids, is_active)
-VALUES ('newbie_welcome', '新手福利箱', 'Newbie Welcome Box', 0.1, 10,
+VALUES ('newbie_welcome', '每日福利箱', 'Daily Bonus Box', 1, 10,
         '{"common":80,"rare":15,"epic":4.9,"legendary":0.1}'::jsonb, '[]'::jsonb, true)
 ON CONFLICT (id) DO UPDATE SET
   name_zh = EXCLUDED.name_zh, name_en = EXCLUDED.name_en,

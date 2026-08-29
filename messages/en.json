@@ -490,7 +490,9 @@
     "invalidBlindboxPool": "Please choose a pool",
     "blindboxUnavailable": "This pool is unavailable",
     "blindboxSpeciesMissing": "Pool species missing, try again later",
-    "blindboxFailed": "Draw failed, please try again later"
+    "blindboxFailed": "Draw failed, please try again later",
+    "blindboxPriceInvalid": "Price config error - minimum is ¥1",
+    "dailyBonusClaimed": "Daily bonus already claimed today - try other boxes"
   },
   "nav": {
     "home": "Home",
@@ -577,9 +579,10 @@
     "normalTitle": "🎉 New Pet!",
     "shareX": "Share to X",
     "drawFailed": "Draw failed, try again later",
-    "newbieTag": "🔥 First Draw",
+    "newbieTag": "🎁 Daily Bonus",
     "hotTag": "✨ High Odds",
     "needLogin": "Please sign in before drawing",
+    "dailyClaimed": "Claimed - tomorrow",
     "payNeed": "Not enough points - scan to pay ¥{price} and draw now",
     "payQrHint": "Scan to pay; the box opens automatically after payment",
     "payOpenCashier": "Open Cashier",
@@ -591,7 +594,7 @@
     "petDetailTitle": "{name} - AI Virtual Pet Encyclopedia | AIABW",
     "petDetailDesc": "Adopt your own AI virtual pet {name}: {category} · {habitat}. Chat, daily check-in and 3-to-1 fusing to level up rare pets.",
     "blindboxTitle": "Blind Box Plaza - {legendary}% Legendary Odds | AIABW",
-    "blindboxDesc": "Blind boxes from $0.1 with transparent odds: {common}% Common · {rare}% Rare · {epic}% Epic · {legendary}% Legendary. Rare pets instantly.",
+    "blindboxDesc": "Blind boxes from ¥1 with transparent odds: {common}% Common · {rare}% Rare · {epic}% Epic · {legendary}% Legendary. Rare pets instantly.",
     "blindboxH1": "Blind Box Plaza",
     "blindboxIntro": "Instant AI virtual pets with transparent, verifiable drop rates.",
     "blindboxCta": "🎁 Blind Box Plaza",
