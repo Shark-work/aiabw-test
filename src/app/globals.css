@@ -2,12 +2,159 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===================== 主题变量（cute 默认 / wild 野性山林） ===================== */
+:root,
+[data-theme="cute"] {
+  --bg-gradient: linear-gradient(180deg, #eef7f0 0%, #e6f2f7 100%);
+  --text-color: #18181b;
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: #e4e4e7;
+  --accent: #f97316;
+  --rain-opacity: 0;
+  --mist-opacity: 0;
+  --glow-opacity: 0;
+}
+
+[data-theme="wild"] {
+  --bg-gradient: linear-gradient(180deg, #2c3e50 0%, #1a4a3a 100%);
+  --text-color: #e5e7eb;
+  --card-bg: rgba(17, 24, 39, 0.78);
+  --card-border: #374151;
+  --accent: #f59e0b;
+  --rain-opacity: 0.55;
+  --mist-opacity: 0.3;
+  --glow-opacity: 0.85;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
-  /* 大草原开阔感：浅草绿 → 淡天蓝 */
-  background: linear-gradient(180deg, #eef7f0 0%, #e6f2f7 100%);
+  background: var(--bg-gradient);
   background-attachment: fixed;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
+
+/* Wild 主题：静态山林剪影背景（WebP，cover 铺满） */
+[data-theme="wild"] body {
+  background-image: url("/images/wild-bg.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ===================== Wild 主题：雨 / 雾 / 光（纯 CSS 伪元素 + GPU 合成） ===================== */
+/* 雨：斜向细线，translateY 下落（0.8s linear infinite） */
+[data-theme="wild"] body::before {
+  content: "";
+  position: fixed;
+  inset: -20% 0;
+  pointer-events: none;
+  z-index: 90;
+  opacity: var(--rain-opacity);
+  background-image: repeating-linear-gradient(
+    115deg,
+    transparent 0 6px,
+    rgba(255, 255, 255, 0.22) 6px 7px
+  );
+  animation: rain-fall 0.8s linear infinite;
+  will-change: transform;
+}
+@keyframes rain-fall {
+  from { transform: translateY(-20%); }
+  to { transform: translateY(100%); }
+}
+
+/* 雾：山腰径向渐变 + translateX 缓慢漂移 */
+[data-theme="wild"] body::after {
+  content: "";
+  position: fixed;
+  left: -20%;
+  right: -20%;
+  bottom: -8%;
+  height: 38vh;
+  pointer-events: none;
+  z-index: 89;
+  opacity: var(--mist-opacity);
+  background:
+    radial-gradient(ellipse at 30% 100%, rgba(200, 220, 210, 0.5), transparent 65%),
+    radial-gradient(ellipse at 75% 100%, rgba(190, 210, 205, 0.4), transparent 60%);
+  filter: blur(12px);
+  animation: mist-drift 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes mist-drift {
+  from { transform: translateX(-4%); }
+  to { transform: translateX(4%); }
+}
+
+/* 光：右下角山洞暖光点 + box-shadow 呼吸闪烁 */
+html[data-theme="wild"]::after {
+  content: "";
+  position: fixed;
+  right: 8%;
+  bottom: 12%;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 88;
+  background: radial-gradient(circle, #ffd700 0%, rgba(255, 215, 0, 0.35) 55%, transparent 75%);
+  box-shadow: 0 0 40px 12px rgba(255, 215, 0, var(--glow-opacity));
+  animation: cave-breathe 3.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+@keyframes cave-breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.15); }
+}
+
+/* ===================== 暗色覆盖映射（wild 下亮色 Tailwind 类 → 暗色变量） ===================== */
+[data-theme="wild"] .bg-white,
+[data-theme="wild"] .bg-white\/70,
+[data-theme="wild"] .bg-white\/80,
+[data-theme="wild"] .bg-white\/85,
+[data-theme="wild"] .bg-white\/90,
+[data-theme="wild"] .bg-zinc-50 {
+  background-color: var(--card-bg) !important;
+}
+[data-theme="wild"] .text-zinc-900,
+[data-theme="wild"] .text-zinc-800,
+[data-theme="wild"] .text-zinc-700,
+[data-theme="wild"] .text-zinc-600 {
+  color: var(--text-color) !important;
+}
+[data-theme="wild"] .text-zinc-500,
+[data-theme="wild"] .text-zinc-400,
+[data-theme="wild"] .text-zinc-300,
+[data-theme="wild"] .text-slate-400 {
+  color: #9ca3af !important;
+}
+[data-theme="wild"] .border-zinc-100,
+[data-theme="wild"] .border-zinc-200,
+[data-theme="wild"] .border-zinc-300 {
+  border-color: var(--card-border) !important;
+}
+/* 平滑过渡：主要卡片/文字颜色 0.5s 淡入淡出 */
+body,
+[data-theme="wild"] .bg-white,
+[data-theme="wild"] .bg-white\/70,
+[data-theme="wild"] .bg-white\/80,
+[data-theme="wild"] .bg-white\/85,
+[data-theme="wild"] .bg-white\/90,
+[data-theme="wild"] .text-zinc-900,
+[data-theme="wild"] .text-zinc-800,
+[data-theme="wild"] .text-zinc-700,
+[data-theme="wild"] .text-zinc-600,
+[data-theme="wild"] .border-zinc-200 {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+}
+
+/* 手机端：雨丝密度减半（静态图背景，省流量） */
+@media (max-width: 768px) {
+  [data-theme="wild"] {
+    --rain-opacity: 0.28;
+  }
+}
+
 
 @layer base {
   :root {

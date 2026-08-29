@@ -11,6 +11,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { FloatingSupport } from "@/components/layout/FloatingSupport";
 import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
+import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
 import { SITE_URL, getAlternates } from "@/lib/site";
 
@@ -98,12 +99,22 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
+      <head>
+        {/* 主题防闪烁：首帧渲染前读取 localStorage 设置 data-theme（杜绝 FOUC） */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem("aiabw_theme")==="wild"){document.documentElement.setAttribute("data-theme","wild");}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="antialiased flex min-h-screen flex-col">
         {/* 全局结构化数据（WebSite + Organization，GEO 优化） */}
         <SiteJsonLd locale={locale} name={t("appName")} description={t("metaDescription")} />
         {/* locale 必须显式传入：next-intl v4 客户端 bundle 在 hydration 时若缺失 locale 会直接
             throw Error（线上曾因此报 “Application error: a client-side exception”）。 */}
         <NextIntlClientProvider locale={locale} messages={messages}>
+          {/* 主题（cute/wild 一键切换，localStorage 持久化 + head 内联脚本防闪烁） */}
+          <ThemeProvider>
           {/* 全局固定顶部导航（所有页面可见，移动端折叠为汉堡菜单） */}
           <SiteHeader />
           {/* 右下角悬浮客服按钮（/chat 页自动隐藏） */}
@@ -122,6 +133,7 @@ export default async function LocaleLayout({
               否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}
           <Footer />
           <Analytics />
+          </ThemeProvider>
         </NextIntlClientProvider>
 
         {/* ============ 第三方统计（全站生效：根布局，所有页面自动加载）============

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTheme } from "@/components/theme-provider";
 
 type Me = { email: string; points: number };
 
@@ -19,6 +20,7 @@ export function SiteHeader() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const pathname = usePathname();
+  const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
 
@@ -128,6 +130,16 @@ export function SiteHeader() {
               </Link>
             </>
           )}
+          {/* 主题切换：cute ↔ wild（野性山林） */}
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={theme === "wild" ? "切回可爱主题" : "切换野性山林主题"}
+            title={theme === "wild" ? "野性山林" : "切换主题"}
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white/70 text-base shadow-sm transition hover:bg-zinc-100"
+          >
+            {theme === "wild" ? "🌧️" : "🌙"}
+          </button>
           {/* 语言切换器：全局导航最右侧、独立单一元素 */}
           <LanguageSwitcher />
         </div>
@@ -211,8 +223,16 @@ export function SiteHeader() {
                 </>
               )}
             </div>
-            {/* 移动端：语言切换（独立行，原生名展示） */}
-            <div className="mt-3 flex items-center justify-center border-t border-zinc-100 pt-3">
+            {/* 移动端：主题切换 + 语言切换（独立行，原生名展示） */}
+            <div className="mt-3 flex items-center justify-center gap-3 border-t border-zinc-100 pt-3">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-label={theme === "wild" ? "切回可爱主题" : "切换野性山林主题"}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white/70 text-base shadow-sm transition hover:bg-zinc-100"
+              >
+                {theme === "wild" ? "🌧️" : "🌙"}
+              </button>
               <LanguageSwitcher />
             </div>
           </nav>
