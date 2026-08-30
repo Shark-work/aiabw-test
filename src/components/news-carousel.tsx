@@ -12,6 +12,8 @@ type NewsItem = {
   hot: number;
   timestamp: number;
   url: string | null;
+  /** 国内/国际（80/20 配比 + 国旗标签） */
+  isDomestic?: boolean;
 };
 
 const FALLBACK_COVER = "/resources/pet/fox2.webp";
@@ -98,7 +100,18 @@ export function NewsCarousel() {
             <p className="line-clamp-2 text-lg font-bold leading-snug text-zinc-900 transition group-hover:text-orange-600 sm:text-xl">
               {item.title}
             </p>
-            <p className="line-clamp-1 text-xs text-zinc-400">{item.source}</p>
+            {/* 翻译提示：国外新闻 AI 翻译透明化 */}
+            {item.isDomestic === false && locale === "zh" && (
+              <p className="text-[10px] text-zinc-400">
+                {t("newsTranslatedFrom", { source: item.source })}
+              </p>
+            )}
+            <p className="flex items-center gap-1.5 text-xs text-zinc-400">
+              <span className="shrink-0 rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium">
+                {item.isDomestic ? t("newsDomesticLabel") : t("newsGlobalLabel")}
+              </span>
+              <span className="line-clamp-1">{item.source}</span>
+            </p>
             <span className="inline-flex w-fit items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
               🔥 {t("newsHot", { hot: formatHot(item.hot) })}
             </span>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { ensureDbSchemaOnce } from "@/db/client";
 import { fetchAndStoreNews } from "@/lib/news-fetch";
 
 export const runtime = "nodejs";
@@ -11,6 +12,8 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   try {
+    // 确保 is_domestic/locale 等列已同步（Neon 幂等 ALTER）
+    await ensureDbSchemaOnce();
     const result = await fetchAndStoreNews();
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {

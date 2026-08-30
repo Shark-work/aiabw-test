@@ -15,6 +15,8 @@ type NewsItem = {
   hot: number;
   timestamp: number;
   url: string | null;
+  /** 国内/国际（80/20 配比 + 国旗标签） */
+  isDomestic?: boolean;
 };
 
 const SKELETON_ROWS = 6;
@@ -117,8 +119,19 @@ export function SidebarAnimalNews() {
                   <p className="line-clamp-2 text-[13px] font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600">
                     {n.title}
                   </p>
+                  {/* 翻译提示：国外新闻 AI 翻译透明化 */}
+                  {n.isDomestic === false && locale === "zh" && (
+                    <p className="mt-0.5 text-[10px] text-zinc-400">
+                      {t("newsTranslatedFrom", { source: n.source })}
+                    </p>
+                  )}
                   <div className="mt-1 flex items-center gap-1.5 text-[10px] text-zinc-400">
-                    <span className="line-clamp-1 max-w-[9rem]">{n.source}</span>
+                    <span className="line-clamp-1 max-w-[9rem]">
+                      <span className="rounded bg-zinc-100 px-1 py-0.5 font-medium">
+                        {n.isDomestic ? t("newsDomesticLabel") : t("newsGlobalLabel")}
+                      </span>{" "}
+                      {n.source}
+                    </span>
                     <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-orange-50 px-1.5 py-0.5 font-semibold text-orange-600">
                       🔥 {formatHot(n.hot)}
                     </span>

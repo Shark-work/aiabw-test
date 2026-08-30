@@ -323,6 +323,8 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "locale" text DEFAULT 'en' NOT NULL`,
   `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "category_en" text`,
   `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "habitat_en" text`,
+  // 新闻国内/国际标识（80/20 配比 + 前端国旗标签）
+  `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "is_domestic" boolean DEFAULT false NOT NULL`,
   // 新闻唯一索引改为 (locale, source, title)：同源同题中英各行互不冲突
   `DROP INDEX IF EXISTS idx_hotnews_source_title`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_hotnews_locale_source_title ON "hotnews" ("locale", "source", "title")`,

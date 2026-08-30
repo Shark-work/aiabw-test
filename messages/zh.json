@@ -64,6 +64,9 @@
     "featuredEmpty": "暂无推荐伙伴，去图鉴逛逛吧",
     "newsTitle": "🐾 动物世界头条",
     "newsRankTitle": "🔥 动物新闻热榜",
+    "newsDomesticLabel": "🇨🇳 国内",
+    "newsGlobalLabel": "🌍 国际",
+    "newsTranslatedFrom": "由 AI 翻译自 {source}",
     "newsHot": "🔥 {hot} 热度",
     "newsCopyright": "资讯内容聚合自公开网络，版权归原作者所有。如有侵犯您的权益，请联系客服处理。"
   },

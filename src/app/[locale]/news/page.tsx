@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { pool } from "@/db/client";
 import { Link } from "@/i18n/navigation";
 import { formatHot } from "@/lib/news";
+import { queryNewsByLocale } from "@/lib/news-fetch";
 import { SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -46,17 +47,17 @@ export default async function NewsPage({ params }: Props) {
   const t = await getTranslations("seo");
   const th = await getTranslations("home");
 
-  let news: { id: number; source: string; title: string; hot: number; url: string | null }[] = [];
+  let news: { id: number; source: string; title: string; hot: number; url: string | null; isDomestic: boolean }[] = [];
   try {
-    const { rows } = await pool.query(
-      `SELECT id, source, title, hot, url FROM hotnews ORDER BY hot DESC LIMIT 10`,
-    );
+    // 80% 国内 + 20% 国外配比（zh）；en 全英文
+    const rows = await queryNewsByLocale(locale, 10);
     news = rows.map((r) => ({
       id: Number(r.id),
       source: String(r.source),
       title: String(r.title),
       hot: Number(r.hot),
       url: r.url ? String(r.url) : null,
+      isDomestic: !!r.isDomestic,
     }));
   } catch {
     // 库不可达：空列表
@@ -87,8 +88,19 @@ export default async function NewsPage({ params }: Props) {
                     >
                       {n.title}
                     </Link>
+                    {/* 翻译提示：国外新闻 AI 翻译透明化 */}
+                    {n.isDomestic === false && locale === "zh" && (
+                      <p className="mt-0.5 text-[10px] text-zinc-400">
+                        {th("newsTranslatedFrom", { source: n.source })}
+                      </p>
+                    )}
                     <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-400">
-                      <span className="line-clamp-1">{n.source}</span>
+                      <span className="line-clamp-1">
+                        <span className="rounded bg-zinc-100 px-1 py-0.5 font-medium">
+                          {n.isDomestic ? th("newsDomesticLabel") : th("newsGlobalLabel")}
+                        </span>{" "}
+                        {n.source}
+                      </span>
                       <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-orange-50 px-1.5 py-0.5 font-semibold text-orange-600">
                         🔥 {formatHot(n.hot)}
                       </span>
