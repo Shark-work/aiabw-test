@@ -44,6 +44,29 @@ function jaccardSimilarity(a: string, b: string): number {
 }
 
 /**
+ * 标题去重（供自动抓取 + 后台手动投喂共用）：
+ * 与库内已有标题（同 locale）+ 本批已接受标题比对，相似度 >0.85 视为重复剔除。
+ */
+export async function dedupeTitles(titles: string[], locale: string): Promise<string[]> {
+  const existing = (
+    await pool.query(`SELECT title FROM hotnews WHERE locale = $1`, [locale])
+  ).rows.map((r) => String(r.title));
+  const accepted: string[] = [];
+  const out: string[] = [];
+  for (const t of titles) {
+    const norm = normalizeTitle(t);
+    const dup =
+      existing.some((e) => jaccardSimilarity(norm, normalizeTitle(e)) > 0.85) ||
+      accepted.some((a) => jaccardSimilarity(norm, normalizeTitle(a)) > 0.85);
+    if (!dup) {
+      accepted.push(t);
+      out.push(t);
+    }
+  }
+  return out;
+}
+
+/**
  * 标题相似度去重（防国内源互相搬运/水稿）：
  * 与库内已有标题（同 locale）+ 本批已接受标题比对，相似度 >0.85 视为重复丢弃。
  */
