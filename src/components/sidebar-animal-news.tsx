@@ -103,10 +103,8 @@ export function SidebarAnimalNews() {
         <ol className="divide-y divide-zinc-100">
           {news.map((n, i) => (
             <li key={n.id} className="py-2.5 first:pt-0 last:pb-0">
-              <a
-                href={n.url ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href={`/news/${n.id}`}
                 className="group flex items-start gap-2.5"
               >
                 {/* 排名 + 热度竖线 */}
@@ -137,7 +135,7 @@ export function SidebarAnimalNews() {
                     </span>
                   </div>
                 </div>
-              </a>
+              </Link>
             </li>
           ))}
         </ol>

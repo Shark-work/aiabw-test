@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
+
 type NewsItem = {
   id: number;
   source: string;
@@ -75,12 +77,10 @@ export function NewsCarousel() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* 当前新闻大卡片（Featured News Card）：移动端图上文下，桌面图左文右 */}
-        <a
+        {/* 当前新闻大卡片（Featured News Card）：移动端图上文下，桌面图左文右；点击进入新闻详情页 */}
+        <Link
           key={item.id}
-          href={item.url ?? "#"}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/news/${item.id}`}
           className="group flex flex-col overflow-hidden rounded-xl border border-zinc-100 bg-white transition hover:border-orange-300 hover:shadow-md sm:flex-row"
         >
           {/* 高清封面图：移动端全宽（h-44），桌面左侧半宽 */}
@@ -116,7 +116,7 @@ export function NewsCarousel() {
               🔥 {t("newsHot", { hot: formatHot(item.hot) })}
             </span>
           </div>
-        </a>
+        </Link>
       </div>
 
       {/* 轮播指示点 + 手动切换 */}
