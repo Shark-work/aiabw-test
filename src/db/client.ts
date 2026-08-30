@@ -327,6 +327,8 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "is_domestic" boolean DEFAULT false NOT NULL`,
   // 盲盒每日福利池标记（限购判定去硬编码）
   `ALTER TABLE "blindbox_pools" ADD COLUMN IF NOT EXISTS "is_daily" boolean DEFAULT false NOT NULL`,
+  // 站内阅读：新闻正文（抓取完整正文，纯文本；失败留空 → 详情页走阅读原文）
+  `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "content" text`,
   // 新闻唯一索引改为 (locale, source, title)：同源同题中英各行互不冲突
   `DROP INDEX IF EXISTS idx_hotnews_source_title`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_hotnews_locale_source_title ON "hotnews" ("locale", "source", "title")`,

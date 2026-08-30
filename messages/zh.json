@@ -613,6 +613,7 @@
     "viewAll": "查看全部",
     "newsDetailBack": "← 返回新闻列表",
     "newsReadOriginal": "阅读原文 →",
+    "newsOriginalSource": "查看原始来源",
     "newsSourceLabel": "来源",
     "newsPublishedAt": "发布于 {time}",
     "newsNotFound": "新闻不存在或已下线"

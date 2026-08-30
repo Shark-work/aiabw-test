@@ -613,6 +613,7 @@
     "viewAll": "View all",
     "newsDetailBack": "← Back to News",
     "newsReadOriginal": "Read Original →",
+    "newsOriginalSource": "View original source",
     "newsSourceLabel": "Source",
     "newsPublishedAt": "Published {time}",
     "newsNotFound": "News not found or removed"

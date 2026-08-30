@@ -66,7 +66,7 @@ export default async function NewsDetailPage({ params }: Props) {
   const th = await getTranslations("home");
 
   const { rows } = await pool.query(
-    `SELECT id, source, title, "desc", cover, hot, timestamp, url, updated_at AS "updatedAt",
+    `SELECT id, source, title, "desc", cover, hot, timestamp, url, content, updated_at AS "updatedAt",
             is_domestic AS "isDomestic"
        FROM hotnews WHERE id = $1 AND status = 'visible' LIMIT 1`,
     [Number(id)],
@@ -143,15 +143,34 @@ export default async function NewsDetailPage({ params }: Props) {
 
           <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-zinc-700">{body}</p>
 
-          {url && (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-block rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
-            >
-              {t("newsReadOriginal")}
-            </a>
+          {/* 站内阅读：有正文 → 渲染正文 + 弱化来源链接；无正文 → 阅读原文 */}
+          {n.content ? (
+            <>
+              <div className="mt-5 whitespace-pre-line border-t border-zinc-100 pt-4 text-[15px] leading-7 text-zinc-700">
+                {String(n.content)}
+              </div>
+              {url && (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-5 inline-block text-xs text-zinc-400 underline-offset-2 transition hover:text-orange-600 hover:underline"
+                >
+                  {t("newsOriginalSource")}
+                </a>
+              )}
+            </>
+          ) : (
+            url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-block rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
+              >
+                {t("newsReadOriginal")}
+              </a>
+            )
           )}
         </article>
 

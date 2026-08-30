@@ -20,6 +20,7 @@ type RawItem = {
   source: string;
   title: string;
   desc: string;
+  content: string | null;
   cover: string | null;
   url: string;
   publishedAtMs: number;
@@ -27,6 +28,27 @@ type RawItem = {
   locale: string;
   isDomestic: boolean;
 };
+
+/** 尝试抓取目标页正文（纯文本提取；付费墙/JS 渲染/失败返回 null）。 */
+async function fetchArticleContent(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(6000),
+      headers: { "User-Agent": "aiabw-news-bot/1.0" },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return text.length >= 200 ? text.slice(0, 5000) : null;
+  } catch {
+    return null;
+  }
+}
 
 /** 标题归一化（小写 + 去标点/空白，截断 60 字符）。 */
 function normalizeTitle(s: string): string {
@@ -126,10 +148,13 @@ function parseRss(xml: string, source: string, weight: number): Omit<RawItem, "l
     const cover =
       enclosure || (body.match(/<media:content[^>]*url="([^"]+)"/) || [])[1] || null;
     if (!title || !link) continue;
+    const fullDesc = descRaw.slice(0, 5000);
     items.push({
       source,
       title: title.slice(0, 300),
-      desc: descRaw.slice(0, 500),
+      desc: fullDesc.slice(0, 500),
+      // RSS description 若本身就是完整正文（长文本）→ 直接作为 content
+      content: fullDesc.length > 800 ? fullDesc : null,
       cover,
       url: link,
       publishedAtMs: pubDate ? Date.parse(pubDate) || Date.now() : Date.now(),
@@ -165,7 +190,7 @@ export async function fetchAndStoreNews(): Promise<{ inserted: number; total: nu
     deduped.push(...(await dedupeBySimilarity(filtered.filter((it) => it.locale === locale), locale)));
   }
 
-  const rows: { source: string; title: string; desc: string; cover: string | null; hot: number; timestamp: number; url: string; locale: string; isDomestic: boolean }[] = [];
+  const rows: { source: string; title: string; desc: string; content: string | null; cover: string | null; hot: number; timestamp: number; url: string; locale: string; isDomestic: boolean }[] = [];
 
   // 保留热度 Top 20 且按热度分写入
   const scored = deduped
@@ -173,11 +198,25 @@ export async function fetchAndStoreNews(): Promise<{ inserted: number; total: nu
     .sort((a, b) => b.hot - a.hot)
     .slice(0, 20);
 
-  for (const it of scored) {
+  // 正文抓取：RSS 摘要短（content 为空）→ 尝试抓取目标页正文（失败留空，详情页走阅读原文）
+  const enriched = await Promise.all(
+    scored.map(async (it) => {
+      if (it.content) return it;
+      try {
+        const content = await fetchArticleContent(it.url);
+        return { ...it, content };
+      } catch {
+        return it;
+      }
+    }),
+  );
+
+  for (const it of enriched) {
     rows.push({
       source: it.source,
       title: it.title,
       desc: it.desc,
+      content: it.content,
       cover: it.cover,
       hot: it.hot,
       timestamp: it.publishedAtMs,
@@ -192,17 +231,17 @@ export async function fetchAndStoreNews(): Promise<{ inserted: number; total: nu
     // 全源不可达 / 无动物内容 → 中文种子内容兜底
     fallback = true;
     for (const s of SEED_NEWS) {
-      rows.push({ source: s.source, title: s.title, desc: s.desc ?? "", cover: s.cover, hot: computeHotScore(1200, s.timestamp, now), timestamp: s.timestamp, url: s.url ?? "", locale: "zh", isDomestic: true });
+      rows.push({ source: s.source, title: s.title, desc: s.desc ?? "", content: null, cover: s.cover, hot: computeHotScore(1200, s.timestamp, now), timestamp: s.timestamp, url: s.url ?? "", locale: "zh", isDomestic: true });
     }
   }
 
   // 幂等写入（locale+source+title 唯一，冲突跳过）
   let inserted = 0;
   if (rows.length) {
-    const values = rows.flatMap((r) => [r.source, r.title, r.desc, r.cover, r.hot, r.timestamp, r.url, r.locale, r.isDomestic]);
-    const placeholders = rows.map((_, i) => `($${i * 9 + 1},$${i * 9 + 2},$${i * 9 + 3},$${i * 9 + 4},$${i * 9 + 5},$${i * 9 + 6},$${i * 9 + 7},$${i * 9 + 8},$${i * 9 + 9})`).join(",");
+    const values = rows.flatMap((r) => [r.source, r.title, r.desc, r.content, r.cover, r.hot, r.timestamp, r.url, r.locale, r.isDomestic]);
+    const placeholders = rows.map((_, i) => `($${i * 10 + 1},$${i * 10 + 2},$${i * 10 + 3},$${i * 10 + 4},$${i * 10 + 5},$${i * 10 + 6},$${i * 10 + 7},$${i * 10 + 8},$${i * 10 + 9},$${i * 10 + 10})`).join(",");
     const res = await pool.query(
-      `INSERT INTO hotnews (source, title, "desc", cover, hot, timestamp, url, locale, is_domestic)
+      `INSERT INTO hotnews (source, title, "desc", content, cover, hot, timestamp, url, locale, is_domestic)
        VALUES ${placeholders}
        ON CONFLICT (locale, source, title) DO NOTHING`,
       values,
