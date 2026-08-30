@@ -21,7 +21,7 @@
   --card-bg: rgba(17, 24, 39, 0.78);
   --card-border: #374151;
   --accent: #f59e0b;
-  --rain-opacity: 0.55;
+  --rain-opacity: 0.25;
   --mist-opacity: 0.3;
   --glow-opacity: 0.85;
 }
@@ -42,7 +42,7 @@ body {
 }
 
 /* ===================== Wild 主题：雨 / 雾 / 光（纯 CSS 伪元素 + GPU 合成） ===================== */
-/* 雨：斜向细线，translateY 下落（0.8s linear infinite） */
+/* 雨：斜向细线（细雨慢镜头，2.5s linear infinite，若有若无） */
 [data-theme="wild"] body::before {
   content: "";
   position: fixed;
@@ -53,9 +53,9 @@ body {
   background-image: repeating-linear-gradient(
     115deg,
     transparent 0 6px,
-    rgba(255, 255, 255, 0.22) 6px 7px
+    rgba(255, 255, 255, 0.1) 6px 6.5px
   );
-  animation: rain-fall 0.8s linear infinite;
+  animation: rain-fall 2.5s linear infinite;
   will-change: transform;
 }
 @keyframes rain-fall {
@@ -78,7 +78,7 @@ body {
     radial-gradient(ellipse at 30% 100%, rgba(200, 220, 210, 0.5), transparent 65%),
     radial-gradient(ellipse at 75% 100%, rgba(190, 210, 205, 0.4), transparent 60%);
   filter: blur(12px);
-  animation: mist-drift 26s ease-in-out infinite alternate;
+  animation: mist-drift 35s ease-in-out infinite alternate;
   will-change: transform;
 }
 @keyframes mist-drift {
@@ -99,7 +99,7 @@ html[data-theme="wild"]::after {
   z-index: 88;
   background: radial-gradient(circle, #ffd700 0%, rgba(255, 215, 0, 0.35) 55%, transparent 75%);
   box-shadow: 0 0 40px 12px rgba(255, 215, 0, var(--glow-opacity));
-  animation: cave-breathe 3.5s ease-in-out infinite;
+  animation: cave-breathe 5s ease-in-out infinite;
   will-change: transform, opacity;
 }
 @keyframes cave-breathe {
@@ -148,10 +148,13 @@ body,
   transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
 }
 
-/* 手机端：雨丝密度减半（静态图背景，省流量） */
+/* 手机端：雨丝更淡（静态图背景，省流量）+ 与桌面一致慢速 */
 @media (max-width: 768px) {
   [data-theme="wild"] {
-    --rain-opacity: 0.28;
+    --rain-opacity: 0.12;
+  }
+  [data-theme="wild"] body::before {
+    animation-duration: 2.5s;
   }
 }
 
