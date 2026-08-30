@@ -18,22 +18,24 @@ export async function GET(req: Request) {
     const { rows } = await pool.query(
       `SELECT id, name_zh AS "nameZh", name_en AS "nameEn",
               price_cny AS "priceCny", price_points AS "pricePoints",
-              probabilities, species_ids AS "speciesIds", is_active AS "isActive"
+              probabilities, species_ids AS "speciesIds", is_active AS "isActive",
+              is_daily AS "isDaily"
          FROM blindbox_pools
         WHERE is_active = true
         ORDER BY created_at`,
     );
 
-    // 登录用户：今日每日福利箱是否已领取（复用 blindbox_logs.created_at）
+    // 登录用户：今日每日福利池是否已领取（按 is_daily 标记判定，去硬编码）
     let dailyClaimedToday = false;
     try {
       const user = await getUserFromRequest(req);
       if (user) {
         const r = await pool.query(
-          `SELECT 1 FROM blindbox_logs
-            WHERE user_id = $1 AND pool_id = 'newbie_welcome'
-              AND created_at::date = CURRENT_DATE
-            LIMIT 1`,
+          `SELECT 1 FROM blindbox_logs l
+            JOIN blindbox_pools p ON p.id = l.pool_id
+           WHERE l.user_id = $1 AND p.is_daily = true
+             AND l.created_at::date = CURRENT_DATE
+           LIMIT 1`,
           [user.id],
         );
         dailyClaimedToday = r.rows.length > 0;
@@ -45,10 +47,11 @@ export async function GET(req: Request) {
     const pools = rows.map((r) => ({
       id: String(r.id),
       name: locale === "en" ? String(r.nameEn) : String(r.nameZh),
-      priceCny: String(r.priceCny),
+      priceCny: Number(r.priceCny),
       pricePoints: Number(r.pricePoints),
       probabilities: r.probabilities ?? {},
-      todayClaimed: String(r.id) === "newbie_welcome" ? dailyClaimedToday : false,
+      isDaily: !!r.isDaily,
+      todayClaimed: r.isDaily === true ? dailyClaimedToday : false,
     }));
     return NextResponse.json({ ok: true, pools });
   } catch (err) {

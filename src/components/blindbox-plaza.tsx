@@ -12,9 +12,11 @@ import { unlockPriceCnyLabel } from "@/lib/pricing";
 type BlindboxPool = {
   id: string;
   name: string;
-  priceCny: string;
+  priceCny: number;
   pricePoints: number;
   probabilities: Record<string, number>;
+  /** 每日福利池（限购标记，去硬编码） */
+  isDaily?: boolean;
   /** 每日福利箱今日是否已领取（仅登录用户、daily 池返回） */
   todayClaimed?: boolean;
 };
@@ -25,12 +27,16 @@ type DrawResult = {
   rarity?: string;
   poolId?: string;
   nfr?: {
+    id: string;
+    collectibleId: string;
+    speciesId: string;
     speciesName: string;
     rarity: string;
     element: string;
     generation: number;
     imageUrl: string;
     hashId: string;
+    lockedUntil?: string | null;
   };
   error?: string;
 };
@@ -58,6 +64,7 @@ type PayState = {
   qr?: string;
   payUrl?: string | null;
   amount: number;
+  pointsCost?: number;
 };
 
 /**
@@ -125,28 +132,33 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
     }, 2000);
   };
 
-  const draw = async () => {
+  // 点击「抽一发」：打开统一支付确认弹窗（积分 / 微信 可选）
+  const draw = () => {
     const token = localStorage.getItem("aiabw_token");
     if (!token) {
       setResult({ ok: false, error: t("needLogin") });
       return;
     }
-    setDrawing(true);
     setResult(null);
-    setPay(null);
-    try {
-      // 1) 余额预检：积分足够 → 积分通道；不足 → 现金兜底
-      let method: "points" | "cash" = "points";
-      try {
-        const me = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        }).then((r) => r.json());
-        if (me?.user && Number(me.user.points ?? 0) < pool.pricePoints) method = "cash";
-      } catch {
-        // 余额查询失败：走积分通道，由后端 402 兜底提示
-      }
+    setPay({
+      orderId: "",
+      amount: pool.priceCny,
+      pointsCost: pool.pricePoints,
+      qr: undefined,
+      payUrl: null,
+    });
+  };
 
-      // 2) 调开箱接口（携带支付方式）
+  /** 支付方式确认：积分 → 积分通道；微信 → 现金下单 */
+  const handlePayMethod = async (method: "points" | "wechat") => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) {
+      setPay(null);
+      setResult({ ok: false, error: t("needLogin") });
+      return;
+    }
+    setDrawing(true);
+    try {
       const res = await fetch("/api/blindbox/draw", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -156,21 +168,25 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
 
       if (data?.ok) {
         if (data.needPayment) {
-          // 积分不足 → 现金兜底：展示支付二维码 + 轮询确认
+          // 现金：展示二维码 + 轮询确认
           setPay({
             orderId: data.orderId,
             qr: data.qr,
             payUrl: data.payUrl ?? null,
-            amount: data.amount ?? 0,
+            amount: data.amount ?? pool.priceCny,
+            pointsCost: pool.pricePoints,
           });
           startPolling(data.orderId);
         } else {
+          setPay(null);
           startOpen(data);
         }
       } else {
+        setPay(null);
         setResult({ ok: false, error: data?.error ?? t("drawFailed") });
       }
     } catch {
+      setPay(null);
       setResult({ ok: false, error: t("drawFailed") });
     } finally {
       setDrawing(false);
@@ -185,7 +201,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
   };
 
   const rarityMeta = result?.nfr ? getRarityMeta(String(result.nfr.rarity ?? "common")) : null;
-  const isNewbie = pool.id === "newbie_welcome";
+  const isNewbie = pool.isDaily === true;
   const isHot = pool.id === "cyber_myth";
 
   return (
@@ -216,7 +232,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
           <span className="rounded-full bg-orange-100 px-2 py-0.5 font-semibold text-orange-700">
             {pool.pricePoints} {t("points")}
           </span>
-          <span className="text-zinc-400">/ ¥{Math.max(Number(pool.priceCny), 1).toFixed(2)}</span>
+          <span className="text-zinc-400">/ ¥{Math.max(pool.priceCny, 1).toFixed(2)}</span>
         </div>
         <div className="mt-3 flex gap-2">
           <button
@@ -274,15 +290,17 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
         </div>
       )}
 
-      {/* 现金支付弹窗（积分不足兜底）：统一 PaymentModal */}
+      {/* 支付弹窗（积分 / 微信统一确认流程） */}
       <PaymentModal
         open={!!pay}
         title={t("payNeed", { price: (pay?.amount ?? 0).toFixed(2) })}
         amount={pay?.amount ?? 0}
+        pointsCost={pay?.pointsCost}
         description={t("payQrHint")}
         qr={pay?.qr}
         payUrl={pay?.payUrl ?? null}
-        pending={!!pay}
+        pending={!!pay?.qr}
+        onPay={(m) => void handlePayMethod(m)}
         onClose={() => setPay(null)}
       />
 

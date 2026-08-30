@@ -325,6 +325,8 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "pet_dictionary" ADD COLUMN IF NOT EXISTS "habitat_en" text`,
   // 新闻国内/国际标识（80/20 配比 + 前端国旗标签）
   `ALTER TABLE "hotnews" ADD COLUMN IF NOT EXISTS "is_domestic" boolean DEFAULT false NOT NULL`,
+  // 盲盒每日福利池标记（限购判定去硬编码）
+  `ALTER TABLE "blindbox_pools" ADD COLUMN IF NOT EXISTS "is_daily" boolean DEFAULT false NOT NULL`,
   // 新闻唯一索引改为 (locale, source, title)：同源同题中英各行互不冲突
   `DROP INDEX IF EXISTS idx_hotnews_source_title`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_hotnews_locale_source_title ON "hotnews" ("locale", "source", "title")`,

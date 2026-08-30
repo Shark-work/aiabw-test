@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     const poolRes = await pool.query(
       `SELECT id, name_zh AS "nameZh", name_en AS "nameEn", price_cny AS "priceCny",
               price_points AS "pricePoints", probabilities, species_ids AS "speciesIds",
-              is_active AS "isActive"
+              is_active AS "isActive", is_daily AS "isDaily"
          FROM blindbox_pools WHERE id = $1 LIMIT 1`,
       [poolId],
     );
@@ -154,7 +154,7 @@ export async function POST(req: Request) {
       }
 
       // 2) 每日福利箱：现金通道每日限购 1 次（复用 blindbox_logs.created_at 判定）
-      if (poolId === "newbie_welcome") {
+      if (poolRow.isDaily === true) {
         const claimed = await pool.query(
           `SELECT 1 FROM blindbox_logs
             WHERE user_id = $1 AND pool_id = $2

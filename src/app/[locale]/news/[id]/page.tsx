@@ -66,7 +66,8 @@ export default async function NewsDetailPage({ params }: Props) {
   const th = await getTranslations("home");
 
   const { rows } = await pool.query(
-    `SELECT id, source, title, "desc", cover, hot, timestamp, url, updated_at AS "updatedAt"
+    `SELECT id, source, title, "desc", cover, hot, timestamp, url, updated_at AS "updatedAt",
+            is_domestic AS "isDomestic"
        FROM hotnews WHERE id = $1 AND status = 'visible' LIMIT 1`,
     [Number(id)],
   );
@@ -75,6 +76,7 @@ export default async function NewsDetailPage({ params }: Props) {
 
   const headline = String(n.title);
   const source = String(n.source);
+  const isDomestic = !!n.isDomestic;
   const url = n.url ? String(n.url) : null;
   const cover = n.cover ? String(n.cover) : null;
   const body = String(n.desc ?? n.title);
@@ -112,14 +114,23 @@ export default async function NewsDetailPage({ params }: Props) {
         <article className="mt-3 rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-sm backdrop-blur">
           <h1 className="text-xl font-bold leading-snug text-zinc-900">{headline}</h1>
 
-          {/* 来源标识 + 发布时间 + 热度 */}
+          {/* 来源标识（🇨🇳 国内 / 🌍 国际）+ 发布时间 + 热度 */}
           <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-zinc-400">
+            <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-medium">
+              {isDomestic ? th("newsDomesticLabel") : th("newsGlobalLabel")}
+            </span>
             <span className="rounded-full bg-orange-50 px-2 py-0.5 font-semibold text-orange-600">
               {t("newsSourceLabel")} {source}
             </span>
             {time && <span>{t("newsPublishedAt", { time })}</span>}
             <span>🔥 {formatHot(Number(n.hot))}</span>
           </div>
+          {/* 翻译提示：国外新闻 AI 翻译透明化 */}
+          {!isDomestic && locale === "zh" && (
+            <p className="mt-1 text-[10px] text-zinc-400">
+              {th("newsTranslatedFrom", { source })}
+            </p>
+          )}
 
           {/* 封面图（外链失败自动回退站内占位图） */}
           {cover && (

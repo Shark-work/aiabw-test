@@ -44,7 +44,8 @@ export async function GET(req: Request) {
   }
   if (category) {
     params.push(category);
-    where.push(`d.category = $${params.length}`);
+    // 兼容 zh/en 传参：分类原文或英文名均可命中
+    where.push(`(d.category = $${params.length} OR d.category_en = $${params.length})`);
   }
   if (species) {
     params.push(species);
@@ -78,9 +79,11 @@ export async function GET(req: Request) {
     params,
   );
 
-  // 图鉴分类导航（来自宠物字典）
+  // 图鉴分类导航（按 locale 返回英文/中文，供筛选按钮显示）
   const { rows: cats } = await pool.query(
-    `SELECT DISTINCT category FROM pet_dictionary ORDER BY category`,
+    locale === "en"
+      ? `SELECT DISTINCT COALESCE(category_en, category) AS category FROM pet_dictionary ORDER BY category`
+      : `SELECT DISTINCT category FROM pet_dictionary ORDER BY category`,
   );
 
   const pets = rows.map((r) => {

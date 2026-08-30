@@ -143,6 +143,9 @@ export function UpgradePetModal({
       pending={!!qr}
       busy={loading}
       error={error || undefined}
+      onPay={(m) => {
+        if (m === "wechat") void createOrder();
+      }}
       onClose={onClose}
     />
   );
