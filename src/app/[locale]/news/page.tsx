@@ -82,12 +82,14 @@ export default async function NewsPage({ params }: Props) {
                 >
                   <span className="mt-0.5 w-5 shrink-0 text-sm font-bold text-zinc-300">{i + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/news/${n.id}`}
+                    <a
+                      href={n.url ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600"
                     >
                       {n.title}
-                    </Link>
+                    </a>
                     {/* 翻译提示：国外新闻 AI 翻译透明化 */}
                     {n.isDomestic === false && locale === "zh" && (
                       <p className="mt-0.5 text-[10px] text-zinc-400">
