@@ -78,7 +78,7 @@ export function NewsCarousel() {
         {/* 当前新闻大卡片：点击直接在新标签页打开真实原文 */}
         <a
           key={item.id}
-          href={item.url ?? "#"}
+          href={item.url ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
           className="group flex flex-col overflow-hidden rounded-xl border border-zinc-100 bg-white transition hover:border-orange-300 hover:shadow-md sm:flex-row"

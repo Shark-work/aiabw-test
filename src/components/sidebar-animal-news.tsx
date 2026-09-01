@@ -104,7 +104,7 @@ export function SidebarAnimalNews() {
           {news.map((n, i) => (
             <li key={n.id} className="py-2.5 first:pt-0 last:pb-0">
               <a
-                href={n.url ?? "#"}
+                href={n.url ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-start gap-2.5"

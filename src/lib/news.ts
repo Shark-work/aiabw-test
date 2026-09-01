@@ -237,7 +237,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "科研团队通过卫星追踪大熊猫迁徙路线，为栖息地保护提供全新数据支持。",
     cover: null,
     timestamp: Date.now() - 3 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=giant_panda",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -245,7 +245,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "爱心志愿者轮班照料，绝育、驱虫、领养一条龙，让更多流浪猫告别街头。",
     cover: null,
     timestamp: Date.now() - 5 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=persian",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -253,7 +253,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "双胞胎滚滚首次亮相，网友投稿的“团团”“圆圆”等名字热度飙升。",
     cover: null,
     timestamp: Date.now() - 7 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=giant_panda",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -261,7 +261,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "护林员与村民为象群让路，这一“象往”之旅成为人与自然和谐的生动注脚。",
     cover: null,
     timestamp: Date.now() - 11 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=elephant",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -269,7 +269,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "每天准时上班、陪客人拍照，这只橘猫成了街区最受欢迎的“店长”。",
     cover: null,
     timestamp: Date.now() - 15 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=maine_coon",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -277,7 +277,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "水下影像记录显示，座头鲸母亲会示范气泡网捕食法，幼鲸反复练习。",
     cover: null,
     timestamp: Date.now() - 20 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=whale",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -285,7 +285,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "饲养员晒出熊猫宝宝“团子”睡姿，网友直呼可爱暴击。",
     cover: null,
     timestamp: Date.now() - 26 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=giant_panda",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -293,7 +293,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "志愿者团队 24 小时轮班喂养与康复，让更多考拉重返野外。",
     cover: null,
     timestamp: Date.now() - 40 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=koala",
+    url: null,
   },
   // ---- 泛动物文化（4）----
   {
@@ -302,7 +302,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "新反派与更广阔的动物都市图景曝光，粉丝直呼“等太久了”。",
     cover: null,
     timestamp: Date.now() - 9 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=sloth",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -310,7 +310,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "荣耀大地的起源传说揭开面纱，经典旋律再度响起。",
     cover: null,
     timestamp: Date.now() - 18 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=lion",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -318,7 +318,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "新季节限定鱼种与潜水玩法上线，无人岛居民又忙了起来。",
     cover: null,
     timestamp: Date.now() - 30 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=octopus",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -326,7 +326,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "森林守护者们的冒险故事持续升温，合家欢观影首选。",
     cover: null,
     timestamp: Date.now() - 50 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=brown_bear",
+    url: null,
   },
   // ---- 动物科普 / 冷知识（3）----
   {
@@ -335,7 +335,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "深海巨星的生理构造为何如此特殊？一文看懂头足类的生存智慧。",
     cover: null,
     timestamp: Date.now() - 22 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=octopus",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -343,7 +343,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "捕猎本能、领地意识与好奇心共同作用，你家主子其实在“练习”。",
     cover: null,
     timestamp: Date.now() - 33 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=persian",
+    url: null,
   },
   {
     source: "Seed · 动物头条",
@@ -351,7 +351,7 @@ export const SEED_NEWS: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "独特的骨骼结构与步态让企鹅在冰面行走更高效，也更可爱。",
     cover: null,
     timestamp: Date.now() - 44 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=penguin",
+    url: null,
   },
 ];
 
@@ -364,7 +364,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Researchers track panda migration routes via satellite, providing new data for habitat protection.",
     cover: null,
     timestamp: Date.now() - 3 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=giant_panda",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -372,7 +372,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Loving volunteers run the station around the clock - neutering, deworming and adoption in one chain.",
     cover: null,
     timestamp: Date.now() - 5 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=persian",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -380,7 +380,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "The twin cubs make their debut as fans flood in with names like 'Tuantuan' and 'Yuanyuan'.",
     cover: null,
     timestamp: Date.now() - 7 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=giant_panda",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -388,7 +388,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Rangers and villagers give way to the herd - a touching chapter of humans and nature in harmony.",
     cover: null,
     timestamp: Date.now() - 11 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=elephant",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -396,7 +396,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Clocking in daily and posing for photos, this tabby became the neighborhood's most beloved 'manager'.",
     cover: null,
     timestamp: Date.now() - 15 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=maine_coon",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -404,7 +404,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Underwater footage shows humpback mothers demonstrating bubble-net feeding, calves practicing repeatedly.",
     cover: null,
     timestamp: Date.now() - 20 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=whale",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -412,7 +412,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Keepers share a photo of sleeping cub 'Tuanzi' - netizens say it's an overload of cuteness.",
     cover: null,
     timestamp: Date.now() - 26 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=giant_panda",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -420,7 +420,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Volunteer teams work 24-hour shifts to feed and rehabilitate, helping more koalas return to the wild.",
     cover: null,
     timestamp: Date.now() - 40 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=koala",
+    url: null,
   },
   // ---- Animal culture (4) ----
   {
@@ -429,7 +429,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "A new villain and a wider animal metropolis are revealed - fans can't wait.",
     cover: null,
     timestamp: Date.now() - 9 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=sloth",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -437,7 +437,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "The origin legend of the Pride Lands unfolds as the classic melody returns.",
     cover: null,
     timestamp: Date.now() - 18 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=lion",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -445,7 +445,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "New seasonal fish and diving gameplay land on the island - residents are busy again.",
     cover: null,
     timestamp: Date.now() - 30 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=octopus",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -453,7 +453,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "The forest guardians' adventures keep warming hearts - a family favorite.",
     cover: null,
     timestamp: Date.now() - 50 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=brown_bear",
+    url: null,
   },
   // ---- Animal science / trivia (3) ----
   {
@@ -462,7 +462,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Why are deep-sea giants built so differently? A quick dive into cephalopod survival smarts.",
     cover: null,
     timestamp: Date.now() - 22 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=octopus",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -470,7 +470,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "Hunting instinct, territory and curiosity combine - your cat is actually 'practicing'.",
     cover: null,
     timestamp: Date.now() - 33 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=persian",
+    url: null,
   },
   {
     source: "Seed · Animal News",
@@ -478,7 +478,7 @@ export const SEED_NEWS_EN: Omit<HotNews, "id" | "hot" | "isDomestic">[] = [
     desc: "A unique skeleton and gait make penguins efficient on ice - and even cuter.",
     cover: null,
     timestamp: Date.now() - 44 * 3_600_000,
-    url: "https://www.aiabw.com/pets?species=penguin",
+    url: null,
   },
 ];
 

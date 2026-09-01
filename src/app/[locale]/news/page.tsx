@@ -83,7 +83,7 @@ export default async function NewsPage({ params }: Props) {
                   <span className="mt-0.5 w-5 shrink-0 text-sm font-bold text-zinc-300">{i + 1}</span>
                   <div className="min-w-0 flex-1">
                     <a
-                      href={n.url ?? "#"}
+                      href={n.url ?? undefined}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600"
