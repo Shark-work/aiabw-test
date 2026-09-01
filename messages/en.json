@@ -68,7 +68,8 @@
     "newsGlobalLabel": "🌍 Global",
     "newsTranslatedFrom": "AI translated from {source}",
     "newsHot": "🔥 {hot} hot",
-    "newsCopyright": "Content aggregated from public sources; all rights belong to the original authors. Please contact support if any rights are infringed."
+    "newsCopyright": "Content aggregated from public sources; all rights belong to the original authors. Please contact support if any rights are infringed.",
+    "newsInSiteFullText": "Full text · read in-app"
   },
   "login": {
     "title": "Sign in to AIABW",

@@ -74,22 +74,27 @@ export default async function NewsPage({ params }: Props) {
           <ol className="mt-4 divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur">
             {news.map((n, i) => (
               <li key={n.id} className="py-3 first:pt-0 last:pb-0">
-                <a
-                  href={n.url ?? "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-start gap-3"
-                >
+                <div className="group flex items-start gap-3">
                   <span className="mt-0.5 w-5 shrink-0 text-sm font-bold text-zinc-300">{i + 1}</span>
                   <div className="min-w-0 flex-1">
-                    <a
-                      href={n.url ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600"
-                    >
-                      {n.title}
-                    </a>
+                    {/* 有真实原文 → 新标签直达；无 url（站内种子）→ 站内阅读正文 */}
+                    {n.url ? (
+                      <a
+                        href={n.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600"
+                      >
+                        {n.title}
+                      </a>
+                    ) : (
+                      <Link
+                        href={`/news/${n.id}`}
+                        className="line-clamp-2 text-sm font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600"
+                      >
+                        {n.title}
+                      </Link>
+                    )}
                     {/* 翻译提示：国外新闻 AI 翻译透明化 */}
                     {n.isDomestic === false && locale === "zh" && (
                       <p className="mt-0.5 text-[10px] text-zinc-400">
@@ -108,7 +113,7 @@ export default async function NewsPage({ params }: Props) {
                       </span>
                     </div>
                   </div>
-                </a>
+                </div>
               </li>
             ))}
           </ol>

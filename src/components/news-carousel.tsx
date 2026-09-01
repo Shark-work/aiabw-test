@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Link } from "@/i18n/navigation";
+
 type NewsItem = {
   id: number;
   source: string;
@@ -67,6 +69,48 @@ export function NewsCarousel() {
   if (!news.length) return null;
   const item = news[idx];
 
+  // 卡片内容（图片 + 文字区）：有真实原文 → 外层 <a target=_blank> 直达原文；
+  // 无 url（站内种子新闻）→ <Link> 进入 /news/[id] 站内阅读完整正文。
+  const cardInner = (
+    <>
+      {/* 高清封面图：移动端全宽（h-44），桌面左侧半宽 */}
+      {/* 远程新闻域名不可控（next/image 需逐一配置 remotePatterns 且不支持 onError 回退），保留原生 img。 */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={item.cover ?? FALLBACK_COVER}
+        alt={item.title}
+        loading="lazy"
+        className="h-44 w-full shrink-0 object-cover sm:h-52 sm:w-1/2"
+        onError={(e) => {
+          const el = e.currentTarget;
+          if (el.src !== window.location.origin + FALLBACK_COVER) el.src = FALLBACK_COVER;
+        }}
+      />
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-4">
+        <p className="line-clamp-2 text-lg font-bold leading-snug text-zinc-900 transition group-hover:text-orange-600 sm:text-xl">
+          {item.title}
+        </p>
+        {/* 翻译提示：国外新闻 AI 翻译透明化 */}
+        {item.isDomestic === false && locale === "zh" && (
+          <p className="text-[10px] text-zinc-400">
+            {t("newsTranslatedFrom", { source: item.source })}
+          </p>
+        )}
+        <p className="flex items-center gap-1.5 text-xs text-zinc-400">
+          <span className="shrink-0 rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium">
+            {item.isDomestic ? t("newsDomesticLabel") : t("newsGlobalLabel")}
+          </span>
+          <span className="line-clamp-1">{item.source}</span>
+        </p>
+        <span className="inline-flex w-fit items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
+          🔥 {t("newsHot", { hot: formatHot(item.hot) })}
+        </span>
+      </div>
+    </>
+  );
+  const cardCls =
+    "group flex flex-col overflow-hidden rounded-xl border border-zinc-100 bg-white transition hover:border-orange-300 hover:shadow-md sm:flex-row";
+
   return (
     <section className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-6 shadow-sm backdrop-blur">
       <h3 className="mb-2 text-sm font-semibold text-zinc-800">{t("newsTitle")}</h3>
@@ -75,48 +119,16 @@ export function NewsCarousel() {
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        {/* 当前新闻大卡片：点击直接在新标签页打开真实原文 */}
-        <a
-          key={item.id}
-          href={item.url ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex flex-col overflow-hidden rounded-xl border border-zinc-100 bg-white transition hover:border-orange-300 hover:shadow-md sm:flex-row"
-        >
-          {/* 高清封面图：移动端全宽（h-44），桌面左侧半宽 */}
-          {/* 远程新闻域名不可控（next/image 需逐一配置 remotePatterns 且不支持 onError 回退），保留原生 img。 */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={item.cover ?? FALLBACK_COVER}
-            alt={item.title}
-            loading="lazy"
-            className="h-44 w-full shrink-0 object-cover sm:h-52 sm:w-1/2"
-            onError={(e) => {
-              const el = e.currentTarget;
-              if (el.src !== window.location.origin + FALLBACK_COVER) el.src = FALLBACK_COVER;
-            }}
-          />
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 p-4">
-            <p className="line-clamp-2 text-lg font-bold leading-snug text-zinc-900 transition group-hover:text-orange-600 sm:text-xl">
-              {item.title}
-            </p>
-            {/* 翻译提示：国外新闻 AI 翻译透明化 */}
-            {item.isDomestic === false && locale === "zh" && (
-              <p className="text-[10px] text-zinc-400">
-                {t("newsTranslatedFrom", { source: item.source })}
-              </p>
-            )}
-            <p className="flex items-center gap-1.5 text-xs text-zinc-400">
-              <span className="shrink-0 rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium">
-                {item.isDomestic ? t("newsDomesticLabel") : t("newsGlobalLabel")}
-              </span>
-              <span className="line-clamp-1">{item.source}</span>
-            </p>
-            <span className="inline-flex w-fit items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
-              🔥 {t("newsHot", { hot: formatHot(item.hot) })}
-            </span>
-          </div>
-        </a>
+        {/* 大卡片：有真实原文 → 新标签直达原文；无 url（站内种子）→ 站内阅读 */}
+        {item.url ? (
+          <a key={item.url} href={item.url} target="_blank" rel="noopener noreferrer" className={cardCls}>
+            {cardInner}
+          </a>
+        ) : (
+          <Link key={item.id} href={`/news/${item.id}`} className={cardCls}>
+            {cardInner}
+          </Link>
+        )}
       </div>
 
       {/* 轮播指示点 + 手动切换 */}

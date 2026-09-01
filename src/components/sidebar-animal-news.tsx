@@ -103,41 +103,51 @@ export function SidebarAnimalNews() {
         <ol className="divide-y divide-zinc-100">
           {news.map((n, i) => (
             <li key={n.id} className="py-2.5 first:pt-0 last:pb-0">
-              <a
-                href={n.url ?? undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-start gap-2.5"
-              >
-                {/* 排名 + 热度竖线 */}
-                <div className="flex w-6 shrink-0 flex-col items-center">
-                  <span className={`text-xs font-bold ${rankTextClass(i)}`}>{i + 1}</span>
-                  <span className={`mt-1 h-6 w-0.5 rounded-full ${hotBarClass(i)}`} />
-                </div>
-                {/* 标题（两行省略）+ 来源标识 + 🔥 热度 */}
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-[13px] font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600">
-                    {n.title}
-                  </p>
-                  {/* 翻译提示：国外新闻 AI 翻译透明化 */}
-                  {n.isDomestic === false && locale === "zh" && (
-                    <p className="mt-0.5 text-[10px] text-zinc-400">
-                      {t("newsTranslatedFrom", { source: n.source })}
-                    </p>
-                  )}
-                  <div className="mt-1 flex items-center gap-1.5 text-[10px] text-zinc-400">
-                    <span className="line-clamp-1 max-w-[9rem]">
-                      <span className="rounded bg-zinc-100 px-1 py-0.5 font-medium">
-                        {n.isDomestic ? t("newsDomesticLabel") : t("newsGlobalLabel")}
-                      </span>{" "}
-                      {n.source}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-orange-50 px-1.5 py-0.5 font-semibold text-orange-600">
-                      🔥 {formatHot(n.hot)}
-                    </span>
-                  </div>
-                </div>
-              </a>
+              {(() => {
+                const inner = (
+                  <>
+                    {/* 排名 + 热度竖线 */}
+                    <div className="flex w-6 shrink-0 flex-col items-center">
+                      <span className={`text-xs font-bold ${rankTextClass(i)}`}>{i + 1}</span>
+                      <span className={`mt-1 h-6 w-0.5 rounded-full ${hotBarClass(i)}`} />
+                    </div>
+                    {/* 标题（两行省略）+ 来源标识 + 🔥 热度 */}
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-[13px] font-medium leading-snug text-zinc-800 transition group-hover:text-orange-600">
+                        {n.title}
+                      </p>
+                      {/* 翻译提示：国外新闻 AI 翻译透明化 */}
+                      {n.isDomestic === false && locale === "zh" && (
+                        <p className="mt-0.5 text-[10px] text-zinc-400">
+                          {t("newsTranslatedFrom", { source: n.source })}
+                        </p>
+                      )}
+                      <div className="mt-1 flex items-center gap-1.5 text-[10px] text-zinc-400">
+                        <span className="line-clamp-1 max-w-[9rem]">
+                          <span className="rounded bg-zinc-100 px-1 py-0.5 font-medium">
+                            {n.isDomestic ? t("newsDomesticLabel") : t("newsGlobalLabel")}
+                          </span>{" "}
+                          {n.source}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-orange-50 px-1.5 py-0.5 font-semibold text-orange-600">
+                          🔥 {formatHot(n.hot)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                );
+                // 有真实原文 → 新标签直达；无 url（站内种子）→ /news/[id] 站内阅读
+                const cls = "group flex items-start gap-2.5";
+                return n.url ? (
+                  <a key={n.url} href={n.url} target="_blank" rel="noopener noreferrer" className={cls}>
+                    {inner}
+                  </a>
+                ) : (
+                  <Link key={n.id} href={`/news/${n.id}`} className={cls}>
+                    {inner}
+                  </Link>
+                );
+              })()}
             </li>
           ))}
         </ol>

@@ -231,7 +231,7 @@ export async function fetchAndStoreNews(): Promise<{ inserted: number; total: nu
     // 全源不可达 / 无动物内容 → 中文种子内容兜底
     fallback = true;
     for (const s of SEED_NEWS) {
-      rows.push({ source: s.source, title: s.title, desc: s.desc ?? "", content: null, cover: s.cover, hot: computeHotScore(1200, s.timestamp, now), timestamp: s.timestamp, url: s.url ?? "", locale: "zh", isDomestic: true });
+      rows.push({ source: s.source, title: s.title, desc: s.desc ?? "", content: s.content ?? null, cover: s.cover, hot: computeHotScore(1200, s.timestamp, now), timestamp: s.timestamp, url: s.url ?? "", locale: "zh", isDomestic: true });
     }
   }
 
@@ -259,6 +259,7 @@ function mapNewsRows(rows: Array<Record<string, unknown>>): HotNews[] {
     source: String(r.source),
     title: String(r.title),
     desc: r.desc ? String(r.desc) : null,
+    content: r.content ? String(r.content) : null,
     cover: r.cover ? String(r.cover) : null,
     hot: Number(r.hot),
     timestamp: Number(r.timestamp),
@@ -275,7 +276,7 @@ function mapNewsRows(rows: Array<Record<string, unknown>>): HotNews[] {
  *    合并后按 timestamp 混合排序（时间线连贯）；国内不足用中文种子补齐。
  */
 export async function queryNewsByLocale(locale: string, limit: number): Promise<HotNews[]> {
-  const NEWS_SELECT = `id, source, title, "desc", cover, hot, timestamp, url, is_domestic AS "isDomestic"`;
+  const NEWS_SELECT = `id, source, title, "desc", content, cover, hot, timestamp, url, is_domestic AS "isDomestic"`;
   if (locale !== "zh") {
     const { rows } = await pool.query(
       `SELECT ${NEWS_SELECT} FROM hotnews WHERE locale = $1 ORDER BY hot DESC LIMIT $2`,
