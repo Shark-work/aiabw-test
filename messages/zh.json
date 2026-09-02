@@ -413,8 +413,18 @@
     "interactSay": "你可以对它说",
     "goChat": "💬 去和它聊天",
     "knowledgeLater": "稍后再说",
+    "loginToChat": "🔑 登录开启云同步",
+    "guestSavedHint": "宠物已保存到本设备，登录后即可云同步并解锁 AI 对话",
     "tabCatalog": "图鉴",
     "tabLeaderboard": "排行榜"
+  },
+  "push": {
+    "title": "召回提醒",
+    "hint": "开启浏览器推送，宠物想你时第一时间告诉你（可随时关闭）",
+    "enable": "🔔 开启提醒",
+    "disable": "已开启 · 点击关闭",
+    "enabled": "✅ 召回提醒已开启",
+    "unsupported": "当前浏览器暂不支持推送提醒"
   },
   "api": {
     "signInFirst": "请先登录",
@@ -474,6 +484,8 @@
     "releaseFailed": "放生失败，请稍后重试",
     "petUnavailable": "这只宠物已经被其他主人领养啦，去图鉴看看别的吧~",
     "claimFailed": "领养失败，请稍后再试",
+    "pushNotConfigured": "推送服务尚未配置",
+    "pushSubscribeFailed": "订阅推送失败，请稍后再试",
     "invalidBreedSet": "请选择恰好 2 只宠物进行繁育",
     "parentNotFound": "亲本不存在或不属于你",
     "breedDifferentSpecies": "暂只支持同物种繁育",

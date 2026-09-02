@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { PetWatermark } from "@/components/pets/pet-watermark";
 import { getRarityMeta } from "@/lib/pet-status";
 
@@ -50,7 +50,7 @@ export function PetDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative mx-auto w-fit rounded-full bg-orange-50">
-          <PetAvatar
+          <LivingPet
             src={pet.imageUrl}
             alt={pet.speciesName}
             className="h-36 w-36 rounded-full border-4 border-orange-200 object-cover shadow-lg"

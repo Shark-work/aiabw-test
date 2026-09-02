@@ -275,6 +275,19 @@ const SCHEMA_CREATES: string[] = [
     "attempted_at" timestamp DEFAULT now() NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_login_attempts_ip_time ON "login_attempts" ("ip", "attempted_at")`,
+  // P2 Web Push 召回：浏览器推送订阅（endpoint 全局唯一；user_id/anonymous_id 二选一归属）
+  `CREATE TABLE IF NOT EXISTS "push_subscriptions" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "endpoint" text NOT NULL UNIQUE,
+    "p256dh" text NOT NULL,
+    "auth" text NOT NULL,
+    "user_id" text,
+    "anonymous_id" text,
+    "locale" text DEFAULT 'zh' NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "last_seen_at" timestamp DEFAULT now() NOT NULL,
+    "last_notified_at" timestamp
+  )`,
 ];
 
 /**
@@ -335,6 +348,9 @@ const SCHEMA_ALTERS: string[] = [
   // ===== 账号安全（防暴力破解）=====
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "locked_until" timestamp`,
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "last_login_at" timestamp`,
+  // P1 零摩擦领养：游客认领占位（owner_id 是 uuid FK 存不了游客，用文本列标记设备持有，
+  // 登录后由 /api/auth/migrate 归并到 owner_id）
+  `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "guest_owner" text`,
 ];
 
 /**
@@ -356,6 +372,11 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_uc_locked ON "user_collectibles" ("locked_until")`,
   `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
+  // P1 零摩擦领养：游客占有的宠物实例（登录归并 / 图鉴 owned 判定）
+  `CREATE INDEX IF NOT EXISTS idx_pets_guest_owner ON "pets" ("guest_owner")`,
+  // P2 Web Push 召回：按用户/设备查订阅
+  `CREATE INDEX IF NOT EXISTS idx_push_sub_user ON "push_subscriptions" ("user_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_push_sub_anon ON "push_subscriptions" ("anonymous_id")`,
   // 数字人记忆：清理低频记忆（last_accessed 超过 30 天）按索引扫描，避免全表扫
   `CREATE INDEX IF NOT EXISTS idx_agent_memories_last_accessed ON "agent_memories" ("last_accessed")`,
   // 裂变邀请：邀请码唯一（并发注册防重）

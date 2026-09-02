@@ -2,7 +2,8 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { PetAvatar } from "@/components/PetAvatar";
+import { Link } from "@/i18n/navigation";
+import { LivingPet } from "@/components/LivingPet";
 import { getRarityMeta } from "@/lib/pet-status";
 import { buildInteractSuggestions } from "@/lib/species-prompt";
 
@@ -18,6 +19,8 @@ export type KnowledgePet = {
   /** 领养成功后传入：可跳转专属 AI 对话 */
   threadId?: string | null;
   adoptionId?: string | null;
+  /** 游客领养（anonymousId 设备暂存）：展示「登录云同步」CTA 而非直接进聊天 */
+  guest?: boolean;
 };
 
 /**
@@ -60,7 +63,7 @@ export function PetKnowledgeModal({
       >
         {/* 头部：大图 + 名称 + 稀有度 */}
         <div className="flex items-center gap-4">
-          <PetAvatar
+          <LivingPet
             src={pet.imageUrl}
             alt={pet.speciesName}
             className="h-16 w-16 shrink-0 rounded-2xl border-2 border-orange-200 bg-orange-50 object-cover shadow"
@@ -128,7 +131,15 @@ export function PetKnowledgeModal({
           >
             {t("knowledgeLater")}
           </button>
-          {canChat && (
+          {pet.guest ? (
+            /* 游客领养：宠物已存到本设备，登录仅在需要云同步 / AI 对话时引导 */
+            <Link
+              href="/login"
+              className="flex-1 rounded-full bg-orange-500 px-4 py-2.5 text-center text-sm font-semibold text-white shadow transition hover:bg-orange-600"
+            >
+              {t("loginToChat")}
+            </Link>
+          ) : canChat ? (
             <button
               type="button"
               onClick={() => onGoChat?.(pet.threadId as string, pet.adoptionId as string)}
@@ -136,8 +147,9 @@ export function PetKnowledgeModal({
             >
               {t("goChat")}
             </button>
-          )}
+          ) : null}
         </div>
+        {pet.guest && <p className="mt-2 text-center text-[11px] text-zinc-400">{t("guestSavedHint")}</p>}
       </div>
     </div>
   );

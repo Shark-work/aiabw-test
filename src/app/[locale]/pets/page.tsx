@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { PetKnowledgeModal, type KnowledgePet } from "@/components/pet-knowledge-modal";
 import { LeaderboardPanel } from "@/components/leaderboard-panel";
 import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
+import { getAnonymousId } from "@/lib/anon-id";
 import { SITE_URL } from "@/lib/site";
 
 type CatalogPet = {
@@ -103,14 +104,15 @@ export default function PetsCatalogPage() {
     void load();
   }, [load]);
 
-  // —— 当前用户宠物数量 / 解锁状态（单宠限制提示）——
+  // —— 当前用户宠物数量 / 解锁状态（单宠限制提示）；游客按本设备 anonymousId 统计 ——
   const refreshPetState = useCallback(async () => {
     const token = localStorage.getItem("aiabw_token");
-    if (!token) return;
+    const anonymousId = getAnonymousId();
     try {
-      const res = await fetch("/api/pets", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `/api/pets${!token && anonymousId ? `?anonymousId=${encodeURIComponent(anonymousId)}` : ""}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
       const data = await res.json();
       if (data?.ok && Array.isArray(data.pets)) {
         const pets = data.pets as { id: string; isUnlocked: boolean }[];
@@ -136,13 +138,10 @@ export default function PetsCatalogPage() {
     return () => clearTimeout(timer);
   }, [celebratePet]);
 
-  // —— 核心领养流程：游客引导 / 免费领养 / 402 支付解锁 ——
+  // —— 核心领养流程：游客直领（anonymousId 设备暂存）/ 免费领养 / 402 引导（游客→登录，登录→支付解锁） ——
   const handleClaim = async (pet: CatalogPet) => {
     const token = localStorage.getItem("aiabw_token");
-    if (!token) {
-      setShowLogin(true);
-      return;
-    }
+    const anonymousId = getAnonymousId();
     setClaimingId(pet.id);
     setError("");
     try {
@@ -150,13 +149,16 @@ export default function PetsCatalogPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ petId: pet.id }),
+        body: JSON.stringify({
+          petId: pet.id,
+          ...(!token && anonymousId ? { anonymousId } : {}),
+        }),
       });
       const data = await res.json();
       if (data?.ok) {
-        // 领养成功 → 祝贺动画 + 知识百科弹窗（含专属对话入口）
+        // 领养成功 → 祝贺动画 + 知识百科弹窗（游客：引导登录云同步，暂不跳聊天）
         setCelebratePet(pet);
         setKnowledgePet({
           id: pet.id,
@@ -167,13 +169,19 @@ export default function PetsCatalogPage() {
           imageUrl: pet.imageUrl,
           traits: pet.traits,
           defaultDescription: pet.defaultDescription,
-          threadId: data.threadId,
+          threadId: token ? data.threadId : null,
           adoptionId: data.adoption?.id ?? null,
+          guest: !token && data.guest === true,
         });
         void refreshPetState();
         void load();
       } else if (data?.needPayment) {
-        // 单宠限制：引导 0.01 元支付解锁无限领养
+        // 单宠限制：游客 → 登录后再解锁；登录用户 → 0.01 元支付解锁无限领养
+        if (!token) {
+          setClaimingId(null);
+          setShowLogin(true);
+          return;
+        }
         setPetState((prev) => ({
           ...prev,
           petCount: data.petCount ?? prev.petCount,
@@ -334,7 +342,7 @@ export default function PetsCatalogPage() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pets.map((pet) => {
+          {pets.map((pet, i) => {
             const rarityMeta = getRarityMeta(String(pet.traits.rarity ?? ""));
             return (
               <div
@@ -342,9 +350,10 @@ export default function PetsCatalogPage() {
                 className="relative rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur"
               >
                 <div className="flex items-center gap-3">
-                  <PetAvatar
+                  <LivingPet
                     src={pet.imageUrl}
                     alt={pet.speciesName}
+                    delay={i * 0.3}
                     className="h-14 w-14 rounded-full border-2 border-orange-200 bg-orange-50 object-cover"
                   />
                   <div className="min-w-0 flex-1">

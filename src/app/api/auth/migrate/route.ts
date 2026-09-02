@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 
-import { db, ensureDbSchemaOnce } from "@/db/client";
+import { db, ensureDbSchemaOnce, pool } from "@/db/client";
 import { adoptions, threads } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
@@ -48,11 +48,24 @@ export async function POST(req: Request) {
         and(eq(threads.userId, "anonymous"), eq(threads.anonymousId, anonymousId)),
       );
 
+    // P1 零摩擦领养：游客设备占位的宠物实例归并到账号（guest_owner → owner_id），
+    // 与上面的 adoptions/threads 迁移配套（图鉴认领时已同时创建匿名领养记录）。
+    const petResult = await pool.query(
+      `UPDATE pets
+          SET owner_id = $1::uuid,
+              guest_owner = NULL,
+              adopted_at = COALESCE(adopted_at, now()),
+              last_interaction_time = COALESCE(last_interaction_time, now())
+        WHERE guest_owner = $2 AND owner_id IS NULL`,
+      [user.id, anonymousId],
+    );
+
     return NextResponse.json({
       ok: true,
       migrated: {
         adoptions: adoptionResult.rowCount ?? 0,
         threads: threadResult.rowCount ?? 0,
+        pets: petResult.rowCount ?? 0,
       },
     });
   } catch (err) {

@@ -3,6 +3,10 @@
     {
       "path": "/api/news/refresh",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/push-recall",
+      "schedule": "0 12 * * *"
     }
   ]
 }

@@ -8,7 +8,7 @@ import { FortuneBanner, RecentBornMarquee } from "@/components/daily-inspiration
 import { NewsCarousel } from "@/components/news-carousel";
 import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
 import { BlindboxPlaza } from "@/components/blindbox-plaza";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { getRarityMeta } from "@/lib/pet-status";
@@ -335,7 +335,7 @@ export default function Home() {
             {featuredLoading ? (
               <p className="col-span-full py-8 text-sm text-zinc-400">{t("featuredLoading")}</p>
             ) : featured.length > 0 ? (
-              featured.map((p) => {
+              featured.map((p, i) => {
                 const meta = getRarityMeta(String(p.traits.rarity ?? "common"));
                 const isRare =
                   p.isRare || ["rare", "epic", "legendary"].includes(String(p.traits.rarity ?? ""));
@@ -356,10 +356,11 @@ export default function Home() {
                     >
                       {meta.emoji} {locale === "en" ? meta.labelEn : meta.labelZh}
                     </span>
-                    <PetAvatar
+                    <LivingPet
                       src={p.imageUrl}
                       alt={`${tc("appName")}-${p.speciesName}`}
-                      className="h-20 w-20 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg transition group-hover:scale-105"
+                      delay={i * 0.35}
+                      className="h-20 w-20 rounded-full border-4 border-orange-200 bg-orange-50 object-cover shadow-lg"
                     />
                     <div className="min-w-0 space-y-1">
                       <div className="truncate text-sm font-semibold text-zinc-900">{p.speciesName}</div>

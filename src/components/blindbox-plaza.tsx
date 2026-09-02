@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { PaymentModal } from "@/components/payment-modal";
 import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
@@ -348,7 +348,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
             {result.nfr ? (
               <>
                 <div className="mt-3 flex items-center justify-center gap-3">
-                  <PetAvatar
+                  <LivingPet
                     src={result.nfr.imageUrl}
                     alt={result.nfr.speciesName}
                     className="h-20 w-20 rounded-2xl border-2 border-orange-200 bg-orange-50 object-cover"

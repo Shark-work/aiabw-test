@@ -6,8 +6,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 
 import { moodInfo, moodLabel } from "@/components/chat/chat-client";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { CosmeticsShopModal } from "@/components/cosmetics-shop-modal";
+import { PushOptIn } from "@/components/push-optin";
 import { getAnonymousId } from "@/lib/anon-id";
 
 type PetItem = {
@@ -236,6 +237,9 @@ export default function MyPetsPage() {
           </div>
         )}
 
+        {/* P2 Web Push 召回：宠物 3 天未互动时浏览器推送提醒 */}
+        <PushOptIn />
+
         {loading && <p className="py-10 text-center text-sm text-zinc-400">Loading…</p>}
         {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
         {!loading && !error && pets.length === 0 && (
@@ -251,7 +255,7 @@ export default function MyPetsPage() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {sortedPets.map((pet) => {
+          {sortedPets.map((pet, i) => {
             const mo = moodInfo(pet.happiness);
             // 禀赋效应：从 adoptions uuid 派生稳定的唯一哈希 ID（#RRGGBB 风格）
             const petIdHash =
@@ -287,9 +291,10 @@ export default function MyPetsPage() {
                 className="rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur"
               >
                 <div className="flex items-center gap-3">
-                  <PetAvatar
+                  <LivingPet
                     src={pet.avatar}
                     alt={pet.displayName || pet.petName}
+                    delay={(i % 4) * 0.3}
                     className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"
                   />
                   <div className="min-w-0 flex-1">
@@ -422,7 +427,7 @@ export default function MyPetsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
-              <PetAvatar
+              <LivingPet
                 src={selectedPet.avatar}
                 alt={selectedPet.displayName || selectedPet.petName}
                 className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"

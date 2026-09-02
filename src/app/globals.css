@@ -274,3 +274,146 @@ body,
   animation: evolve-glow 2s ease-in-out infinite;
 }
 
+.evolve-glow {
+  animation: evolve-glow 2s ease-in-out infinite;
+}
+
+/* ===================== P0：宠物“活起来”（纯 CSS keyframes，仅 transform/opacity GPU 合成） =====================
+ * 分层结构（每层只动一个 transform 维度，避免互相覆盖）：
+ *   .living-pet        外层浮动 bob（translateY）
+ *   .living-pet__body  呼吸 breathe（scale）+ 点击撒娇 pat（squash & stretch）
+ *   .living-pet__head  悬停转头（transition rotate/translateX，无 keyframes）
+ *   .living-pet__blink 眨眼（周期性 scaleY 快速压扁再弹回）
+ *   .living-pet__tail  摇尾（装饰性尾巴在身后摆动，颜色随主题 --accent）
+ * 遵守 prefers-reduced-motion：全部停用。
+ */
+.living-pet {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 0;
+  animation: pet-bob 3.6s ease-in-out infinite;
+  will-change: transform;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.living-pet__body,
+.living-pet__head,
+.living-pet__blink {
+  display: block;
+  line-height: 0;
+}
+.living-pet__body {
+  animation: pet-breathe 3.2s ease-in-out infinite;
+  transform-origin: 50% 85%;
+  will-change: transform;
+}
+.living-pet__head {
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: 50% 62%;
+}
+/* 悬停/键盘聚焦 → 转头看向用户（悬停转头） */
+.living-pet:hover .living-pet__head,
+.living-pet:focus-visible .living-pet__head {
+  transform: rotate(-7deg) translateX(3%) scale(1.05);
+}
+.living-pet__blink {
+  animation: pet-blink 5.8s ease-in-out infinite;
+  will-change: transform;
+}
+/* 摇尾：装饰性尾巴（身后右下角，origin 左侧 = 尾根） */
+.living-pet__tail {
+  position: absolute;
+  right: -4%;
+  bottom: -3%;
+  width: 34%;
+  height: 13%;
+  z-index: 0;
+  border-radius: 50% 50% 50% 50% / 70% 70% 35% 35%;
+  background: var(--accent, #f97316);
+  opacity: 0.75;
+  transform-origin: 8% 50%;
+  animation: pet-wag 0.9s ease-in-out infinite;
+  will-change: transform;
+}
+.living-pet__img {
+  position: relative;
+  z-index: 1;
+}
+/* 点击撒娇：squash & stretch + 尾巴加速摆 + 飘心 */
+.living-pet--pat .living-pet__body {
+  animation: pet-pat 0.7s cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+.living-pet--pat .living-pet__tail {
+  animation-duration: 0.26s;
+}
+.living-pet__heart {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  z-index: 2;
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  animation: pet-heart 0.9s ease-out forwards;
+}
+.living-pet__heart--0 { animation-name: pet-heart-l; margin-left: -22px; }
+.living-pet__heart--1 { animation-name: pet-heart-c; }
+.living-pet__heart--2 { animation-name: pet-heart-r; margin-left: 8px; }
+
+@keyframes pet-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3.5%); }
+}
+@keyframes pet-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes pet-blink {
+  0%, 90.5%, 100% { transform: scaleY(1); }
+  92.5%, 95.5% { transform: scaleY(0.12) translateY(4%); }
+  98% { transform: scaleY(1); }
+}
+@keyframes pet-pat {
+  0% { transform: scale(1, 1); }
+  28% { transform: scale(1.1, 0.88); }
+  55% { transform: scale(0.92, 1.08); }
+  100% { transform: scale(1, 1); }
+}
+@keyframes pet-wag {
+  0%, 100% { transform: rotate(-10deg) scaleX(0.9); }
+  50% { transform: rotate(16deg) scaleX(1.05); }
+}
+@keyframes pet-heart-l {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-14px, -30px) scale(1.15); }
+}
+@keyframes pet-heart-c {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(0, -38px) scale(1.25); }
+}
+@keyframes pet-heart-r {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(14px, -28px) scale(1.1); }
+}
+
+/* 无障碍：用户偏好减少动效 → 全部停用（保留静态展示） */
+@media (prefers-reduced-motion: reduce) {
+  .living-pet,
+  .living-pet__body,
+  .living-pet__blink,
+  .living-pet__tail {
+    animation: none !important;
+  }
+  .living-pet__head {
+    transition: none;
+  }
+  .living-pet__heart {
+    display: none;
+  }
+}
+

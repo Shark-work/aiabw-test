@@ -26,6 +26,8 @@ export async function GET(req: Request) {
   const rarity = url.searchParams.get("rarity")?.trim() || "";
   const personality = url.searchParams.get("personality")?.trim() || "";
   const mine = url.searchParams.get("mine") === "1";
+  // P1 零摩擦领养：游客设备标识（无需登录，用于 guest_owner 归属判定）
+  const anonymousId = url.searchParams.get("anonymousId")?.trim() || "";
   const limit = Math.min(Number(url.searchParams.get("limit") ?? 50) || 50, 100);
   const offset = Math.max(Number(url.searchParams.get("offset") ?? 0) || 0, 0);
 
@@ -33,11 +35,16 @@ export async function GET(req: Request) {
   const params: unknown[] = [];
   if (mine) {
     const user = await getUserFromRequest(req);
-    if (!user) {
+    if (user) {
+      params.push(user.id);
+      where.push(`p.owner_id = $${params.length}`);
+    } else if (anonymousId) {
+      // 游客：按本设备占位（guest_owner）过滤
+      params.push(anonymousId);
+      where.push(`p.guest_owner = $${params.length}`);
+    } else {
       return NextResponse.json({ ok: false, error: "signInFirst" }, { status: 401 });
     }
-    params.push(user.id);
-    where.push(`p.owner_id = $${params.length}`);
   } else {
     // 站长下架的宠物对普通用户图鉴不可见（管理员后台控制上架/下架）
     where.push(`p.visible = true`);
@@ -66,7 +73,7 @@ export async function GET(req: Request) {
 
   const { rows } = await pool.query(
     `SELECT p.id, p.species_id, p.image_url, p.traits, p.generation, p.parent_ids,
-            p.custom_description, p.owner_id, p.adopted_at, p.last_interaction_time,
+            p.custom_description, p.owner_id, p.guest_owner, p.adopted_at, p.last_interaction_time,
             d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.category_en AS "categoryEn",
             d.habitat, d.habitat_en AS "habitatEn",
             d.default_description_zh AS "defaultDescriptionZh",
@@ -103,7 +110,8 @@ export async function GET(req: Request) {
       parentIds: r.parent_ids,
       customDescription: r.custom_description ?? null,
       defaultDescription: renderPetDescription(speciesRow, r.traits, locale),
-      owned: r.owner_id != null,
+      // 已领养：账号（owner_id）或游客设备占位（guest_owner）均视为有主
+      owned: r.owner_id != null || r.guest_owner != null,
       adoptedAt: r.adopted_at,
       lastInteractionTime: r.last_interaction_time,
     };

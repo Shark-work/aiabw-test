@@ -225,6 +225,27 @@ export const pets = pgTable('pets', {
   status: text('status').notNull().default('active'),
   /** 被消耗时指向进化结果宠物 id（evolution 链）。 */
   evolutionId: text('evolution_id'),
+  /** P1 零摩擦领养：游客（anonymousId）占有的占位列；登录后归并到 owner_id 并清空。 */
+  guestOwner: text('guest_owner'),
+});
+
+/**
+ * P2 Web Push 召回：浏览器推送订阅。
+ *  - endpoint 全局唯一（同一浏览器重复订阅做 UPSERT）；
+ *  - user_id / anonymous_id 二选一归属（登录后调用 subscribe 可把游客订阅绑定账号）；
+ *  - last_notified_at 防打扰：同一订阅 7 天内最多召回一次。
+ */
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  userId: text('user_id'),
+  anonymousId: text('anonymous_id'),
+  locale: text('locale').notNull().default('zh'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lastSeenAt: timestamp('last_seen_at').defaultNow().notNull(),
+  lastNotifiedAt: timestamp('last_notified_at'),
 });
 
 
