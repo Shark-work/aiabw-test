@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
+import { LivingPet } from "@/components/LivingPet";
 import { PetAvatar } from "@/components/PetAvatar";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 
@@ -288,15 +289,16 @@ export default function MarketplacePage() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {pets.map((pet) => (
+          {pets.map((pet, i) => (
             <div
               key={pet.id}
               className="rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur"
             >
               <div className="flex items-center gap-3">
-                <PetAvatar
+                <LivingPet
                   src={pet.imageUrl}
                   alt={pet.name}
+                  delay={i * 0.3}
                   className="h-14 w-14 rounded-full border border-orange-200 bg-orange-50 object-cover"
                 />
                 <div className="min-w-0 flex-1">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { getRarityMeta } from "@/lib/pet-status";
 
 type PetRank = {
@@ -96,7 +96,7 @@ export function LeaderboardPanel() {
       {!loading && !error && (
         <ol className="space-y-1.5">
           {type === "pets"
-            ? pets.map((p) => {
+            ? pets.map((p, i) => {
                 const meta = getRarityMeta(p.rarity);
                 const top = p.rank <= 3;
                 return (
@@ -113,9 +113,11 @@ export function LeaderboardPanel() {
                     >
                       {RANK_MEDALS[p.rank - 1] ?? p.rank}
                     </span>
-                    <PetAvatar
+                    <LivingPet
                       src={p.imageUrl}
                       alt={p.name}
+                      tail={false}
+                      delay={(i % 4) * 0.3}
                       className="h-9 w-9 shrink-0 rounded-full border border-orange-200 bg-orange-50 object-cover"
                     />
                     <div className="min-w-0 flex-1">

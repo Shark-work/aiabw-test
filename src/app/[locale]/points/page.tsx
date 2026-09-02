@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 
 type Log = { id: string; amount: number; reason: string; createdAt: string };
 
@@ -166,9 +166,10 @@ export default function PointsPage() {
           )}
           {redeemResult && (
             <div className="mt-2 flex items-center gap-3 rounded-xl bg-white/80 p-2">
-              <PetAvatar
+              <LivingPet
                 src={redeemResult.imageUrl}
                 alt={redeemResult.speciesName}
+                tail={false}
                 className="h-10 w-10 rounded-full border border-violet-200 object-cover"
               />
               <div className="min-w-0">

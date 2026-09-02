@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { pool } from "@/db/client";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { Link } from "@/i18n/navigation";
 import { renderPetDescription, type DictionarySpecies } from "@/lib/pet-dictionary";
 import { SITE_URL } from "@/lib/site";
@@ -104,7 +104,7 @@ export default async function PetSpeciesPage({ params }: Props) {
 
         <div className="mt-3 rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-sm backdrop-blur">
           <div className="flex items-center gap-4">
-            <PetAvatar
+            <LivingPet
               src={s.imageUrl ? String(s.imageUrl) : ""}
               alt={name}
               className="h-24 w-24 shrink-0 rounded-2xl border-2 border-orange-200 bg-orange-50 object-cover"

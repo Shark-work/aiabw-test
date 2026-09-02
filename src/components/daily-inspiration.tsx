@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 
 type LuckyPet = {
   id: string;
@@ -139,9 +139,11 @@ export function RecentBornMarquee() {
               href={`/pets?rarity=${encodeURIComponent(p.rarity)}`}
               className="flex w-44 shrink-0 items-center gap-2 rounded-xl border border-zinc-100 bg-orange-50/60 p-2 transition hover:border-orange-300"
             >
-              <PetAvatar
+              <LivingPet
                 src={p.imageUrl}
                 alt={p.speciesName}
+                tail={false}
+                delay={(i % 3) * 0.3}
                 className="h-9 w-9 shrink-0 rounded-full border border-orange-200 bg-white object-cover"
               />
               <span className="min-w-0 text-[11px] leading-snug text-zinc-600">

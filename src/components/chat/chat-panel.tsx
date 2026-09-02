@@ -8,7 +8,7 @@ import { Loader2, Send, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { ToolCallCard } from "@/components/chat/tool-call-card";
 import { EXAMPLE_PROMPTS } from "@/lib/utils";
 import type { PetConfig } from "@/lib/pet-config";
@@ -23,9 +23,10 @@ function AgentAvatar({
   className?: string;
 }) {
   return (
-    <PetAvatar
+    <LivingPet
       src={pet.avatar}
       alt={pet.name}
+      tail={false}
       className={`${className} shrink-0 rounded-full border border-orange-200 bg-orange-50 object-cover`}
     />
   );

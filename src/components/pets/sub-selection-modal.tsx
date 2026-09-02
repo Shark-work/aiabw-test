@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { getRarityMeta } from "@/lib/pet-status";
 import type { AggGroup } from "@/components/pets/aggregated-pet-card";
 
@@ -91,7 +91,7 @@ export function SubSelectionModal({
         )}
 
         <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-          {group.pets.map((p) => {
+          {group.pets.map((p, i) => {
             const checked = checkedIds.includes(p.id);
             const disabled = !checked && full;
             return (
@@ -111,9 +111,11 @@ export function SubSelectionModal({
                   onClick={() => onToggle(p.id)}
                   className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                 >
-                  <PetAvatar
+                  <LivingPet
                     src={p.imageUrl}
                     alt={p.speciesName}
+                    tail={false}
+                    delay={(i % 4) * 0.3}
                     className="h-11 w-11 shrink-0 rounded-full border border-orange-200 object-cover"
                   />
                   <span className="min-w-0">

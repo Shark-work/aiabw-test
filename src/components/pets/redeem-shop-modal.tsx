@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { PetWatermark } from "@/components/pets/pet-watermark";
 
 const REDEEM_PRICE = 500;
@@ -64,7 +64,7 @@ export function RedeemShopModal({
         {redeemResult ? (
           <div className="text-center">
             <div className="evolve-glow relative mx-auto rounded-full bg-violet-50">
-              <PetAvatar
+              <LivingPet
                 src={redeemResult.imageUrl}
                 alt={redeemResult.speciesName}
                 className="born-pop h-28 w-28 rounded-full border-4 border-violet-300 object-cover shadow-xl"

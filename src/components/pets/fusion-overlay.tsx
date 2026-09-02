@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
+import { LivingPet } from "@/components/LivingPet";
 import { PetAvatar } from "@/components/PetAvatar";
 import { getRarityMeta } from "@/lib/pet-status";
 import { PetWatermark } from "@/components/pets/pet-watermark";
@@ -33,6 +34,7 @@ export function FusionOverlay({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/60 backdrop-blur-sm">
         <div className="relative mx-auto flex h-60 w-60 items-center justify-center">
+          {/* 源宠物保持静态渲染：fuse-l/m/r 飞行位移动画期间叠加呼吸/转头会互相干扰 */}
           {sources.slice(0, 3).map((p, i) => (
             <PetAvatar
               key={p.id}
@@ -68,7 +70,7 @@ export function FusionOverlay({
           </span>
         )}
         <div className="evolve-glow relative mx-auto rounded-full bg-orange-50">
-          <PetAvatar
+          <LivingPet
             src={outcome.pet.imageUrl}
             alt={outcome.pet.speciesName}
             className="born-pop h-32 w-32 rounded-full border-4 border-amber-300 object-cover shadow-xl"

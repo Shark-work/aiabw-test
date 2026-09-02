@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 
-import { PetAvatar } from "@/components/PetAvatar";
+import { LivingPet } from "@/components/LivingPet";
 import { getRarityMeta } from "@/lib/pet-status";
 
 export type AggPet = {
@@ -36,10 +36,13 @@ export function AggregatedPetCard({
   group,
   disabled,
   onSelect,
+  delay = 0,
 }: {
   group: AggGroup;
   disabled?: boolean;
   onSelect: (g: AggGroup) => void;
+  /** 活体动画错峰延迟（秒）：网格内传 index * 0.3，避免同屏呼吸/眨眼完全同步 */
+  delay?: number;
 }) {
   const t = useTranslations("petsCatalog");
   const locale = useLocale();
@@ -73,10 +76,11 @@ export function AggregatedPetCard({
         </span>
       )}
 
-      <PetAvatar
+      <LivingPet
         src={group.imageUrl}
         alt={group.speciesName}
-        className="h-16 w-16 rounded-full border-2 border-orange-200 bg-orange-50 object-cover transition group-hover:scale-105"
+        delay={delay}
+        className="h-16 w-16 rounded-full border-2 border-orange-200 bg-orange-50 object-cover"
       />
       <span className="text-sm font-semibold text-zinc-800">{group.speciesName}</span>
       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badgeClass}`}>

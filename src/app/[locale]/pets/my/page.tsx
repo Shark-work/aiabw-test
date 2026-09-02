@@ -281,10 +281,11 @@ export default function PetCollectionPage() {
 
         {/* 聚合卡片网格 */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {visibleGroups.map((g) => (
+          {visibleGroups.map((g, i) => (
             <AggregatedPetCard
               key={g.key}
               group={g}
+              delay={i * 0.3}
               disabled={locked && checkedGroupKey !== g.key}
               onSelect={openSubSelection}
             />
