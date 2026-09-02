@@ -12,7 +12,6 @@ import { LivingPet } from "@/components/LivingPet";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { getRarityMeta } from "@/lib/pet-status";
-import { type PetType, DEFAULT_PET_TYPE } from "@/lib/pet-config";
 import { getAnonymousId } from "@/lib/anon-id";
 
 export default function Home() {
@@ -22,7 +21,8 @@ export default function Home() {
   const ts = useTranslations("seo");
   const locale = useLocale();
 
-  const [adoptingType, setAdoptingType] = useState<PetType | null>(null);
+  // 正在领养的推荐宠实例 id（详情弹窗按钮 busy 态）
+  const [claimingPetId, setClaimingPetId] = useState<string | null>(null);
   // 首页动态推荐宠（替代硬编码 抱抱狐/企鹅/修狗）：
   // 池 = 稀缺（rare/epic/legendary）OR 高领养物种，每次刷新随机 3 只
   const [featured, setFeatured] = useState<FeaturedPet[]>([]);
@@ -42,9 +42,8 @@ export default function Home() {
     unlockAdoptionId: string | null;
   }>({ petCount: 0, hasUnlocked: false, unlockAdoptionId: null });
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  // 用户想领养但被单宠限制拦截的类型；支付解锁后自动完成领养并跳转聊天
-  const [pendingAdoptType, setPendingAdoptType] = useState<PetType | null>(null);
-  const petLimitReached = petState.petCount >= 1 && !petState.hasUnlocked;
+  // 用户想领养但被单宠限制拦截的推荐宠；支付解锁后自动完成领养并跳转聊天
+  const [pendingPet, setPendingPet] = useState<FeaturedPet | null>(null);
 
   // 从 localStorage 恢复登录态
   useEffect(() => {
@@ -159,72 +158,68 @@ export default function Home() {
     }
   };
 
-  const handleAdopt = async (petType: PetType) => {
-    if (adoptingType) return;
-    setAdoptingType(petType);
+  // —— 核心领养：认领用户实际点击的这只推荐宠（图鉴同款 /api/pets/claim 链路）——
+  // 成功后带 threadId + adoptionId 跳转聊天页，聊天页按 adoption.petType
+  // （species:<id>）解析该物种的头像 / 名字 / 欢迎语，确保展示的就是被领养的那只。
+  const claimFeatured = async (pet: FeaturedPet) => {
+    setClaimingPetId(pet.id);
     setError("");
-
     try {
       const token = localStorage.getItem("aiabw_token");
       const anonymousId = getAnonymousId();
-      const res = await fetch("/api/adopt", {
+      const res = await fetch("/api/pets/claim", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          petType,
-          ...(anonymousId ? { anonymousId } : {}),
+          petId: pet.id,
+          ...(!token && anonymousId ? { anonymousId } : {}),
         }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        // 单宠限制：引导用户解锁付费
-        if (data?.needPayment === true) {
-          setError(data.error || t("unlockFirst"));
-          if (data.unlockAdoptionId) {
-            setPetState((prev) => ({
-              ...prev,
-              petCount: data.petCount ?? prev.petCount,
-              hasUnlocked: false,
-              unlockAdoptionId: data.unlockAdoptionId,
-            }));
-          }
-          // 恢复卡片可点 + 记住解锁后要领养的宠物类型（支付成功 → 自动领养）
-          setAdoptingType(null);
-          setPendingAdoptType(petType);
-          setUpgradeOpen(true);
-          return;
-        }
-        throw new Error(data.error || t("adoptFailed"));
-      }
-
-      // 领养成功 → 带着新线程与领养记录进入独立聊天页面
-      if (data.ok && data.threadId) {
+      if (data?.ok && data.threadId) {
+        // 领养成功 → 带着新线程与领养记录进入独立聊天页面
+        // （游客也可先看到这只宠物，发送消息时按提示登录即可）
+        void refreshPetState();
         router.push(
           `/chat?thread=${data.threadId}&adopt=${data.adoption?.id ?? ""}`,
         );
+      } else if (data?.needPayment === true) {
+        // 单宠限制：游客 → 登录（登录后自动迁移本设备已有宠物）；
+        // 登录用户 → 0.01 元解锁无限领养，支付成功后自动完成这次领养
+        if (!token) {
+          router.push("/login?redirect=/my-pets");
+          return;
+        }
+        setPetState((prev) => ({
+          ...prev,
+          petCount: data.petCount ?? prev.petCount,
+          hasUnlocked: false,
+          unlockAdoptionId: data.unlockAdoptionId ?? prev.unlockAdoptionId,
+        }));
+        setPendingPet(pet);
+        setUpgradeOpen(true);
       } else {
-        router.push("/chat");
+        throw new Error(data?.error || t("adoptFailed"));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("adoptFailed"));
-      setAdoptingType(null);
+    } finally {
+      setClaimingPetId(null);
     }
   };
 
-  // 详情弹窗 CTA「获得它」：单宠限制 → 支付解锁；可领养 → 直接领养默认伙伴（闭环）
+  // 详情弹窗 CTA「获得它」：直接领养用户点击的这只推荐宠（闭环）。
+  // 单宠限制等拦截统一交给 claimFeatured 处理（游客 → 登录，登录用户 → 支付解锁）。
   const handleGetPet = () => {
     if (!detailPet) return;
+    const pet = detailPet;
     setDetailPet(null);
-    if (petLimitReached) {
-      setUpgradeOpen(true);
-      return;
-    }
-    void handleAdopt(DEFAULT_PET_TYPE);
+    void claimFeatured(pet);
   };
 
   return (
@@ -392,7 +387,7 @@ export default function Home() {
       {detailPet && (
         <PetDetailModal
           pet={detailPet}
-          busy={adoptingType !== null}
+          busy={claimingPetId !== null}
           onAdopt={handleGetPet}
           onClose={() => setDetailPet(null)}
         />
@@ -405,12 +400,12 @@ export default function Home() {
         onClose={() => setUpgradeOpen(false)}
         onUnlocked={() => {
           // 支付成功：刷新解锁状态 + 自动完成被拦截的领养并跳转聊天页
-          const pending = pendingAdoptType;
-          setPendingAdoptType(null);
+          const pending = pendingPet;
+          setPendingPet(null);
           setError("");
           void refreshPetState();
           if (pending) {
-            void handleAdopt(pending);
+            void claimFeatured(pending);
           }
         }}
       />

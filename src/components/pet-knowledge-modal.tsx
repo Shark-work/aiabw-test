@@ -132,9 +132,15 @@ export function PetKnowledgeModal({
             {t("knowledgeLater")}
           </button>
           {pet.guest ? (
-            /* 游客领养：宠物已存到本设备，登录仅在需要云同步 / AI 对话时引导 */
+            /* 游客领养：宠物已存到本设备；登录后直接回到这只宠物的聊天页（数据自动云同步） */
             <Link
-              href="/login"
+              href={
+                pet.threadId && pet.adoptionId
+                  ? `/login?redirect=${encodeURIComponent(
+                      `/chat?thread=${pet.threadId}&adopt=${pet.adoptionId}`,
+                    )}`
+                  : "/login"
+              }
               className="flex-1 rounded-full bg-orange-500 px-4 py-2.5 text-center text-sm font-semibold text-white shadow transition hover:bg-orange-600"
             >
               {t("loginToChat")}

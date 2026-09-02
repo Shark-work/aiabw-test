@@ -169,7 +169,8 @@ export default function PetsCatalogPage() {
           imageUrl: pet.imageUrl,
           traits: pet.traits,
           defaultDescription: pet.defaultDescription,
-          threadId: token ? data.threadId : null,
+          // 游客也带 threadId：登录云同步后直接回到这只宠物的聊天页
+          threadId: data.threadId ?? null,
           adoptionId: data.adoption?.id ?? null,
           guest: !token && data.guest === true,
         });
