@@ -129,7 +129,12 @@
     "feed": "🍖 Feed now",
     "evolveBanner": "🧪 Got 3 identical companions? Try fusing them at the Dictionary!",
     "evolveGo": "Fuse now →",
-    "shop": "Cosmetic Shop"
+    "shop": "Cosmetic Shop",
+    "backpack": "🎁 Item Backpack",
+    "backpackEmpty": "No items yet - check in 7 days in a row to open a mystery box!",
+    "equip": "Equip",
+    "unequip": "Unequip",
+    "equipFailed": "Equip failed, please try again"
   },
   "marketplace": {
     "title": "UGC Market",
@@ -508,7 +513,13 @@
     "blindboxSpeciesMissing": "Pool species missing, try again later",
     "blindboxFailed": "Draw failed, please try again later",
     "blindboxPriceInvalid": "Price config error - minimum is ¥1",
-    "dailyBonusClaimed": "Daily bonus already claimed today - try other boxes"
+    "dailyBonusClaimed": "Daily bonus already claimed today - try other boxes",
+    "itemIdRequired": "Missing item id",
+    "itemNotFound": "Item not found",
+    "itemNotYours": "You can only manage items in your own backpack",
+    "adoptionNotYours": "Pet not found or not yours",
+    "equipFailed": "Equip failed, please try again",
+    "itemsLoadFailed": "Failed to load backpack, please try again"
   },
   "nav": {
     "home": "Home",
@@ -605,6 +616,29 @@
     "payWaiting": "Waiting for payment confirmation…",
     "payCancel": "Not now",
     "unlockPrice": "Unlock ¥{price}"
+  },
+  "checkin": {
+    "title": "Daily Check-in",
+    "petGeneric": "Your companion",
+    "day1": "You're here!",
+    "day3": "Old friend!",
+    "day7": "We're best friends now!",
+    "dayOther": "So happy to see you!",
+    "streakLabel": "{days}-day streak",
+    "progressHint": "Check in 7 days in a row to open a mystery box 🎁",
+    "checkinBtn": "📅 Check in",
+    "checking": "Checking in…",
+    "pointsGain": "🎉 Checked in! +{points} points",
+    "doneAlready": "Already checked in today — see you tomorrow!",
+    "premiumBadge": "👑 Premium ×2",
+    "premiumHint": "Premium perks: double points, guaranteed rare box",
+    "blindboxTitle": "🎁 7-day streak — mystery box opened!",
+    "itemGet": "Got “{name}”",
+    "rarity_common": "Common",
+    "rarity_rare": "Rare",
+    "rarity_legendary": "Legendary",
+    "close": "See you tomorrow~",
+    "failed": "Check-in failed, please try again"
   },
   "seo": {
     "petDetailTitle": "{name} - AI Virtual Pet Encyclopedia | AIABW",

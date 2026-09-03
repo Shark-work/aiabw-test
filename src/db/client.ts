@@ -215,6 +215,17 @@ const SCHEMA_CREATES: string[] = [
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_uc_cosmetic_uniq ON "user_cosmetics" ("user_id", "cosmetic_id", "adoption_id")`,
 
+  // P0-1 每日签到 · 用户道具背包（连签 7 天开心情盲盒：帽子/围巾/玩具，可装备到领养宠物展示）
+  `CREATE TABLE IF NOT EXISTS "user_items" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "item_key" text NOT NULL,
+    "rarity" text NOT NULL DEFAULT 'common',
+    "source" text NOT NULL DEFAULT 'checkin_blindbox',
+    "equipped_adoption_id" uuid REFERENCES "adoptions"("id"),
+    "created_at" timestamp NOT NULL DEFAULT now()
+  )`,
+
   // ===== AIGC 盲盒引擎 =====
   // 盲盒奖池定义（概率 JSONB + 物种白名单）
   `CREATE TABLE IF NOT EXISTS "blindbox_pools" (
@@ -372,6 +383,8 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_uc_locked ON "user_collectibles" ("locked_until")`,
   `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
+  // P0-1 道具背包：按用户查列表 / 装备筛选
+  `CREATE INDEX IF NOT EXISTS idx_user_items_user ON "user_items" ("user_id")`,
   // P1 零摩擦领养：游客占有的宠物实例（登录归并 / 图鉴 owned 判定）
   `CREATE INDEX IF NOT EXISTS idx_pets_guest_owner ON "pets" ("guest_owner")`,
   // P2 Web Push 召回：按用户/设备查订阅

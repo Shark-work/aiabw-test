@@ -129,7 +129,12 @@
     "feed": "🍖 去喂食",
     "evolveBanner": "🧪 发现你有 3 只相同的伙伴？试试灵力融合吧！",
     "evolveGo": "去融合 →",
-    "shop": "装扮商城"
+    "shop": "装扮商城",
+    "backpack": "🎁 道具背包",
+    "backpackEmpty": "还没有道具，连签 7 天开心情盲盒吧~",
+    "equip": "装备",
+    "unequip": "卸下",
+    "equipFailed": "装备失败，请稍后重试"
   },
   "marketplace": {
     "title": "UGC 广场",
@@ -508,7 +513,13 @@
     "blindboxSpeciesMissing": "奖池物种缺失，请稍后再试",
     "blindboxFailed": "抽奖失败，请稍后再试",
     "blindboxPriceInvalid": "价格配置错误，最低需 1 元",
-    "dailyBonusClaimed": "今日福利已领取，可购买其他盲盒"
+    "dailyBonusClaimed": "今日福利已领取，可购买其他盲盒",
+    "itemIdRequired": "缺少道具 id",
+    "itemNotFound": "道具不存在",
+    "itemNotYours": "只能操作自己背包里的道具",
+    "adoptionNotYours": "该宠物不存在或不属于你",
+    "equipFailed": "装备失败，请稍后重试",
+    "itemsLoadFailed": "读取背包失败，请稍后重试"
   },
   "nav": {
     "home": "首页",
@@ -605,6 +616,29 @@
     "payWaiting": "正在等待支付确认…",
     "payCancel": "暂不支付",
     "unlockPrice": "解锁需 ¥{price}"
+  },
+  "checkin": {
+    "title": "每日签到",
+    "petGeneric": "你的小伙伴",
+    "day1": "你来啦！",
+    "day3": "老朋友！",
+    "day7": "我们已经是最好的伙伴了！",
+    "dayOther": "见到你真开心！",
+    "streakLabel": "连续签到 {days} 天",
+    "progressHint": "连签 7 天即可开启心情盲盒 🎁",
+    "checkinBtn": "📅 签到",
+    "checking": "签到中…",
+    "pointsGain": "🎉 签到成功 +{points} 积分",
+    "doneAlready": "今天已经签到过啦，明天再来~",
+    "premiumBadge": "👑 月卡双倍",
+    "premiumHint": "月卡特权：签到积分 ×2，盲盒保底稀有",
+    "blindboxTitle": "🎁 连签 7 天，开出心情盲盒！",
+    "itemGet": "获得「{name}」",
+    "rarity_common": "普通",
+    "rarity_rare": "稀有",
+    "rarity_legendary": "传说",
+    "close": "明天再来~",
+    "failed": "签到失败，请稍后重试"
   },
   "seo": {
     "petDetailTitle": "{name} - AI 虚拟宠物图鉴 | 艾比世界",

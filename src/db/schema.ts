@@ -66,6 +66,23 @@ export const userCosmetics = pgTable('user_cosmetics', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+/**
+ * P0-1 每日签到 · 道具背包：
+ *  - 连签每满 7 天开一次心情盲盒（帽子/围巾/玩具），稀有度 普通 70% / 稀有 25% / 传说 5%；
+ *  - item_key 对应 src/lib/checkin-items.ts 道具目录（代码常量，非 FK）；
+ *  - equipped_adoption_id：装备在哪只领养宠物上展示（NULL = 收纳在背包中）；
+ *  - source：来源（checkin_blindbox = 签到盲盒；后续可扩展补签/商城等）。
+ */
+export const userItems = pgTable('user_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  itemKey: text('item_key').notNull(),
+  rarity: text('rarity').notNull().default('common'),
+  source: text('source').notNull().default('checkin_blindbox'),
+  equippedAdoptionId: uuid('equipped_adoption_id').references(() => adoptions.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 /** 盲盒奖池定义（概率 JSONB + 物种白名单） */
 export const blindboxPools = pgTable('blindbox_pools', {
   id: text('id').primaryKey(),

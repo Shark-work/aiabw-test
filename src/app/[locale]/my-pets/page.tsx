@@ -10,6 +10,12 @@ import { LivingPet } from "@/components/LivingPet";
 import { CosmeticsShopModal } from "@/components/cosmetics-shop-modal";
 import { PushOptIn } from "@/components/push-optin";
 import { getAnonymousId } from "@/lib/anon-id";
+import {
+  RARITY_BADGE_CLASS,
+  itemByKey,
+  itemDisplayName,
+  type UserItemRow,
+} from "@/lib/checkin-items";
 
 type PetItem = {
   id: string;
@@ -37,6 +43,7 @@ export default function MyPetsPage() {
   const t = useTranslations("myPets");
   const tc = useTranslations("common");
   const tchat = useTranslations("chat");
+  const tck = useTranslations("checkin");
   const locale = useLocale();
   const router = useRouter();
   const [pets, setPets] = useState<PetItem[]>([]);
@@ -49,6 +56,10 @@ export default function MyPetsPage() {
   const [inviteCopied, setInviteCopied] = useState(false);
   // 装扮商城（情绪与特权消费）
   const [shopOpen, setShopOpen] = useState(false);
+  // P0-1 道具背包（签到盲盒产出，宠物详情页可装备展示）
+  const [items, setItems] = useState<UserItemRow[]>([]);
+  const [equipping, setEquipping] = useState<string | null>(null);
+  const [equipError, setEquipError] = useState("");
 
   const loadPets = useCallback(async () => {
     setLoading(true);
@@ -87,6 +98,42 @@ export default function MyPetsPage() {
         /* 邀请码拉取失败不影响页面主体 */
       });
   }, []);
+
+  // 拉取道具背包（登录用户；加载失败不影响页面主体）
+  useEffect(() => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    fetch("/api/user/items", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.ok) setItems(data.items ?? []);
+      })
+      .catch(() => {
+        /* 背包加载失败不影响页面主体 */
+      });
+  }, []);
+
+  // 道具装备 / 卸下（服务端校验归属，成功后以返回的最新列表刷新）
+  const equipItem = async (item: UserItemRow, adoptionId: string | null) => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token || equipping) return;
+    setEquipping(item.id);
+    setEquipError("");
+    try {
+      const res = await fetch("/api/user/items/equip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ itemId: item.id, adoptionId }),
+      });
+      const data = await res.json();
+      if (data?.ok) setItems(data.items ?? []);
+      else setEquipError(data?.error ?? t("equipFailed"));
+    } catch {
+      setEquipError(t("equipFailed"));
+    } finally {
+      setEquipping(null);
+    }
+  };
 
   const copyInviteLink = async () => {
     const url = `${window.location.origin}/${locale}/register?ref=${inviteCode}`;
@@ -305,6 +352,20 @@ export default function MyPetsPage() {
                       <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-semibold text-white">
                         Lv.{pet.level}
                       </span>
+                      {items
+                        .filter((it) => it.equippedAdoptionId === pet.id)
+                        .map((it) => {
+                          const meta = itemByKey(it.itemKey);
+                          return (
+                            <span
+                              key={it.id}
+                              title={meta ? itemDisplayName(meta, locale) : it.itemKey}
+                              className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[10px]"
+                            >
+                              {meta?.emoji ?? "🎁"}
+                            </span>
+                          );
+                        })}
                       {pet.isUnlocked && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                           {tc("unlocked")}
@@ -440,6 +501,20 @@ export default function MyPetsPage() {
                   <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
                     Lv.{selectedPet.level}
                   </span>
+                  {items
+                    .filter((it) => it.equippedAdoptionId === selectedPet.id)
+                    .map((it) => {
+                      const meta = itemByKey(it.itemKey);
+                      return (
+                        <span
+                          key={it.id}
+                          title={meta ? itemDisplayName(meta, locale) : it.itemKey}
+                          className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[10px]"
+                        >
+                          {meta?.emoji ?? "🎁"}
+                        </span>
+                      );
+                    })}
                   {selectedPet.isUnlocked && (
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                       {tc("unlocked")}
@@ -494,6 +569,58 @@ export default function MyPetsPage() {
                   <div className="text-[10px] text-zinc-400">{t("chats")}</div>
                 </div>
               </div>
+            </div>
+
+            {/* P0-1 道具背包：签到盲盒道具装备 / 卸下 */}
+            <div className="mt-4">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-medium text-zinc-500">{t("backpack")}</span>
+                {equipError && <span className="text-[10px] text-red-500">{equipError}</span>}
+              </div>
+              {items.length === 0 ? (
+                <p className="py-2 text-center text-xs text-zinc-400">{t("backpackEmpty")}</p>
+              ) : (
+                <div className="max-h-36 space-y-1.5 overflow-y-auto pr-1">
+                  {items.map((it) => {
+                    const meta = itemByKey(it.itemKey);
+                    const equippedHere = it.equippedAdoptionId === selectedPet.id;
+                    return (
+                      <div
+                        key={it.id}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-zinc-100 bg-zinc-50/60 px-2.5 py-1.5"
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="text-lg" aria-hidden>
+                            {meta?.emoji ?? "🎁"}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium text-zinc-700">
+                              {meta ? itemDisplayName(meta, locale) : it.itemKey}
+                            </p>
+                            <span
+                              className={`inline-block rounded-full border px-1.5 text-[10px] ${RARITY_BADGE_CLASS[it.rarity] ?? ""}`}
+                            >
+                              {tck(`rarity_${it.rarity}`)}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={equipping === it.id}
+                          onClick={() => equipItem(it, equippedHere ? null : selectedPet.id)}
+                          className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition disabled:opacity-50 ${
+                            equippedHere
+                              ? "border border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-100"
+                              : "bg-orange-500 text-white hover:bg-orange-600"
+                          }`}
+                        >
+                          {equipping === it.id ? "…" : equippedHere ? t("unequip") : t("equip")}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* 记忆 */}
