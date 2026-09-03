@@ -11,6 +11,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { FloatingSupport } from "@/components/layout/FloatingSupport";
 import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
+import { SwRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
 import { SITE_URL, getAlternates } from "@/lib/site";
@@ -135,6 +136,9 @@ export default async function LocaleLayout({
           <Analytics />
           </ThemeProvider>
         </NextIntlClientProvider>
+
+        {/* Service Worker 注册（生产环境）：Web Push 召回 + 静态资源离线缓存（PWA） */}
+        <SwRegister />
 
         {/* ============ 第三方统计（全站生效：根布局，所有页面自动加载）============
             - Google Analytics (gtag.js)：G-11LB54EX3D（紧跟 <head> 后的标准 gtag 初始化）
