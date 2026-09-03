@@ -25,8 +25,13 @@ export default async function ChatPage({
   const tchat = await getTranslations("chat");
 
   const { thread: threadParam, adopt: adoptionParam } = await searchParams;
-  const threadId = threadParam || undefined;
-  const adoptionId = adoptionParam || undefined;
+
+  // 参数防护：非法 UUID（如 adopt=undefined / 被截断的分享链接）一律视为缺失，
+  // 避免把非法值发给 Postgres 的 uuid 列导致整页 500。
+  const isUuid = (v?: string | null): v is string =>
+    !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+  const threadId = isUuid(threadParam) ? threadParam : undefined;
+  const adoptionId = isUuid(adoptionParam) ? adoptionParam : undefined;
 
   // 加载这条线程的历史消息（含领养时的欢迎消息）
   let initialMessages: UIMessage[] = [];
@@ -48,23 +53,39 @@ export default async function ChatPage({
   let level = 1;
   let monthlyPoints = 0;
   let petType: string = DEFAULT_PET_TYPE;
-  if (adoptionId) {
-    const [ad] = await db
-      .select({
-        happiness: adoptions.happiness,
-        level: adoptions.level,
-        monthlyPoints: adoptions.monthlyPoints,
-        petType: adoptions.petType,
-      })
-      .from(adoptions)
-      .where(eq(adoptions.id, adoptionId))
-      .limit(1);
-    if (ad) {
-      happiness = ad.happiness;
-      level = ad.level ?? 1;
-      monthlyPoints = ad.monthlyPoints ?? 0;
-      petType = ad.petType || DEFAULT_PET_TYPE;
-    }
+  // 优先按 adopt 参数精确匹配领养记录；
+  // 兜底：adopt 缺失 / 失效（旧链接、参数被截断、旧线程页重定向过来）时，
+  // 用 threadId 反查这条线程对应的领养记录 —— 「进了谁的对话就显示谁」，
+  // 而不是退回默认抱抱狐（曾出现的「领养后聊天页显示默认狐」问题）。
+  const adoptionSelect = {
+    happiness: adoptions.happiness,
+    level: adoptions.level,
+    monthlyPoints: adoptions.monthlyPoints,
+    petType: adoptions.petType,
+  };
+  let ad = adoptionId
+    ? (
+        await db
+          .select(adoptionSelect)
+          .from(adoptions)
+          .where(eq(adoptions.id, adoptionId))
+          .limit(1)
+      )[0]
+    : undefined;
+  if (!ad && threadId) {
+    ad = (
+      await db
+        .select(adoptionSelect)
+        .from(adoptions)
+        .where(eq(adoptions.threadId, threadId))
+        .limit(1)
+    )[0];
+  }
+  if (ad) {
+    happiness = ad.happiness;
+    level = ad.level ?? 1;
+    monthlyPoints = ad.monthlyPoints ?? 0;
+    petType = ad.petType || DEFAULT_PET_TYPE;
   }
 
   // 根据 petType 解析宠物配置（UGC 宠物读取数据库；图鉴物种动态构建；未知类型自动回退狐狸）

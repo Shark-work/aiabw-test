@@ -1,11 +1,10 @@
-import { db } from '@/db/client';
-import { messages as messagesTable } from '@/db/schema';
-import { eq, asc } from 'drizzle-orm';
-import type { UIMessage } from 'ai';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { ChatPanel } from '@/components/chat/chat-panel';
-import { getPet, PETS, DEFAULT_PET_TYPE, type PetConfig } from '@/lib/pet-config';
+import { redirect } from "next/navigation";
+import { setRequestLocale } from "next-intl/server";
 
+// 旧版线程直达页：没有领养上下文，历史上固定渲染默认「抱抱狐」，
+// 是「进了对话却显示狐狸」的残留入口（旧书签 / 搜索引擎收录的链接）。
+// 现统一重定向到 /chat?thread=<id>：聊天页会按线程反查领养记录
+// （adoptions.thread_id 兜底，见 chat/page.tsx），展示该线程的真实宠物。
 export default async function ThreadPage({
   params,
 }: {
@@ -13,34 +12,5 @@ export default async function ThreadPage({
 }) {
   const { id, locale } = await params;
   setRequestLocale(locale);
-  const tp = await getTranslations('pets');
-
-  const rows = await db
-    .select()
-    .from(messagesTable)
-    .where(eq(messagesTable.threadId, id))
-    .orderBy(asc(messagesTable.createdAt));
-
-  const initialMessages = rows.map((r) => ({
-    id: r.id,
-    role: r.role as 'user' | 'assistant' | 'system',
-    parts: r.parts as UIMessage['parts'],
-  }));
-
-  // 该线程页没有独立的领养上下文，默认使用狐狸人设。
-  const petType = DEFAULT_PET_TYPE;
-  const basePet = getPet(petType);
-  const pet: PetConfig =
-    petType && (PETS as Record<string, PetConfig>)[petType]
-      ? { ...basePet, name: tp(`${petType}.name`), personality: tp(`${petType}.personality`) }
-      : basePet;
-
-  return (
-    <ChatPanel
-      threadId={id}
-      initialMessages={initialMessages}
-      petType={petType}
-      pet={pet}
-    />
-  );
+  redirect(`/${locale}/chat?thread=${id}`);
 }
