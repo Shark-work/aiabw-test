@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import {
   AggregatedPetCard,
@@ -12,9 +12,13 @@ import {
 import { SubSelectionModal } from "@/components/pets/sub-selection-modal";
 import { FusionOverlay } from "@/components/pets/fusion-overlay";
 import { RedeemShopModal } from "@/components/pets/redeem-shop-modal";
+import { getRarityMeta, type Rarity } from "@/lib/pet-status";
 
 /** 仓库上限（资产管理层显示持有数/上限） */
 const STORAGE_LIMIT = 100;
+
+/** 我的宠物页的稀有度筛选 chip 顺序（按权重升序：常见 → 传说）。 */
+const RARITY_CHIPS: Rarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
 type Outcome = { pet: AggPet & { defaultDescription?: string }; critical: boolean };
 
@@ -24,11 +28,14 @@ export default function PetCollectionPage() {
   const tm = useTranslations("myPets");
   const tp = useTranslations("points");
   const router = useRouter();
+  const locale = useLocale();
 
   const [pets, setPets] = useState<AggPet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showOnlyEvolvable, setShowOnlyEvolvable] = useState(false);
+  // 稀有度筛选（"" = 全部；从 ?rarity= 直达：图鉴已下线此入口，我的宠物页接管）
+  const [rarityFilter, setRarityFilter] = useState<Rarity | "">("");
   const [openGroup, setOpenGroup] = useState<AggGroup | null>(null);
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [phase, setPhase] = useState<"idle" | "fusing" | "result">("idle");
@@ -79,6 +86,13 @@ export default function PetCollectionPage() {
   useEffect(() => {
     void load();
   }, [load]);
+  // URL ?rarity= 直达：图鉴已下线此入口，我的宠物页接管（共享过滤态）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qs = new URLSearchParams(window.location.search);
+    const r = qs.get("rarity") as Rarity | null;
+    if (r && (RARITY_CHIPS as string[]).includes(r)) setRarityFilter(r);
+  }, []);
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
     if (!token) return;
@@ -90,10 +104,20 @@ export default function PetCollectionPage() {
       .catch(() => {});
   }, []);
 
+  // 稀有度筛选：先按 rarity 过滤实例，再按 (物种, 稀有度) 聚合。
+  // 聚合 key 包含 rarity，所以过滤后每个分组天然只含该稀有度，与 rarity 筛选语义一致。
+  const filteredPets = useMemo(
+    () =>
+      rarityFilter
+        ? pets.filter((p) => String(p.traits.rarity ?? "common") === rarityFilter)
+        : pets,
+    [pets, rarityFilter],
+  );
+
   // 按（物种, 稀有度）聚合
   const groups = useMemo(() => {
     const map = new Map<string, AggGroup>();
-    for (const p of pets) {
+    for (const p of filteredPets) {
       const r = String(p.traits.rarity ?? "common");
       const key = `${p.speciesId}::${r}`;
       if (!map.has(key)) {
@@ -109,7 +133,7 @@ export default function PetCollectionPage() {
       map.get(key)!.pets.push(p);
     }
     return Array.from(map.values()).sort((a, b) => b.pets.length - a.pets.length);
-  }, [pets]);
+  }, [filteredPets]);
 
   const visibleGroups = showOnlyEvolvable ? groups.filter((g) => g.pets.length >= 3) : groups;
 
@@ -264,18 +288,54 @@ export default function PetCollectionPage() {
           </div>
         )}
 
-        {/* 筛选器：仅显示可合成 */}
-        <div className="mb-4 flex items-center gap-2">
-          <button type="button" onClick={() => setShowOnlyEvolvable((v) => !v)} className={chip(showOnlyEvolvable)}>
-            {t("onlyEvolvable")}
-          </button>
+        {/* 筛选器：仅显示可合成 + 稀有度（图鉴已下线此入口，我的宠物页接管） */}
+        <div className="mb-4 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => setShowOnlyEvolvable((v) => !v)} className={chip(showOnlyEvolvable)}>
+              {t("onlyEvolvable")}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-zinc-400">{t("rarityLabel")}</span>
+            <button
+              type="button"
+              onClick={() => setRarityFilter("")}
+              className={chip(rarityFilter === "")}
+            >
+              {t("rarityAll")}
+            </button>
+            {RARITY_CHIPS.map((r) => {
+              const meta = getRarityMeta(r);
+              const active = rarityFilter === r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRarityFilter(active ? "" : r)}
+                  className={chip(active)}
+                  aria-pressed={active}
+                >
+                  {meta.emoji} {locale === "en" ? meta.labelEn : meta.labelZh}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {loading && <p className="py-10 text-center text-sm text-zinc-400">{tc("loading")}</p>}
         {error && <p className="py-10 text-center text-sm text-red-500">{error}</p>}
         {!loading && !error && visibleGroups.length === 0 && (
           <p className="py-16 text-center text-sm text-zinc-400">
-            {showOnlyEvolvable ? t("noEvolvable") : t("empty")}
+            {rarityFilter
+              ? t("noRarityMatch", {
+                  rarity:
+                    locale === "en"
+                      ? getRarityMeta(rarityFilter).labelEn
+                      : getRarityMeta(rarityFilter).labelZh,
+                })
+              : showOnlyEvolvable
+                ? t("noEvolvable")
+                : t("empty")}
           </p>
         )}
 

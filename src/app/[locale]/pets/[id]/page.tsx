@@ -6,6 +6,9 @@ import { pool } from "@/db/client";
 import { LivingPet } from "@/components/LivingPet";
 import { Link } from "@/i18n/navigation";
 import { renderPetDescription, type DictionarySpecies } from "@/lib/pet-dictionary";
+import { getRarityMeta } from "@/lib/pet-status";
+import { unlockPriceCnyLabel } from "@/lib/pricing";
+import { rarityWeight } from "@/lib/species-group";
 import { SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string; id: string }> };
@@ -14,6 +17,7 @@ type Props = { params: Promise<{ locale: string; id: string }> };
  * 宠物（物种）详情页 — SEO 落地页：
  *  - 动态 generateMetadata：查 pet_dictionary 生成物种专属标题/描述/OG；
  *  - 内容为服务端渲染（利于收录），带返回图鉴 + 领养 CTA 内链；
+ *  - 下方按稀有度聚合展示该物种全部版本（已拥有 / 解锁价，与图鉴按物种去重互补）；
  *  - URL 已纳入 sitemap.xml（/zh|en/pets/<speciesId>）。
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -49,6 +53,7 @@ export default async function PetSpeciesPage({ params }: Props) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("seo");
+  const tc = await getTranslations("petsCatalog");
 
   const { rows } = await pool.query(
     `SELECT d.id, d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.category_en AS "categoryEn",
@@ -72,6 +77,28 @@ export default async function PetSpeciesPage({ params }: Props) {
   };
   const name = locale === "en" ? species.nameEn : species.nameZh;
   const desc = renderPetDescription(species, null, locale);
+
+  // 该物种的全部稀有度版本（图鉴已按物种去重，各版本在详情页展示）：
+  //  - 按稀有度聚合（legendary > … > common），每版本一卡；
+  //  - owned = 该版本存在已被领养的实例（与图鉴 owned 判定同源）。
+  const { rows: variantRows } = await pool.query(
+    `SELECT p.traits->>'rarity' AS rarity,
+            COUNT(*) AS instances,
+            COUNT(*) FILTER (WHERE p.owner_id IS NOT NULL OR p.guest_owner IS NOT NULL) AS owned,
+            (array_agg(p.image_url ORDER BY p.image_url NULLS LAST))[1] AS image_url
+       FROM pets p
+      WHERE p.species_id = $1 AND p.status = 'active' AND p.visible = true
+      GROUP BY p.traits->>'rarity'`,
+    [id],
+  );
+  const variants = variantRows
+    .map((r) => ({
+      rarity: String(r.rarity ?? "common"),
+      instances: Number(r.instances),
+      owned: Number(r.owned) > 0,
+      imageUrl: r.image_url ? String(r.image_url) : null,
+    }))
+    .sort((a, b) => rarityWeight(b.rarity) - rarityWeight(a.rarity));
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
@@ -128,6 +155,54 @@ export default async function PetSpeciesPage({ params }: Props) {
           </div>
 
           <p className="mt-4 border-t border-zinc-100 pt-3 text-sm leading-relaxed text-zinc-600">{desc}</p>
+
+          {/* 稀有度版本列表：图鉴按物种去重后，各版本在详情页展示与定价 */}
+          {variants.length > 0 && (
+            <div className="mt-5 border-t border-zinc-100 pt-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-sm font-bold text-zinc-900">{tc("variantsTitle")}</h2>
+                <span className="text-[11px] text-zinc-400">
+                  {tc("variantsSubtitle", { count: variants.length })}
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {variants.map((v) => {
+                  const meta = getRarityMeta(v.rarity);
+                  return (
+                    <div
+                      key={v.rarity}
+                      className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/60 p-3"
+                    >
+                      <LivingPet
+                        src={v.imageUrl ?? (s.imageUrl ? String(s.imageUrl) : "")}
+                        alt={`${name} · ${locale === "en" ? meta.labelEn : meta.labelZh}`}
+                        className="h-10 w-10 shrink-0 rounded-full border-2 border-orange-100 object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badgeClass}`}
+                          >
+                            {meta.emoji} {locale === "en" ? meta.labelEn : meta.labelZh}
+                          </span>
+                          <span className="text-[10px] text-zinc-400">× {v.instances}</span>
+                        </div>
+                        <div className="mt-1 text-xs font-semibold">
+                          {v.owned ? (
+                            <span className="text-zinc-400">{tc("claimed")}</span>
+                          ) : (
+                            <span className="text-orange-500">
+                              {tc("unlockPrice", { price: unlockPriceCnyLabel(v.rarity) })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="mt-5 flex flex-wrap gap-2">
             <Link

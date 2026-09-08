@@ -24,10 +24,11 @@ type CatalogPet = {
   defaultDescription: string;
   /** 是否已被领养（owner_id 非空） */
   owned?: boolean;
+  /** 物种全量版本种数（仅 group=species API 模式返回 > 1；普通模式 undefined） */
+  variantCount?: number;
 };
 
 const ELEMENTS = ["fire", "water", "earth", "air"];
-const RARITIES = ["common", "uncommon", "rare", "epic", "legendary"];
 
 /** 图鉴收录的精选物种（GEO：JSON-LD ItemList 静态条目，SSR 可靠输出）。 */
 const LD_SPECIES = [
@@ -46,7 +47,7 @@ const LD_SPECIES = [
 /**
  * 动物图鉴（公共物种百科）：
  *  - 只读展示全部预计算宠物的物种、属性与介绍；
- *  - 保留分类导航 + 元素 / 稀有度筛选（GIN 索引）；
+ *  - 保留分类导航 + 元素筛选（GIN 索引）；稀有度筛选已迁移到 /pets/my（我的宠物页）；
  *  - 合成 / 进化 / 我的宠物 等操作在 /pets/my（我的宠物合成页）。
  */
 export default function PetsCatalogPage() {
@@ -56,7 +57,7 @@ export default function PetsCatalogPage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [element, setElement] = useState("");
-  const [rarity, setRarity] = useState("");
+  // 图鉴是物种百科：按 speciesId 去重展示，不做稀有度筛选（rarity 筛选已迁移到 /pets/my 我的宠物页）。
   // 今日幸运宠等外部入口可通过 ?species=xxx 直达该物种
   const [species, setSpecies] = useState("");
   const [loading, setLoading] = useState(true);
@@ -80,10 +81,11 @@ export default function PetsCatalogPage() {
     setLoading(true);
     setError("");
     try {
-      const qs = new URLSearchParams({ limit: "60" });
+      // group=species：同物种多实例去重为一张卡（rep=最高稀有度 + 共 X 种版本）。
+      // 物种客观版本种数不受当前 category/element/species 筛选影响（API 内部 SQL 单独算）。
+      const qs = new URLSearchParams({ limit: "60", group: "species" });
       if (category) qs.set("category", category);
       if (element) qs.set("element", element);
-      if (rarity) qs.set("rarity", rarity);
       if (species) qs.set("species", species);
       const res = await fetch(`/api/pets/catalog?${qs.toString()}`);
       const data = await res.json();
@@ -98,7 +100,7 @@ export default function PetsCatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [category, element, rarity, species, t]);
+  }, [category, element, species, t]);
 
   useEffect(() => {
     void load();
@@ -212,13 +214,20 @@ export default function PetsCatalogPage() {
     }
   };
 
-  // 外部入口（今日幸运宠等）通过 URL 参数直达物种/稀有度
+  // 外部入口（今日幸运宠等）通过 URL 参数直达物种
+  //  - ?species= 直达该物种；图鉴不再支持 ?rarity=（已迁移到 /pets/my 我的宠物页），
+  //    历史深链进入时静默清理掉避免误传。
   useEffect(() => {
+    if (typeof window === "undefined") return;
     const qs = new URLSearchParams(window.location.search);
     const s = qs.get("species");
-    const r = qs.get("rarity");
     if (s) setSpecies(s);
-    if (r) setRarity(r);
+    if (qs.get("rarity")) {
+      qs.delete("rarity");
+      const next = qs.toString();
+      const url = `${window.location.pathname}${next ? `?${next}` : ""}`;
+      window.history.replaceState(null, "", url);
+    }
   }, []);
 
   const chip = (active: boolean) =>
@@ -306,34 +315,19 @@ export default function PetsCatalogPage() {
           ))}
         </div>
 
-        {/* 元素筛选（GIN 索引） */}
-        <div className="mb-4 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-zinc-400">element</span>
-            {ELEMENTS.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => setElement(element === e ? "" : e)}
-                className={chip(element === e)}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-zinc-400">rarity</span>
-            {RARITIES.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRarity(rarity === r ? "" : r)}
-                className={chip(rarity === r)}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
+        {/* 元素筛选（GIN 索引）。图鉴是物种百科：稀有度筛选已迁移到 /pets/my 我的宠物页。 */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-zinc-400">element</span>
+          {ELEMENTS.map((e) => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => setElement(element === e ? "" : e)}
+              className={chip(element === e)}
+            >
+              {e}
+            </button>
+          ))}
         </div>
 
         {loading && <p className="py-10 text-center text-sm text-zinc-400">{t("loading")}</p>}
@@ -358,13 +352,21 @@ export default function PetsCatalogPage() {
                     className="h-14 w-14 rounded-full border-2 border-orange-200 bg-orange-50 object-cover"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-zinc-900">{pet.speciesName}</span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${rarityMeta.badgeClass}`}
                       >
                         {rarityMeta.emoji} {locale === "en" ? rarityMeta.labelEn : rarityMeta.labelZh}
                       </span>
+                      {(pet.variantCount ?? 0) > 1 && (
+                        <span
+                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500"
+                          title={t("variantsSubtitle", { count: pet.variantCount as number })}
+                        >
+                          {t("variantsBadge", { count: pet.variantCount as number })}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-0.5 flex flex-wrap gap-1 text-[10px] text-zinc-500">
                       <span className="rounded bg-orange-50 px-1 py-0.5">⚡{pet.traits.element ?? "?"}</span>
