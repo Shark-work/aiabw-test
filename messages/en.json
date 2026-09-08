@@ -670,5 +670,60 @@
     "newsSourceLabel": "Source",
     "newsPublishedAt": "Published {time}",
     "newsNotFound": "News not found or removed"
+  },
+  "exploration": {
+    "title": "Pet Travel Diary",
+    "subtitle": "Idle explore with your pet",
+    "backpack": "Backpack",
+    "postcards": "Postcards",
+    "loading": "Loading...",
+    "map": {
+      "map1": "Village",
+      "map2": "Meadow",
+      "map3": "Forest",
+      "map4": "River",
+      "map5": "Desert",
+      "map6": "Snowy Peak",
+      "map7": "Starry Sky"
+    },
+    "weather": {
+      "sunny": "Sunny",
+      "rainy": "Rainy",
+      "snowy": "Snowy",
+      "cloudy": "Cloudy"
+    },
+    "stats": {
+      "steps": "Walked {count} steps",
+      "progress": "{percent}% done",
+      "km": "{km} km walked",
+      "day": "Day {day}",
+      "mood": "Mood"
+    },
+    "events": {
+      "item": "Got an item",
+      "weather": "Weather changed",
+      "npc": "Met an NPC",
+      "obstacle": "Hit an obstacle",
+      "continue": "Continue",
+      "got": "Got",
+      "reached": "Reached {map}!",
+      "obstacleBack": "Careful - need {item} to pass",
+      "skipObstacle": "Skip - back up a few steps",
+      "useItem": "Use item ({item})"
+    },
+    "postcard": {
+      "title": "Journey Complete",
+      "summary": "Summary",
+      "viewAll": "View all postcards",
+      "empty": "No postcards yet - finish your first map!",
+      "achievement": "Achievement"
+    },
+    "panel": {
+      "backpackTitle": "Backpack",
+      "empty": "Backpack is empty - go explore with your pet",
+      "progressLabel": "Progress",
+      "weatherLabel": "Weather",
+      "dayLabel": "Day {day}"
+    }
   }
 }

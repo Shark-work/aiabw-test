@@ -670,5 +670,60 @@
     "newsSourceLabel": "来源",
     "newsPublishedAt": "发布于 {time}",
     "newsNotFound": "新闻不存在或已下线"
+  },
+  "exploration": {
+    "title": "宠物旅行日记",
+    "subtitle": "和宠物一起挂机探索",
+    "backpack": "背包",
+    "postcards": "明信片",
+    "loading": "加载中...",
+    "map": {
+      "map1": "村庄",
+      "map2": "草地",
+      "map3": "森林",
+      "map4": "河流",
+      "map5": "沙漠",
+      "map6": "雪山",
+      "map7": "星空"
+    },
+    "weather": {
+      "sunny": "晴天",
+      "rainy": "雨天",
+      "snowy": "雪天",
+      "cloudy": "多云"
+    },
+    "stats": {
+      "steps": "已走 {count} 步",
+      "progress": "完成 {percent}%",
+      "km": "已走 {km} 公里",
+      "day": "第 {day} 天",
+      "mood": "心情"
+    },
+    "events": {
+      "item": "获得道具",
+      "weather": "天气变化",
+      "npc": "遇到 NPC",
+      "obstacle": "遇到障碍",
+      "continue": "继续",
+      "got": "获得",
+      "reached": "到达 {map}!",
+      "obstacleBack": "小心~ 需要 {item} 才能通过",
+      "skipObstacle": "算了，退回几步",
+      "useItem": "使用道具 ({item})"
+    },
+    "postcard": {
+      "title": "旅程完成",
+      "summary": "总结",
+      "viewAll": "查看所有明信片",
+      "empty": "还没有明信片哦~ 继续动手完成第一张吧!",
+      "achievement": "成就"
+    },
+    "panel": {
+      "backpackTitle": "背包",
+      "empty": "背包还为空~ 与宠物一起冒险获得道具",
+      "progressLabel": "完成度",
+      "weatherLabel": "天气",
+      "dayLabel": "第 {day} 天"
+    }
   }
 }

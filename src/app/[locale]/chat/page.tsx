@@ -9,7 +9,6 @@ import { LivingPet } from "@/components/LivingPet";
 import { PETS, DEFAULT_PET_TYPE, type PetConfig } from "@/lib/pet-config";
 import { resolvePetConfig } from "@/lib/ugc";
 import { sanitizeForTextModel } from "@/lib/context-compress";
-
 // 领养成功后进入的独立聊天页。
 // 服务端根据 URL 参数加载该线程的历史消息、艾比心情与宠物类型（petType），再交给客户端渲染。
 export default async function ChatPage({
@@ -92,6 +91,40 @@ export default async function ChatPage({
     petType = ad.petType || DEFAULT_PET_TYPE;
   }
 
+  // 宠物旅行日记：探索初始状态（SSR 加载一次，避免首次渲染空白）
+  // 注：columns 是 IF NOT EXISTS 添加，旧库若缺这些列会自动补齐（见 src/db/client.ts）。
+  let initialExploration: {
+    adoptionId: string;
+    explorationSteps: number;
+    currentMapId: number;
+    mapProgress: number;
+    weather: "sunny" | "rainy" | "snowy" | "cloudy";
+  } | null = null;
+  const finalAdoptionId = adoptionId;
+  if (finalAdoptionId) {
+    const [exRow] = await db
+      .select({
+        id: adoptions.id,
+        explorationSteps: adoptions.explorationSteps,
+        currentMapId: adoptions.currentMapId,
+        mapProgress: adoptions.mapProgress,
+        weather: adoptions.weather,
+      })
+      .from(adoptions)
+      .where(eq(adoptions.id, finalAdoptionId))
+      .limit(1);
+    if (exRow) {
+      const w = exRow.weather;
+      initialExploration = {
+        adoptionId: exRow.id,
+        explorationSteps: exRow.explorationSteps ?? 0,
+        currentMapId: exRow.currentMapId ?? 1,
+        mapProgress: exRow.mapProgress ?? 0,
+        weather: w === "rainy" || w === "snowy" || w === "cloudy" ? w : "sunny",
+      };
+    }
+  }
+
   // 根据 petType 解析宠物配置（UGC 宠物读取数据库；图鉴物种动态构建；未知类型自动回退狐狸）
   const basePet = await resolvePetConfig(petType, locale as "zh" | "en");
 
@@ -139,6 +172,7 @@ export default async function ChatPage({
           fallbackWelcome={welcomeMessage || undefined}
           petType={petType}
           pet={pet}
+          initialExploration={initialExploration ?? undefined}
         />
       </div>
     </main>

@@ -31,6 +31,11 @@ export async function GET(req: Request) {
         chatCount: adoptions.chatCount,
         monthlyPoints: adoptions.monthlyPoints,
         isUnlocked: adoptions.isUnlocked,
+        // 宠物旅行日记：探索状态
+        explorationSteps: adoptions.explorationSteps,
+        currentMapId: adoptions.currentMapId,
+        mapProgress: adoptions.mapProgress,
+        weather: adoptions.weather,
       })
       .from(adoptions)
       .where(eq(adoptions.id, id))
@@ -48,6 +53,11 @@ export async function GET(req: Request) {
       chatCount: row.chatCount,
       monthlyPoints: row.monthlyPoints,
       isUnlocked: row.isUnlocked,
+      // 宠物旅行日记
+      explorationSteps: row.explorationSteps ?? 0,
+      currentMapId: row.currentMapId ?? 1,
+      mapProgress: row.mapProgress ?? 0,
+      weather: row.weather ?? "sunny",
     });
   } catch (err) {
     console.error("Failed to load pet status:", err);
