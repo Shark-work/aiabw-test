@@ -8,6 +8,7 @@ import { ChatClient } from "@/components/chat/chat-client";
 import { LivingPet } from "@/components/LivingPet";
 import { PETS, DEFAULT_PET_TYPE, type PetConfig } from "@/lib/pet-config";
 import { resolvePetConfig } from "@/lib/ugc";
+import { sanitizeForTextModel } from "@/lib/context-compress";
 
 // 领养成功后进入的独立聊天页。
 // 服务端根据 URL 参数加载该线程的历史消息、艾比心情与宠物类型（petType），再交给客户端渲染。
@@ -47,6 +48,9 @@ export default async function ChatPage({
       parts: r.parts as UIMessage["parts"],
     }));
   }
+  // 前端防线：丢弃 DB 历史里残留的 file/image/tool/reasoning 等非文本 part，
+  // 避免 useChat 默认回传整个 messages 数组时把图片 part 发往后端。
+  initialMessages = sanitizeForTextModel(initialMessages);
 
   // 读取当前心情值 / 等级 / 月度积分 / 宠物类型（默认 50 / Lv.1 / 0 分 / 狐狸）
   let happiness = 50;

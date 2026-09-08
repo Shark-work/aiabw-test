@@ -16,5 +16,14 @@ export function getModel(modelName?: string) {
     apiKey: process.env.BAILIAN_API_KEY ?? '',
     baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
   });
-  return bailian(modelName ?? process.env.BAILIAN_MODEL ?? 'qwen-turbo');
+  const name = modelName ?? process.env.BAILIAN_MODEL ?? 'qwen-turbo';
+  // Why bailian.chat (Chat Completions) instead of bailian() (Responses API):
+  //  - DashScope /compatible-mode/v1/responses serializes UIMessage parts into
+  //    `input_image` items which `qwen-turbo` (text-only) rejects with
+  //    "Model only support text input" if any file/image part sneaks into history
+  //    (e.g. legacy DB rows, future multimodal UIs).
+  //  - Chat Completions on /compatible-mode/v1/chat/completions handles tool
+  //    calls + multi-turn text cleanly and ignores unsupported modalities
+  //    instead of failing hard. Verified via tmp-repro2-chat.mjs R-E.
+  return bailian.chat(name);
 }

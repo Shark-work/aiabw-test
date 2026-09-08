@@ -31,6 +31,30 @@ export function countUserTurns(messages: UIMessage[]): number {
   return messages.filter((m) => m.role === "user").length;
 }
 
+/**
+ * 把 UIMessage.parts 清洗为「纯文本模型安全」格式：
+ *  - 仅保留 type === "text" 的 parts（保留原顺序与原 text）
+ *  - 丢弃 file / image / tool-* / reasoning / step-start 等非文本 part
+ *  - 整条消息 parts 全部被丢弃时，parts 置为 []（不进 model）
+ *
+ * 用途：默认 DashScope qwen-turbo 是纯文本模型。
+ *  - Responses API 把 file part 序列化为 `input_image`，qwen-turbo 会拒绝并报
+ *    "Model only support text input"；
+ *  - Chat Completions 路径虽容错，但残留的非文本 part 仍会污染上下文、浪费 token。
+ * 调用方应在 convertToModelMessages 之前先 sanitize（前端 initialMessages 也应同样处理）。
+ */
+export function sanitizeForTextModel(messages: UIMessage[]): UIMessage[] {
+  return messages.map((m) => {
+    const parts = Array.isArray(m.parts) ? m.parts : [];
+    const textParts = parts.filter(
+      (p): p is { type: "text"; text: string; state?: "streaming" } =>
+        !!p && (p as { type?: string }).type === "text" &&
+        typeof (p as { text?: unknown }).text === "string",
+    );
+    return { ...m, parts: textParts } as UIMessage;
+  });
+}
+
 /** 提取一条 UIMessage 的纯文本内容（text parts 拼接）。 */
 export function messageText(m: UIMessage): string {
   return (m.parts ?? [])

@@ -4,6 +4,7 @@ import {
   compressConversation,
   countUserTurns,
   extractTopics,
+  sanitizeForTextModel,
   summarizeEarlyTurns,
 } from "../src/lib/context-compress.ts";
 
@@ -68,4 +69,75 @@ test("边界：恰好等于阈值不压缩，超过 1 轮触发", () => {
 
 test("summarizeEarlyTurns 空输入安全", () => {
   assert.ok(summarizeEarlyTurns([]).includes("归档"));
+});
+
+test("sanitizeForTextModel 保留 text parts，丢弃 file/image/tool/reasoning", () => {
+  const input = [
+    {
+      role: "user",
+      parts: [
+        { type: "text", text: "hello" },
+        { type: "file", mediaType: "image/png", url: "https://example.com/x.png" },
+      ],
+    },
+    {
+      role: "assistant",
+      parts: [
+        { type: "step-start" },
+        {
+          type: "tool-get_weather",
+          toolCallId: "call_1",
+          state: "output-available",
+          input: { city: "SZ" },
+          output: { ok: true },
+        },
+        { type: "text", text: "It's sunny" },
+        { type: "reasoning", text: "thinking..." },
+      ],
+    },
+  ];
+  const out = sanitizeForTextModel(input);
+  assert.equal(out[0].parts.length, 1);
+  assert.equal(out[0].parts[0].type, "text");
+  assert.equal(out[0].parts[0].text, "hello");
+  assert.equal(out[1].parts.length, 1);
+  assert.equal(out[1].parts[0].type, "text");
+  assert.equal(out[1].parts[0].text, "It's sunny");
+});
+
+test("sanitizeForTextModel 整条无 text 时 parts 置空（不进模型）", () => {
+  const input = [
+    {
+      role: "assistant",
+      parts: [
+        { type: "step-start" },
+        { type: "tool-foo", toolCallId: "c", state: "output-available", input: {}, output: {} },
+      ],
+    },
+  ];
+  const out = sanitizeForTextModel(input);
+  assert.equal(out[0].parts.length, 0);
+});
+
+test("sanitizeForTextModel 容错：parts 缺失或非数组", () => {
+  const input = [
+    { role: "user", parts: undefined },
+    { role: "assistant", parts: null },
+    { role: "user", parts: "not-an-array" },
+    { role: "user" },
+  ];
+  const out = sanitizeForTextModel(input);
+  for (const m of out) {
+    assert.ok(Array.isArray(m.parts), "parts is array");
+    assert.equal(m.parts.length, 0);
+  }
+});
+
+test("sanitizeForTextModel 不修改 message.id 和 role", () => {
+  const input = [
+    { id: "abc-1", role: "user", parts: [{ type: "text", text: "hi" }] },
+  ];
+  const out = sanitizeForTextModel(input);
+  assert.equal(out[0].id, "abc-1");
+  assert.equal(out[0].role, "user");
 });

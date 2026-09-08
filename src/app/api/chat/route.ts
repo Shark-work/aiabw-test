@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { agentTools } from "@/lib/agent-tools";
 import { getModel } from "@/lib/get-model";
 import { buildMemorySection, updateMemory } from "@/lib/memory";
-import { compressConversation } from "@/lib/context-compress";
+import { compressConversation, sanitizeForTextModel } from "@/lib/context-compress";
 import { resolvePetConfig } from "@/lib/ugc";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
@@ -121,16 +121,19 @@ export async function POST(req: Request) {
   const result = streamText({
     model: getModel(),
     system,
-    messages: convertToModelMessages(recentMessages),
+    // 纯文本模型安全：丢弃 file/image/tool/reasoning 等非文本 part，
+    // 避免 DashScope qwen-turbo 报 "Model only support text input"。
+    messages: convertToModelMessages(sanitizeForTextModel(recentMessages)),
     tools: agentTools,
     // Agent loop: model may call tools, observe results, and respond
     // across up to 5 steps in a single turn.
     stopWhen: stepCountIs(5),
     // 对话流结束后：异步提取长期记忆（不阻塞回复）。
     // 记忆提取基于完整原始对话（messages），保证记忆质量不受上下文压缩影响。
+    // 同样先 sanitize，防止老会话里残留的图片 part 误入长期记忆 prompt。
     onFinish: async (event) => {
       if (typeof adoptionId === "string" && adoptionId) {
-        void updateMemory(adoptionId, messages, event.text ?? "").catch((err) =>
+        void updateMemory(adoptionId, sanitizeForTextModel(messages), event.text ?? "").catch((err) =>
           console.error("[memory] update failed:", err),
         );
       }
