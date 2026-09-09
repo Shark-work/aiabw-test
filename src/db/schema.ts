@@ -26,6 +26,8 @@ export const users = pgTable('users', {
   inviteCode: text('invite_code').unique(),
   /** 裂变邀请：由谁邀请（邀请人 user id） */
   invitedBy: uuid('invited_by').references((): AnyPgColumn => users.id),
+  /** 金币余额：探险商城（shop_items）通用货币，新用户默认 200 */
+  coins: integer('coins').notNull().default(200),
 });
 
 /**
@@ -329,4 +331,203 @@ export const userPostcards = pgTable('user_postcards', {
   aiSummaryEn: text('ai_summary_en').notNull(),
   illustrationEmoji: text('illustration_emoji').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * 宠物旅行日记 · 探险商城 商品目录：
+ *  - id 语义化英文 key（tent / umbrella / compass / bridge / rope / lantern / hot_air_balloon）；
+ *  - effect_type: 'obstacle_pass'(自动通过) / 'weather_resist'(免疫天气) / 'distance_boost'(步数加成) / 'rare_event'(稀有事件概率) / 'map_skip'(跳图)；
+ *  - effect_value: 数值（如 distance_boost=1.5 表示步数 ×1.5）；
+ *  - duration: -1 = 永久装备；>0 = 消耗品秒数（本期不实现过期逻辑，预留字段）；
+ *  - is_premium: TRUE 表示仅高级公民月卡用户可购买；
+ *  - currency: 'coin' / 'rmb' / 'subscription'（本期只用 coin）。
+ */
+export const shopItems = pgTable('shop_items', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  descriptionZh: text('description_zh').notNull(),
+  descriptionEn: text('description_en').notNull(),
+  icon: text('icon').notNull(),
+  price: integer('price').notNull(),
+  currency: text('currency').notNull().default('coin'),
+  effectType: text('effect_type').notNull(),
+  effectValue: doublePrecision('effect_value').notNull().default(1.0),
+  duration: integer('duration').notNull().default(-1),
+  isPremium: boolean('is_premium').notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * 宠物旅行日记 · 探险商城 用户购买订单（流水账）：
+ *  - 实际装备的道具入 user_items 表（source='shop'），本表只保留购买记录；
+ *  - status: 'pending' / 'completed' / 'refunded'（本期只写 completed）；
+ *  - payment 渠道：currency='coin' 用金币扣减；其它渠道预留。
+ */
+export const userOrders = pgTable('user_orders', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  itemId: text('item_id').references(() => shopItems.id).notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  totalPrice: integer('total_price').notNull(),
+  currency: text('currency').notNull(),
+  status: text('status').notNull().default('completed'),
+  paidAt: timestamp('paid_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * 宠物旅行日记 · 聊天额度（每日按 user_id+date 唯一）：
+ *  - 每日计数：message_count 达到 FREE_DAILY_LIMIT 触发硬限制
+ *  - VIP 用户：直接走 unlimited 分支，chat_quotas 不会增长
+ *  - last_message_at：仅供诊断/运维
+ */
+export const chatQuotas = pgTable('chat_quotas', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  date: text('date').notNull(), // 'YYYY-MM-DD' 本地日期
+  messageCount: integer('message_count').notNull().default(0),
+  lastMessageAt: timestamp('last_message_at'),
+});
+
+/**
+ * 宠物旅行日记 · 订阅计划目录：
+ *  - id: 'monthly' / 'quarterly' / 'yearly'
+ *  - price_rmb: 单位 = 分（与 xorpay 一致）
+ *  - daily_chat_limit: -1 = 无限
+ *  - features: JSON 字符串列表（与前端 vip features 文案键对齐）
+ */
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  priceRmb: integer('price_rmb').notNull(),
+  durationDays: integer('duration_days').notNull(),
+  dailyChatLimit: integer('daily_chat_limit').notNull(),
+  // jsonb 列存储为 JSON 字符串（Drizzle PG 用 jsonb 模式，DB 客户端走原始 SQL 时以 jsonb 表达）
+  features: text('features').notNull().default('[]'),
+  badgeZh: text('badge_zh').notNull().default(''),
+  badgeEn: text('badge_en').notNull().default(''),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+});
+
+/**
+ * 宠物旅行日记 · 用户订阅实例：
+ *  - status: 'active' / 'expired' / 'cancelled'（cancelled 仅关闭自动续费）
+ *  - expires_at: 续费时若未到期则向后顺延，到期后用 null/重新创建
+ *  - payment_id: xorpay 订单号（subscription-…）
+ *  - auto_renew: false = 用户主动取消续费，当前周期仍生效
+ */
+export const userSubscriptions = pgTable('user_subscriptions', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  planId: text('plan_id').references(() => subscriptionPlans.id).notNull(),
+  status: text('status').notNull().default('active'),
+  startedAt: timestamp('started_at').notNull().defaultNow(),
+  expiresAt: timestamp('expires_at').notNull(),
+  paymentId: text('payment_id'),
+  autoRenew: boolean('auto_renew').notNull().default(true),
+});
+
+/**
+ * 宠物长期记忆库（VIP 专属，drizzle/0019_pet_memories.sql）
+ *  - memoryType: preference(偏好) / event(事件) / fact(事实) / emotion(情绪)
+ *  - importance: 1-10，用于 recallMemory 排序权重
+ *  - timesRecalled + lastRecalledAt: 召回统计
+ *  - expiresAt: 临时记忆可设过期（NULL=永不过期）
+ *  - petId: 可选；为 NULL 则视为「跨宠物」全局记忆（如用户姓名、整体偏好）
+ * 访问控制：src/lib/memory-gate.hasMemoryAccess() 校验 user_subscriptions。
+ */
+export const petMemories = pgTable('pet_memories', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  petId: text('pet_id'),
+  memoryType: text('memory_type', {
+    enum: ['preference', 'event', 'fact', 'emotion'],
+  }).notNull(),
+  content: text('content').notNull(),
+  sourceMessage: text('source_message'),
+  importance: integer('importance').notNull().default(5),
+  timesRecalled: integer('times_recalled').notNull().default(0),
+  lastRecalledAt: timestamp('last_recalled_at'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * 探索 v2 · 动物知识百科（drizzle/0020_exploration_v2.sql）
+ *  - id: 物种唯一标识（如 "persian-cat"）
+ *  - species: 物种显示名（中英双语或单语皆可）
+ *  - category: 分类（猫/狗/狐/兔/鸟/...）
+ *  - traits / funFacts: JSON 字符串数组（Drizzle 侧用 text，应用层 parseAnimalTraits / parseAnimalFunFacts 解析）
+ *  - 数据驱动：新增宠物只插一行；不需改代码。
+ */
+export const animalWiki = pgTable('animal_wiki', {
+  id: text('id').primaryKey(),
+  species: text('species').notNull(),
+  category: text('category').notNull(),
+  origin: text('origin'),
+  lifespan: text('lifespan'),
+  weight: text('weight'),
+  // JSON 字符串数组，存：["安静","温顺",...]
+  traits: text('traits').notNull().default('[]'),
+  // JSON 字符串数组，至少 5 条趣味知识
+  funFacts: text('fun_facts').notNull().default('[]'),
+  habitat: text('habitat'),
+  diet: text('diet'),
+  conservationStatus: text('conservation_status'),
+  imageUrl: text('image_url'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * 探索 v2 · 事件库（drizzle/0020_exploration_v2.sql）
+ *  - eventType: postcard / gift / knowledge / encounter / rest
+ *  - rarity: common / rare / epic（CHECK 约束，DB 层防越界）
+ *  - weight: 抽取权重（整数；应用层按 weight 比例随机）
+ *  - petCategory: 适用宠物类别（NULL = 通用）
+ *  - knowledgeLink: 关联 animal_wiki.id（knowledge 类专用）
+ *  - requiredEquipment: 需要装备 ID（NULL = 无前置；后续可扩展）
+ */
+export const explorationEventsV2 = pgTable('exploration_events', {
+  id: text('id').primaryKey(),
+  petCategory: text('pet_category'),
+  eventType: text('event_type', {
+    enum: ['postcard', 'gift', 'knowledge', 'encounter', 'rest'],
+  }).notNull(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  imageEmoji: text('image_emoji'),
+  rarity: text('rarity', { enum: ['common', 'rare', 'epic'] }).notNull().default('common'),
+  weight: integer('weight').notNull().default(10),
+  requiredEquipment: text('required_equipment'),
+  knowledgeLink: text('knowledge_link'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * 探索 v2 · 记录（每次探索落库一行）
+ *  - userId: 探索发起人（必填）
+ *  - petId: 关联宠物实例（NULL = 未选；可后续在 0021 阶段扩展）
+ *  - eventId: 关联事件（NULL 表示系统异常但仍记录步数）
+ *  - resultType: 与 event.eventType 一致
+ *  - resultData: JSON 字符串（title/description/emoji 等）
+ *  - isRare: 派生字段（rarity != 'common'），UI 标记用
+ */
+export const explorationRecords = pgTable('exploration_records', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  petId: text('pet_id'),
+  eventId: text('event_id').references((): AnyPgColumn => explorationEventsV2.id),
+  resultType: text('result_type', {
+    enum: ['postcard', 'gift', 'knowledge', 'encounter', 'rest'],
+  }).notNull(),
+  resultData: text('result_data'),
+  stepsGained: integer('steps_gained').notNull().default(0),
+  distanceGained: numeric('distance_gained', { precision: 10, scale: 2 }).notNull().default('0'),
+  isRare: boolean('is_rare').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 });

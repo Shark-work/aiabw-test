@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTheme } from "@/components/theme-provider";
 
 type Me = { email: string; points: number };
+type SubStatus = { isVip: boolean; daysRemaining: number } | null;
 
 /**
  * 全局固定顶部导航：
@@ -23,12 +24,14 @@ export function SiteHeader() {
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
+  const [sub, setSub] = useState<SubStatus>(null);
 
   // 每次路由变化后刷新登录态（导航高亮、登录按钮切换）
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
     if (!token) {
       setMe(null);
+      setSub(null);
       return;
     }
     fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
@@ -39,10 +42,28 @@ export function SiteHeader() {
         } else {
           localStorage.removeItem("aiabw_token");
           setMe(null);
+          setSub(null);
         }
       })
       .catch(() => setMe(null));
-  }, [pathname]);
+
+    // VIP 状态：依赖 me 已加载后再渲染（避免未登录态出现按钮闪动）。
+    // me 已置为 null 时（即未登录 / 登录态失败），sub 保持 null，导航条隐藏 VIP 入口。
+    if (!me) {
+      // 上方 me 状态已经更新；下个渲染周期 effect 会再跑一次补全 sub。
+    } else {
+      fetch("/api/subscription/status", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d?.ok) {
+            setSub({ isVip: !!d.isVip, daysRemaining: Math.max(0, d.daysRemaining ?? 0) });
+          } else {
+            setSub({ isVip: false, daysRemaining: 0 });
+          }
+        })
+        .catch(() => setSub({ isVip: false, daysRemaining: 0 }));
+    }
+  }, [pathname, me]);
 
   const handleLogout = () => {
     localStorage.removeItem("aiabw_token");
@@ -54,6 +75,7 @@ export function SiteHeader() {
     { href: "/", label: t("home") },
     { href: "/pets", label: t("catalog") },
     { href: "/my-pets", label: t("myPets") },
+    { href: "/explore-v2", label: t("explore") },
     { href: "/marketplace", label: t("market") },
     { href: "/handbooks", label: t("journals") },
     { href: "/points", label: t("points") },
@@ -92,6 +114,40 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+
+        {/* 宠物长期记忆（仅 VIP）：跳转 /memories */}
+        {me && sub && sub.isVip ? (
+          <Link
+            href="/memories"
+            className="hidden shrink-0 items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700 transition hover:bg-violet-200 hover:shadow-sm md:inline-flex dark:bg-violet-900/30 dark:text-violet-300 dark:hover:bg-violet-900/50"
+            title={t("navMemory")}
+          >
+            <span aria-hidden>🧠</span>
+            <span>{t("navMemory")}</span>
+          </Link>
+        ) : null}
+
+        {/* 桌面端 VIP 入口：仅登录后展示 */}
+        {me && sub && (
+          sub.isVip ? (
+            <Link
+              href="/subscribe"
+              className="hidden shrink-0 items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700 transition hover:bg-purple-200 hover:shadow-sm md:inline-flex dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50"
+              title={t("manageSubscription")}
+            >
+              {t("navVipDays", { days: sub.daysRemaining })}
+            </Link>
+          ) : (
+            <Link
+              href="/subscribe"
+              className="hidden shrink-0 items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1 text-sm font-semibold text-white shadow-sm transition hover:scale-105 hover:shadow-md md:inline-flex"
+              title={t("navUpgrade")}
+            >
+              <span aria-hidden>✨</span>
+              <span>{t("navUpgrade")}</span>
+            </Link>
+          )
+        )}
 
         {/* 右侧登录态 */}
         <div className="hidden shrink-0 items-center gap-2 md:flex">
@@ -185,6 +241,42 @@ export function SiteHeader() {
                   {it.label}
                 </Link>
               ))}
+              {/* 宠物长期记忆（仅 VIP） */}
+              {me && sub && sub.isVip ? (
+                <Link
+                  href="/memories"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center justify-center gap-1 rounded-xl bg-violet-100 px-3 py-2.5 text-sm font-semibold text-violet-700"
+                  title={t("navMemory")}
+                >
+                  <span aria-hidden>🧠</span>
+                  <span>{t("navMemory")}</span>
+                </Link>
+              ) : null}
+              {/* 移动端 VIP 入口：图标+短文字（仅登录后展示） */}
+              {me && sub && (
+                sub.isVip ? (
+                  <Link
+                    href="/subscribe"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-center gap-1 rounded-xl bg-purple-100 px-3 py-2.5 text-sm font-semibold text-purple-700"
+                    title={t("manageSubscription")}
+                  >
+                    <span aria-hidden>💎</span>
+                    <span>{sub.daysRemaining}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/subscribe"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-2.5 text-sm font-semibold text-white"
+                    title={t("navUpgrade")}
+                  >
+                    <span aria-hidden>👑</span>
+                    <span>VIP</span>
+                  </Link>
+                )
+              )}
             </div>
             <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 pt-3">
               {me ? (

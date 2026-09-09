@@ -327,7 +327,127 @@ const SCHEMA_CREATES: string[] = [
     "ai_summary_en" text NOT NULL,
     "illustration_emoji" text NOT NULL,
     "created_at" timestamp DEFAULT now() NOT NULL
-  )`
+  )`,
+  // 宠物旅行日记 · 探险商城（drizzle/0017_shop.sql）：商品目录 + 订单流水
+  `CREATE TABLE IF NOT EXISTS "shop_items" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "description_zh" text NOT NULL,
+    "description_en" text NOT NULL,
+    "icon" text NOT NULL,
+    "price" integer NOT NULL,
+    "currency" text DEFAULT 'coin' NOT NULL,
+    "effect_type" text NOT NULL,
+    "effect_value" double precision DEFAULT 1.0 NOT NULL,
+    "duration" integer DEFAULT -1 NOT NULL,
+    "is_premium" boolean DEFAULT false NOT NULL,
+    "sort_order" integer DEFAULT 0 NOT NULL,
+    "is_active" boolean DEFAULT true NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS "user_orders" (
+    "id" text PRIMARY KEY,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "item_id" text NOT NULL REFERENCES "shop_items"("id"),
+    "quantity" integer DEFAULT 1 NOT NULL,
+    "total_price" integer NOT NULL,
+    "currency" text NOT NULL,
+    "status" text DEFAULT 'completed' NOT NULL,
+    "paid_at" timestamp DEFAULT now() NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
+  // 宠物旅行日记 · VIP 订阅系统（drizzle/0018_subscription.sql）
+  // 每日聊天额度（user_id+date 唯一）+ 订阅计划目录 + 用户订阅实例
+  `CREATE TABLE IF NOT EXISTS "chat_quotas" (
+    "id" text PRIMARY KEY,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "date" text NOT NULL,
+    "message_count" integer DEFAULT 0 NOT NULL,
+    "last_message_at" timestamp
+  )`,
+  `CREATE TABLE IF NOT EXISTS "subscription_plans" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "price_rmb" integer NOT NULL,
+    "duration_days" integer NOT NULL,
+    "daily_chat_limit" integer NOT NULL,
+    "features" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "badge_zh" text DEFAULT '' NOT NULL,
+    "badge_en" text DEFAULT '' NOT NULL,
+    "sort_order" integer DEFAULT 0 NOT NULL,
+    "is_active" boolean DEFAULT true NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "user_subscriptions" (
+    "id" text PRIMARY KEY,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "plan_id" text NOT NULL REFERENCES "subscription_plans"("id"),
+    "status" text DEFAULT 'active' NOT NULL,
+    "started_at" timestamp DEFAULT now() NOT NULL,
+    "expires_at" timestamp NOT NULL,
+    "payment_id" text,
+    "auto_renew" boolean DEFAULT true NOT NULL
+  )`,
+  // 宠物旅行日记 · 宠物长期记忆库（VIP 专属，drizzle/0019_pet_memories.sql）
+  `CREATE TABLE IF NOT EXISTS "pet_memories" (
+    "id"               text PRIMARY KEY,
+    "user_id"          uuid NOT NULL REFERENCES "users"("id"),
+    "pet_id"           text,
+    "memory_type"      text NOT NULL CHECK ("memory_type" IN ('preference', 'event', 'fact', 'emotion')),
+    "content"          text NOT NULL,
+    "source_message"   text,
+    "importance"       integer DEFAULT 5 NOT NULL CHECK ("importance" BETWEEN 1 AND 10),
+    "times_recalled"   integer DEFAULT 0 NOT NULL,
+    "last_recalled_at" timestamp,
+    "expires_at"       timestamp,
+    "created_at"       timestamp DEFAULT now() NOT NULL
+  )`,
+  // 探索 v2 · 动物知识百科（drizzle/0020_exploration_v2.sql；与聊天驱动步数系统并行）
+  `CREATE TABLE IF NOT EXISTS "animal_wiki" (
+    "id"                  text PRIMARY KEY,
+    "species"             text NOT NULL,
+    "category"            text NOT NULL,
+    "origin"              text,
+    "lifespan"            text,
+    "weight"              text,
+    "traits"              text DEFAULT '[]' NOT NULL,
+    "fun_facts"           text DEFAULT '[]' NOT NULL,
+    "habitat"             text,
+    "diet"                text,
+    "conservation_status" text,
+    "image_url"           text,
+    "created_at"          timestamp DEFAULT now() NOT NULL
+  )`,
+  // 探索 v2 · 事件库（按权重随机抽取）
+  `CREATE TABLE IF NOT EXISTS "exploration_events" (
+    "id"                 text PRIMARY KEY,
+    "pet_category"       text,
+    "event_type"         text NOT NULL CHECK ("event_type" IN ('postcard','gift','knowledge','encounter','rest')),
+    "title"              text NOT NULL,
+    "description"        text NOT NULL,
+    "image_emoji"        text,
+    "rarity"             text DEFAULT 'common' NOT NULL CHECK ("rarity" IN ('common','rare','epic')),
+    "weight"             integer DEFAULT 10 NOT NULL,
+    "required_equipment" text,
+    "knowledge_link"     text,
+    "created_at"         timestamp DEFAULT now() NOT NULL
+  )`,
+  // 探索 v2 · 探索记录（每次探索落库一行）
+  `CREATE TABLE IF NOT EXISTS "exploration_records" (
+    "id"              text PRIMARY KEY,
+    "user_id"         uuid NOT NULL REFERENCES "users"("id"),
+    "pet_id"          text,
+    "event_id"        text REFERENCES "exploration_events"("id"),
+    "result_type"     text NOT NULL CHECK ("result_type" IN ('postcard','gift','knowledge','encounter','rest')),
+    "result_data"     text,
+    "steps_gained"    integer DEFAULT 0 NOT NULL,
+    "distance_gained" numeric(10,2) DEFAULT 0 NOT NULL,
+    "is_rare"         boolean DEFAULT false NOT NULL,
+    "created_at"      timestamp DEFAULT now() NOT NULL
+  )`,
 ];
 
 /**
@@ -357,6 +477,8 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "checkin_streak" integer DEFAULT 0 NOT NULL`,
   // 高级公民月卡到期时间（NULL=非会员；到期后自动降级为普通用户）
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "premium_until" timestamp`,
+  // 探险商城：金币余额（新用户默认 200）
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "coins" integer DEFAULT 200 NOT NULL`,
   // 裂变奖励状态机：pending=冻结等待活跃验证 / credited=已发放 / expired=超时作废
   `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'credited' NOT NULL`,
   `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "claimed_at" timestamp`,
@@ -449,6 +571,24 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_map_events_map_id" ON "map_events" ("map_id")`,
   // 宠物旅行日记 · 明信片按用户时间倒序
   `CREATE INDEX IF NOT EXISTS "idx_user_postcards_user" ON "user_postcards" ("user_id", "created_at" DESC)`,
+  // 宠物旅行日记 · 商城订单按用户时间倒序（"我的订单"查询）
+  `CREATE INDEX IF NOT EXISTS "idx_user_orders_user" ON "user_orders" ("user_id", "created_at" DESC)`,
+  // 宠物旅行日记 · 聊天额度按用户+日期索引
+  `CREATE INDEX IF NOT EXISTS "idx_chat_quotas_user_date" ON "chat_quotas" ("user_id", "date")`,
+  // 宠物旅行日记 · 订阅按用户索引
+  `CREATE INDEX IF NOT EXISTS "idx_user_subscriptions_user" ON "user_subscriptions" ("user_id")`,
+  // 宠物旅行日记 · 订阅到期日索引（清理过期订阅）
+  `CREATE INDEX IF NOT EXISTS "idx_user_subscriptions_expires" ON "user_subscriptions" ("expires_at")`,
+  // 宠物旅行日记 · 宠物长期记忆库索引（drizzle/0019_pet_memories.sql）
+  `CREATE INDEX IF NOT EXISTS "idx_pet_memories_user"      ON "pet_memories" ("user_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_pet_memories_user_pet"  ON "pet_memories" ("user_id", "pet_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_pet_memories_user_type" ON "pet_memories" ("user_id", "memory_type")`,
+  // 探索 v2 · 探索记录索引（drizzle/0020_exploration_v2.sql）
+  `CREATE INDEX IF NOT EXISTS "idx_exploration_records_user"      ON "exploration_records" ("user_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_exploration_records_user_time" ON "exploration_records" ("user_id", "created_at" DESC)`,
+  // 探索 v2 · 事件库索引（按 type / rarity 过滤）
+  `CREATE INDEX IF NOT EXISTS "idx_exploration_events_type"   ON "exploration_events" ("event_type")`,
+  `CREATE INDEX IF NOT EXISTS "idx_exploration_events_rarity" ON "exploration_events" ("rarity")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
