@@ -561,7 +561,8 @@
     "navVipDays": "💎 {days}d",
     "navMemory": "🧠 Memory",
     "vipBadgeShort": "💎",
-    "explore": "Explore"
+    "explore": "Explore",
+    "navExplore": "🗺️ Explore"
   },
   "pages": {
     "backHome": "← Back to home",

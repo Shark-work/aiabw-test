@@ -75,7 +75,7 @@ export function SiteHeader() {
     { href: "/", label: t("home") },
     { href: "/pets", label: t("catalog") },
     { href: "/my-pets", label: t("myPets") },
-    { href: "/explore-v2", label: t("explore") },
+    { href: "/explore-v2", label: t("navExplore") },
     { href: "/marketplace", label: t("market") },
     { href: "/handbooks", label: t("journals") },
     { href: "/points", label: t("points") },

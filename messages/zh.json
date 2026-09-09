@@ -561,7 +561,8 @@
     "navVipDays": "💎 {days}天",
     "navMemory": "🧠 记忆",
     "vipBadgeShort": "💎",
-    "explore": "探索"
+    "explore": "探索",
+    "navExplore": "🗺️ 探索"
   },
   "pages": {
     "backHome": "← 返回首页",

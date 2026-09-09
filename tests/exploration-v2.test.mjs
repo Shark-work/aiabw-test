@@ -318,5 +318,65 @@ test("exploration v2: EVENT_TYPES / RARITY_LEVELS invariants", () => {
 test("exploration v2: SiteHeader includes /explore-v2 nav item", () => {
   const c = readFileSync(join(ROOT, "src/components/layout/SiteHeader.tsx"), "utf8");
   assert.ok(c.includes("/explore-v2"), "SiteHeader must link /explore-v2");
-  assert.ok(c.includes("t(\"explore\")") || c.includes('t("explore")'), "SiteHeader must use nav.explore label");
+  assert.ok(c.includes("navExplore") || c.includes("t(\"explore\")"), "SiteHeader must use navExplore label");
+});
+
+// === 16) DDL auto-execute: SCHEMA_CREATES has 3 table DDLs (verified earlier but with stricter key) ===
+test("exploration v2: SCHEMA_CREATES has animal_wiki / exploration_events / exploration_records CREATE TABLE", () => {
+  const c = readFileSync(join(ROOT, "src/db/client.ts"), "utf8");
+  assert.ok(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+"animal_wiki"/.test(c), 'SCHEMA_CREATES missing animal_wiki DDL');
+  assert.ok(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+"exploration_events"/.test(c), 'SCHEMA_CREATES missing exploration_events DDL');
+  assert.ok(/CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+"exploration_records"/.test(c), 'SCHEMA_CREATES missing exploration_records DDL');
+});
+
+// === 17) DDL auto-execute: SCHEMA_CREATES has seed INSERTs for animal_wiki + exploration_events ===
+test("exploration v2: SCHEMA_CREATES contains seed INSERTs (animal_wiki + exploration_events)", () => {
+  const c = readFileSync(join(ROOT, "src/db/client.ts"), "utf8");
+  // animal_wiki seed (persian cat)
+  const m1 = c.match(/INSERT\s+INTO\s+"animal_wiki"[\s\S]+?ON\s+CONFLICT\s*\("id"\)\s*DO\s+NOTHING/);
+  assert.ok(m1, "SCHEMA_CREATES missing animal_wiki INSERT seed");
+  assert.ok(m1[0].includes("persian-cat"), "animal_wiki seed must include persian-cat");
+  assert.ok(m1[0].includes("12-17年"), "animal_wiki seed must include lifespan 12-17年");
+  // exploration_events seed (20 rows)
+  const m2 = c.match(/INSERT\s+INTO\s+"exploration_events"[\s\S]+?ON\s+CONFLICT\s*\("id"\)\s*DO\s+NOTHING/);
+  assert.ok(m2, "SCHEMA_CREATES missing exploration_events INSERT seed");
+  const evtMatches = m2[0].match(/\('evt-\d{3}'/g) || [];
+  assert.ok(evtMatches.length >= 20, `exploration_events seed should have >=20 rows, got ${evtMatches.length}`);
+});
+
+// === 18) SiteHeader uses navExplore i18n key (not the old 'explore') ===
+test("exploration v2: SiteHeader nav item uses navExplore i18n key", () => {
+  const c = readFileSync(join(ROOT, "src/components/layout/SiteHeader.tsx"), "utf8");
+  assert.ok(/t\(\s*"navExplore"\s*\)/.test(c), 'SiteHeader must call t("navExplore")');
+  // Should not use the bare 'explore' for the explore-v2 entry
+  const exploreV2Line = c.split(/\r?\n/).find((l) => l.includes("/explore-v2"));
+  assert.ok(exploreV2Line, "no nav line for /explore-v2 found");
+  assert.ok(!/t\(\s*"explore"\s*\)/.test(exploreV2Line), "explore-v2 nav line must not use old 'explore' key");
+});
+
+// === 19) navExplore key exists in both locales with correct values ===
+test("exploration v2: messages.{zh,en}.json nav.navExplore = 🗺️ 探索 / 🗺️ Explore", () => {
+  for (const [f, expected] of [
+    [join(ROOT, "messages/zh.json"), "🗺️ 探索"],
+    [join(ROOT, "messages/en.json"), "🗺️ Explore"],
+  ]) {
+    const j = JSON.parse(readFileSync(f, "utf8"));
+    assert.ok(j.nav && typeof j.nav.navExplore === "string", `${f} missing nav.navExplore`);
+    assert.equal(j.nav.navExplore, expected, `${f} nav.navExplore should be "${expected}", got "${j.nav.navExplore}"`);
+  }
+});
+
+// === 20) Mobile hamburger also exposes /explore-v2 (via same items array) ===
+test("exploration v2: mobile menu renders /explore-v2 (same items array)", () => {
+  const c = readFileSync(join(ROOT, "src/components/layout/SiteHeader.tsx"), "utf8");
+  // Find the items array + ensure it appears in mobile section too (no separate copy)
+  const itemsIdx = c.indexOf("const items = [");
+  const mobileIdx = c.indexOf("md:hidden");
+  assert.ok(itemsIdx > 0, "items array must exist");
+  assert.ok(mobileIdx > 0, "mobile menu section must exist");
+  // Both desktop <nav> and mobile <nav> render items.map(...)
+  const mapCount = (c.match(/items\.map\(/g) || []).length;
+  assert.ok(mapCount >= 2, "items.map should be used in both desktop and mobile (>=2 occurrences)");
+  // The /explore-v2 entry should appear in the items array
+  assert.ok(c.includes('"/explore-v2"'), "items array must contain /explore-v2");
 });
