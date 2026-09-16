@@ -218,6 +218,7 @@
     "refreshing": "Refreshing…"
   },
   "chatPanel": {
+    "you": "You",
     "needEnergy": "{name} needs an energy boost!",
     "sponsorHint": "Sponsor a milk tea to unlock unlimited chatting and get exclusive limited skins too!",
     "scanHint": "Scan the QR code above with Alipay / WeChat to complete the payment.",

@@ -218,6 +218,7 @@
     "refreshing": "刷新中…"
   },
   "chatPanel": {
+    "you": "你",
     "needEnergy": "{name}需要充能啦~",
     "sponsorHint": "赞助一杯奶茶，即可解锁无限畅聊，还能带走专属限量皮肤哦~",
     "scanHint": "请使用支付宝 / 微信扫描上方二维码完成支付~",

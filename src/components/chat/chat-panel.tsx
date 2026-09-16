@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import type { UIMessage } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Send, User } from "lucide-react";
 
@@ -109,6 +109,17 @@ export function ChatPanel({
   const { messages, sendMessage, status, error, clearError } = useChat({
     id: threadId,
     messages: initialMessages,
+    // 关键修复：/api/chat 强制要求 Authorization: Bearer <token>（token 存 localStorage），
+    // 而 useChat 默认 transport 不带任何头 → 浏览器里永远 401 → AI 无回复（API 测试显式
+    // 传 token 所以一直没暴露，与 b104e3d 修 pay/create 缺 token 是同一类问题）。
+    // headers 传函数：每次请求时动态读取，登录/退出后即时生效，transport 本身可安全 memo。
+    transport: new DefaultChatTransport({
+      headers: (): Record<string, string> => {
+        if (typeof window === "undefined") return {};
+        const token = localStorage.getItem("aiabw_token");
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      },
+    }),
     // 流式完成时：刷新今日额度并显示软提醒（如果接近上限）
     onFinish: () => {
       void refreshQuota();
@@ -245,6 +256,14 @@ export function ChatPanel({
           dailyLimit: Number(parsed.quota.dailyLimit ?? 10),
           message: String(parsed.quota.message ?? parsed.error ?? ""),
         });
+        return;
+      }
+      // 未登录 / token 过期：清掉失效 token 并跳转登录页（登录后跳回本页）。
+      // 否则 401 会在 UI 上「静默失败」——用户看到的就是「AI 没有任何回复」。
+      if (parsed.code === "SIGN_IN_REQUIRED") {
+        localStorage.removeItem("aiabw_token");
+        const here = window.location.pathname + window.location.search;
+        window.location.href = `/login?redirect=${encodeURIComponent(here)}`;
       }
     } catch {
       // 普通流式/网络错误，不视为被解锁拦截，忽略。

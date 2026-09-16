@@ -618,6 +618,9 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_user_orders_user" ON "user_orders" ("user_id", "created_at" DESC)`,
   // 宠物旅行日记 · 聊天额度按用户+日期索引
   `CREATE INDEX IF NOT EXISTS "idx_chat_quotas_user_date" ON "chat_quotas" ("user_id", "date")`,
+  // 宠物旅行日记 · 聊天额度唯一约束：/api/chat 计数 UPSERT 的 ON CONFLICT (user_id, date)
+  // 依赖唯一索引，否则每次计数都报 42P10「no unique constraint」导致每日额度永不累计
+  `CREATE UNIQUE INDEX IF NOT EXISTS "uq_chat_quotas_user_date" ON "chat_quotas" ("user_id", "date")`,
   // 宠物旅行日记 · 订阅按用户索引
   `CREATE INDEX IF NOT EXISTS "idx_user_subscriptions_user" ON "user_subscriptions" ("user_id")`,
   // 宠物旅行日记 · 订阅到期日索引（清理过期订阅）
