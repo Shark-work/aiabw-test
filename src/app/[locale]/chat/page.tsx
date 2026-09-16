@@ -1,14 +1,19 @@
 import { db } from "@/db/client";
-import { messages as messagesTable, adoptions } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { messages as messagesTable, adoptions, chatQuotas } from "@/db/schema";
+import { and, eq, asc } from "drizzle-orm";
 import type { UIMessage } from "ai";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { cookies } from "next/headers";
 
 import { ChatClient } from "@/components/chat/chat-client";
 import { LivingPet } from "@/components/LivingPet";
 import { PETS, DEFAULT_PET_TYPE, type PetConfig } from "@/lib/pet-config";
 import { resolvePetConfig } from "@/lib/ugc";
 import { sanitizeForTextModel } from "@/lib/context-compress";
+import { getActiveSubscription } from "@/lib/subscription-config";
+import { getQuotaStatus, getRemaining, QUOTA_CONFIG, todayString } from "@/lib/chat-quota-config";
+import { QuotaBadge, type QuotaState } from "@/components/chat/quota-ui";
+import { verifyToken } from "@/lib/auth";
 // 领养成功后进入的独立聊天页。
 // 服务端根据 URL 参数加载该线程的历史消息、艾比心情与宠物类型（petType），再交给客户端渲染。
 export default async function ChatPage({
@@ -140,6 +145,45 @@ export default async function ChatPage({
     welcomeMessage = tp(`${petType}.welcome`);
   }
 
+  // 宠物旅行日记 · 聊天额度（SSR 初值，避免首屏空白）
+  //  - 客户端 QuotaBadge 仍会每 30s 轮询；这里只负责首帧
+  const cookieStore = await cookies();
+  const tokenCookie =
+    cookieStore.get("aiabw_token")?.value ?? cookieStore.get("auth_token")?.value;
+  const initialUser = tokenCookie ? await verifyToken(tokenCookie) : null;
+  let initialQuota: QuotaState = {
+    messageCount: 0,
+    dailyLimit: QUOTA_CONFIG.FREE_DAILY_LIMIT,
+    status: "normal",
+    remaining: QUOTA_CONFIG.FREE_DAILY_LIMIT,
+    isVip: false,
+  };
+  if (initialUser) {
+    const sub = await getActiveSubscription(initialUser.id);
+    const isVip = sub !== null;
+    let count = 0;
+    if (!isVip) {
+      const [row] = await db
+        .select({ messageCount: chatQuotas.messageCount })
+        .from(chatQuotas)
+        .where(
+          and(
+            eq(chatQuotas.userId, initialUser.id),
+            eq(chatQuotas.date, todayString()),
+          ),
+        )
+        .limit(1);
+      count = row?.messageCount ?? 0;
+    }
+    initialQuota = {
+      messageCount: count,
+      dailyLimit: QUOTA_CONFIG.FREE_DAILY_LIMIT,
+      status: getQuotaStatus(count, isVip),
+      remaining: getRemaining(count, isVip),
+      isVip,
+    };
+  }
+
   return (
     <main className="flex h-dvh w-full flex-col gap-2 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
       <div className="flex items-center gap-3 px-1">
@@ -149,13 +193,14 @@ export default async function ChatPage({
           tail={false}
           className="h-10 w-10 rounded-full border border-orange-200 bg-orange-50 object-cover"
         />
-        <div>
+        <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-zinc-900">{tc("appName")}</span>
             {/* 养成：当前等级徽标 */}
             <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
               Lv.{level} {pet.name}
             </span>
+            <QuotaBadge initial={initialQuota} />
           </div>
           <div className="text-xs text-zinc-500">{tchat("chatWith", { name: pet.name })}</div>
         </div>

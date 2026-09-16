@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     pay_time,
   });
 
-  // 2) 从 order_id 解析订单类型与业务参数（unlock / cosmetic / premium）
+  // 2) 从 order_id 解析订单类型与业务参数（unlock / cosmetic / premium / subscription / blindbox）
   const adoptionMatch = order_id.match(
     /^unlock-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
@@ -63,6 +63,10 @@ export async function POST(req: Request) {
   );
   const premiumMatch = order_id.match(
     /^premium-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  // subscription-<planId>-<userId>-<nonce>  planId ∈ {monthly, quarterly, yearly}
+  const subscriptionMatch = order_id.match(
+    /^subscription-(monthly|quarterly|yearly)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
   const blindboxMatch = order_id.match(
     /^blindbox-([^-]+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
@@ -109,6 +113,27 @@ export async function POST(req: Request) {
       [userId],
     );
     console.log("[pay/notify] premium granted", { userId });
+  } else if (subscriptionMatch) {
+    // —— VIP 订阅：UPSERT user_subscriptions（未到期则向后顺延；已到期则从现在起算）——
+    const planId = subscriptionMatch[1];
+    const userId = subscriptionMatch[2];
+    // durationDays: 30 / 90 / 365
+    const durationDays = planId === "yearly" ? 365 : planId === "quarterly" ? 90 : 30;
+    const subscriptionId = `sub-${order_id}`;
+    await pool.query(
+      `INSERT INTO user_subscriptions (id, user_id, plan_id, status, started_at, expires_at, payment_id, auto_renew)
+       VALUES (
+         $1, $2::uuid, $3, 'active', now(),
+         now() + ($4 || ' days')::interval,
+         $5, true
+       )
+       ON CONFLICT (id) DO UPDATE
+         SET expires_at = GREATEST(user_subscriptions.expires_at, now())
+                          + ($4 || ' days')::interval,
+             status = 'active'`,
+      [subscriptionId, userId, planId, String(durationDays), order_id],
+    );
+    console.log("[pay/notify] subscription granted", { planId, userId, orderId: order_id });
   } else if (blindboxMatch) {
     // —— 盲盒抽奖（XorPay 通道）：支付确认后，事务内抽奖 + 铸造 + 写流水 ——
     const bbPoolId = blindboxMatch[1];

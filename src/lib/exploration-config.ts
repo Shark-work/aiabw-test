@@ -196,6 +196,32 @@ export function advanceStep(state: {
   return { currentMapId: nextMapId, mapProgress: 0, completedMapId: finishedMapId };
 }
 
+/**
+ * 装备层叠的"实际步数"。
+ *  - baseSteps = STEPS_PER_MESSAGE（默认 10）；
+ *  - distance_boost 装备（如 compass ×1.5）按倍率放大，向下取整。
+ *  - 纯函数，advanceStep 调用方在循环内使用。
+ * @param baseSteps 基础步数（不含装备）
+ * @param equippedItemKeys 用户当前已装备的 itemKey 列表
+ * @returns 实际推进的步数（≥ baseSteps）
+ */
+export function applyEquipmentToSteps(
+  baseSteps: number,
+  equippedItemKeys: ReadonlyArray<string>,
+): number {
+  if (equippedItemKeys.length === 0) return baseSteps;
+  // 内联实现：避免循环依赖 shop-config（exploration-config 是更底层的纯模块）
+  let mult = 1.0;
+  for (const key of equippedItemKeys) {
+    if (key === "compass") {
+      // compass 步数加成 1.5
+      if (mult < 1.5) mult = 1.5;
+    }
+    // 未来可扩展其它 distance_boost 装备
+  }
+  return Math.max(baseSteps, Math.floor(baseSteps * mult));
+}
+
 export function getMapInfo(mapId: number): MapInfo | null {
   return EXPLORATION_MAPS.find((m) => m.id === mapId) ?? null;
 }

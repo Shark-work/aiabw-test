@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
 import { adoptions, userItems, userPostcards } from "@/db/schema";
@@ -8,11 +8,17 @@ import {
   EXPLORATION_MAPS,
   STEPS_PER_MESSAGE,
   advanceStep,
+  applyEquipmentToSteps,
   fillItemPlaceholder,
   pickEventForMap,
   type Weather,
   type MapEventSeed,
 } from "@/lib/exploration-config";
+import {
+  canPassObstacle,
+  canResistWeather,
+  rareEventMultiplier,
+} from "@/lib/shop-config";
 
 export const runtime = "nodejs";
 
@@ -98,11 +104,39 @@ export async function POST(req: Request) {
     let curProgress = row.mapProgress ?? 0;
     let curSteps = row.explorationSteps ?? 0;
     let curWeather = normalizeWeather(row.weather);
+
+    // 商城装备：加载当前用户已装备（source='shop'）的 itemKey 集合
+    //  - 仅登录用户生效（匿名领养的 userId='anonymous' 跳过）
+    //  - 商城永久装备视作'账号级'装备（不依赖 equipped_adoption_id，与签到盲盒不同）
+    let equippedItemKeys: string[] = [];
+    if (row.userId && row.userId !== "anonymous") {
+      try {
+        const owned = await db
+          .select({ itemKey: userItems.itemKey })
+          .from(userItems)
+          .where(
+            and(
+              eq(userItems.userId, row.userId),
+              eq(userItems.source, "shop"),
+            ),
+          );
+        // 去重（同一件永久装备可能有多条 user_items 记录）
+        equippedItemKeys = Array.from(new Set(owned.map((o) => o.itemKey)));
+      } catch (e) {
+        console.warn("[/api/exploration/step] load equipped items failed:", e);
+        equippedItemKeys = [];
+      }
+    }
+
+    // 装备 → 步数倍率（compass 等）
+    const actualStepsPerMessage = applyEquipmentToSteps(STEPS_PER_MESSAGE, equippedItemKeys);
+    const rareMult = rareEventMultiplier(equippedItemKeys);
+
     const completedMapIds: number[] = [];
     const events: ReturnType<typeof renderEvent>[] = [];
     let rewardItem: { key: string; emoji: string; name: string; rarity: string } | null = null;
 
-    for (let i = 0; i < STEPS_PER_MESSAGE; i++) {
+    for (let i = 0; i < actualStepsPerMessage; i++) {
       const next = advanceStep({ currentMapId: curMapId, mapProgress: curProgress });
       curMapId = next.currentMapId;
       curProgress = next.mapProgress;
@@ -115,11 +149,23 @@ export async function POST(req: Request) {
       }
 
       // 事件检查：每累计 20 步做一次概率判定（MVP 简化版）
+      // 装备倍率：rare_event（如 lantern）让事件触发概率 ×rareMult
       if (curSteps > 0 && curSteps % 20 === 0) {
         const randomVal = Math.random();
-        const event = pickEventForMap(curMapId, randomVal, curWeather);
+        // 把 rareMult 折算成新的 randomVal：mult > 1 → 降低 randomVal（更易触发）
+        const biasedRandom = rareMult > 1 ? randomVal / rareMult : randomVal;
+        const event = pickEventForMap(curMapId, biasedRandom, curWeather);
         if (event) {
-          events.push(renderEvent(event, locale));
+          // 装备效果：obstacle_pass / weather_resist → 标记 passedByEquipment / negatedByEquipment，弹窗展示提示
+          const passed = event.eventType === "obstacle" && canPassObstacle(equippedItemKeys);
+          const negated = event.eventType === "weather" && canResistWeather(equippedItemKeys);
+          const view = renderEvent(event, locale);
+          if (passed || negated) {
+            const tag = passed ? " [装备自动通过]" : " [装备免疫]";
+            events.push({ ...view, description: view.description + tag });
+          } else {
+            events.push(view);
+          }
 
           if (event.eventType === "item" && event.rewardItemKey) {
             if (row.userId && row.userId !== "anonymous") {

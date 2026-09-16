@@ -14,6 +14,7 @@ import { EXAMPLE_PROMPTS } from "@/lib/utils";
 import type { PetConfig } from "@/lib/pet-config";
 import { useTranslations } from "next-intl";
 import { PaymentModal } from "@/components/payment-modal";
+import { QuotaSoftWarn, QuotaUpgradeModal } from "@/components/chat/quota-ui";
 
 function AgentAvatar({
   pet,
@@ -73,14 +74,60 @@ export function ChatPanel({
   const t = useTranslations("chatPanel");
   const tc = useTranslations("common");
   const [input, setInput] = useState("");
+  /**
+   * 拉取当前用户的聊天额度（带状态 + 软提醒文案）
+   *  - 硬限制：触发弹窗（与 /api/chat 429 互为冗余）
+   *  - 软提醒：80% 时把拟人化文案写入 softWarn
+   */
+  const refreshQuota = useCallback(async () => {
+    try {
+      const res = await fetch("/api/chat/quota", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data?.ok) return;
+      if (typeof data.isVip === "boolean") setIsVip(data.isVip);
+      if (data.isVip) {
+        setSoftWarn(null);
+        return;
+      }
+      if (data.status === "soft_warn") {
+        setSoftWarn({
+          message:
+            (data.remaining ?? 0) > 0
+              ? `今天的聊天次数快用完啦（还剩 ${data.remaining} 条）`
+              : "",
+          remaining: Number(data.remaining ?? 0),
+        });
+      } else {
+        setSoftWarn(null);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const { messages, sendMessage, status, error, clearError } = useChat({
     id: threadId,
     messages: initialMessages,
+    // 流式完成时：刷新今日额度并显示软提醒（如果接近上限）
+    onFinish: () => {
+      void refreshQuota();
+    },
   });
 
   // 商业化变现：捕获 /api/chat 返回的 blocked 响应，弹出赞助/解锁卡片。
   const [blocked, setBlocked] = useState<{ message: string } | null>(null);
   const [blockedDismissed, setBlockedDismissed] = useState(false);
+  // VIP 订阅系统：硬限制（每日 10 条）弹窗（来自 429 quota_exceeded）
+  const [quotaModal, setQuotaModal] = useState<{
+    messageCount: number;
+    dailyLimit: number;
+    message: string;
+  } | null>(null);
+  // 软提醒（80% 触发的黄色提示条）
+  const [softWarn, setSoftWarn] = useState<{ message: string; remaining: number } | null>(null);
+  // 宠物长期记忆（VIP 专属）：仅 VIP 关闭免费用户每隔 5 条消息的轻量引导提示
+  const [isVip, setIsVip] = useState(false);
 
   // XorPay 下单状态：loading / 二维码 / 支付页链接 / 错误
   const [pay, setPay] = useState<{
@@ -184,13 +231,20 @@ export function ChatPanel({
     if (!error) return;
     try {
       const parsed = JSON.parse(error.message);
-      if (
-        parsed &&
-        parsed.blocked === true &&
-        typeof parsed.message === "string"
-      ) {
+      if (!parsed) return;
+      // 老路径：adoptions.chatCount >= 10（解锁前）
+      if (parsed.blocked === true && typeof parsed.message === "string") {
         setBlocked({ message: parsed.message });
         setBlockedDismissed(false);
+        return;
+      }
+      // 新路径：VIP 订阅系统的 429 quota_exceeded
+      if (parsed.code === "quota_exceeded" && parsed.quota) {
+        setQuotaModal({
+          messageCount: Number(parsed.quota.messageCount ?? 0),
+          dailyLimit: Number(parsed.quota.dailyLimit ?? 10),
+          message: String(parsed.quota.message ?? parsed.error ?? ""),
+        });
       }
     } catch {
       // 普通流式/网络错误，不视为被解锁拦截，忽略。
@@ -199,6 +253,11 @@ export function ChatPanel({
 
   const isLoading = status === "submitted" || status === "streaming";
   const showBlockedCard = blocked !== null && !blockedDismissed;
+
+  // 进入聊天页时拉一次额度（用于软提醒与 VIP 徽章）
+  useEffect(() => {
+    void refreshQuota();
+  }, [refreshQuota]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -324,6 +383,11 @@ export function ChatPanel({
         </div>
 
         {footerInfo}
+        <QuotaSoftWarn
+          warning={softWarn ? { status: "soft_warn", remaining: softWarn.remaining, message: softWarn.message } : null}
+        />
+        {/* 宠物长期记忆引导（仅免费用户，每 5 条用户消息显示一次） */}
+        {!isVip ? <MemoryHint userMsgCount={messages.filter((m) => m.role === "user").length} /> : null}
         <form onSubmit={handleSubmit} className="flex gap-2 border-t pt-4">
           <Input
             value={input}
@@ -379,6 +443,23 @@ export function ChatPanel({
         </div>
       )}
 
+      {/* VIP 订阅系统：硬限制弹窗（每日 10 条 / VIP 无限） */}
+      <QuotaUpgradeModal
+        quota={
+          quotaModal
+            ? {
+                messageCount: quotaModal.messageCount,
+                dailyLimit: quotaModal.dailyLimit,
+                status: "hard_limit",
+                remaining: 0,
+                isVip: false,
+                message: quotaModal.message,
+              }
+            : null
+        }
+        onClose={() => setQuotaModal(null)}
+      />
+
       {/* 统一支付弹窗（微信扫码 + 金额 + 取消） */}
       <PaymentModal
         open={!!pay.qr}
@@ -391,5 +472,25 @@ export function ChatPanel({
         onClose={() => setPay({ loading: false })}
       />
     </Card>
+  );
+}
+
+
+/**
+ * 宠物长期记忆引导：免费用户每发送 5 条用户消息时显示一次轻量提示（spec: 每 5 条最多一次）
+ *  - 检测 userMsgCount % 5 === 0 且 > 0（用户发第 5、10、15…条时）
+ *  - 不弹窗，只是消息列表底部 / 输入框上方的小提示
+ */
+function MemoryHint({ userMsgCount }: { userMsgCount: number }) {
+  const t = useTranslations("memories");
+  if (userMsgCount <= 0) return null;
+  if (userMsgCount % 5 !== 0) return null;
+  return (
+    <div
+      className="rounded-lg border border-violet-200 bg-violet-50/70 px-3 py-2 text-xs text-violet-700"
+      data-testid="memory-hint"
+    >
+      {t("upgradeHint")}
+    </div>
   );
 }
