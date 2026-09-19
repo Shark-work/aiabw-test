@@ -234,7 +234,8 @@
     "unlockNotDetected": "Unlock not detected yet. Please make sure you completed the payment and try again.",
     "orderFailed": "Order creation failed, please try again",
     "placeholder": "Tell {name} what you need~",
-    "send": "Send"
+    "send": "Send",
+    "replyFailed": "Reply failed ({detail}). Please try sending again."
   },
   "chatClient": {
     "memory": "🧠 Memory",

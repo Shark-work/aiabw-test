@@ -3,11 +3,22 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // 快速失败：数据库不可达时 5 秒内报错，而不是无限挂起（避免前端一直“注册中/加载中”）
-  connectionTimeoutMillis: 5000,
+  // 快速失败：数据库不可达时按超时报错，而不是无限挂起（避免前端一直“注册中/加载中”）。
+  // 注意：Neon 免费层会休眠（auto-suspend），冷启动唤醒可能 >5s，故默认放宽到 15s，
+  // 可用 DB_CONNECTION_TIMEOUT_MS 覆盖。
+  connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS ?? 15000),
   // 显式声明最大并发物理连接数（@neondatabase/serverless 默认 10）。
   // Neon 免费版 pooler 并发上限约 10，故保持 10；如遇连接超限可调低到 5。
   max: 10,
+});
+
+// 关键防护：pg Pool 的 'error' 事件（空闲连接被 Neon pooler 断开 / WebSocket 异常等）
+// 必须挂监听器，否则 Node 会把该事件当成 uncaughtException 直接杀死整个进程
+// （历史事故：tmp-server.err.log 中 "Unhandled error" → uncaughtException → 服务器
+// 进程退出，前端发消息全部连接失败，表现为「AI 完全无回复」）。
+// 挂监听后 pg 会安全地丢弃坏连接，后续查询自动新建连接。
+pool.on("error", (err: unknown) => {
+  console.error("[db] idle client error (connection dropped, will reconnect on next query):", err);
 });
 
 export const db = drizzle(pool);
@@ -490,6 +501,68 @@ const SCHEMA_CREATES: string[] = [
      ('evt-018','cat','rest','在纸箱里发呆','发现了一个快递纸箱，钻进去刚刚好！纸箱真是世界上最好的发明～','📦','common',18,NULL),
      ('evt-019','cat','rest','舔毛时间','坐在阳台上认认真真舔了一个小时的毛，现在我是世界上最干净的猫了！','✨','common',15,NULL),
      ('evt-020','cat','rest','看窗外的鸟','窗台上停了一只小鸟，我盯着它看了好久，它盯着我看了一会儿就飞走了…','🐦','common',15,NULL)
+   ON CONFLICT ("id") DO NOTHING`,
+
+  // 探索 v2 · 种子数据 · 动物知识百科（赤狐 + 柴犬；数据驱动，与波斯猫同构）
+  `INSERT INTO "animal_wiki" (
+     "id","species","category","origin","lifespan","weight",
+     "traits","fun_facts","habitat","diet","conservation_status","image_url"
+   ) VALUES
+   (
+     'red-fox',
+     '赤狐 / Red Fox',
+     '狐',
+     '北半球广布（欧亚大陆、北美洲）',
+     '野生3-4年，圈养可达10-12年',
+     '4-8 kg',
+     '["机敏","好奇","独立","夜行性","适应力极强"]',
+     '["赤狐是分布最广的野生犬科动物，几乎遍布整个北半球","赤狐能利用地球磁场定位捕猎——扑向雪下的猎物时，朝东北方向跳跃成功率更高","赤狐的大尾巴不仅是平衡器，冬天还能当围巾裹住身体保暖","赤狐能发出超过40种不同的声音，最著名的是类似尖叫的求偶叫声","赤狐脚掌上长有毛发，冬天像穿了雪地靴，在积雪中行走不易下陷"]',
+     '森林、草原、山地乃至城市郊区，适应性极强',
+     '杂食性，以鼠类、兔类为主，也吃鸟类、昆虫、浆果',
+     '无危（LC，IUCN 红色名录）',
+     NULL
+   ),
+   (
+     'shiba-inu',
+     '柴犬 / Shiba Inu',
+     '犬',
+     '日本（本州山地）',
+     '12-15年',
+     '8-11 kg',
+     '["忠诚","倔强","爱干净","警惕","表情丰富"]',
+     '["柴犬是日本六种原生犬种中体型最小的一种，已有超过2000年历史","柴犬的名字来源有两种说法：一说因为在灌木丛（柴）中狩猎，一说因为毛色像枯柴","柴犬极度爱干净，会像猫一样舔毛清洁自己，还会主动避开泥坑","柴犬的飞机耳和眯眼微笑是它们表达开心的招牌动作","2013年风靡全球的 Doge 表情包，原型是一只名叫 Kabosu 的日本柴犬"]',
+     '起源于日本山地，现为城市家庭伴侣犬，能适应公寓生活',
+     '肉食为主，优质犬粮；易发胖体质，需要控制零食',
+     '家养宠物，无保护级别（日本天然纪念物）',
+     NULL
+   )
+   ON CONFLICT ("id") DO NOTHING`,
+
+  // 探索 v2 · 种子数据 · 探索事件库（赤狐 evt-021~030 + 柴犬 evt-031~040；
+  // 5 类事件 × 3 稀有度：common 13 / rare 5 / epic 2；knowledge 类链接对应百科 id）
+  `INSERT INTO "exploration_events" ("id","pet_category","event_type","title","description","image_emoji","rarity","weight","knowledge_link") VALUES
+     -- 赤狐（fox）
+     ('evt-021','fox','postcard','晨雾中的森林','今天起了个大早，森林里全是白茫茫的雾，我踩在软软的苔藓上，像走在云朵里～','🌫️','common',25,NULL),
+     ('evt-022','fox','postcard','雪地里的一串脚印','下了一夜雪，我回头看到自己留下的一串小脚印，一直延伸到看不见的远方，突然有点想家…','🐾','rare',10,NULL),
+     ('evt-023','fox','gift','叼回一颗松果','捡到一颗特别完美的松果！鳞片排列得整整齐齐，送你当收藏品～','🌲','common',22,NULL),
+     ('evt-024','fox','gift','火红的枫叶','找到了一片和我毛色一模一样的红枫叶！据说捡到它的狐狸会遇到真爱…先送你保管！','🍁','epic',3,NULL),
+     ('evt-025','fox','knowledge','狐狸的小秘密','你知道吗？我们赤狐扑向雪地里的老鼠时，朝东北方向跳成功率最高——科学家说我们能感应地球磁场！','🧭','common',15,'red-fox'),
+     ('evt-026','fox','knowledge','尾巴的妙用','我的大尾巴不只是好看哦！冬天睡觉时把它盖在鼻子上，就是一条天然围巾～','🦊','rare',8,'red-fox'),
+     ('evt-027','fox','encounter','和刺猬对峙','遇到一只缩成球的刺猬，我围着它转了三圈愣是下不去嘴…算了算了，惹不起！','🦔','common',15,NULL),
+     ('evt-028','fox','encounter','城市边缘的冒险','今晚溜到了人类的小区边上，路灯好亮啊！有个小孩趴在窗户上看我，我冲他眨了眨眼～','🌃','rare',8,NULL),
+     ('evt-029','fox','rest','树洞里的午觉','找到一个空心老树洞，蜷成一圈睡了一下午，尾巴盖着脸，谁也叫不醒～','💤','common',18,NULL),
+     ('evt-030','fox','rest','溪边喝水休息','走累了在小溪边喝水，水好凉好甜，还看到几条小鱼从脚边游过去～','🏞️','common',15,NULL),
+     -- 柴犬（dog）
+     ('evt-031','dog','postcard','樱花树下转圈圈','公园里的樱花开了！我在树下追着飘落的花瓣转圈圈，路人都停下来给我拍照～','🌸','common',25,NULL),
+     ('evt-032','dog','postcard','神社前的沉思','路过一座小神社，我在鸟居下面坐了一会儿，不知道为什么突然变得好庄重…','⛩️','rare',10,NULL),
+     ('evt-033','dog','gift','叼回一根木棍','看我捡到的这根木棍！又长又直，手感超棒，这是我今天最大的战利品！','🪵','common',22,NULL),
+     ('evt-034','dog','gift','幸运达摩小挂件','在庙会摊位边捡到一个迷你达摩挂件！摊主爷爷说我是有福气的柴柴，就送给我啦～','🎎','epic',3,NULL),
+     ('evt-035','dog','knowledge','柴犬冷知识','告诉你哦，我们柴犬已经有2000多年历史了，是日本原生犬种里最小只的！祖先是山地猎犬～','⛰️','common',15,'shiba-inu'),
+     ('evt-036','dog','knowledge','爱干净的天性','我们柴犬会像猫一样自己舔毛做清洁！所以别嫌我挑剔，泥坑我是真的不想踩…','🛁','rare',8,'shiba-inu'),
+     ('evt-037','dog','encounter','倔强的拔河','散步时突然不想走了，原地坐下！主人拉绳子我就往后躺——最后他只好抱我回家，嘿嘿～','🦮','common',15,NULL),
+     ('evt-038','dog','encounter','遇到秋田大哥','遇到一只比我大两圈的秋田犬，本来想凶一下的，抬头看了看体型差距…还是先打个招呼吧！','🐕','common',12,NULL),
+     ('evt-039','dog','rest','飞机耳晒太阳','趴在阳台的垫子上晒太阳，耳朵开心得变成飞机耳，被主人偷拍了一百张…','☀️','common',18,NULL),
+     ('evt-040','dog','rest','蜷成甜甜圈','把自己蜷成一个完美的甜甜圈形状，尾巴刚好盖住鼻子，这是我最有安全感的睡姿～','🍩','common',15,NULL)
    ON CONFLICT ("id") DO NOTHING`,
 ];
 

@@ -234,7 +234,8 @@
     "unlockNotDetected": "还没检测到解锁，请确认已完成支付后再试~",
     "orderFailed": "下单失败，请稍后重试",
     "placeholder": "和{name}聊聊你的需求吧~",
-    "send": "发送"
+    "send": "发送",
+    "replyFailed": "回复失败（{detail}），请再发一次试试～"
   },
   "chatClient": {
     "memory": "🧠 记忆",

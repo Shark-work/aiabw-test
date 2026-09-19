@@ -61,7 +61,9 @@ test("api/chat: streamText 的 model 来自 getModel()（单点配置生效）",
   const ts = read("src/app/api/chat/route.ts");
   assert.ok(/import \{ getModel \} from "@\/lib\/get-model"/.test(ts), "imports getModel");
   assert.ok(/model:\s*getModel\(\)/.test(ts), "streamText uses getModel()");
-  assert.ok(ts.includes("toUIMessageStreamResponse()"), "returns streaming UI message response");
+  assert.ok(/toUIMessageStreamResponse\(/.test(ts), "returns streaming UI message response");
+  // 流式错误必须透出真实原因（onError），否则上游模型 401/超时只表现为「AI 无回复」
+  assert.ok(/onError:\s*\(err\)/.test(ts), "stream response wires onError diagnostics");
 });
 
 // ───────────── 7) .env.example 文档同步 ─────────────

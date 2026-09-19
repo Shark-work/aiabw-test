@@ -137,6 +137,8 @@ export function ChatPanel({
   } | null>(null);
   // 软提醒（80% 触发的黄色提示条）
   const [softWarn, setSoftWarn] = useState<{ message: string; remaining: number } | null>(null);
+  // 兜底错误条：服务端 500 / 流式错误 / 网络错误时展示（杜绝「AI 无回复且无任何提示」）
+  const [plainError, setPlainError] = useState<string | null>(null);
   // 宠物长期记忆（VIP 专属）：仅 VIP 关闭免费用户每隔 5 条消息的轻量引导提示
   const [isVip, setIsVip] = useState(false);
 
@@ -242,33 +244,44 @@ export function ChatPanel({
     if (!error) return;
     try {
       const parsed = JSON.parse(error.message);
-      if (!parsed) return;
-      // 老路径：adoptions.chatCount >= 10（解锁前）
-      if (parsed.blocked === true && typeof parsed.message === "string") {
-        setBlocked({ message: parsed.message });
-        setBlockedDismissed(false);
-        return;
-      }
-      // 新路径：VIP 订阅系统的 429 quota_exceeded
-      if (parsed.code === "quota_exceeded" && parsed.quota) {
-        setQuotaModal({
-          messageCount: Number(parsed.quota.messageCount ?? 0),
-          dailyLimit: Number(parsed.quota.dailyLimit ?? 10),
-          message: String(parsed.quota.message ?? parsed.error ?? ""),
-        });
-        return;
-      }
-      // 未登录 / token 过期：清掉失效 token 并跳转登录页（登录后跳回本页）。
-      // 否则 401 会在 UI 上「静默失败」——用户看到的就是「AI 没有任何回复」。
-      if (parsed.code === "SIGN_IN_REQUIRED") {
-        localStorage.removeItem("aiabw_token");
-        const here = window.location.pathname + window.location.search;
-        window.location.href = `/login?redirect=${encodeURIComponent(here)}`;
+      if (parsed) {
+        // 老路径：adoptions.chatCount >= 10（解锁前）
+        if (parsed.blocked === true && typeof parsed.message === "string") {
+          setBlocked({ message: parsed.message });
+          setBlockedDismissed(false);
+          return;
+        }
+        // 新路径：VIP 订阅系统的 429 quota_exceeded
+        if (parsed.code === "quota_exceeded" && parsed.quota) {
+          setQuotaModal({
+            messageCount: Number(parsed.quota.messageCount ?? 0),
+            dailyLimit: Number(parsed.quota.dailyLimit ?? 10),
+            message: String(parsed.quota.message ?? parsed.error ?? ""),
+          });
+          return;
+        }
+        // 未登录 / token 过期：清掉失效 token 并跳转登录页（登录后跳回本页）。
+        // 否则 401 会在 UI 上「静默失败」——用户看到的就是「AI 没有任何回复」。
+        if (parsed.code === "SIGN_IN_REQUIRED") {
+          localStorage.removeItem("aiabw_token");
+          const here = window.location.pathname + window.location.search;
+          window.location.href = `/login?redirect=${encodeURIComponent(here)}`;
+          return;
+        }
+        // 服务端结构化 500（DB / 配置错误等）：展示出来而不是静默。
+        if (parsed.code === "CHAT_INTERNAL_ERROR" && typeof parsed.error === "string") {
+          setPlainError(parsed.error);
+          return;
+        }
       }
     } catch {
-      // 普通流式/网络错误，不视为被解锁拦截，忽略。
+      // 非 JSON：流式错误（CHAT_STREAM_ERROR: ...）或网络层错误，走下方兜底展示。
     }
-  }, [error]);
+    // 兜底可见性：任何未识别的错误都必须让用户看见并允许重试——
+    // 历史 bug 是这里静默忽略，用户只能看到「AI 没有任何回复」。
+    const detail = error.message.replace(/^CHAT_STREAM_ERROR:\s*/, "").trim();
+    setPlainError(t("replyFailed", { detail: detail.slice(0, 120) }));
+  }, [error, t]);
 
   const isLoading = status === "submitted" || status === "streaming";
   const showBlockedCard = blocked !== null && !blockedDismissed;
@@ -282,6 +295,7 @@ export function ChatPanel({
     e.preventDefault();
     const text = input.trim();
     if (!text) return;
+    setPlainError(null); // 重新发送时清掉上一条错误提示
     sendMessage({ text }, { body: { petType, adoptionId } });
     setInput("");
 
@@ -402,6 +416,22 @@ export function ChatPanel({
         </div>
 
         {footerInfo}
+        {plainError && (
+          <div
+            className="flex items-start justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+            role="alert"
+          >
+            <span className="flex-1">{plainError}</span>
+            <button
+              type="button"
+              onClick={() => setPlainError(null)}
+              className="shrink-0 text-red-400 hover:text-red-600"
+              aria-label={tc("close")}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <QuotaSoftWarn
           warning={softWarn ? { status: "soft_warn", remaining: softWarn.remaining, message: softWarn.message } : null}
         />

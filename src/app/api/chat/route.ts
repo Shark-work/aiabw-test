@@ -34,6 +34,26 @@ export const maxDuration = 60;
 const FREE_MESSAGE_LIMIT = 10;
 
 export async function POST(req: Request) {
+  // 顶层防护：前置阶段（鉴权 / 建表 / Neon 查询 / 模型配置）任何一步抛错，
+  // 都返回结构化 JSON 500 并打印服务端日志——而不是让 Next.js 返回 HTML 错误页
+  // （前端 useChat 拿到非 JSON 错误会静默吞掉，用户看到的就是「AI 无任何回复」）。
+  try {
+    return await handlePost(req);
+  } catch (err) {
+    console.error("[chat] request failed:", err);
+    const detail = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      {
+        ok: false,
+        code: "CHAT_INTERNAL_ERROR",
+        error: `聊天服务暂时不可用，请稍后再试（${detail.slice(0, 200)}）`,
+      },
+      { status: 500 },
+    );
+  }
+}
+
+async function handlePost(req: Request) {
   const { messages, petType, adoptionId } = (await req.json()) as {
     messages: UIMessage[];
     petType?: string;
@@ -250,7 +270,15 @@ export async function POST(req: Request) {
   });
 
   // 软提醒信息写入响应头（前端 useChat 完成后读取）
-  const response = result.toUIMessageStreamResponse();
+  const response = result.toUIMessageStreamResponse({
+    // 透出真实错误到流里（默认只有 "An error occurred."），前端 error.message 可读、
+    // 服务端同时打日志——否则上游模型 401/超时只会表现为「AI 无任何回复」。
+    onError: (err) => {
+      console.error("[chat] stream error:", err);
+      const detail = err instanceof Error ? err.message : String(err);
+      return `CHAT_STREAM_ERROR: ${detail.slice(0, 300)}`;
+    },
+  });
   if (softWarnMessage) {
     response.headers.set("x-quota-warning", encodeURIComponent(JSON.stringify({
       status,
