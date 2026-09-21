@@ -5,12 +5,12 @@ import { createOpenAI } from '@ai-sdk/openai';
  *
  * 按优先级读取环境变量，第一个配置了 API Key 的提供商生效：
  *
- *   1) OPENAI_API_KEY  —— OpenAI 官方或任意 OpenAI 兼容服务（推荐）
- *        OPENAI_BASE_URL  可选；不设时默认 https://api.openai.com
- *        OPENAI_MODEL     可选，默认 gpt-4o-mini
- *   2) DEEPSEEK_API_KEY —— DeepSeek
+ *   1) DEEPSEEK_API_KEY —— DeepSeek
  *        DEEPSEEK_BASE_URL 可选，默认 https://api.deepseek.com
  *        DEEPSEEK_MODEL    可选，默认 deepseek-chat
+ *   2) OPENAI_API_KEY  —— OpenAI 官方或任意 OpenAI 兼容服务
+ *        OPENAI_BASE_URL  可选；不设时默认 https://api.openai.com
+ *        OPENAI_MODEL     可选，默认 gpt-4o-mini
  *   3) BAILIAN_API_KEY  —— 阿里云百炼（DashScope OpenAI 兼容模式）
  *        BAILIAN_MODEL    可选，默认 qwen-turbo
  *
@@ -24,18 +24,18 @@ interface ModelProvider {
 }
 
 function resolveProvider(): ModelProvider {
-  if (process.env.OPENAI_API_KEY) {
-    return {
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL || undefined,
-      defaultModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
-    };
-  }
   if (process.env.DEEPSEEK_API_KEY) {
     return {
       apiKey: process.env.DEEPSEEK_API_KEY,
       baseURL: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
       defaultModel: process.env.DEEPSEEK_MODEL ?? 'deepseek-chat',
+    };
+  }
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: process.env.OPENAI_BASE_URL || undefined,
+      defaultModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
     };
   }
   return {
