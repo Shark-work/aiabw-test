@@ -3,7 +3,9 @@
 // 背景（2026-09）：get-model.ts 原先写死阿里云百炼（BAILIAN_API_KEY + DashScope
 // baseURL）。用户要求统一从 OPENAI_API_KEY 读取，且支持任意 OpenAI 兼容端点
 //（OPENAI_BASE_URL / OPENAI_MODEL）。重构为三级提供商回退：
-//   OPENAI → DEEPSEEK → BAILIAN（第一个配置了 API Key 的生效）。
+//   DEEPSEEK → OPENAI → BAILIAN（第一个配置了 API Key 的生效）。
+// 注（ff906ea）：优先级由 OPENAI 优先调整为 DEEPSEEK 优先——Vercel 上残留的
+//   OPENAI_API_KEY 是失效的 ark- key（401），而 DEEPSEEK_API_KEY 有效。
 // /api/chat、agent-psychology、handbook、memory、memory-context、social-poster
 // 共 6 处调用点全部经由 getModel()，单点改造即全站生效。
 import test from "node:test";
@@ -15,8 +17,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(ROOT, p), "utf8");
 
-// ───────────── 1) OPENAI_API_KEY 为最高优先级 ─────────────
-test("get-model: OPENAI_API_KEY 是回退链的第一优先级", () => {
+// ───────────── 1) DEEPSEEK_API_KEY 为最高优先级 ─────────────
+test("get-model: DEEPSEEK_API_KEY 是回退链的第一优先级", () => {
   const ts = read("src/lib/get-model.ts");
   const iOpenai = ts.indexOf("process.env.OPENAI_API_KEY");
   const iDeepseek = ts.indexOf("process.env.DEEPSEEK_API_KEY");
@@ -24,8 +26,8 @@ test("get-model: OPENAI_API_KEY 是回退链的第一优先级", () => {
   assert.ok(iOpenai > -1, "reads OPENAI_API_KEY");
   assert.ok(iDeepseek > -1, "reads DEEPSEEK_API_KEY");
   assert.ok(iBailian > -1, "reads BAILIAN_API_KEY");
-  assert.ok(iOpenai < iDeepseek && iDeepseek < iBailian, "priority order OPENAI → DEEPSEEK → BAILIAN");
-  assert.ok(/if \(process\.env\.OPENAI_API_KEY\)/.test(ts), "OPENAI branch guards on key presence");
+  assert.ok(iDeepseek < iOpenai && iOpenai < iBailian, "priority order DEEPSEEK → OPENAI → BAILIAN");
+  assert.ok(/if \(process\.env\.DEEPSEEK_API_KEY\)/.test(ts), "DEEPSEEK branch guards on key presence");
 });
 
 // ───────────── 2) OPENAI_BASE_URL / OPENAI_MODEL 可配置 ─────────────

@@ -736,42 +736,106 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
   }
 }
 
+// ============================================================================
+// Schema 版本闸门（性能关键）
+//
+// 背景事故：旧版“快速路径”名义上跳过 DDL，实际仍在每个 Serverless 冷启动
+// 串行执行全部 CREATE/ALTER/INDEX/种子 INSERT（60+ 次数据库往返）；并发冷启动
+// 的实例互相争抢表锁，普通业务查询被堵在 DDL 锁队列里，表现为全站 45s+ 无响应。
+//
+// 现在改为版本闸门：版本一致 ⇒ 冷启动仅 1 次轻量查询即返回；
+// 仅当 SCHEMA_VERSION 提升（修改了 DDL 或种子数据）后，由单个实例经
+// 「原子认领」执行一次全量同步，其它实例有界等待，彻底避免 DDL 并发风暴。
+// （不用 pg advisory lock：Neon pooler 事务模式不支持会话级锁，改用 meta 表
+//   原子 UPDATE 认领，崩溃后可凭 10 分钟陈旧标记自动恢复。）
+//
+// ⚠️ 维护规则：凡修改 SCHEMA_CREATES / SCHEMA_ALTERS / SCHEMA_INDEXES
+//    （含种子数据），必须将 SCHEMA_VERSION +1，否则生产库不会应用变更。
+// ============================================================================
+const SCHEMA_VERSION = 1;
+
+const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
+  "id" integer PRIMARY KEY,
+  "version" integer NOT NULL,
+  "applied_at" timestamp DEFAULT now() NOT NULL
+)`;
+
+/** 读取已应用的 schema 版本；meta 表不存在等异常按 0 处理（将触发一次全量同步）。 */
+async function readSchemaVersion(client: {
+  query: (sql: string) => Promise<{ rows: Array<{ version: number }> }>;
+}): Promise<number> {
+  try {
+    const r = await client.query(
+      `SELECT "version" FROM "_schema_meta" WHERE "id" = 1`,
+    );
+    return Number(r.rows[0]?.version ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** 全量同步：建表 + 补列 + 补索引（幂等；由版本闸门保证仅低频执行）。 */
+async function runFullSchemaSync(client: {
+  query: (sql: string) => Promise<unknown>;
+}) {
+  for (const statement of SCHEMA_CREATES) {
+    await client.query(statement);
+  }
+  await runAlters(client);
+  await runIndexes(client);
+}
+
 /**
  * 幂等建表：全局只执行一次（失败会记录日志但不抛出，避免阻断业务请求重试）。
  * 调用方 await 它即可保证“执行本次查询前表结构已就绪”。
  *
- * 性能优化：先用一条 to_regclass 查询确认核心表已存在——
- * 存在则直接跳过整套 DDL，避免每次 Serverless 冷启动都跑 17 条建表语句。
+ * 性能：版本闸门快速路径 —— 冷启动仅 1 次版本查询（~1 RTT），
+ * 不再重复执行整套 DDL；全量同步仅由抢到认领的单个实例执行一次。
  */
 export function ensureDbSchemaOnce(): Promise<void> {
   schemaReadyPromise ??= (async () => {
     const client = await pool.connect();
     try {
-      // 快速路径：核心表存在则跳过 DDL
-      const exists = await client.query(
-        `SELECT to_regclass('public.users') AS u,
-                to_regclass('public.adoptions') AS a,
-                to_regclass('public.threads') AS t`,
+      // 快速路径（每次冷启动仅 1 次轻量查询）：版本已达标 → 直接返回
+      if ((await readSchemaVersion(client)) >= SCHEMA_VERSION) return;
+
+      // 慢速路径（仅 SCHEMA_VERSION 提升后执行一次）：建 meta 表 → 原子认领 → 全量同步
+      await client.query(META_TABLE_DDL);
+      const claimed = await client.query(
+        `INSERT INTO "_schema_meta" ("id", "version", "applied_at")
+         VALUES (1, -1, now())
+         ON CONFLICT ("id") DO UPDATE
+           SET "version" = -1, "applied_at" = now()
+         WHERE ("_schema_meta"."version" >= 0 AND "_schema_meta"."version" < $1)
+            OR ("_schema_meta"."version" < 0 AND "_schema_meta"."applied_at" < now() - interval '10 minutes')
+         RETURNING "id"`,
+        [SCHEMA_VERSION],
       );
-      const row = exists.rows[0] ?? {};
-      if (row.u && row.a && row.t) {
-        // 快速路径：核心表已存在 → 仍需幂等执行 CREATE TABLE IF NOT EXISTS
-        // （否则后续新增的表——如 agent_memories——永远不会被创建到已存在的生产库）
-        // + 幂等补列（ALTER）+ 补索引。
-        for (const statement of SCHEMA_CREATES) {
-          await client.query(statement);
+      if ((claimed.rowCount ?? 0) > 0) {
+        try {
+          await runFullSchemaSync(client);
+          await client.query(
+            `UPDATE "_schema_meta" SET "version" = $1, "applied_at" = now() WHERE "id" = 1`,
+            [SCHEMA_VERSION],
+          );
+          console.log("[db] schema synced to version", SCHEMA_VERSION);
+        } catch (err) {
+          // 同步中途失败：复位为未同步标记，让后续冷启动立即重试
+          await client
+            .query(`UPDATE "_schema_meta" SET "version" = 0 WHERE "id" = 1`)
+            .catch(() => {});
+          throw err;
         }
-        await runAlters(client);
-        await runIndexes(client);
-        console.log("[db] schema present: tables ensured (create-if-not-exists + alters + indexes)");
         return;
       }
-      for (const statement of SCHEMA_CREATES) {
-        await client.query(statement);
+
+      // 其它实例正在全量同步：有界轮询等待其完成（仅发生在版本切换窗口）。
+      // 注意 schemaReadyPromise 是实例级单例，同一实例无论多少请求也只跑一个轮询。
+      for (let i = 0; i < 30; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if ((await readSchemaVersion(client)) >= SCHEMA_VERSION) return;
       }
-      await runAlters(client);
-      await runIndexes(client);
-      console.log("[db] schema ensured (tables are ready)");
+      console.warn("[db] schema sync by another instance timed out; proceeding");
     } finally {
       client.release();
     }
