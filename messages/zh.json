@@ -699,6 +699,7 @@
   "exploration": {
     "title": "宠物旅行日记",
     "subtitle": "和宠物一起挂机探索",
+    "v2Banner": "新版探索上线！每日随机事件 × 稀有奇遇，点这里体验 →",
     "backpack": "背包",
     "postcards": "明信片",
     "loading": "加载中...",

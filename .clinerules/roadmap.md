@@ -76,19 +76,37 @@
 
 ### 迁移步骤
 
-| 步骤 | 内容 | 优先级 |
+| 步骤 | 内容 | 优先级 | 状态 |
+| --- | --- | --- | --- |
+| 1 | 确认 V1 用户数据兼容性（探索次数、已触发事件等字段映射到 V2 表结构） | P0 | ✅ 2026-09-23 |
+| 2 | V1 入口重定向到 V2 页面，保留 URL 兼容（/explore → /explore-v2） | P0 | ✅ 2026-09-23 |
+| 3 | 为 V1 老用户发放"回归礼包"（补偿积分 + 专属徽章"元老探险家"） | P1 | ⬜ |
+| 4 | 删除 V1 相关代码和路由，清理冗余 | P2 | ⬜ |
+| 5 | 更新 README 和新手引导文案，统一指向 V2 | P2 | ⬜ |
+
+### 数据兼容要点（2026-09-23 代码核实，修正原假设）
+
+V1 真实形态：**没有独立的 /explore 页面**（git 历史确认），入口是聊天页的
+`ExplorationMap` 挂件（`/api/exploration/step` 随每条聊天消息推进，
+drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
+
+| V1 数据（0016） | V2 落点（0020） | 映射结论 |
 | --- | --- | --- |
-| 1 | 确认 V1 用户数据兼容性（探索次数、已触发事件等字段映射到 V2 表结构） | P0 |
-| 2 | V1 入口重定向到 V2 页面，保留 URL 兼容（/explore → /explore-v2） | P0 |
-| 3 | 为 V1 老用户发放"回归礼包"（补偿积分 + 专属徽章"元老探险家"） | P1 |
-| 4 | 删除 V1 相关代码和路由，清理冗余 | P2 |
-| 5 | 更新 README 和新手引导文案，统一指向 V2 | P2 |
+| `adoptions.exploration_steps`（按宠物累计步数，每消息 +10） | `exploration_records`（按用户每次一行） | ❌ V1 无 `exploration_count` 字段；换算口径：完成地图数 = Σsteps ÷ 100（每图 100 步） |
+| `user_postcards`（每完成一张地图生成一张） | 探索次数计数 | ✅ V1「探索次数」≈ `COUNT(user_postcards)`，与上一条交叉校验取 max |
+| `map_events` 事件触发（应用层即时抽取，不落库） | `exploration_records.event_id`（evt-001~040） | ❌ 不可迁移：V1 触发无用户维度持久化、无稳定事件 ID；奇遇类徽章 V1 用户从 0 开始 |
+| `user_items`（source='exploration'） | — | ✅ 原表保留，背包通用，无需迁移 |
+| `user_postcards` 内容 | — | ✅ 原表保留，V1 明信片继续可查看 |
 
-### 数据兼容要点
+- 原假设「`exploration_count` 直接迁移」「事件 ID 合并到 `triggered_events`」经核实**不成立**（字段/数组均不存在），按上表修正。
+- V1 用户的累计探索次数自动计入 V2 徽章进度（如"探险新手"徽章），口径 = `max(Σ adoptions.exploration_steps ÷ 100, COUNT(user_postcards))`，由成就系统（任务二）落地时执行回填。
+- 步数量纲不同（V1 每消息 10 步 vs V2 每次 500-3000 步）→ 只按**次数**映射，不按步数。
 
-- V1 的 `exploration_count` 字段直接迁移到 V2
-- V1 已触发的事件 ID 合并到 V2 的 `triggered_events` 数组中
-- V1 用户的累计探索次数自动计入 V2 徽章进度（如"探险新手"徽章）
+**入口迁移（步骤 2 落地，2026-09-23）：**
+
+- 新建 `/[locale]/explore` 页面 308 永久重定向 → `/[locale]/explore-v2`（/explore 经 middleware 自动补 locale 前缀，URL 兼容旧书签/外链）。
+- `ExplorationMap` 挂件（V1 真实入口）顶部加 V2 引导条（`exploration.v2Banner` 双语），导航栏已统一指向 /explore-v2。
+- 迁移期 V1 系统（step/status/postcards API、挂件、0016 各表）保持可用，删除属于步骤 4（P2）。契约测试：tests/explore-v1-migration.test.mjs。
 
 ---
 

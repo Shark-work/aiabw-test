@@ -699,6 +699,7 @@
   "exploration": {
     "title": "Pet Travel Diary",
     "subtitle": "Idle explore with your pet",
+    "v2Banner": "New Exploration is live! Daily random events × rare encounters — try it now →",
     "backpack": "Backpack",
     "postcards": "Postcards",
     "loading": "Loading...",

@@ -8,8 +8,9 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { X, MapPin, Package, Image as ImageIcon, ShoppingBag, Coins, Lock, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { X, MapPin, Package, Image as ImageIcon, ShoppingBag, Coins, Lock, Loader2, Sparkles } from "lucide-react";
 import {
   EXPLORATION_MAPS,
   type ExplorationItem,
@@ -84,6 +85,7 @@ export function ExplorationMap({
   const t = useTranslations("exploration");
   const tShop = useTranslations("shop");
   const tCommon = useTranslations("common");
+  const currentLocale = useLocale();
   // 从 cookie 推断 locale（SSR 不可用，所以这里只在客户端判断；fallback zh）
   const locale: "zh" | "en" =
     (typeof document !== "undefined"
@@ -239,6 +241,16 @@ export function ExplorationMap({
 
   return (
     <div className="relative shrink-0 overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+      {/* V1→V2 迁移引导条：旧版挂机探索迁移期仍可用，引导用户前往新版随机事件探索
+          （roadmap 三·步骤 2；V1 下线（步骤 4）时随本组件一并移除） */}
+      <Link
+        href={`/${currentLocale}/explore-v2`}
+        data-testid="explore-v2-banner"
+        className="flex items-center justify-center gap-1.5 border-b border-violet-200 bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:from-violet-600 hover:to-fuchsia-600"
+      >
+        <Sparkles className="h-3 w-3" aria-hidden />
+        {t("v2Banner")}
+      </Link>
       <div className="flex items-center justify-between gap-2 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-2 text-xs">
         <div className="flex items-center gap-2 truncate">
           <span className="text-lg" aria-hidden>
