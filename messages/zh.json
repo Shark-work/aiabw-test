@@ -27,8 +27,8 @@
   "home": {
     "title": "艾比世界 · 多宠图鉴",
     "subtitle": "选一只你喜欢的艾比伙伴，陪它聊天、帮它成长~",
-    "checkin": "📅 签到 +10",
-    "checkinOk": "🎉 签到成功 +10 积分！",
+    "checkin": "📅 每日签到",
+    "checkinOk": "🎉 签到成功 +{points} 积分！",
     "checkinAlready": "今天已经签到过啦，明天再来~",
     "checkinFailed": "签到失败",
     "becomeCreator": "✨ 成为创作者",

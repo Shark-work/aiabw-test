@@ -27,8 +27,8 @@
   "home": {
     "title": "AIABW · Multi-Pet Collection",
     "subtitle": "Pick a companion you love, chat with it, and help it grow.",
-    "checkin": "📅 Check-in +10",
-    "checkinOk": "🎉 Check-in success +10 points!",
+    "checkin": "📅 Daily Check-in",
+    "checkinOk": "🎉 Check-in success! +{points} points!",
     "checkinAlready": "You already checked in today. See you tomorrow!",
     "checkinFailed": "Check-in failed",
     "becomeCreator": "✨ Become a creator",

@@ -60,7 +60,7 @@ function yesterday() {
   const password = "growthpass123";
   const allEmails = [];
 
-  // ---- A) 每日签到：+10 + 重复拦截 ----
+  // ---- A) 每日签到：加权随机 1-10 + 重复拦截 ----
   const emailA = `gcheck_${ts}@test.aiabw`;
   allEmails.push(emailA);
   const regA = await req("POST", "/api/auth/register", { email: emailA, password });
@@ -71,7 +71,12 @@ function yesterday() {
   const ck1 = await req("POST", "/api/user/checkin", null, tokenA);
   assert(ck1.status === 200 && ck1.json?.already === false, "首次签到成功", "status=" + ck1.status);
   assert(ck1.json?.streak === 1, "首签连签天数 = 1", "streak=" + ck1.json?.streak);
-  assert(ck1.json?.points - 20 === 10, "签到 +10 积分", "diff=" + (ck1.json?.points - 20));
+  assert(
+    Number.isInteger(ck1.json?.pointsGain) && ck1.json.pointsGain >= 1 && ck1.json.pointsGain <= 10,
+    "签到积分为 1-10 随机整数",
+    "pointsGain=" + ck1.json?.pointsGain,
+  );
+  assert(ck1.json?.points - 20 === ck1.json?.pointsGain, "签到入账与 pointsGain 一致", "diff=" + (ck1.json?.points - 20));
 
   const ck2 = await req("POST", "/api/user/checkin", null, tokenA);
   assert(ck2.json?.already === true, "同日重复签到被拦截（already=true）");
@@ -90,7 +95,11 @@ function yesterday() {
   const ckB = await req("POST", "/api/user/checkin", null, tokenB);
   assert(ckB.json?.streak === 7, "连签第 7 天 streak=7", "streak=" + ckB.json?.streak);
   assert(ckB.json?.bonus === true, "第 7 天触发签到成就（bonus=true）");
-  assert(ckB.json?.points === 110, "连签 7 天 +10+100 = 110", "points=" + ckB.json?.points);
+  assert(
+    ckB.json?.points === (ckB.json?.pointsGain ?? 0) + 100,
+    "连签 7 天 随机(1-10)+100 入账",
+    "points=" + ckB.json?.points + " gain=" + ckB.json?.pointsGain,
+  );
 
   // ---- C) 裂变：带 ref 注册 → 冻结 pending → 被邀请人领养后邀请人 +50 ----
   const inviter = `ginviter_${ts}@test.aiabw`;

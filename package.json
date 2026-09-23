@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs tests/agent-embedding.test.mjs tests/referral.test.mjs tests/species-prompt.test.mjs tests/checkin-items.test.mjs tests/species-group.test.mjs tests/context-compress.test.mjs tests/exploration.test.mjs tests/shop.test.mjs tests/subscription.test.mjs tests/nav-vip.test.mjs tests/memories.test.mjs tests/exploration-v2.test.mjs tests/chat-auth-repair.test.mjs tests/openai-model-config.test.mjs tests/wiki-new-pets.test.mjs tests/explore-auth-repair.test.mjs",
+    "test": "node --test tests/pet-limit.test.mjs tests/auth-hash.test.mjs tests/agent-embedding.test.mjs tests/referral.test.mjs tests/species-prompt.test.mjs tests/checkin-items.test.mjs tests/species-group.test.mjs tests/context-compress.test.mjs tests/exploration.test.mjs tests/shop.test.mjs tests/subscription.test.mjs tests/nav-vip.test.mjs tests/memories.test.mjs tests/exploration-v2.test.mjs tests/chat-auth-repair.test.mjs tests/openai-model-config.test.mjs tests/wiki-new-pets.test.mjs tests/explore-auth-repair.test.mjs tests/checkin-points.test.mjs",
     "check:assets": "node scripts/check-assets.js",
     "assets:optimize": "node scripts/optimize-images.mjs",
     "migrate:pets-to-blob": "node scripts/migrate-pets-to-blob.js",

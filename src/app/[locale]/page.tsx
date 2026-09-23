@@ -129,7 +129,7 @@ export default function Home() {
       const data = await res.json();
       if (data?.ok) {
         setUser((prev) => (prev ? { ...prev, points: data.points ?? prev.points } : prev));
-        alert(data.already ? t("checkinAlready") : t("checkinOk"));
+        alert(data.already ? t("checkinAlready") : t("checkinOk", { points: data.pointsGain ?? 0 }));
       } else {
         alert(data?.error ?? t("checkinFailed"));
       }

@@ -7,11 +7,11 @@ import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { isPremium } from "@/lib/premium";
 import { moodKeyFor, rollCheckinItem } from "@/lib/checkin-items";
+import { rollCheckinPoints } from "@/lib/checkin-points";
 
 export const runtime = "nodejs";
 
-/** 每日签到积分（月卡用户 ×2） */
-const CHECKIN_POINTS = 10;
+// 每日签到积分：加权随机 1–10（档位权重 50/30/15/5，见 @/lib/checkin-points）；月卡用户 ×2。
 /** 连签 7 天额外奖励积分（成就，月卡用户 ×2） */
 const CHECKIN_BONUS_POINTS = 100;
 /** 连签成就周期：每满 7 天 额外积分 + 心情盲盒道具 */
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
 /**
  * POST /api/user/checkin
  * 每日签到（P0-1 升级：心情盲盒 + 月卡特权）：
- *  - +10 积分（一天一次，原子条件更新防并发重复签到）；月卡用户积分 ×2；
+ *  - +1~10 加权随机积分（一天一次，原子条件更新防并发重复签到）；月卡用户积分 ×2；
  *  - 连签逻辑：昨天签到过 → streak+1，否则重置为 1；
  *  - 连签每满 7 天 → 额外 +100 积分（月卡 ×2）+ 随机心情盲盒道具
  *    （普通 70% / 稀有 25% / 传说 5%；月卡保底稀有）写入 user_items 背包；
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
     const newStreak = isConsecutive ? (me?.checkinStreak ?? 0) + 1 : 1;
     const bonus = newStreak % STREAK_BONUS_PERIOD === 0;
     const multiplier = premium ? PREMIUM_POINTS_MULTIPLIER : 1;
-    const gain = CHECKIN_POINTS * multiplier;
+    const gain = rollCheckinPoints() * multiplier;
     const bonusGain = bonus ? CHECKIN_BONUS_POINTS * multiplier : 0;
     const totalGain = gain + bonusGain;
 
