@@ -876,6 +876,7 @@
     "timelineEmpty": "No exploration yet. Tap the button above to take your pet on a trip!",
     "untitledEvent": "Untitled event",
     "refreshHistory": "Refresh history",
+    "loadFailedRetry": "Failed to load, tap to retry",
     "stepsUnit": "steps",
     "distanceUnit": "km",
     "groupToday": "Today",

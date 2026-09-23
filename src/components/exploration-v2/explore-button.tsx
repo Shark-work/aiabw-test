@@ -3,7 +3,8 @@
 /**
  * 探索 v2 · 探索按钮
  *  - 显示今日已用 / 今日上限
- *  - 触发 /api/exploration/start，成功后通过 onResult 回调把结果传给父组件
+ *  - 触发 /api/exploration/start（从 localStorage 携带 Bearer token），成功后通过 onResult 回调把结果传给父组件
+ *  - 401（token 缺失/失效）：清理 stale token，并经 onAuthExpired 通知父面板切换到登录引导
  *  - 次数用尽：显示「升级 VIP」引导
  */
 
@@ -46,6 +47,8 @@ export type ExploreButtonProps = {
   initialIsVip: boolean;
   onResult: (result: ExploreResultPayload) => void;
   onLimit?: (info: { todayCount: number; maxCount: number; isVip: boolean }) => void;
+  /** 接口返回 401（token 缺失/失效）时回调：父面板据此切换到登录引导 */
+  onAuthExpired?: () => void;
   className?: string;
 };
 
@@ -55,6 +58,7 @@ export function ExploreButton({
   initialIsVip,
   onResult,
   onLimit,
+  onAuthExpired,
   className = "",
 }: ExploreButtonProps) {
   const t = useTranslations("explorationV2");
@@ -76,9 +80,15 @@ export function ExploreButton({
     }
     setLoading(true);
     try {
+      // 登录 token 只存 localStorage（本站 API 一律 Bearer），必须显式携带，
+      // 否则已登录用户也会被 /api/exploration/start 判为未登录（SIGN_IN_REQUIRED）。
+      const token = localStorage.getItem("aiabw_token");
       const res = await fetch("/api/exploration/start", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
       const data = (await res.json().catch(() => null)) as
         | { ok: true; event: { id: string; type: string; title: string; description: string; emoji: string | null; rarity: "common" | "rare" | "epic"; isRare: boolean; knowledge: ExploreResultPayload["knowledge"] }; steps: number; distance: number; todayCount: number; maxCount: number; isVip: boolean }
@@ -86,7 +96,12 @@ export function ExploreButton({
         | null;
       if (!data) { setError(t("networkError")); return; }
       if (!data.ok) {
-        if (data.code === "SIGN_IN_REQUIRED") setError(t("signInFirst"));
+        if (data.code === "SIGN_IN_REQUIRED") {
+          // token 失效/缺失：清理 stale token 并通知父面板切换到登录引导
+          localStorage.removeItem("aiabw_token");
+          onAuthExpired?.();
+          setError(t("signInFirst"));
+        }
         else if (data.code === "EXPLORATION_LIMIT") {
           setTodayCount(data.todayCount);
           onLimit?.({ todayCount: data.todayCount, maxCount: data.maxCount, isVip: data.isVip });

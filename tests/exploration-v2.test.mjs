@@ -287,13 +287,17 @@ test("exploration v2: 5 frontend components exist with required exports / testid
 });
 
 // === 13) Page file ===
-test("exploration v2: /[locale]/explore-v2/page.tsx exists and wires engine + auth", () => {
+test("exploration v2: /[locale]/explore-v2/page.tsx renders client panel (auth moved client-side)", () => {
   const p = join(ROOT, "src/app/[locale]/explore-v2/page.tsx");
   assert.ok(existsSync(p), `missing ${p}`);
   const c = readFileSync(p, "utf8");
-  assert.ok(c.includes("verifyToken"), "page must verify token");
-  assert.ok(c.includes("getMaxExplorations"), "page must use getMaxExplorations");
   assert.ok(c.includes("ExploreV2Panel"), "page must render ExploreV2Panel");
+  // 2026-09 修复「已登录仍提示请先登录」：登录 token 只存 localStorage（API 走 Bearer），
+  // cookie 中并不存在令牌；SSR 读 cookie 鉴权永远拿到 null → 已登录用户也被误拦。
+  // 因此鉴权必须在客户端（面板 + /api/exploration/quota）完成，
+  // 页面不得再从 cookie / verifyToken 判定登录态（详见 explore-auth-repair.test.mjs）。
+  assert.ok(!c.includes("cookieStore"), "page must NOT gate on cookies (token lives in localStorage)");
+  assert.ok(!c.includes("verifyToken"), "page must NOT verify token server-side (client bootstraps auth)");
 });
 
 // === 14) Constants invariants ===
