@@ -11,6 +11,8 @@
 import { useTranslations } from "next-intl";
 import { X, Footprints, MapPin, Sparkles, BookOpen, Trophy } from "lucide-react";
 
+import { BADGE_I18N_KEYS, type BadgeId } from "@/lib/achievements-config";
+
 export type ExploreResultModalData = {
   emoji: string | null;
   title: string;
@@ -24,6 +26,8 @@ export type ExploreResultModalData = {
     species: string;
     category: string;
   } | null;
+  /** 本次探索新解锁的徽章（成就系统，roadmap 任务二；null/undefined = 无） */
+  newlyUnlocked?: { id: BadgeId; emoji: string; rewardPoints: number }[] | null;
 };
 
 type Props = {
@@ -40,6 +44,7 @@ const RARITY_TEXT: Record<"common" | "rare" | "epic", string> = {
 
 export function ExploreResultModal({ result, onClose, onViewKnowledge }: Props) {
   const t = useTranslations("explorationV2");
+  const ta = useTranslations("achievements");
   if (!result) return null;
 
   return (
@@ -104,6 +109,32 @@ export function ExploreResultModal({ result, onClose, onViewKnowledge }: Props) 
               </span>
             </div>
           </div>
+
+          {result.newlyUnlocked && result.newlyUnlocked.length > 0 && (
+            <div
+              className="mb-2 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-2"
+              data-testid="explore-result-badges"
+            >
+              <p className="mb-1.5 text-center text-xs font-bold text-amber-900">
+                {ta("celebrationTitle")}
+              </p>
+              <ul className="flex flex-col gap-1">
+                {result.newlyUnlocked.map((b) => (
+                  <li
+                    key={b.id}
+                    className="flex items-center justify-center gap-1.5 text-xs font-semibold text-amber-800"
+                    data-testid={`explore-result-badge-${b.id}`}
+                  >
+                    <span className="text-base">{b.emoji}</span>
+                    {ta(`badges.${BADGE_I18N_KEYS[b.id]}.name`)}
+                    <span className="text-emerald-700">
+                      {ta("rewardPoints", { points: b.rewardPoints })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {result.knowledge && (
             <button

@@ -564,6 +564,17 @@ const SCHEMA_CREATES: string[] = [
      ('evt-039','dog','rest','飞机耳晒太阳','趴在阳台的垫子上晒太阳，耳朵开心得变成飞机耳，被主人偷拍了一百张…','☀️','common',18,NULL),
      ('evt-040','dog','rest','蜷成甜甜圈','把自己蜷成一个完美的甜甜圈形状，尾巴刚好盖住鼻子，这是我最有安全感的睡姿～','🍩','common',15,NULL)
    ON CONFLICT ("id") DO NOTHING`,
+
+  // 探索成就（drizzle/0021_achievements.sql，roadmap 任务二）：
+  // 徽章解锁记录；UNIQUE(user_id,badge_id) 保证解锁入账幂等；进度快照见列注释
+  `CREATE TABLE IF NOT EXISTS "achievements" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "badge_id" text NOT NULL,
+    "progress" integer DEFAULT 0 NOT NULL,
+    "unlocked_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "achievements_user_badge_unique" UNIQUE ("user_id", "badge_id")
+  )`,
 ];
 
 /**
@@ -708,6 +719,8 @@ const SCHEMA_INDEXES: string[] = [
   // 探索 v2 · 事件库索引（按 type / rarity 过滤）
   `CREATE INDEX IF NOT EXISTS "idx_exploration_events_type"   ON "exploration_events" ("event_type")`,
   `CREATE INDEX IF NOT EXISTS "idx_exploration_events_rarity" ON "exploration_events" ("rarity")`,
+  // 探索成就 · 按用户查询徽章列表（drizzle/0021_achievements.sql）
+  `CREATE INDEX IF NOT EXISTS "idx_achievements_user" ON "achievements" ("user_id")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
@@ -752,7 +765,8 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // ⚠️ 维护规则：凡修改 SCHEMA_CREATES / SCHEMA_ALTERS / SCHEMA_INDEXES
 //    （含种子数据），必须将 SCHEMA_VERSION +1，否则生产库不会应用变更。
 // ============================================================================
-const SCHEMA_VERSION = 1;
+// v2: 新增 achievements 表（drizzle/0021，探索成就系统）
+const SCHEMA_VERSION = 2;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

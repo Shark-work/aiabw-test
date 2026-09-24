@@ -63,6 +63,19 @@
 - 在探索完成、登录、百科解锁等关键节点触发进度更新检查
 - 前端新增成就面板组件
 
+### 落地状态（✅ 2026-09-23）
+
+- 徽章定义与纯函数评估器：`src/lib/achievements-config.ts`（8 徽章/奖励/目标值与上表一致）
+- 服务端聚合：`src/lib/achievements-service.ts`（单 SQL 聚合全源表统计；事务化解锁 + 积分入账 users.points + points_log reason='achievement'；UNIQUE(user_id,badge_id) 幂等）
+- **规格修正**：不设 `achievement_progress` 表——全部进度可由源表实时推导（exploration_records / knowledge_link / checkin_streak / adoptions.happiness / V1 口径折算），冗余进度表有双写不一致风险且无法自动覆盖 V1 老数据；`achievements.progress` 仅存解锁时快照
+- 「亲密无间」数据源核实：代码无独立 intimacy 字段 → 采用 `adoptions.happiness`（0-100，/api/interact 维护）满值 100
+- 「百科达人」当前进度上限 3/5（wiki 现有 persian-cat/red-fox/shiba-inu），垂耳兔/玄凤鹦鹉（任务一）落地后自然可达 5/5
+- 触发节点：`POST /api/exploration/start`（探索完成即时解锁 + newlyUnlocked 庆祝）、`GET /api/achievements`（面板加载惰性评估，覆盖签到/亲密度等非探索节点）
+- 前端：`AchievementPanel`（explore-v2 页顶部 x/8 进度条 + 展开列表 + 庆祝弹窗）+ 探索结果弹窗内嵌徽章庆祝；i18n `achievements` 双语
+- 数据表：`achievements`（drizzle/0021；SCHEMA_VERSION 2 生产自动同步）
+- 契约测试：`tests/achievements.test.mjs`（11 项）
+- 联动：迁移步骤 3「元老探险家」徽章可直接以 badge_id='veteran-explorer' 写入 achievements 表发放（不占 8 枚常规徽章位）
+
 ---
 
 ## 三、旧版探索 V1 引导迁移到 V2（P0）
@@ -126,4 +139,4 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 ---
 
-_创建：2026-09-23。状态：全部待启动。_
+_创建：2026-09-23。状态：任务三 V1→V2 迁移 🚧（步骤 1/2 ✅）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展待启动。_

@@ -442,6 +442,7 @@
   "api": {
     "signInFirst": "请先登录",
     "notSignedIn": "未登录",
+    "achievementsFailed": "成就加载失败，请稍后重试",
     "sessionExpired": "未登录或登录已过期",
     "petLimit": "你已经有了 1 只艾比伙伴啦！解锁「多宠图鉴」，即可再领养新伙伴，还能无限畅聊~",
     "adoptionNotFound": "未找到该领养记录",
@@ -884,6 +885,23 @@
     "groupYesterday": "昨天",
     "groupWeek": "本周",
     "groupEarlier": "更早"
+  },
+  "achievements": {
+    "title": "探索徽章",
+    "rewardPoints": "+{points} 积分",
+    "celebrationTitle": "🎉 解锁新徽章！",
+    "celebrationPoints": "奖励已到账：+{points} 积分",
+    "celebrationButton": "太棒了！",
+    "badges": {
+      "firstExplore": { "name": "初出茅庐", "desc": "完成首次探索" },
+      "explorer10": { "name": "探险新手", "desc": "累计探索 10 次", "rewardNote": "额外奖励：垂耳兔解锁资格" },
+      "allCommonEvents": { "name": "足迹遍布", "desc": "触发全部 20 种普通事件" },
+      "allRareEvents": { "name": "奇遇猎人", "desc": "触发全部 20 种稀有事件", "rewardNote": "额外奖励：玄凤鹦鹉解锁资格" },
+      "wikiCollector": { "name": "百科达人", "desc": "解锁 5 种宠物百科" },
+      "bondMax": { "name": "亲密无间", "desc": "与任意宠物亲密度达到满值", "rewardNote": "额外奖励：专属称号" },
+      "checkin7": { "name": "全勤奖", "desc": "连续签到 7 天" },
+      "master": { "name": "艾比大师", "desc": "解锁其它全部徽章", "rewardNote": "额外奖励：限定头像框" }
+    }
   },
   "knowledge": {
     "title": "动物知识庛",

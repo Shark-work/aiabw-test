@@ -21,6 +21,8 @@ import {
 } from "@/lib/exploration-engine";
 import { getActiveSubscription } from "@/lib/subscription-config";
 import { isPremium } from "@/lib/premium";
+import { syncAchievements } from "@/lib/achievements-service";
+import type { NewlyUnlockedBadge } from "@/lib/achievements-config";
 
 export const runtime = "nodejs";
 
@@ -170,7 +172,15 @@ export async function POST(req: Request) {
       ],
     );
 
-    // 6) 返回
+    // 6) 成就评估（roadmap 任务二：探索完成节点；失败不阻断探索主流程）
+    let newlyUnlocked: NewlyUnlockedBadge[] = [];
+    try {
+      newlyUnlocked = (await syncAchievements(user.id)).newlyUnlocked;
+    } catch (achvErr) {
+      console.error("[/api/exploration/start] achievements sync failed:", achvErr);
+    }
+
+    // 7) 返回
     const eventResult = toEventResult(picked);
     eventResult.knowledge = knowledge;
     const body: ExplorationStartResponse = {
@@ -181,6 +191,7 @@ export async function POST(req: Request) {
       todayCount: todayCount + 1,
       maxCount,
       isVip,
+      newlyUnlocked,
     };
     return NextResponse.json(body);
   } catch (err) {

@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision, numeric, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision, numeric, unique, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /** 账号：注册用户 */
 export const users = pgTable('users', {
@@ -531,3 +531,23 @@ export const explorationRecords = pgTable('exploration_records', {
   isRare: boolean('is_rare').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
+
+/**
+ * 探索成就（roadmap 任务二，drizzle/0021_achievements.sql）：
+ *  - 每个用户每枚徽章一行：解锁即写入（unlockedAt + 解锁时刻进度快照）；
+ *  - 不设进度表：进度全部由源表实时推导（见 src/lib/achievements-service.ts），
+ *    本表 progress 仅为快照，不参与判定；
+ *  - UNIQUE(user_id, badge_id) + ON CONFLICT DO NOTHING：并发/重复触发幂等，
+ *    积分奖励在同事务内入账（users.points + points_log，reason='achievement'）。
+ */
+export const achievements = pgTable(
+  'achievements',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').references(() => users.id).notNull(),
+    badgeId: text('badge_id').notNull(),
+    progress: integer('progress').notNull().default(0),
+    unlockedAt: timestamp('unlocked_at').defaultNow().notNull(),
+  },
+  (t) => [unique('achievements_user_badge_unique').on(t.userId, t.badgeId)],
+);

@@ -25,6 +25,7 @@ import {
   ExploreResultModal,
   type ExploreResultModalData,
 } from "@/components/exploration-v2/explore-result-modal";
+import { AchievementPanel } from "@/components/achievements/achievement-panel";
 
 type Quota = { todayCount: number; maxCount: number; isVip: boolean };
 type AuthState = "loading" | "guest" | "authed";
@@ -45,6 +46,8 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
   const [records, setRecords] = useState<TimelineRecord[]>([]);
   const [result, setResult] = useState<ExploreResultModalData | null>(null);
   const [knowledge, setKnowledge] = useState<KnowledgeCardData | null>(null);
+  // 成就面板刷新信号：每次探索完成 +1 → AchievementPanel 重新拉取进度
+  const [achvRefreshKey, setAchvRefreshKey] = useState(0);
 
   const onAuthExpired = useCallback(() => {
     localStorage.removeItem("aiabw_token");
@@ -156,6 +159,7 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
         createdAt: new Date().toISOString(),
       };
       setRecords((prev) => [newRecord, ...prev]);
+      setAchvRefreshKey((k) => k + 1);
       setResult({
         emoji: payload.emoji,
         title: payload.title,
@@ -171,6 +175,7 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
               category: payload.knowledge.category,
             }
           : null,
+        newlyUnlocked: payload.newlyUnlocked ?? null,
       });
     },
     [],
@@ -213,6 +218,8 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
           🌿 {t("panelTitle")}
         </h2>
       </header>
+
+      <AchievementPanel refreshKey={achvRefreshKey} />
 
       {quota ? (
         <ExploreButton

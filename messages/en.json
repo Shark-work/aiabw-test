@@ -442,6 +442,7 @@
   "api": {
     "signInFirst": "Please sign in first",
     "notSignedIn": "Not signed in",
+    "achievementsFailed": "Failed to load achievements, please try again later.",
     "sessionExpired": "Not signed in or session expired",
     "petLimit": "You already have 1 companion! Unlock the Multi-Pet Collection to adopt new friends and chat without limits.",
     "adoptionNotFound": "Adoption record not found",
@@ -884,6 +885,23 @@
     "groupYesterday": "Yesterday",
     "groupWeek": "This week",
     "groupEarlier": "Earlier"
+  },
+  "achievements": {
+    "title": "Exploration Badges",
+    "rewardPoints": "+{points} pts",
+    "celebrationTitle": "🎉 New badge unlocked!",
+    "celebrationPoints": "Reward credited: +{points} pts",
+    "celebrationButton": "Awesome!",
+    "badges": {
+      "firstExplore": { "name": "First Steps", "desc": "Complete your first exploration" },
+      "explorer10": { "name": "Rookie Explorer", "desc": "Complete 10 explorations", "rewardNote": "Bonus: Lop Bunny unlock eligibility" },
+      "allCommonEvents": { "name": "Trailblazer", "desc": "Trigger all 20 common events" },
+      "allRareEvents": { "name": "Adventure Hunter", "desc": "Trigger all 20 rare events", "rewardNote": "Bonus: Cockatiel unlock eligibility" },
+      "wikiCollector": { "name": "Wiki Master", "desc": "Unlock 5 pet wiki entries" },
+      "bondMax": { "name": "Inseparable", "desc": "Reach max bond with any pet", "rewardNote": "Bonus: exclusive title" },
+      "checkin7": { "name": "Perfect Attendance", "desc": "Check in 7 days in a row" },
+      "master": { "name": "Aibi Master", "desc": "Unlock all other badges", "rewardNote": "Bonus: limited avatar frame" }
+    }
   },
   "knowledge": {
     "title": "Animal Wiki",

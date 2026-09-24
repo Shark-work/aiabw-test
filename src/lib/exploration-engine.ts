@@ -96,6 +96,8 @@ export type ExplorationStartResponse = {
   todayCount: number;
   maxCount: number;
   isVip: boolean;
+  /** 本次探索后新解锁的徽章（成就系统，roadmap 任务二；无新解锁则为 []） */
+  newlyUnlocked?: import("./achievements-config").NewlyUnlockedBadge[];
 };
 
 export type ExplorationStartError = {
