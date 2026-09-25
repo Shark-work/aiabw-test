@@ -565,6 +565,70 @@ const SCHEMA_CREATES: string[] = [
      ('evt-040','dog','rest','蜷成甜甜圈','把自己蜷成一个完美的甜甜圈形状，尾巴刚好盖住鼻子，这是我最有安全感的睡姿～','🍩','common',15,NULL)
    ON CONFLICT ("id") DO NOTHING`,
 
+  // 探索 v2 · 种子数据 · 动物知识百科（垂耳兔 + 玄凤鹦鹉；数据驱动，与波斯猫/赤狐同构；image_url NULL，立绘占位由事件 image_emoji / i18n avatarEmoji 承担）
+  `INSERT INTO "animal_wiki" (
+     "id","species","category","origin","lifespan","weight",
+     "traits","fun_facts","habitat","diet","conservation_status","image_url"
+   ) VALUES
+   (
+     'lop-rabbit',
+     '垂耳兔 / Lop Rabbit',
+     '兔',
+     '欧洲（荷兰、法国）',
+     '7-10年',
+     '1.5-2.5 kg',
+     '["温顺","胆小","爱撒娇","爱干净","喜欢被摸头"]',
+     '["垂耳兔的下垂耳朵是基因突变的结果，不同个体的耳朵长度差异很大","垂耳兔的耳朵非常敏感且布满血管，被大力抓扯会受伤，正确抱法是托住屁股和后腿","兔子是严格的草食动物，靠盲肠发酵消化纤维，胡萝卜糖分高只能当零食","垂耳兔开心时会原地蹦跳甩头，这个动作被爱好者称为「兔子舞」（binky）","兔子的视野接近360度，但正前方反而是盲区，靠嗅觉和胡须感知面前的食物"]',
+     '家庭室内饲养为主，需要干草、躲避屋与安全的活动空间',
+     '草食性，以提摩西草为主食，辅以兔粮与少量新鲜蔬菜（胡萝卜少量）',
+     '家养宠物，无保护级别',
+     NULL
+   ),
+   (
+     'cockatiel',
+     '玄凤鹦鹉 / Cockatiel',
+     '鹦鹉',
+     '澳大利亚内陆',
+     '15-20年',
+     '80-120 g',
+     '["活泼","话痨","好奇心强","爱模仿","黏人"]',
+     '["玄凤鹦鹉是凤头鹦鹉科中体型最小的成员，原产于澳大利亚内陆","雄性玄凤鹦鹉更擅长吹口哨和模仿声音，常用歌声吸引伴侣","玄凤鹦鹉的冠羽是情绪晴雨表：竖起表示兴奋或警觉，贴平表示放松或害怕","野生玄凤鹦鹉成群飞行数十公里寻找水源，飞行时翅膀会发出独特的呼啸声","玄凤鹦鹉脸颊上的橙色斑点被爱好者称为「腮红」，是它们最招牌的特征"]',
+     '澳大利亚干旱与半干旱内陆，成群栖息于水源附近的开阔林地',
+     '植食性，以草籽、谷物为主，也吃浆果与嫩芽；家养需墨鱼骨补钙',
+     '无危（LC，IUCN 红色名录）',
+     NULL
+   )
+   ON CONFLICT ("id") DO NOTHING`,
+
+  // 探索 v2 · 种子数据 · 探索事件库（垂耳兔 evt-041~050 + 玄凤鹦鹉 evt-051~060；
+  // 5 类事件 × 3 稀有度：common 10 / rare 7 / epic 3；垂耳兔 3 条食材类 gift 呼应「额外掉落食材」特性，
+  // 玄凤鹦鹉 rare+epic 占 6 条呼应「高空视野发现稀有事件」特性（evt-057 空中奇遇 / evt-060 远山宝藏）；
+  // knowledge 类链接对应百科 id）
+  `INSERT INTO "exploration_events" ("id","pet_category","event_type","title","description","image_emoji","rarity","weight","knowledge_link") VALUES
+     -- 垂耳兔（rabbit）
+     ('evt-041','rabbit','postcard','蒲公英草地的清晨','清晨的草地还带着露水，我蹦过的地方留下一串小脚印，蒲公英跟着我一起飞起来了～','🌼','common',25,NULL),
+     ('evt-042','rabbit','postcard','篱笆外的晚霞','我鼓起勇气跳上篱笆，看到了整片橙红色的天空！虽然有点高，但风景真的好好…','🌇','rare',9,NULL),
+     ('evt-043','rabbit','gift','挖到甜胡萝卜','鼻子一直闻到香香的味道，顺着挖下去——是一根超大的胡萝卜！带回去给你煮汤～','🥕','common',22,NULL),
+     ('evt-044','rabbit','gift','发现一窝野莓','灌木丛深处藏着一小片野莓丛，我尝了一颗，酸酸甜甜的！摘了最饱满的几颗送给你～','🫐','rare',9,NULL),
+     ('evt-045','rabbit','gift','神秘的黄金胡萝卜','在很老很老的橡树洞里，发现了一根闪闪发光的金色胡萝卜！这一定是传说中的宝物吧…','🌟','epic',3,NULL),
+     ('evt-046','rabbit','knowledge','兔兔的小知识','你知道吗？我们兔子的视野接近360度，能看到身后的动静，但正前方反而是盲区哦～','📖','common',15,'lop-rabbit'),
+     ('evt-047','rabbit','knowledge','耳朵的秘密','我们垂耳兔的耳朵又软又敏感，被轻轻摸会害羞得跺脚……但主人摸的话，可、可以哦。','🐰','rare',8,'lop-rabbit'),
+     ('evt-048','rabbit','encounter','和小田鼠分食','遇到一只抱着草籽的小田鼠，我分了一半嫩草给它，它送了我一颗橡果当谢礼～','🐭','common',15,NULL),
+     ('evt-049','rabbit','encounter','被蝴蝶吓了一跳','一只蝴蝶突然停在我鼻子上，我吓得原地蹦起来跺了三下脚……才不是害怕，是打招呼！','🦋','common',12,NULL),
+     ('evt-050','rabbit','rest','缩成一团晒太阳','阳光暖洋洋的，我把自己缩成一小团，耳朵盖在脸上，谁路过都发现不了我，嘿嘿～','☀️','common',18,NULL),
+     -- 玄凤鹦鹉（bird）
+     ('evt-051','bird','postcard','云层之上的日出','我飞到比云还高的地方，看到太阳从棉花糖一样的云海里跳出来！这种景色一定要讲给你听！','🌅','rare',10,NULL),
+     ('evt-052','bird','postcard','山谷里的回声','对着山谷喊了一声「你好——」，山谷回了我十声「你好」！我们聊了整整一个下午～','🏔️','common',20,NULL),
+     ('evt-053','bird','gift','衔回闪亮卵石','在溪边发现一颗会反光的白色卵石！亮晶晶的东西必须收藏，送你啦～','🪨','common',20,NULL),
+     ('evt-054','bird','gift','远方浆果的种子','从很远很远的山那边带回来的浆果种子，种下去说不定会长出异国味道的果子哦！','🌱','rare',8,NULL),
+     ('evt-055','bird','knowledge','鹦鹉小课堂','告诉你哦，我们的冠羽是心情晴雨表——竖起来是超级好奇，贴平是放松，你学会读了吗？','🎓','common',15,'cockatiel'),
+     ('evt-056','bird','knowledge','口哨的天赋','我们玄凤鹦鹉天生爱吹口哨，尤其是男孩子，听过两遍的旋律就能哼出来，厉害吧！','🎵','rare',8,'cockatiel'),
+     ('evt-057','bird','encounter','空中奇遇·热气球','高空巡逻时遇到一个会飞的大彩球！里面的人类朝我挥手，我绕着它飞了三圈表示欢迎～','🎈','rare',8,NULL),
+     ('evt-058','bird','encounter','与老鹰的对视','在悬崖边和一只老鹰对视了十秒钟！它没有生气，只是点了点头——那一刻我觉得自己也是猛禽了！','🦅','epic',3,NULL),
+     ('evt-059','bird','rest','树枝上午睡','找到一根晒得暖暖的树枝，单脚站着打了个盹，梦里有吃不完的小米穗～','🌿','common',16,NULL),
+     ('evt-060','bird','rest','远山宝藏的黄昏','黄昏时我登上最高的瞭望树，看见远山背后有金色的光在闪！下次探索一定要飞过去看看！','🗺️','epic',2,NULL)
+   ON CONFLICT ("id") DO NOTHING`,
+
   // 探索成就（drizzle/0021_achievements.sql，roadmap 任务二）：
   // 徽章解锁记录；UNIQUE(user_id,badge_id) 保证解锁入账幂等；进度快照见列注释
   `CREATE TABLE IF NOT EXISTS "achievements" (
@@ -766,7 +830,8 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //    （含种子数据），必须将 SCHEMA_VERSION +1，否则生产库不会应用变更。
 // ============================================================================
 // v2: 新增 achievements 表（drizzle/0021，探索成就系统）
-const SCHEMA_VERSION = 2;
+// v3: 新增垂耳兔/玄凤鹦鹉百科 + evt-041~060 探索事件种子（roadmap 任务一）
+const SCHEMA_VERSION = 3;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

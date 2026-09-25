@@ -9,8 +9,8 @@
  *      adoptions.happiness / V1 口径 max(Σsteps÷100, postcards)）；
  *  - 「亲密无间」数据源核实：代码无独立 intimacy 字段 → adoptions.happiness（0-100，
  *    /api/interact 维护）满值 100 视为「亲密度满级」；
- *  - 「百科达人」target=5：当前 wiki 仅 3 物种（persian-cat/red-fox/shiba-inu），
- *    垂耳兔/玄凤鹦鹉（roadmap 任务一）落地后自然达标；
+ *  - 「百科达人」target=5：wiki 已达 5 物种（persian-cat/red-fox/shiba-inu +
+ *    任务一新增 lop-rabbit/cockatiel），解锁条件可达；
  *  - 「艾比大师」：其它 7 枚全部解锁后达成（target=7 = 非 master 徽章数）。
  */
 

@@ -924,5 +924,65 @@
     "stepBonus": "×1.5 step bonus",
     "rareEvent": "Rare events ×2 weight",
     "idleHint": "Idle exploration (coming soon)"
+  },
+  "newPets": {
+    "lopRabbit": {
+      "name": "Lop Rabbit",
+      "avatarEmoji": "🐰",
+      "persona": "Gentle, timid and clingy; stamps its feet shyly when its ears are petted",
+      "unlock": "Adoptable from day one; unlock eligibility also bundled with the Rookie Explorer badge",
+      "interactions": [
+        "Nuzzle hand",
+        "Perk up ears",
+        "Binky hop",
+        "Curl up to sleep"
+      ],
+      "lines": [
+        "You're back! I had my ears perked up listening for your footsteps the whole time~",
+        "Y-you can pet my ears... eep! So ticklish... (stamps feet shyly) J-just a little!",
+        "I found the sweetest carrot today - I saved the biggest bite for you!",
+        "P-please don't speak so loudly all of a sudden, my heart goes thump thump...",
+        "Nuzzling the back of your hand - that's how bunnies say \"I like you\"!",
+        "I'm curling into a tiny ball to sleep. Can you tuck me in with a leaf blanket?",
+        "Hop! Look how high I jumped! My hind legs just bounce on their own when I'm happy~",
+        "The wild herb soup smells amazing... can I have one tiny sip? Just one!",
+        "Thunder scares me... can I hide in your pocket? I'll be very quiet.",
+        "You said I'm the best bunny? R-really? My ears are burning with joy~",
+        "Shh - ears up! The wind smells like carrot tops. Follow me!",
+        "I'll keep you company quietly today - you do your thing, I'll nap right here.",
+        "If we ever get separated, I'll stand still with ears up until I hear you call.",
+        "I hid a four-leaf clover in the clover patch - it's a lucky charm for you!",
+        "Compliments make me shy... (stomp) b-but maybe a few more, please..."
+      ]
+    },
+    "cockatiel": {
+      "name": "Cockatiel",
+      "avatarEmoji": "🦜",
+      "persona": "Chatty, lively and curious; loves mimicking the owner's tone of voice",
+      "unlock": "Unlocked via the Adventure Hunter exploration badge or limited-time events",
+      "interactions": [
+        "Head tilt",
+        "Wing stretch",
+        "Whistle",
+        "Shoulder perch"
+      ],
+      "lines": [
+        "Good morning good morning GOOD MORNING! Important things get said three times!",
+        "(mimicking your voice) \"Let's do our best today~\" - well? Do I sound like you?",
+        "Watch me spread my wings! Handsome, right? I'm the finest bird in this sky!",
+        "I just learned a new whistle - listen: tweet-tweet-DOO!",
+        "Lend me your shoulder - I need a high perch to supervise everything!",
+        "What's that? What's this? Is it edible? - the curiosity triple!",
+        "(head tilt) Did you just secretly compliment me? Say it again, say it again!",
+        "From high above I saw golden light behind the far mountains - treasure hunt someday!",
+        "It's not my fault I talk a lot - the world is just too interesting!",
+        "Ring ring - \"Hello!\" Haha, fooled you with my phone impression!",
+        "I napped on top of a cloud today - soft and puffy like a marshmallow!",
+        "Play with me! Just a little bit, a teeny-tiny bit!",
+        "I counted - you smiled seven times today, one more than yesterday. Progress!",
+        "The east wind brought news from far away, and I'm telling you first!",
+        "When my crest stands up it means I'm super curious - look, it's up again!"
+      ]
+    }
   }
 }

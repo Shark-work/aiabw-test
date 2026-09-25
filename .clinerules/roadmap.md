@@ -31,6 +31,14 @@
 - 新增 15-20 条专属探索事件（evt-041~060）
 - 准备立绘/表情包素材（可先用 AI 生成占位，后续替换）
 
+### 落地状态（✅ 2026-09-23）
+
+- 百科：`animal_wiki` 新增 lop-rabbit（垂耳兔，category=兔）+ cockatiel（玄凤鹦鹉，category=鹦鹉）种子（src/db/client.ts，ON CONFLICT 幂等；traits/fun_facts 各 5 条）
+- 探索事件：evt-041~060 共 20 条（rabbit 10 + bird 10；5 类 × 3 稀有度；垂耳兔 3 条食材类 gift 呼应「额外掉落食材」，玄凤鹦鹉 rare+epic 6 条呼应「高空视野发现稀有事件」，含 evt-057 空中奇遇 / evt-060 远山宝藏）
+- 对话语料：i18n `newPets` 命名空间（zh/en 各 30 条人设台词 + 互动动作 + 解锁说明；avatarEmoji 🐰/🦜 作立绘占位，后续替换正式素材）
+- 成就联动：REWARD_NOTE_BADGES 已关联 探险新手→垂耳兔 / 奇遇猎人→玄凤鹦鹉（任务二落地，本任务测试锁定）；「百科达人」target=5 随本批 2 条百科落地正式可达（persian-cat/red-fox/shiba-inu/lop-rabbit/cockatiel）
+- SCHEMA_VERSION 2→3（生产库自动同步种子）；契约测试 tests/new-animals.test.mjs（11 项）
+
 ---
 
 ## 二、探索成就系统（徽章/进度条）（P1）
@@ -139,4 +147,4 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 ---
 
-_创建：2026-09-23。状态：任务三 V1→V2 迁移 🚧（步骤 1/2 ✅）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展待启动。_
+_创建：2026-09-23。状态：任务三 V1→V2 迁移 🚧（步骤 1/2 ✅）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展 ✅（2026-09-23）。_
