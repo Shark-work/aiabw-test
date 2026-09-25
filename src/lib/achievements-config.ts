@@ -12,6 +12,10 @@
  *  - 「百科达人」target=5：wiki 已达 5 物种（persian-cat/red-fox/shiba-inu +
  *    任务一新增 lop-rabbit/cockatiel），解锁条件可达；
  *  - 「艾比大师」：其它 7 枚全部解锁后达成（target=7 = 非 master 徽章数）。
+ *  - 迁移步骤 3 回归礼包（2026-09-23）：V1 老用户（COUNT(user_postcards) >= 1）
+ *    首次检查时自动发放「元老探险家」徽章（VETERAN_BADGE，+20 积分）——直接写入
+ *    achievements 表，不占 8 枚常规徽章位、不计入 master 进度（服务端见
+ *    achievements-service.ts）。
  */
 
 export type BadgeId =
@@ -45,6 +49,18 @@ export const RARE_EVENT_ID_MAX = "evt-040";
 export const HAPPINESS_MAX = 100;
 /** 艾比大师目标：非 master 徽章总数 */
 export const MASTER_TARGET = 7;
+
+/** 迁移步骤 3 回归礼包：V1 老用户专属「元老探险家」徽章（roadmap §三联动约定）。
+ *  判定：COUNT(user_postcards) >= 1（V1 完成过至少一张地图 → 每图一张明信片）；
+ *  发放：syncAchievements 首次检查时事务性写入 achievements 表（progress=明信片数
+ *  快照）+ users.points +20 + points_log(reason='achievement')；UNIQUE(user_id,
+ *  badge_id) + ON CONFLICT DO NOTHING 保证重复调用/并发幂等；
+ *  不属于 ACHIEVEMENTS：不进面板列表、不计入 master、不参与常规评估循环。 */
+export const VETERAN_BADGE = {
+  id: "veteran-explorer",
+  emoji: "🏅",
+  rewardPoints: 20,
+} as const;
 
 export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: "first-explore", emoji: "🌱", rewardPoints: 5, target: 1, order: 1 },
@@ -85,10 +101,20 @@ export const REWARD_NOTE_BADGES: ReadonlySet<BadgeId> = new Set<BadgeId>([
 
 /** 新解锁徽章（API 响应用，前端庆祝动画数据源） */
 export type NewlyUnlockedBadge = {
-  id: BadgeId;
+  /** 常规 8 枚徽章 id，或迁移步骤 3 回归礼包 VETERAN_BADGE.id */
+  id: BadgeId | (typeof VETERAN_BADGE)["id"];
   emoji: string;
   rewardPoints: number;
 };
+
+/** 徽章名称在 achievements 命名空间内的 i18n 路径：
+ *  常规 8 枚 → badges.<key>.name；回归礼包（veteran）→ veteranBadge.name。
+ *  供庆祝弹窗/探索结果弹窗按 id 安全查名（避免 veteran 直查 badges.undefined）。 */
+export function badgeNameMessageKey(id: NewlyUnlockedBadge["id"]): string {
+  return id === VETERAN_BADGE.id
+    ? "veteranBadge.name"
+    : `badges.${BADGE_I18N_KEYS[id]}.name`;
+}
 
 /**
  * 徽章进度统计输入（由 achievements-service 聚合；V1 老用户数据已折算进

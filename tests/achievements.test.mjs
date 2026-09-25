@@ -2,6 +2,7 @@
 // 覆盖：徽章配置（8 枚/奖励/目标值）+ 纯函数评估器 + drizzle/0021 迁移 +
 //      schema 导出 + client.ts 注入（SCHEMA_CREATES/INDEXES/VERSION≥2）+
 //      服务端聚合（V1 折算口径）+ API 路由 + i18n 双语 + 前端组件接线
+//      + 迁移步骤 3 回归礼包（veteran-explorer 自动发放 / 非 V1 不触发 / 幂等）
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
@@ -14,6 +15,8 @@ import {
   REWARD_NOTE_BADGES,
   MASTER_TARGET,
   HAPPINESS_MAX,
+  VETERAN_BADGE,
+  badgeNameMessageKey,
   getBadgeProgress,
   isBadgeUnlocked,
 } from "../src/lib/achievements-config.ts";
@@ -227,3 +230,73 @@ test("achievements: panel fetches API with Bearer; v2 panel + result modal wired
   const btn = read("src/components/exploration-v2/explore-button.tsx");
   assert.ok(btn.includes("newlyUnlocked: data.newlyUnlocked ?? null"), "pass-through");
 });
+
+// === 12) 迁移步骤 3 回归礼包：V1 老用户自动解锁 ===
+test("achievements: veteran gift auto-grants for V1 users (COUNT(user_postcards) >= 1)", () => {
+  // 配置（roadmap §三联动约定）：badge_id='veteran-explorer'，+20 积分，不占 8 枚常规位
+  assert.equal(VETERAN_BADGE.id, "veteran-explorer");
+  assert.equal(VETERAN_BADGE.rewardPoints, 20);
+  assert.ok(VETERAN_BADGE.emoji.length > 0, "veteran emoji");
+  assert.equal(ACHIEVEMENT_MAP[VETERAN_BADGE.id], undefined, "veteran 不在常规徽章位");
+  // 服务：首次检查（syncAchievements）识别 V1 老用户 → 事务性写入 + 积分入账
+  const c = read("src/lib/achievements-service.ts");
+  assert.ok(c.includes("stats.v1Postcards >= 1"), "V1 识别门槛 COUNT(user_postcards) >= 1");
+  assert.ok(
+    /creditBadge\(userId, VETERAN_BADGE, stats\.v1Postcards\)/.test(c),
+    "事务性写入 achievements（progress=明信片数快照）",
+  );
+  assert.ok(c.includes('reason: "achievement"'), "points_log reason='achievement'");
+  assert.ok(c.includes("v1Postcards: row?.v1_postcards"), "聚合统计暴露 v1Postcards");
+  // 探索次数类徽章进度回填（roadmap §三口径）：max(Σsteps÷100, COUNT(postcards))
+  assert.ok(c.includes("Math.max(Math.floor("), "V1 折算回填 totalExplorations");
+  // i18n：庆祝展示名（veteranBadge 命名空间，不占 badges.* 的 8 枚位）
+  const zhA = JSON.parse(read("messages/zh.json")).achievements;
+  const enA = JSON.parse(read("messages/en.json")).achievements;
+  assert.equal(zhA.veteranBadge?.name, "元老探险家");
+  assert.ok(zhA.veteranBadge?.desc?.length > 0, "zh veteran desc");
+  assert.equal(enA.veteranBadge?.name, "Veteran Explorer");
+  assert.ok(enA.veteranBadge?.desc?.length > 0, "en veteran desc");
+  assert.equal(Object.keys(zhA.badges).length, 8, "badges.* 仍 8 枚");
+  // 名称查找辅助：veteran → veteranBadge.name；常规徽章 → badges.<key>.name
+  assert.equal(badgeNameMessageKey(VETERAN_BADGE.id), "veteranBadge.name");
+  assert.equal(badgeNameMessageKey("first-explore"), "badges.firstExplore.name");
+});
+
+// === 13) 迁移步骤 3 回归礼包：非 V1 用户不触发 ===
+test("achievements: veteran gift NOT granted to non-V1 users (postcards = 0 short-circuits)", () => {
+  const c = read("src/lib/achievements-service.ts");
+  // 门槛短路：0 张明信片不满足 >= 1，且已解锁直接跳过（&& 顺序保证）
+  assert.ok(
+    c.includes("if (stats.v1Postcards >= 1 && !unlockedMap.has(VETERAN_BADGE.id))"),
+    "非 V1（0 明信片）不进入发放分支",
+  );
+  // 常规评估不受影响：8 枚徽章位 / master 目标 7 不变
+  assert.equal(ACHIEVEMENTS.length, 8);
+  assert.ok(ACHIEVEMENTS.every((d) => d.id !== VETERAN_BADGE.id), "veteran 不进常规评估循环");
+  assert.equal(MASTER_TARGET, 7, "master 仍按 7 枚非 master 常规徽章");
+  // 面板输出仅由 ACHIEVEMENTS 派生（veteran 不进列表/计数）
+  assert.ok(c.includes("ACHIEVEMENTS.map((def)"), "badges 列表仅 8 枚");
+  // 前端庆祝展示有 veteran 名称回退（避免 badges.undefined.name）
+  const modal = read("src/components/exploration-v2/explore-result-modal.tsx");
+  assert.ok(modal.includes("badgeNameMessageKey(b.id)"), "result modal veteran fallback");
+  assert.ok(!modal.includes("BADGE_I18N_KEYS[b.id]"), "modal 不再直查 BADGE_I18N_KEYS");
+  const panel = read("src/components/achievements/achievement-panel.tsx");
+  assert.ok(panel.includes("badgeNameMessageKey(b.id)"), "panel celebration veteran fallback");
+});
+
+// === 14) 迁移步骤 3 回归礼包：幂等 ===
+test("achievements: veteran gift idempotent (UNIQUE + ON CONFLICT DO NOTHING, no double credit)", () => {
+  const c = read("src/lib/achievements-service.ts");
+  // 应用层短路：unlockedMap 命中（已解锁）→ 跳过
+  assert.ok(c.includes("!unlockedMap.has(VETERAN_BADGE.id)"), "已解锁跳过");
+  // DB 兜底：UNIQUE(user_id,badge_id) + ON CONFLICT DO NOTHING → inserted=0 不发积分
+  assert.ok(c.includes(".onConflictDoNothing()"), "冲突兜底");
+  assert.ok(c.includes("if (inserted.length === 0) return false"), "重复插入不入账");
+  const m = read("drizzle/0021_achievements.sql");
+  assert.ok(m.includes('UNIQUE ("user_id", "badge_id")'), "0021 UNIQUE(user_id,badge_id)");
+  const client = read("src/db/client.ts");
+  assert.ok(client.includes("achievements_user_badge_unique"), "client.ts schema 同步");
+  // 积分入账与徽章行同一事务（无半提交）
+  assert.ok(c.includes("db.transaction"), "事务性入账");
+});
+

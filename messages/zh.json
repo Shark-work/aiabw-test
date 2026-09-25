@@ -896,6 +896,7 @@
     "celebrationTitle": "🎉 解锁新徽章！",
     "celebrationPoints": "奖励已到账：+{points} 积分",
     "celebrationButton": "太棒了！",
+    "veteranBadge": { "name": "元老探险家", "desc": "回归礼包：感谢你从 V1 时代就陪伴艾比探索世界" },
     "badges": {
       "firstExplore": { "name": "初出茅庐", "desc": "完成首次探索" },
       "explorer10": { "name": "探险新手", "desc": "累计探索 10 次", "rewardNote": "额外奖励：垂耳兔解锁资格" },

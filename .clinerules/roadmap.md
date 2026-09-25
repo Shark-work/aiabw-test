@@ -81,7 +81,7 @@
 - 触发节点：`POST /api/exploration/start`（探索完成即时解锁 + newlyUnlocked 庆祝）、`GET /api/achievements`（面板加载惰性评估，覆盖签到/亲密度等非探索节点）
 - 前端：`AchievementPanel`（explore-v2 页顶部 x/8 进度条 + 展开列表 + 庆祝弹窗）+ 探索结果弹窗内嵌徽章庆祝；i18n `achievements` 双语
 - 数据表：`achievements`（drizzle/0021；SCHEMA_VERSION 2 生产自动同步）
-- 契约测试：`tests/achievements.test.mjs`（11 项）
+- 契约测试：`tests/achievements.test.mjs`（14 项）
 - 联动：迁移步骤 3「元老探险家」徽章可直接以 badge_id='veteran-explorer' 写入 achievements 表发放（不占 8 枚常规徽章位）
 
 ---
@@ -101,7 +101,7 @@
 | --- | --- | --- | --- |
 | 1 | 确认 V1 用户数据兼容性（探索次数、已触发事件等字段映射到 V2 表结构） | P0 | ✅ 2026-09-23 |
 | 2 | V1 入口重定向到 V2 页面，保留 URL 兼容（/explore → /explore-v2） | P0 | ✅ 2026-09-23 |
-| 3 | 为 V1 老用户发放"回归礼包"（补偿积分 + 专属徽章"元老探险家"） | P1 | ⬜ |
+| 3 | 为 V1 老用户发放"回归礼包"（补偿积分 + 专属徽章"元老探险家"） | P1 | ✅ 2026-09-23 |
 | 4 | 删除 V1 相关代码和路由，清理冗余 | P2 | ⬜ |
 | 5 | 更新 README 和新手引导文案，统一指向 V2 | P2 | ⬜ |
 
@@ -129,6 +129,12 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 - `ExplorationMap` 挂件（V1 真实入口）顶部加 V2 引导条（`exploration.v2Banner` 双语），导航栏已统一指向 /explore-v2。
 - 迁移期 V1 系统（step/status/postcards API、挂件、0016 各表）保持可用，删除属于步骤 4（P2）。契约测试：tests/explore-v1-migration.test.mjs。
 
+**回归礼包（步骤 3 落地，2026-09-23）：**
+
+- `syncAchievements` 首次检查识别 V1 老用户（`COUNT(user_postcards) >= 1`）→ 事务性写入 `achievements`（badge_id=`veteran-explorer`，progress=明信片数快照）+ `users.points +20` + `points_log(reason='achievement')`；UNIQUE(user_id,badge_id) + ON CONFLICT DO NOTHING 保证重复调用/并发幂等。
+- 探索次数类徽章（初出茅庐/探险新手）进度按 `max(Σsteps÷100, COUNT(postcards))` 实时回填进 `totalExplorations`（任务二折算口径），V1 用户首次同步即自动达标解锁。
+- 徽章不占 8 枚常规位、不计入 master/面板计数；庆祝弹窗经 `badgeNameMessageKey` 回退查名（i18n `achievements.veteranBadge` 双语）。契约测试：tests/achievements.test.mjs 新增 3 项（12~14）。
+
 ---
 
 ## 四、执行建议
@@ -147,4 +153,4 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 ---
 
-_创建：2026-09-23。状态：任务三 V1→V2 迁移 🚧（步骤 1/2 ✅）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展 ✅（2026-09-23）。_
+_创建：2026-09-23。状态：任务三 V1→V2 迁移 🚧（步骤 1/2/3 ✅）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展 ✅（2026-09-23）。_

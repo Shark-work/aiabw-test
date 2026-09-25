@@ -896,6 +896,7 @@
     "celebrationTitle": "🎉 New badge unlocked!",
     "celebrationPoints": "Reward credited: +{points} pts",
     "celebrationButton": "Awesome!",
+    "veteranBadge": { "name": "Veteran Explorer", "desc": "Welcome-back gift: thank you for exploring with Aibi since the V1 days" },
     "badges": {
       "firstExplore": { "name": "First Steps", "desc": "Complete your first exploration" },
       "explorer10": { "name": "Rookie Explorer", "desc": "Complete 10 explorations", "rewardNote": "Bonus: Lop Bunny unlock eligibility" },

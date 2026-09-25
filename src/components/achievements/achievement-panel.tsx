@@ -23,6 +23,7 @@ import {
 import {
   BADGE_I18N_KEYS,
   REWARD_NOTE_BADGES,
+  badgeNameMessageKey,
   type BadgeId,
   type NewlyUnlockedBadge,
 } from "@/lib/achievements-config";
@@ -210,7 +211,7 @@ export function AchievementPanel({
                   data-testid={`celebration-${b.id}`}
                 >
                   <span className="text-lg">{b.emoji}</span>
-                  {t(`badges.${BADGE_I18N_KEYS[b.id]}.name`)}
+                  {t(badgeNameMessageKey(b.id))}
                 </li>
               ))}
             </ul>

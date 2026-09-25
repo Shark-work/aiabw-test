@@ -11,7 +11,10 @@
 import { useTranslations } from "next-intl";
 import { X, Footprints, MapPin, Sparkles, BookOpen, Trophy } from "lucide-react";
 
-import { BADGE_I18N_KEYS, type BadgeId } from "@/lib/achievements-config";
+import {
+  badgeNameMessageKey,
+  type NewlyUnlockedBadge,
+} from "@/lib/achievements-config";
 
 export type ExploreResultModalData = {
   emoji: string | null;
@@ -27,7 +30,7 @@ export type ExploreResultModalData = {
     category: string;
   } | null;
   /** 本次探索新解锁的徽章（成就系统，roadmap 任务二；null/undefined = 无） */
-  newlyUnlocked?: { id: BadgeId; emoji: string; rewardPoints: number }[] | null;
+  newlyUnlocked?: NewlyUnlockedBadge[] | null;
 };
 
 type Props = {
@@ -126,7 +129,7 @@ export function ExploreResultModal({ result, onClose, onViewKnowledge }: Props) 
                     data-testid={`explore-result-badge-${b.id}`}
                   >
                     <span className="text-base">{b.emoji}</span>
-                    {ta(`badges.${BADGE_I18N_KEYS[b.id]}.name`)}
+                    {ta(badgeNameMessageKey(b.id))}
                     <span className="text-emerald-700">
                       {ta("rewardPoints", { points: b.rewardPoints })}
                     </span>
