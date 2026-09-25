@@ -384,3 +384,31 @@ test("exploration v2: mobile menu renders /explore-v2 (same items array)", () =>
   // The /explore-v2 entry should appear in the items array
   assert.ok(c.includes('"/explore-v2"'), "items array must contain /explore-v2");
 });
+
+// === 21) V1→V2 URL 兼容：/explore 308 重定向永久保留（迁移步骤 4 清理后） ===
+test("exploration v2: /explore keeps 308 redirect to /explore-v2; V1 runtime removed", () => {
+  const p = join(ROOT, "src/app/[locale]/explore/page.tsx");
+  assert.ok(existsSync(p), "explore redirect page must remain (URL 兼容旧书签/外链)");
+  const c = readFileSync(p, "utf8");
+  assert.ok(c.includes("permanentRedirect"), "must use 308 permanentRedirect");
+  assert.ok(c.includes("/explore-v2"), "redirect target must be /explore-v2");
+  // V1 运行时代码已删除（迁移步骤 4）：路由 / 挂件 / 配置 / 0016 迁移文件全部不复存在
+  for (const rel of [
+    "src/app/api/exploration/step/route.ts",
+    "src/app/api/exploration/status/route.ts",
+    "src/app/api/exploration/postcards/route.ts",
+    "src/components/exploration/exploration-map.tsx",
+    "src/lib/exploration-config.ts",
+    "drizzle/0016_exploration.sql",
+  ]) {
+    assert.ok(!existsSync(join(ROOT, rel)), `${rel} should be removed in step 4 cleanup`);
+  }
+  // V2 路由仍在（start/history/quota 是 V2，不是 V1）
+  for (const rel of [
+    "src/app/api/exploration/start/route.ts",
+    "src/app/api/exploration/history/route.ts",
+    "src/app/api/exploration/quota/route.ts",
+  ]) {
+    assert.ok(existsSync(join(ROOT, rel)), `${rel} (V2) must remain`);
+  }
+});

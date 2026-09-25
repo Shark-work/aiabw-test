@@ -1,6 +1,6 @@
 # 艾比世界 (AIABW)
 
-**艾比世界** 是一个集 **AI 宠物对话**、**挂机探索步数**、**动物百科知识** 于一体的 Web 应用。领养你的专属 AI 宠物，陪它聊天、看它出门探索寄回明信片与礼物、在探索中解锁真实的动物百科知识。
+**艾比世界** 是一个集 **AI 宠物对话**、**宠物探索冒险**、**动物百科知识** 于一体的 Web 应用。领养你的专属 AI 宠物，陪它聊天、看它出门探索寄回明信片与礼物、在探索中解锁真实的动物百科知识。
 
 - 生产环境：<https://www.aiabw.com>（Vercel 项目名 `aiabw`）
 - 技术栈：**Next.js 15 (App Router, Turbopack) · React 19 · TypeScript · TailwindCSS · PostgreSQL (Neon Serverless) · OpenAI/DeepSeek API（OpenAI 兼容协议）**
@@ -12,7 +12,7 @@
 | 模块 | 入口 / 路由 | 状态 | 说明 |
 |---|---|---|---|
 | AI 宠物聊天 | `/chat` · `POST /api/chat` | ✅ 已上线 | 多步 Agent（天气/计算/搜索 3 个工具），流式回复；10 句免费后需解锁 |
-| 探索 V2（挂机步数） | `POST /api/exploration/start` | ✅ 已上线 | 事件库按权重抽取（postcard/gift/knowledge/encounter/rest），免费 1 次/天，VIP 3 次/天且步数 ×1.5 |
+| 探索（每日随机事件） | `POST /api/exploration/start` | ✅ 已上线 | 事件库按权重抽取（postcard/gift/knowledge/encounter/rest），免费 1 次/天，VIP 3 次/天且步数 ×1.5 |
 | 动物百科 | `GET /api/animal-wiki/[id]` | ✅ 已上线 | 数据驱动：`animal_wiki` 表每物种一行，知识类探索事件自动关联百科卡片 |
 | 百科手账 | `/handbooks` · `POST /api/generate/handbook` | ✅ 已上线 | AI 生成宠物手账，后台任务轮询 |
 | 商城 / 装扮 | `/marketplace` · `/api/shop/*` | ✅ 已上线 | 积分购买装扮、装备到宠物 |
@@ -96,7 +96,7 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── chat/route.ts            # AI 聊天主路由（streamText + 工具 + 配额/记忆/解锁校验）
-│   │   ├── exploration/             # 探索 V2：start / status / step / history / postcards
+│   │   ├── exploration/             # 探索 V2：start / history / quota
 │   │   ├── animal-wiki/[id]/        # 动物百科卡片（公共接口）
 │   │   ├── pets/                    # 领养 claim / 图鉴 catalog / 合成 / 进化 / 繁殖
 │   │   ├── shop|subscription|pay/   # 商城、VIP 订阅、XorPay 支付

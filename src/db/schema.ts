@@ -195,11 +195,8 @@ export const adoptions = pgTable('adoptions', {
   isUnlocked: boolean('is_unlocked').notNull().default(false),
   // 长期记忆：AI 提取的用户偏好/关键记忆（后续由 AI 写入）
   memoryContext: text('memory_context'),
-  // 宠物旅行日记：累计步数、当前地图 id（1-7）、地图完成百分比、当前天气
+  // V1 探索遗产列：累计步数（成就系统 V1 折算口径 max(Σsteps÷100, 明信片数) 的数据源，原列保留）
   explorationSteps: integer('exploration_steps').notNull().default(0),
-  currentMapId: integer('current_map_id').notNull().default(1),
-  mapProgress: integer('map_progress').notNull().default(0),
-  weather: text('weather').notNull().default('sunny'),
 });
 
 /**
@@ -290,31 +287,9 @@ export const agentMemories = pgTable('agent_memories', {
   important: boolean('important').notNull().default(false),
 });
 
-/**
- * 宠物旅行日记 · 探索事件库（应用层随机抽取的目标池）：
- *  - map_id: 与 EXPLORATION_MAPS[id] 对应（1=村庄 / 2=草地 / 3=森林 / 4=河流 / 5=沙漠 / 6=雪山 / 7=星空）
- *  - event_type: item(获得道具) / weather(天气变化) / npc(NPC 互动) / obstacle(障碍)
- *  - reward_item_key: 与 src/lib/exploration-config.ts 的 EXPLORATION_ITEMS.key 对应；
- *    NULL = 非 item 事件（无道具奖励）
- *  - weather_bias: 偏好天气（如 "rainy"），触发概率加成；NULL = 无偏好
- *  - probability: 默认 0.6；应用层在事件抽取时还会再叠加 weather_bias 与随机数（0~1）
- */
-export const mapEvents = pgTable('map_events', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  mapId: integer('map_id').notNull(),
-  eventType: text('event_type', { enum: ['item', 'weather', 'npc', 'obstacle'] }).notNull(),
-  titleZh: text('title_zh').notNull(),
-  titleEn: text('title_en').notNull(),
-  descriptionZh: text('description_zh').notNull(),
-  descriptionEn: text('description_en').notNull(),
-  rewardItemKey: text('reward_item_key'),
-  probability: doublePrecision('probability').notNull().default(0.6),
-  weatherBias: text('weather_bias'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
 
 /**
- * 宠物旅行日记 · 旅行明信片（完成一张地图后生成）：
+ * 宠物旅行日记 · 旅行明信片（V1 遗产表，原表保留：成就系统 V1 识别/折算口径数据源）：
  *  - user_id: 归属用户（领养人；游客不写入）
  *  - adoption_id: 完成旅程的领养记录（NULL 表示账号级成就）
  *  - ai_summary_*: AI 生成的旅程亮点总结（按 locale 取一份展示）

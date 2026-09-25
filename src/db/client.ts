@@ -311,22 +311,8 @@ const SCHEMA_CREATES: string[] = [
     "last_notified_at" timestamp
   )`,
 
-  // 宠物旅行日记：探索事件库（应用层按 map_id 抽取，不在 DB 端做随机）
-  `CREATE TABLE IF NOT EXISTS "map_events" (
-    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    "map_id" integer NOT NULL,
-    "event_type" text NOT NULL,
-    "title_zh" text NOT NULL,
-    "title_en" text NOT NULL,
-    "description_zh" text NOT NULL,
-    "description_en" text NOT NULL,
-    "reward_item_key" text,
-    "probability" double precision DEFAULT 0.6 NOT NULL,
-    "weather_bias" text,
-    "created_at" timestamp DEFAULT now() NOT NULL
-  )`,
 
-  // 宠物旅行日记：旅行明信片（完成地图后生成）
+  // 宠物旅行日记：旅行明信片（V1 遗产表，成就系统折算口径数据源，保留）
   `CREATE TABLE IF NOT EXISTS "user_postcards" (
     "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     "user_id" uuid NOT NULL REFERENCES "users"("id"),
@@ -705,11 +691,8 @@ const SCHEMA_ALTERS: string[] = [
   // 登录后由 /api/auth/migrate 归并到 owner_id）
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "guest_owner" text`,
 
-  // 宠物旅行日记 · adoptions 扩展（聊天驱动挂机探索核心）
+  // V1 探索遗产列（成就系统 V1 折算口径数据源，保留；current_map_id/map_progress/weather 3 列随 V1 代码删除）
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "exploration_steps" integer DEFAULT 0 NOT NULL`,
-  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "current_map_id" integer DEFAULT 1 NOT NULL`,
-  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "map_progress" integer DEFAULT 0 NOT NULL`,
-  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "weather" text DEFAULT 'sunny' NOT NULL`,
 ];
 
 /**
@@ -758,8 +741,6 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_pets_species_id ON "pets" ("species_id")`,
   // 损失厌恶：批量查找“超过 N 天未互动”的宠物（状态反馈）
   `CREATE INDEX IF NOT EXISTS idx_pets_last_interaction ON "pets" ("last_interaction_time")`,
-  // 宠物旅行日记 · 事件库按地图 id 抽取
-  `CREATE INDEX IF NOT EXISTS "idx_map_events_map_id" ON "map_events" ("map_id")`,
   // 宠物旅行日记 · 明信片按用户时间倒序
   `CREATE INDEX IF NOT EXISTS "idx_user_postcards_user" ON "user_postcards" ("user_id", "created_at" DESC)`,
   // 宠物旅行日记 · 商城订单按用户时间倒序（"我的订单"查询）

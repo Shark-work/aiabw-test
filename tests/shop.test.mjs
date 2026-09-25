@@ -14,7 +14,6 @@ import {
   canPassObstacle,
   canResistWeather,
 } from "../src/lib/shop-config.ts";
-import { applyEquipmentToSteps } from "../src/lib/exploration-config.ts";
 
 test("shop: 7 商品目录完整（tent/umbrella/compass/bridge/rope/lantern/hot_air_balloon）", () => {
   assert.equal(SHOP_ITEMS.length, 7, "should have 7 items");
@@ -91,16 +90,6 @@ test("shop: canResistWeather tent/umbrella 抵抗；其它不行", () => {
   assert.equal(canResistWeather(["tent"]), true);
   assert.equal(canResistWeather(["umbrella"]), true);
   assert.equal(canResistWeather(["tent", "umbrella"]), true);
-});
-
-test("exploration: applyEquipmentToSteps compass = base ×1.5", () => {
-  assert.equal(applyEquipmentToSteps(10, []), 10, "no equipment → base steps");
-  assert.equal(applyEquipmentToSteps(10, ["compass"]), 15, "compass → 1.5x = 15");
-  assert.equal(applyEquipmentToSteps(10, ["tent"]), 10, "tent is weather_resist, not distance");
-  assert.equal(applyEquipmentToSteps(10, ["tent", "compass"]), 15);
-  assert.equal(applyEquipmentToSteps(10, ["unknown"]), 10);
-  // 小数情况：1 * 1.5 = 1.5 → floor = 1
-  assert.equal(applyEquipmentToSteps(1, ["compass"]), 1);
 });
 
 test("drizzle/0017_shop.sql exists with CREATE TABLE shop_items & user_orders", () => {

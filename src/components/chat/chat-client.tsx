@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import type { UIMessage } from "ai";
 
 import { ChatPanel } from "@/components/chat/chat-panel";
 import type { PetConfig } from "@/lib/pet-config";
 import { useTranslations } from "next-intl";
-import { ExplorationMap, type ExplorationState, type ExplorationEvent } from "@/components/exploration/exploration-map";
 
 /** 根据心情值返回对应的表情与心情键（键再通过 t() 本地化）。 */
 export function moodInfo(happiness: number) {
@@ -74,7 +73,6 @@ export function ChatClient({
   fallbackWelcome,
   petType,
   pet,
-  initialExploration,
 }: {
   threadId?: string;
   adoptionId?: string;
@@ -85,8 +83,6 @@ export function ChatClient({
   fallbackWelcome?: string;
   petType: string;
   pet: PetConfig;
-  /** 宠物旅行日记：SSR 预加载的探索状态。无 adoptionId 时不渲染地图。 */
-  initialExploration?: ExplorationState;
 }) {
   const t = useTranslations("chatClient");
   const tc = useTranslations("common");
@@ -281,53 +277,6 @@ export function ChatClient({
     }
   }, []);
 
-  // —— 宠物旅行日记：探索状态 + 步数推进 ——
-  const [exploration, setExploration] = useState<ExplorationState | null>(
-    initialExploration ?? null,
-  );
-  const [pendingEvents, setPendingEvents] = useState<ExplorationEvent[]>([]);
-  const [explorationLoading, setExplorationLoading] = useState(false);
-
-  /**
-   * 推进探索：POST /api/exploration/step
-   *  - 失败/网络错误一律静默（不影响聊天流）；
-   *  - 返回 events 存入 pendingEvents，触发 ExplorationMap 的事件弹窗。
-   */
-  const advanceExploration = useCallback(async () => {
-    if (!adoptionIdState || explorationLoading) return;
-    setExplorationLoading(true);
-    try {
-      const res = await fetch("/api/exploration/step", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adoptionId: adoptionIdState }),
-      });
-      const data = await res.json();
-      if (data?.ok) {
-        setExploration({
-          adoptionId: data.adoptionId,
-          explorationSteps: data.explorationSteps ?? 0,
-          currentMapId: data.currentMapId ?? 1,
-          mapProgress: data.mapProgress ?? 0,
-          weather: data.weather ?? "sunny",
-        });
-        if (Array.isArray(data.events) && data.events.length > 0) {
-          setPendingEvents(data.events as ExplorationEvent[]);
-        }
-      }
-    } catch {
-      // 静默
-    } finally {
-      setExplorationLoading(false);
-    }
-  }, [adoptionIdState, explorationLoading]);
-
-  /**
-   * 用 ref 跟踪是否需要下次聊天回复完成后推进探索。
-   * 目的：避免游客/老库 chatCount 没增加但 user 发了消息的边界情况。
-   */
-  const explorationAdvanceRef = useRef(false);
-
   // 每次互动结束后重新拉取最新心情 / 等级 / 月度积分
   const refreshMood = useCallback(async () => {
     if (!adoptionIdState) return;
@@ -349,16 +298,7 @@ export function ChatClient({
     } finally {
       setRefreshing(false);
     }
-
-    // 探索推进：每次聊天回复完调一次（STAMINA_OLD 风格：聊天驱动挂机）
-    if (explorationAdvanceRef.current) {
-      explorationAdvanceRef.current = false;
-      void advanceExploration();
-    } else {
-      // 兜底：直接允许一次推进（防止 refreshMood 被多次调用漏掉）
-      void advanceExploration();
-    }
-  }, [adoptionIdState, advanceExploration]);
+  }, [adoptionIdState]);
 
   const mo = moodInfo(happiness);
 
@@ -418,17 +358,6 @@ export function ChatClient({
             {t("memory")}
           </button>
         </div>
-      )}
-
-      {/* 宠物旅行日记：探索地图（聊天驱动步数） */}
-      {exploration && (
-        <ExplorationMap
-          initialState={exploration}
-          petName={pet.name}
-          petAvatar={pet.avatar}
-          pendingEvents={pendingEvents}
-          onClearEvents={() => setPendingEvents([])}
-        />
       )}
 
       <ChatPanel

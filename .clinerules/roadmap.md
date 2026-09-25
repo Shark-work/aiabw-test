@@ -86,7 +86,7 @@
 
 ---
 
-## 三、旧版探索 V1 引导迁移到 V2（P0）
+## 三、旧版探索 V1 引导迁移到 V2（P0）✅ 已完成
 
 **目标**：统一用户体验，避免新老用户认知割裂，降低维护成本。
 
@@ -102,8 +102,8 @@
 | 1 | 确认 V1 用户数据兼容性（探索次数、已触发事件等字段映射到 V2 表结构） | P0 | ✅ 2026-09-23 |
 | 2 | V1 入口重定向到 V2 页面，保留 URL 兼容（/explore → /explore-v2） | P0 | ✅ 2026-09-23 |
 | 3 | 为 V1 老用户发放"回归礼包"（补偿积分 + 专属徽章"元老探险家"） | P1 | ✅ 2026-09-23 |
-| 4 | 删除 V1 相关代码和路由，清理冗余 | P2 | ⬜ |
-| 5 | 更新 README 和新手引导文案，统一指向 V2 | P2 | ⬜ |
+| 4 | 删除 V1 相关代码和路由，清理冗余 | P2 | ✅ 2026-09-23 |
+| 5 | 更新 README 和新手引导文案，统一指向 V2 | P2 | ✅ 2026-09-23 |
 
 ### 数据兼容要点（2026-09-23 代码核实，修正原假设）
 
@@ -135,6 +135,13 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 - 探索次数类徽章（初出茅庐/探险新手）进度按 `max(Σsteps÷100, COUNT(postcards))` 实时回填进 `totalExplorations`（任务二折算口径），V1 用户首次同步即自动达标解锁。
 - 徽章不占 8 枚常规位、不计入 master/面板计数；庆祝弹窗经 `badgeNameMessageKey` 回退查名（i18n `achievements.veteranBadge` 双语）。契约测试：tests/achievements.test.mjs 新增 3 项（12~14）。
 
+**代码清理 + 文案统一（步骤 4/5 落地，2026-09-23）：**
+
+- 删除 V1 运行时代码：`/api/exploration/{step,status,postcards}` 路由、`ExplorationMap` 挂件（chat-client / chat 页 SSR 接线同步移除）、`src/lib/exploration-config.ts`、`drizzle/0016_exploration.sql`；`/api/pet/status` 剔除 4 个探索字段；`adoptions.current_map_id / map_progress / weather` 与 `map_events` 从 schema.ts / client.ts 移除（生产存量对象不 DROP，冷存储；新装库不再创建）。
+- 保留（成就系统依赖）：`user_postcards` 原表 + `adoptions.exploration_steps` 列（V1 折算口径 + 回归礼包数据源）；`/explore` 308 重定向永久保留（URL 兼容旧书签/外链）；`start/history/quota` 为 V2 路由，不在删除范围。
+- 文案统一：删除 i18n `exploration.*` 整个命名空间（zh/en，仅挂件使用）与无引用的 `explorationV2.idleHint`（"挂机探索（二期即将上线）"过时文案）；README 模块表/目录树统一为 V2 描述；导航 `navExplore` 已是「🗺️ 探索」双语统一。
+- 契约测试：删除 tests/exploration.test.mjs、tests/explore-v1-migration.test.mjs（迁移期使命完成）；tests/exploration-v2.test.mjs 新增 #21（308 重定向保留 + V1 文件不复存在 + V2 路由仍在）；tests/shop.test.mjs 移除 applyEquipmentToSteps 用例（随 exploration-config 删除，商城其余用例不受影响）。
+
 ---
 
 ## 四、执行建议
@@ -153,4 +160,4 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 ---
 
-_创建：2026-09-23。状态：任务三 V1→V2 迁移 🚧（步骤 1/2/3 ✅）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展 ✅（2026-09-23）。_
+_创建：2026-09-23。状态：任务三 V1→V2 迁移 ✅（步骤 1/2/3/4/5 全部完成，2026-09-23）；任务二 成就系统 ✅（2026-09-23）；任务一 新宠物扩展 ✅（2026-09-23）。_
