@@ -856,6 +856,10 @@
     "empty": "Your pet hasn't remembered anything yet. Keep chatting!",
     "vipOnly": "Memory is only available for VIP members",
     "upgradeHint": "💡 Upgrade to VIP and your pet will remember everything you say",
+    "subscribeNow": "Upgrade to VIP",
+    "vipDays": "VIP: {days} days left",
+    "loadFailed": "Failed to load memories. Check your connection and try again.",
+    "retry": "Retry",
     "daysAgo": "{days}d ago",
     "today": "Today"
   },

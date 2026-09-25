@@ -185,6 +185,9 @@ test("api/memories/route.ts: GET handler with VIP guard + pagination", () => {
   assert.match(api, /searchParams\.get\("page"\)/);
   assert.match(api, /searchParams\.get\("pageSize"\)/);
   assert.match(api, /searchParams\.get\("type"\)/);
+  // 页面转纯壳后，VIP 剩余天数改由 API 随列表返回
+  assert.match(api, /daysRemaining/);
+  assert.match(api, /getActiveSubscription/);
 });
 
 test("api/memories/[id]/route.ts: DELETE + PUT handlers with VIP guard + ownership check", () => {
@@ -196,12 +199,17 @@ test("api/memories/[id]/route.ts: DELETE + PUT handlers with VIP guard + ownersh
 });
 
 // --- 6. 记忆管理页面：VIP 拦截 + 渲染 ---
-test("memories/page.tsx: redirects non-VIP to /subscribe and renders MemoriesClient", () => {
+test("memories/page.tsx: 纯壳渲染 MemoriesClient（对齐 de6453d：SSR 不做 cookie 鉴权）", () => {
   const page = readText(join(ROOT, "src/app/[locale]/memories/page.tsx"));
-  assert.match(page, /redirect\("\/subscribe"\)/);
-  assert.match(page, /hasMemoryAccess/);
   assert.match(page, /<MemoriesClient/);
-  assert.match(page, /getActiveSubscription/);
+  // 本站登录态只存 localStorage(aiabw_token)、全站不写 cookie，
+  // SSR 读 cookie 恒为 null —— 页面壳不得再做 cookie/服务端鉴权/VIP 拦截
+  assert.ok(!/cookies\(/.test(page), "page shell should not read cookies");
+  assert.ok(!/verifyToken/.test(page), "page shell should not verify token");
+  assert.ok(
+    !/hasMemoryAccess|getActiveSubscription|redirect\("\/subscribe"\)/.test(page),
+    "VIP/登录拦截应下沉到客户端 + API",
+  );
 });
 
 test("memories-client.tsx: filters, list, edit, delete, modal, empty state, importance stars", () => {
@@ -247,6 +255,15 @@ test("memories-client.tsx: filters, list, edit, delete, modal, empty state, impo
   assert.match(client, /function Modal\(/);
   // 重要度星标
   assert.match(client, /function renderStars\(/);
+  // 鉴权（对齐 de6453d）：localStorage token + Bearer + 未登录重定向 + 非 VIP 订阅引导
+  assert.match(client, /localStorage\.getItem\("aiabw_token"\)/);
+  assert.match(client, /Authorization:\s*`Bearer \$\{token\}`/);
+  assert.match(client, /login\?redirect=\/\$\{locale\}\/memories/);
+  assert.match(client, /localStorage\.removeItem\("aiabw_token"\)/);
+  assert.match(client, /"forbidden"/);
+  assert.match(client, /t\("vipOnly"\)/);
+  assert.match(client, /t\("subscribeNow"\)/);
+  assert.match(client, /t\("vipDays"/);
 });
 
 // --- 7. 导航栏 Memory 入口（仅 VIP） ---
@@ -276,7 +293,7 @@ test("chat-panel.tsx: MemoryHint renders only for non-VIP every 5 user messages"
 });
 
 // --- 9. i18n memories 命名空间 ---
-test("i18n: zh.json has memories namespace with 20 keys", () => {
+test("i18n: zh.json has memories namespace with 24 keys", () => {
   const zh = readJson(join(ROOT, "messages/zh.json"));
   assert.ok(zh.memories, "zh.memories should exist");
   const keys = [
@@ -298,6 +315,10 @@ test("i18n: zh.json has memories namespace with 20 keys", () => {
     "empty",
     "vipOnly",
     "upgradeHint",
+    "subscribeNow",
+    "vipDays",
+    "loadFailed",
+    "retry",
     "daysAgo",
     "today",
   ];
@@ -305,10 +326,10 @@ test("i18n: zh.json has memories namespace with 20 keys", () => {
     assert.equal(typeof zh.memories[k], "string", `zh.memories.${k} should be a string`);
     assert.ok(zh.memories[k].length > 0, `zh.memories.${k} should be non-empty`);
   }
-  assert.equal(Object.keys(zh.memories).length, 20);
+  assert.equal(Object.keys(zh.memories).length, 24);
 });
 
-test("i18n: en.json has memories namespace with 20 keys", () => {
+test("i18n: en.json has memories namespace with 24 keys", () => {
   const en = readJson(join(ROOT, "messages/en.json"));
   assert.ok(en.memories, "en.memories should exist");
   for (const k of [
@@ -330,12 +351,16 @@ test("i18n: en.json has memories namespace with 20 keys", () => {
     "empty",
     "vipOnly",
     "upgradeHint",
+    "subscribeNow",
+    "vipDays",
+    "loadFailed",
+    "retry",
     "daysAgo",
     "today",
   ]) {
     assert.equal(typeof en.memories[k], "string", `en.memories.${k} should be a string`);
   }
-  assert.equal(Object.keys(en.memories).length, 20);
+  assert.equal(Object.keys(en.memories).length, 24);
 });
 
 test("i18n: nav.navMemory exists in both locales", () => {

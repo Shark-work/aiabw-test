@@ -856,6 +856,10 @@
     "empty": "宠物还没有记住任何事情，多和它聊聊天吧～",
     "vipOnly": "记忆功能仅对 VIP 用户开放",
     "upgradeHint": "💡 开通 VIP 后，宠物会记住你说的每一件事哦",
+    "subscribeNow": "立即开通 VIP",
+    "vipDays": "VIP 剩余 {days} 天",
+    "loadFailed": "记忆加载失败，请检查网络后重试",
+    "retry": "重试",
     "daysAgo": "{days}天前",
     "today": "今天"
   },

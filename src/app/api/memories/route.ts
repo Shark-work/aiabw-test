@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { petMemories } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { hasMemoryAccess } from "@/lib/memory-gate";
+import { getActiveSubscription } from "@/lib/subscription-config";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import zhMessages from "../../../../messages/zh.json";
 import enMessages from "../../../../messages/en.json";
@@ -65,7 +66,19 @@ export async function GET(req: Request) {
     .orderBy(desc(petMemories.createdAt));
   const total = allRows.length;
   const memories = allRows.slice((page - 1) * pageSize, page * pageSize);
-  return NextResponse.json({ ok: true, memories, total, page, pageSize });
+  // 已通过 VIP 门禁，订阅必存在；剩余天数随列表返回（原由 SSR 页计算，现页面转纯壳后改由 API 提供）
+  const sub = await getActiveSubscription(user.id);
+  const daysRemaining = sub
+    ? Math.max(0, Math.ceil((sub.expiresAt.getTime() - Date.now()) / 86400000))
+    : 0;
+  return NextResponse.json({
+    ok: true,
+    memories,
+    total,
+    page,
+    pageSize,
+    daysRemaining,
+  });
 }
 
 

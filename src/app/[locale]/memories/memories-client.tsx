@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Trash2, Edit3, Star, Loader2 } from "lucide-react";
 
 type MemoryType = "preference" | "event" | "fact" | "emotion";
@@ -17,24 +19,26 @@ interface MemoryItem {
   expiresAt: string | null;
 }
 
-interface MemoriesClientProps {
-  initialMemories: MemoryItem[];
-  isVip: boolean;
-  daysRemaining: number;
-}
+type Status = "loading" | "ready" | "forbidden" | "error";
 
 const TYPES: MemoryType[] = ["preference", "event", "fact", "emotion"];
 
-export function MemoriesClient({
-  initialMemories,
-  isVip,
-  daysRemaining,
-}: MemoriesClientProps) {
+/**
+ * 记忆库客户端（鉴权模式对齐 de6453d / explore-v2 修复）：
+ *  - 登录态只存 localStorage(aiabw_token)，所有 /api/memories 请求带 Bearer
+ *  - 无 token / 401 → 清 stale token，重定向 /{locale}/login?redirect=/{locale}/memories
+ *  - 403 VIP_REQUIRED → 订阅引导；组件仅做展示，不读写任何 cookie
+ */
+export function MemoriesClient() {
   const t = useTranslations("memories");
-  const [memories, setMemories] = useState<MemoryItem[]>(initialMemories);
+  const locale = useLocale();
+  const router = useRouter();
+  const [status, setStatus] = useState<Status>("loading");
+  const [memories, setMemories] = useState<MemoryItem[]>([]);
+  const [daysRemaining, setDaysRemaining] = useState(0);
   const [filter, setFilter] = useState<"all" | MemoryType>("all");
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialMemories.length >= 20);
+  const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [editing, setEditing] = useState<MemoryItem | null>(null);
   const [editDraft, setEditDraft] = useState({
@@ -44,6 +48,76 @@ export function MemoriesClient({
   });
   const [confirmDelete, setConfirmDelete] = useState<MemoryItem | null>(null);
   const [saving, setSaving] = useState(false);
+
+  /** 未登录或 401：清 stale token，回跳登录页（redirect 参数供登录后跳回） */
+  const gotoLogin = useCallback(() => {
+    try {
+      localStorage.removeItem("aiabw_token");
+    } catch {
+      /* ignore */
+    }
+    router.replace(`/${locale}/login?redirect=/${locale}/memories`);
+  }, [locale, router]);
+
+  /** 统一 Bearer 请求；无 token / 401 自动转登录页 */
+  const authFetch = useCallback(
+    async (input: string, init?: RequestInit) => {
+      const token = localStorage.getItem("aiabw_token");
+      if (!token) {
+        gotoLogin();
+        throw new Error("not signed in");
+      }
+      const res = await fetch(input, {
+        ...init,
+        headers: {
+          ...(init?.headers ?? {}),
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.status === 401) {
+        gotoLogin();
+        throw new Error("session expired");
+      }
+      return res;
+    },
+    [gotoLogin],
+  );
+
+  /** 拉取第一页（挂载 + 失败重试共用） */
+  const loadFirstPage = useCallback(async () => {
+    setStatus("loading");
+    try {
+      const url = new URL("/api/memories", window.location.origin);
+      url.searchParams.set("page", "1");
+      url.searchParams.set("pageSize", "20");
+      const res = await authFetch(url.toString());
+      const data = (await res.json()) as {
+        memories?: MemoryItem[];
+        daysRemaining?: number;
+      };
+      if (res.status === 403) {
+        setStatus("forbidden");
+        return;
+      }
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+      setMemories(data.memories ?? []);
+      setHasMore((data.memories?.length ?? 0) >= 20);
+      setDaysRemaining(data.daysRemaining ?? 0);
+      setPage(1);
+      setStatus("ready");
+    } catch (err) {
+      // 401/未登录：authFetch 已触发登录页重定向
+      if (err instanceof Error && /signed in|expired/.test(err.message)) return;
+      setStatus("error");
+    }
+  }, [authFetch]);
+
+  useEffect(() => {
+    void loadFirstPage();
+  }, [loadFirstPage]);
 
   const filtered = useMemo(
     () =>
@@ -59,11 +133,11 @@ export function MemoriesClient({
       url.searchParams.set("page", String(p));
       url.searchParams.set("pageSize", "20");
       if (filter !== "all") url.searchParams.set("type", filter);
-      const res = await fetch(url.toString());
+      const res = await authFetch(url.toString());
       const data = (await res.json()) as { memories?: MemoryItem[] };
       return data;
     },
-    [filter],
+    [authFetch, filter],
   );
 
   const onFilterChange = useCallback(async (next: "all" | MemoryType) => {
@@ -75,14 +149,16 @@ export function MemoriesClient({
       url.searchParams.set("page", "1");
       url.searchParams.set("pageSize", "20");
       if (next !== "all") url.searchParams.set("type", next);
-      const res = await fetch(url.toString());
+      const res = await authFetch(url.toString());
       const data = (await res.json()) as { memories?: MemoryItem[] };
       setMemories(data.memories ?? []);
       setHasMore((data.memories?.length ?? 0) >= 20);
+    } catch {
+      /* 401 已由 authFetch 转登录页 */
     } finally {
       setLoadingMore(false);
     }
-  }, []);
+  }, [authFetch]);
 
   const onLoadMore = useCallback(async () => {
     setLoadingMore(true);
@@ -92,6 +168,8 @@ export function MemoriesClient({
       setMemories((prev) => [...prev, ...(data.memories ?? [])]);
       setHasMore((data.memories?.length ?? 0) >= 20);
       setPage(next);
+    } catch {
+      /* 401 已由 authFetch 转登录页 */
     } finally {
       setLoadingMore(false);
     }
@@ -110,7 +188,7 @@ export function MemoriesClient({
     if (!editing) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/memories/${editing.id}`, {
+      const res = await authFetch(`/api/memories/${editing.id}`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -119,6 +197,10 @@ export function MemoriesClient({
           memoryType: editDraft.memoryType,
         }),
       });
+      if (res.status === 403) {
+        setStatus("forbidden");
+        return;
+      }
       const data = (await res.json()) as { ok: boolean; memory?: MemoryItem };
       if (data.ok && data.memory) {
         setMemories((prev) =>
@@ -138,15 +220,19 @@ export function MemoriesClient({
     } finally {
       setSaving(false);
     }
-  }, [editDraft, editing]);
+  }, [authFetch, editDraft, editing]);
 
   const onConfirmDelete = useCallback(async () => {
     if (!confirmDelete) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/memories/${confirmDelete.id}`, {
+      const res = await authFetch(`/api/memories/${confirmDelete.id}`, {
         method: "DELETE",
       });
+      if (res.status === 403) {
+        setStatus("forbidden");
+        return;
+      }
       const data = (await res.json()) as { ok: boolean };
       if (data.ok) {
         setMemories((prev) => prev.filter((m) => m.id !== confirmDelete.id));
@@ -155,7 +241,7 @@ export function MemoriesClient({
     } finally {
       setSaving(false);
     }
-  }, [confirmDelete]);
+  }, [authFetch, confirmDelete]);
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-3xl bg-gradient-to-br from-orange-50 via-white to-rose-50 px-4 py-6 sm:px-6 sm:py-10">
@@ -164,13 +250,43 @@ export function MemoriesClient({
           {t("title")}
         </h1>
         <p className="mt-2 text-sm text-zinc-500">{t("subtitle")}</p>
-        {isVip && daysRemaining > 0 ? (
+        {status === "ready" && daysRemaining > 0 ? (
           <p className="mt-2 inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
-            💎 VIP · {t("daysAgo", { days: daysRemaining })}
+            💎 VIP · {t("vipDays", { days: daysRemaining })}
           </p>
         ) : null}
       </header>
 
+      {status === "loading" ? (
+        <div className="mt-10 flex justify-center text-violet-500">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : status === "forbidden" ? (
+        <div className="rounded-xl border border-dashed border-violet-300 bg-violet-50 p-6 text-center">
+          <p className="text-sm font-medium text-violet-700">{t("vipOnly")}</p>
+          <p className="mt-1 text-xs text-violet-500">{t("upgradeHint")}</p>
+          <Link
+            href={`/${locale}/subscribe`}
+            className="mt-3 inline-block rounded-full bg-violet-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-violet-700"
+          >
+            {t("subscribeNow")}
+          </Link>
+        </div>
+      ) : status === "error" ? (
+        <div className="rounded-xl border border-dashed border-zinc-300 p-6 text-center">
+          <p className="text-sm text-zinc-500">{t("loadFailed")}</p>
+          <button
+            type="button"
+            onClick={() => void loadFirstPage()}
+            className="mt-3 rounded-full border border-violet-300 px-4 py-1.5 text-sm font-medium text-violet-700 transition hover:bg-violet-50"
+          >
+            {t("retry")}
+          </button>
+        </div>
+      ) : null}
+
+      {status === "ready" ? (
+        <>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <FilterChip
           active={filter === "all"}
@@ -255,6 +371,8 @@ export function MemoriesClient({
             {t("loadMore")}
           </button>
         </div>
+      ) : null}
+        </>
       ) : null}
 
       {editing ? (
