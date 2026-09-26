@@ -64,6 +64,77 @@ export function md5(input: string): string {
   return crypto.createHash("md5").update(input, "utf8").digest("hex");
 }
 
+/* ------------------------------------------------------------------ */
+/* 手机端适配：微信内置浏览器 JSAPI 支付                                 */
+/*                                                                     */
+/* 背景：微信官方已全面禁用「长按识别二维码」，手机端 Native 扫码二维码   */
+/* 在微信内无法识别跳转。因此下单按 UA 分流：                            */
+/*   - 微信内置浏览器（UA 含 MicroMessenger）→ pay_type=jsapi，需 openid */
+/*   - 外部浏览器 → pay_type=native（或其它配置），返回 code_url 二维码  */
+/* openid 通过 XorPay OAuth 获取：                                       */
+/*   GET https://xorpay.com/api/openid/{aid}?callback=<回跳URL>          */
+/*   微信授权后 302 回跳，URL 上附带 openid 参数。                        */
+/* ------------------------------------------------------------------ */
+
+/** 服务端 UA 检测：是否微信内置浏览器（公众号/H5 内打开）。 */
+export function isWechatUserAgent(ua: string | null | undefined): boolean {
+  return typeof ua === "string" && ua.includes("MicroMessenger");
+}
+
+/** 微信 openid 格式校验（字母/数字/下划线/连字符，通常 28 位）。 */
+export function isValidOpenid(openid: string | null | undefined): openid is string {
+  return typeof openid === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(openid);
+}
+
+/** 仅允许站内相对路径作为 OAuth 回跳地址（防开放重定向），非法值回退 /subscribe。 */
+export function sanitizeReturnPath(raw: string | null | undefined): string {
+  if (typeof raw === "string" && /^\/(?!\/)/.test(raw)) return raw;
+  return "/subscribe";
+}
+
+/**
+ * 构建 XorPay 微信 OAuth 跳转地址（获取 openid 用）。
+ * 用户在微信内访问该地址 → 微信授权 → 302 回跳 callback 并附带 openid。
+ */
+export function buildXorpayOpenidUrl(callbackUrl: string): string {
+  return `https://xorpay.com/api/openid/${XORPAY_AID}?callback=${encodeURIComponent(callbackUrl)}`;
+}
+
+/** JSAPI 下单成功后 XorPay 返回的收银台参数（info 字段内）。 */
+export type XorpayJsapiParams = {
+  appId: string;
+  timeStamp: string;
+  nonceStr: string;
+  package: string;
+  signType: string;
+  paySign: string;
+};
+
+/**
+ * 从 XorPay 统一下单响应中提取 JSAPI 拉起参数。
+ * 官方规范：status="ok" 时 jsapi 的 info 内含
+ * appId / timeStamp / nonceStr / package / signType / paySign。
+ * 字段缺失或不符类型时返回 null（调用方应按下单失败处理）。
+ */
+export function extractJsapiParams(data: unknown): XorpayJsapiParams | null {
+  if (!data || typeof data !== "object") return null;
+  const info = (data as Record<string, unknown>).info;
+  if (!info || typeof info !== "object") return null;
+  const r = info as Record<string, unknown>;
+  const str = (v: unknown): string | null =>
+    typeof v === "string" && v.length > 0 ? v : null;
+  const appId = str(r.appId);
+  const timeStamp = str(r.timeStamp);
+  const nonceStr = str(r.nonceStr);
+  const pkg = str(r.package);
+  const signType = str(r.signType);
+  const paySign = str(r.paySign);
+  if (!appId || !timeStamp || !nonceStr || !pkg || !signType || !paySign) {
+    return null;
+  }
+  return { appId, timeStamp, nonceStr, package: pkg, signType, paySign };
+}
+
 /**
  * 计算 XorPay MD5 签名。
  * 按规范将参数按以下顺序拼接后取 MD5：
@@ -87,6 +158,9 @@ export function buildXorpaySign(params: {
 /**
  * 统一下单：POST https://xorpay.com/api/pay/{aid}
  * Content-Type: application/x-www-form-urlencoded
+ *
+ * openid 仅 JSAPI（微信内置浏览器支付）时必传；
+ * 官方签名串不含 openid，因此不参与签名，仅作为附加表单字段提交。
  */
 export async function createXorpayOrder(fields: {
   order_id: string;
@@ -95,12 +169,13 @@ export async function createXorpayOrder(fields: {
   pay_type: string;
   notify_url: string;
   sign: string;
+  openid?: string;
 }): Promise<{ ok: boolean; data?: unknown; error?: string }> {
   if (!XORPAY_AID) {
     return { ok: false, error: "XORPAY_AID is not configured" };
   }
 
-  const body = new URLSearchParams({
+  const form = new URLSearchParams({
     order_id: fields.order_id,
     name: fields.name,
     price: fields.price,
@@ -108,7 +183,11 @@ export async function createXorpayOrder(fields: {
     notify_url: fields.notify_url,
     sign: fields.sign,
     sign_type: "MD5",
-  }).toString();
+  });
+  if (fields.openid) {
+    form.set("openid", fields.openid);
+  }
+  const body = form.toString();
 
   try {
     const res = await fetch(`https://xorpay.com/api/pay/${XORPAY_AID}`, {

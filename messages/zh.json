@@ -779,6 +779,10 @@
     "renewingNote": "当前订阅未到期，续订将在到期后生效",
     "paySuccess": "🎉 VIP 已生效！",
     "payFailed": "支付失败，请稍后重试",
+    "payCancelled": "支付已取消",
+    "payConfirming": "支付完成，正在确认到账…",
+    "scanGuide": "请打开微信 → 右上角「扫一扫」→ 扫描屏幕上的二维码完成支付",
+    "openidFailed": "微信授权失败，请重试",
     "faq": {
       "title": "常见问题",
       "q1": "订阅后可以取消吗？",

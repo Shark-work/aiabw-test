@@ -779,6 +779,10 @@
     "renewingNote": "Your current plan is still active — renewal will apply after it expires.",
     "paySuccess": "🎉 VIP Activated!",
     "payFailed": "Payment failed. Please try again.",
+    "payCancelled": "Payment cancelled",
+    "payConfirming": "Payment complete — confirming…",
+    "scanGuide": "Open WeChat → tap \"+\" (top right) → \"Scan\" → scan this QR code to pay",
+    "openidFailed": "WeChat authorization failed. Please try again.",
     "faq": {
       "title": "FAQ",
       "q1": "Can I cancel anytime?",

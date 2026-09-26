@@ -22,11 +22,69 @@ type CurrentSub = {
   autoRenew: boolean;
 } | null;
 
+type JsapiParams = {
+  appId: string;
+  timeStamp: string;
+  nonceStr: string;
+  package: string;
+  signType: string;
+  paySign: string;
+};
+
 type PayModalState =
   | { kind: "closed" }
   | { kind: "loading"; planId: string }
   | { kind: "qr"; planId: string; orderId: string; qr: string; payUrl: string | null }
+  | { kind: "confirming"; planId: string; orderId: string }
   | { kind: "error"; message: string };
+
+/** 微信 JSSDK 注入的全局桥（仅微信内置浏览器存在）。 */
+declare global {
+  interface Window {
+    WeixinJSBridge?: {
+      invoke?: (
+        event: string,
+        params: Record<string, unknown>,
+        callback: (res: { err_msg?: string }) => void,
+      ) => void;
+    };
+  }
+}
+
+/** 客户端检测：当前是否微信内置浏览器（手机端长按识别二维码已被微信官方禁用，微信内需走 JSAPI）。 */
+function isWechatBrowser(): boolean {
+  return (
+    typeof navigator !== "undefined" &&
+    navigator.userAgent.includes("MicroMessenger")
+  );
+}
+
+/** Native 二维码有效期刷新间隔（微信原生码实际约 2h，但手机端建议 5 分钟重刷防过期）。 */
+const QR_REFRESH_MS = 5 * 60 * 1000;
+const OPENID_KEY = "wx_openid";
+const PENDING_PLAN_KEY = "wx_pending_plan";
+
+/**
+ * 读取当前可用的微信 openid：
+ * 优先取 OAuth 回跳 URL 上的 openid（取到后写 sessionStorage 并清掉 query，防泄露/复用），
+ * 否则取 sessionStorage 缓存（同一标签页会话内复用，避免反复授权跳转）。
+ */
+function consumeOpenid(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const url = new URL(window.location.href);
+    const fromUrl = url.searchParams.get("openid");
+    if (fromUrl) {
+      sessionStorage.setItem(OPENID_KEY, fromUrl);
+      url.searchParams.delete("openid");
+      window.history.replaceState(null, "", url.toString());
+      return fromUrl;
+    }
+    return sessionStorage.getItem(OPENID_KEY);
+  } catch {
+    return null;
+  }
+}
 
 function discountPercent(planId: string): number {
   if (planId === "quarterly") return 17;
@@ -73,18 +131,87 @@ export function SubscribeClient() {
     return plans.find((p) => p.id === "quarterly") ?? plans[1] ?? plans[0] ?? null;
   }, [plans]);
 
+  /** 统一下单（openid 仅微信内 JSAPI 需要，外部浏览器不传）。 */
+  const createOrder = async (planId: string, openid: string | null) => {
+    const res = await fetch("/api/subscription/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(openid ? { planId, openid } : { planId }),
+    });
+    const data = await res.json().catch(() => null);
+    return { res, data };
+  };
+
+  /** 微信内置浏览器：跳转 XorPay OAuth 拿 openid（记下待支付计划，回来自动续单）。 */
+  const redirectToWechatOauth = (planId: string) => {
+    try {
+      sessionStorage.setItem(PENDING_PLAN_KEY, planId);
+    } catch {
+      /* sessionStorage 不可用时回跳后由用户重新点击 */
+    }
+    const ret = encodeURIComponent(window.location.pathname);
+    window.location.href = `/api/subscription/wechat-oauth?return=${ret}`;
+  };
+
+  /** JSAPI：通过 WeixinJSBridge 拉起微信收银台。 */
+  const launchWechatPay = (planId: string, orderId: string, params: JsapiParams) => {
+    const doInvoke = () => {
+      window.WeixinJSBridge?.invoke?.(
+        "getBrandWCPayRequest",
+        params as unknown as Record<string, unknown>,
+        (res: { err_msg?: string }) => {
+          const msg = res?.err_msg ?? "";
+          if (msg === "get_brand_wcpay_request:ok") {
+            // 前端收银台返回成功 ≠ 已入账；进入确认态，由异步回调 + 状态轮询闭环
+            setPayModal({ kind: "confirming", planId, orderId });
+          } else if (msg.includes(":cancel")) {
+            setPayModal({ kind: "error", message: t("payCancelled") });
+          } else {
+            setPayModal({
+              kind: "error",
+              message: msg ? `${t("payFailed")}（${msg}）` : t("payFailed"),
+            });
+          }
+        },
+      );
+    };
+    if (window.WeixinJSBridge?.invoke) {
+      doInvoke();
+    } else {
+      // WeixinJSBridge 未注入（页面加载早期）→ 等就绪事件兜底
+      document.addEventListener("WeixinJSBridgeReady", doInvoke, { once: true });
+    }
+  };
+
   const onSubscribe = async (planId: string) => {
     if (payModal.kind !== "closed") return;
+    const inWechat = isWechatBrowser();
+    const openid = inWechat ? consumeOpenid() : null;
+    if (inWechat && !openid) {
+      // 微信内 JSAPI 必须先拿 openid → 先走 OAuth 授权跳转
+      setPayModal({ kind: "loading", planId });
+      redirectToWechatOauth(planId);
+      return;
+    }
     setPayModal({ kind: "loading", planId });
     try {
-      const res = await fetch("/api/subscription/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-      const data = await res.json();
+      const { res, data } = await createOrder(planId, openid);
+      if (inWechat && data?.needOpenid) {
+        // 兜底：缓存的 openid 失效/被清 → 重新授权
+        try {
+          sessionStorage.removeItem(OPENID_KEY);
+        } catch {
+          /* ignore */
+        }
+        redirectToWechatOauth(planId);
+        return;
+      }
       if (!res.ok || !data?.ok) {
         setPayModal({ kind: "error", message: data?.error ?? t("payFailed") });
+        return;
+      }
+      if (data.channel === "jsapi" && data.jsapiParams) {
+        launchWechatPay(planId, data.orderId, data.jsapiParams as JsapiParams);
         return;
       }
       setPayModal({
@@ -102,6 +229,39 @@ export function SubscribeClient() {
     }
   };
 
+  // 微信 OAuth 回跳恢复：带上 openid 回到本页 → 自动继续之前选中的计划
+  useEffect(() => {
+    if (!isWechatBrowser()) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("wx_auth") === "failed") {
+      url.searchParams.delete("wx_auth");
+      window.history.replaceState(null, "", url.toString());
+      try {
+        sessionStorage.removeItem(PENDING_PLAN_KEY);
+      } catch {
+        /* ignore */
+      }
+      setPayModal({ kind: "error", message: t("openidFailed") });
+      return;
+    }
+    let pending: string | null = null;
+    try {
+      pending = sessionStorage.getItem(PENDING_PLAN_KEY);
+    } catch {
+      /* ignore */
+    }
+    if (!pending) return;
+    const openid = consumeOpenid();
+    if (!openid) return; // 授权尚未回跳（异常路径）→ 不自动跳转防循环，由用户重新点击
+    try {
+      sessionStorage.removeItem(PENDING_PLAN_KEY);
+    } catch {
+      /* ignore */
+    }
+    void onSubscribe(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const onCancelAutoRenew = async () => {
     try {
       const res = await fetch("/api/subscription/cancel", { method: "POST" });
@@ -117,7 +277,8 @@ export function SubscribeClient() {
 
   // 简单轮询：支付完成 3 秒后尝试刷新订阅状态
   useEffect(() => {
-    if (payModal.kind !== "qr") return;
+    // Native 扫码中 + JSAPI 支付后确认中均轮询（以后端异步回调入账为准）
+    if (payModal.kind !== "qr" && payModal.kind !== "confirming") return;
     const timer = setInterval(async () => {
       try {
         const res = await fetch("/api/subscription/status", { cache: "no-store" });
@@ -138,6 +299,31 @@ export function SubscribeClient() {
     }, 3000);
     return () => clearInterval(timer);
   }, [payModal.kind, router]);
+
+  // Native 二维码 5 分钟过期重刷（旧码过期前静默换新，防止用户扫到失效码）
+  useEffect(() => {
+    if (payModal.kind !== "qr") return;
+    const { planId } = payModal;
+    const timer = setTimeout(async () => {
+      try {
+        const { res, data } = await createOrder(planId, null);
+        if (res.ok && data?.ok && data.qr) {
+          setPayModal({
+            kind: "qr",
+            planId,
+            orderId: data.orderId,
+            qr: data.qr,
+            payUrl: data.payUrl ?? null,
+          });
+        }
+        // 刷新失败则保留旧码（用户仍可关闭重试，避免打断支付流程）
+      } catch {
+        /* 保留旧码 */
+      }
+    }, QR_REFRESH_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payModal]);
 
   if (loading) {
     return (
@@ -303,6 +489,26 @@ function renderPayModal(
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         {payModal.kind === "loading" ? (
           <div className="py-10 text-center text-zinc-500">{t("subscribing")}</div>
+        ) : payModal.kind === "confirming" ? (
+          <>
+            <h3 className="text-lg font-semibold text-zinc-900">
+              {t("subscribe")} · {payModal.planId}
+            </h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              订单号：<code className="text-[10px]">{payModal.orderId}</code>
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-2 text-sm text-zinc-600">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-emerald-500" />
+              {t("payConfirming")}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPayModal({ kind: "closed" })}
+              className="mt-6 w-full rounded-full border border-zinc-200 bg-white py-2 text-sm text-zinc-600 hover:bg-zinc-50"
+            >
+              取消
+            </button>
+          </>
         ) : payModal.kind === "qr" ? (
           <>
             <h3 className="text-lg font-semibold text-zinc-900">
@@ -319,6 +525,10 @@ function renderPayModal(
                 className="h-56 w-56 rounded-lg border border-zinc-200 object-contain"
               />
             </div>
+            {/* 手机端引导：微信已禁用「长按识别二维码」，须改用「扫一扫」 */}
+            <p className="mt-3 text-center text-xs leading-5 text-emerald-700">
+              {t("scanGuide")}
+            </p>
             {payModal.payUrl ? (
               <a
                 href={payModal.payUrl}

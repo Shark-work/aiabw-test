@@ -85,6 +85,11 @@ npx next build     # 生产构建
 | `AUTH_SECRET` | ✅ | JWT 密钥 |
 | `XORPAY_AID` / `XORPAY_SECRET` / `XORPAY_NOTIFY_URL` / `XORPAY_PAY_TYPE` / `XORPAY_PRODUCT_NAME` | 支付功能 | 码支付 |
 | `CRON_SECRET` | 定时任务 | 守护 `/api/cron/*` |
+
+> **手机端微信支付（/subscribe）**：微信已全面禁用「长按识别二维码」，站点按 UA 自动分流——
+> 微信内置浏览器走 JSAPI 直接拉起收银台（自动经 `/api/subscription/wechat-oauth` 完成 OAuth 取 openid），
+> 外部浏览器保持 Native 扫码（二维码下方有「扫一扫」引导，5 分钟自动重刷）。
+> 前置条件：**XorPay 后台需把站点域名（如 `www.aiabw.com`）加入「支付授权域名」白名单**，否则微信内 JSAPI 拉起会失败。
 | `BLOB_READ_WRITE_TOKEN` / `BLOB_STORE_ID` | 图片存储 | Vercel Blob |
 
 ---
