@@ -14,14 +14,17 @@ export async function SupportContact() {
       <p className="text-sm font-semibold text-orange-900">🎧 {ts("supportTitle")}</p>
       <p className="mt-1 text-xs leading-relaxed text-orange-700">{ts("supportBody")}</p>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-orange-800">
-        {/* QQ 群：群号文本，提示搜索加入 */}
-        <span
-          className="flex items-center gap-1 font-medium"
+        {/* QQ 群：一键加群链接 */}
+        <a
+          href={CONTACT_INFO.qqGroupJoinUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 font-medium underline decoration-orange-300 underline-offset-2 hover:text-orange-600"
           title={ts("socialQqGroupHint")}
         >
           <QQIcon className="h-3.5 w-3.5 text-[#12B7F5]" />
           {ts("socialQqGroup")}
-        </span>
+        </a>
         <a
           href={QQ_SERVICE_URL}
           className="flex items-center gap-1 font-medium underline decoration-orange-300 underline-offset-2 hover:text-orange-600"

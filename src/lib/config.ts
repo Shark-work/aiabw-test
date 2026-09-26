@@ -29,8 +29,11 @@ export const SOCIAL = {
  * 页脚 / 悬浮客服 / 法律页 / 联系页 / 订阅页等全部引用此处，改号只改这一处。
  */
 export const CONTACT_INFO = {
-  /** QQ 交流群群号（暂无在线加群链接，展示群号引导搜索加入） */
+  /** QQ 交流群群号（辅助展示；加入统一走 qqGroupJoinUrl 一键加群） */
   qqGroup: "1005445619",
+  /** QQ 群在线加群链接（腾讯官方 qm.qq.com 一键加群页） */
+  qqGroupJoinUrl:
+    "https://qm.qq.com/cgi-bin/qm/qr?k=Hf0R51LVoGSeLQN3X8kc-BLzZuAx8YAT&jump_from=webapi&authKey=z2houMdX3NE9PijBT5Cek6RUhJVJnOngHw+R+QCvWF64RD0MZtSjaz9UQsd+z2uN",
   /** 客服 QQ（一对一咨询） */
   customerServiceQQ: "1206309834",
   /** 客服 QQ 对应邮箱 */

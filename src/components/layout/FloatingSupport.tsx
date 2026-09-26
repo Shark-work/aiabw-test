@@ -34,17 +34,20 @@ export function FloatingSupport() {
           <p className="text-sm font-bold text-zinc-900">🎧 {t("supportTitle")}</p>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500">{t("supportBody")}</p>
           <div className="mt-3 space-y-2">
-            {/* QQ 群（搜索群号加入，无在线链接） */}
-            <div
-              className="flex items-center justify-between gap-2 rounded-xl bg-sky-50 px-3 py-2.5"
+            {/* QQ 群（一键加群，跳转腾讯官方加群页） */}
+            <a
+              href={CONTACT_INFO.qqGroupJoinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between gap-2 rounded-xl bg-sky-50 px-3 py-2.5 transition hover:bg-sky-100"
               title={t("socialQqGroupHint")}
             >
               <span className="flex items-center gap-2 text-xs font-medium text-zinc-700">
                 <QQIcon className="h-4 w-4 text-[#12B7F5]" />
                 {t("socialQqGroup")}
               </span>
-              <span className="text-[10px] text-zinc-400">{t("socialQqGroupHint")}</span>
-            </div>
+              <span className="text-[10px] text-zinc-400">{t("socialQqGroupJoin")} ↗</span>
+            </a>
             {/* 客服 QQ（一键唤起会话） */}
             <a
               href={QQ_SERVICE_URL}

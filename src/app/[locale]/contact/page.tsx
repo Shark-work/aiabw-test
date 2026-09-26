@@ -24,7 +24,7 @@ export default async function ContactPage({
       title: t("qqGroupTitle"),
       desc: t("qqGroupDesc"),
       actionText: t("qqGroupAction"),
-      href: null, // 暂无在线加群链接，展示群号文本引导搜索加入
+      href: CONTACT_INFO.qqGroupJoinUrl, // 一键加群（腾讯官方加群页）
     },
     {
       key: "qqService",

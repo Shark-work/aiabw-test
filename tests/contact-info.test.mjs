@@ -18,6 +18,10 @@ const config = await import("../src/lib/config.ts");
 test("contact: CONTACT_INFO exact values", () => {
   const c = config.CONTACT_INFO;
   assert.equal(c.qqGroup, "1005445619");
+  assert.equal(
+    c.qqGroupJoinUrl,
+    "https://qm.qq.com/cgi-bin/qm/qr?k=Hf0R51LVoGSeLQN3X8kc-BLzZuAx8YAT&jump_from=webapi&authKey=z2houMdX3NE9PijBT5Cek6RUhJVJnOngHw+R+QCvWF64RD0MZtSjaz9UQsd+z2uN"
+  );
   assert.equal(c.customerServiceQQ, "1206309834");
   assert.equal(c.customerServiceEmail, "1206309834@qq.com");
   assert.equal(c.xHandle, "@Aiabw_com");
@@ -31,6 +35,11 @@ test("contact: derived URLs follow spec formats", () => {
     "tencent://message/?uin=1206309834&Site=&Menu=yes"
   );
   assert.equal(config.EMAIL_URL, "mailto:aiabw@outlook.com");
+  // QQ 群加群链接必须为腾讯官方 qm.qq.com 域名
+  assert.ok(
+    config.CONTACT_INFO.qqGroupJoinUrl.startsWith("https://qm.qq.com/"),
+    "qqGroupJoinUrl 必须是腾讯官方加群页"
+  );
   // SOCIAL.x 默认值同步为 @Aiabw_com（env 可覆盖，但测试环境下必须为新账号）
   assert.equal(config.SOCIAL.x, "https://x.com/Aiabw_com");
 });
@@ -57,10 +66,32 @@ test("contact: legacy support@aiabw.com fully removed from src/ and messages/", 
   assert.deepEqual(offenders, [], `旧邮箱残留: ${offenders.join(", ")}`);
 });
 
+test("contact: no leftover 'search group ID to join' plain text anywhere", () => {
+  const roots = ["src", "messages"].map((r) =>
+    fileURLToPath(new URL(`../${r}`, import.meta.url))
+  );
+  const offenders = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) {
+        if (name === "node_modules" || name === ".next") continue;
+        walk(p);
+      } else if (/\.(ts|tsx|json|mjs|cjs)$/.test(name)) {
+        const text = readFileSync(p, "utf8");
+        if (text.includes("搜索群号加入")) offenders.push(p);
+      }
+    }
+  };
+  for (const r of roots) walk(r);
+  assert.deepEqual(offenders, [], `"搜索群号加入"残留: ${offenders.join(", ")}`);
+});
+
 // === 3) 展示层接线 ============================================================
 test("contact: footer renders all 4 channels from CONTACT_INFO", () => {
   const s = read("src/components/layout/Footer.tsx");
   assert.match(s, /CONTACT_INFO,\s*EMAIL_URL,\s*QQ_SERVICE_URL/);
+  assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
   assert.match(s, /socialQqGroup/);
   assert.match(s, /socialQqService/);
   assert.match(s, /socialX/);
@@ -76,6 +107,8 @@ test("contact: floating support panel renders all 4 channels", () => {
   assert.match(s, /EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.xUrl/);
   assert.match(s, /socialQqGroupHint/);
+  assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
+  assert.match(s, /socialQqGroupJoin/);
   assert.ok(!s.includes("SOCIAL.telegram"), "悬浮面板不再展示 Telegram");
 });
 
@@ -84,6 +117,7 @@ test("contact: SupportContact module renders all 4 channels", () => {
   assert.match(s, /QQ_SERVICE_URL/);
   assert.match(s, /EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.xUrl/);
+  assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
   assert.match(s, /socialQqGroup/);
   assert.ok(!s.includes("TelegramIcon"), "法律页模块不再展示 Telegram");
 });
@@ -98,6 +132,8 @@ test("contact: /contact page is a 4-card grid with work hours", () => {
   assert.match(s, /QQ_SERVICE_URL/);
   assert.match(s, /EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.xUrl/);
+  assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
+  assert.ok(!s.includes("href: null"), "QQ群卡片已改为可点击加群链接");
   assert.match(s, /sm:grid-cols-2/, "四宫格双列布局");
   assert.match(s, /QQIcon|MailIcon|XIcon/);
 });
@@ -154,7 +190,7 @@ test("contact i18n: new support/login/register/settings/subscription/nav keys in
   const zh = JSON.parse(read("messages/zh.json"));
   const en = JSON.parse(read("messages/en.json"));
   for (const j of [zh, en]) {
-    for (const k of ["socialQqGroup", "socialQqGroupHint", "socialQqService", "socialEmail"]) {
+    for (const k of ["socialQqGroup", "socialQqGroupHint", "socialQqGroupJoin", "socialQqService", "socialEmail"]) {
       assert.ok(j.support[k], `support.${k} 缺失`);
     }
     assert.ok(j.login.needHelp, "login.needHelp 缺失");
@@ -169,6 +205,13 @@ test("contact i18n: new support/login/register/settings/subscription/nav keys in
   assert.ok(zh.support.socialQqGroup.includes("1005445619"));
   assert.ok(zh.support.socialQqService.includes("1206309834"));
   assert.ok(zh.support.socialEmail.includes("aiabw@outlook.com"));
+  // 加群行动文案已替换"搜索群号加入"，群号保留为辅助说明
+  assert.equal(zh.contact.qqGroupAction, "一键加群");
+  assert.equal(en.contact.qqGroupAction, "Join Group");
+  assert.equal(zh.support.socialQqGroupJoin, "加入群聊");
+  assert.equal(en.support.socialQqGroupJoin, "Join Group");
+  assert.ok(zh.contact.qqGroupDesc.includes("1005445619"), "群号保留为辅助说明");
+  assert.ok(!zh.support.socialQqGroupHint.includes("搜索群号加入"));
 });
 
 test("contact i18n: legal pages use new email, not legacy one", () => {

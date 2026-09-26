@@ -41,14 +41,17 @@ export async function Footer() {
       </nav>
       {/* 全站统一客服渠道（QQ群 / 客服QQ / X / 邮箱，来源 src/lib/config.ts CONTACT_INFO） */}
       <address className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 text-xs not-italic text-zinc-500">
-        {/* QQ 群：暂无在线加群链接，展示群号引导搜索加入 */}
-        <span
-          className="flex items-center gap-1.5 text-zinc-600"
+        {/* QQ 群：一键加群（跳转腾讯官方加群页，群号保留展示） */}
+        <a
+          href={CONTACT_INFO.qqGroupJoinUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
           title={ts("socialQqGroupHint")}
         >
           <QQIcon className="h-4 w-4 text-[#12B7F5]" />
           {ts("socialQqGroup")}
-        </span>
+        </a>
         <span aria-hidden className="text-zinc-200">
           |
         </span>
