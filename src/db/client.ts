@@ -446,6 +446,38 @@ const SCHEMA_CREATES: string[] = [
     "created_at"      timestamp DEFAULT now() NOT NULL
   )`,
 
+  // UGC 内容创作工坊（drizzle/0023_ugc_workshop.sql）
+  // P0：ugc_creations（日记卡片 / AI 写真生成记录）；P1 预留：campaigns + submissions
+  `CREATE TABLE IF NOT EXISTS "ugc_creations" (
+    "id"         uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id"    uuid NOT NULL REFERENCES "users"("id"),
+    "pet_id"     text,
+    "type"       text NOT NULL CHECK ("type" IN ('portrait', 'diary_card', 'sticker')),
+    "style"      text,
+    "image_url"  text NOT NULL,
+    "is_premium" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "ugc_campaigns" (
+    "id"            text PRIMARY KEY,
+    "title"         text NOT NULL,
+    "description"   text,
+    "start_date"    timestamp,
+    "end_date"      timestamp,
+    "reward_points" integer DEFAULT 0 NOT NULL,
+    "is_active"     boolean DEFAULT true NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "ugc_submissions" (
+    "id"           uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "campaign_id"  text NOT NULL REFERENCES "ugc_campaigns"("id"),
+    "user_id"      uuid NOT NULL REFERENCES "users"("id"),
+    "content_type" text NOT NULL CHECK ("content_type" IN ('image', 'video', 'text')),
+    "content_url"  text,
+    "status"       text DEFAULT 'pending' NOT NULL CHECK ("status" IN ('pending', 'approved', 'rejected', 'featured')),
+    "likes"        integer DEFAULT 0 NOT NULL,
+    "created_at"   timestamp DEFAULT now() NOT NULL
+  )`,
+
   // 探索 v2 · 种子数据 · 动物知识百科（波斯猫；与 0020_exploration_v2.sql 一致）
   `INSERT INTO "animal_wiki" (
      "id","species","category","origin","lifespan","weight",
@@ -778,6 +810,11 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_achievements_user" ON "achievements" ("user_id")`,
   // 隐私改造：昵称唯一（登录双通道按 username 匹配 / 注册与改名防重）
   `CREATE UNIQUE INDEX IF NOT EXISTS "users_username_key" ON "users" ("username")`,
+  // UGC 内容创作工坊索引（drizzle/0023_ugc_workshop.sql）
+  `CREATE INDEX IF NOT EXISTS "idx_ugc_creations_user" ON "ugc_creations" ("user_id", "created_at" DESC)`,
+  `CREATE INDEX IF NOT EXISTS "idx_ugc_creations_type" ON "ugc_creations" ("user_id", "type", "created_at" DESC)`,
+  `CREATE INDEX IF NOT EXISTS "idx_ugc_submissions_campaign" ON "ugc_submissions" ("campaign_id", "created_at" DESC)`,
+  `CREATE INDEX IF NOT EXISTS "idx_ugc_submissions_user" ON "ugc_submissions" ("user_id", "created_at" DESC)`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
@@ -825,7 +862,8 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // v2: 新增 achievements 表（drizzle/0021，探索成就系统）
 // v3: 新增垂耳兔/玄凤鹦鹉百科 + evt-041~060 探索事件种子（roadmap 任务一）
 // v4: 隐私改造 —— users.username 公开昵称（user_0001 回填+唯一索引）+ show_in_leaderboard 排行榜 opt-out（drizzle/0022）
-const SCHEMA_VERSION = 4;
+// v5: UGC 内容创作工坊 —— ugc_creations（P0 写真/日记卡片）+ ugc_campaigns/ugc_submissions（P1 预留）（drizzle/0023）
+const SCHEMA_VERSION = 5;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

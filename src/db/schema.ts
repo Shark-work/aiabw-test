@@ -530,3 +530,51 @@ export const achievements = pgTable(
   },
   (t) => [unique('achievements_user_badge_unique').on(t.userId, t.badgeId)],
 );
+
+/**
+ * UGC 内容创作工坊 · 生成记录（drizzle/0023_ugc_workshop.sql）：
+ *  - type: portrait（AI 写真）/ diary_card（日记卡片）/ sticker（表情包，P1）
+ *  - style: 风格模板 id（PORTRAIT_STYLES / DIARY_THEMES）
+ *  - isPremium: 付费（VIP）解锁 → 高清无水印版；免费 → 低清水印版
+ *  - petId: 关联宠物实例/类型（text，宽松存储，无 FK）
+ */
+export const ugcCreations = pgTable('ugc_creations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  petId: text('pet_id'),
+  type: text('type', { enum: ['portrait', 'diary_card', 'sticker'] }).notNull(),
+  style: text('style'),
+  imageUrl: text('image_url').notNull(),
+  isPremium: boolean('is_premium').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * UGC 征集活动（P1 预留，drizzle/0023）：
+ *  - 运营侧创建活动；用户投稿入 ugc_submissions，按 status 审核流转
+ */
+export const ugcCampaigns = pgTable('ugc_campaigns', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  description: text('description'),
+  startDate: timestamp('start_date'),
+  endDate: timestamp('end_date'),
+  rewardPoints: integer('reward_points').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+});
+
+/**
+ * UGC 活动投稿（P1 预留，drizzle/0023）：
+ *  - status: pending → approved / rejected / featured（精选加推）
+ */
+export const ugcSubmissions = pgTable('ugc_submissions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  campaignId: text('campaign_id').references(() => ugcCampaigns.id).notNull(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  contentType: text('content_type', { enum: ['image', 'video', 'text'] }).notNull(),
+  contentUrl: text('content_url'),
+  status: text('status', { enum: ['pending', 'approved', 'rejected', 'featured'] }).notNull().default('pending'),
+  likes: integer('likes').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+

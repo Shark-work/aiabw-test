@@ -21,6 +21,7 @@
 | 宠物市场（UGC） | `/api/creator/*` | ✅ 已上线 | 创作者发布自定义人设宠物，购买者分成 |
 | 盲盒 / 合成 / 繁殖 | `/api/blindbox/*` · `/api/pets/synthesize` | ✅ 已上线 | 抽宠、多宠合成、繁殖进化 |
 | 每日签到 / 积分 | `/api/user/checkin` · `/api/points-log` | ✅ 已上线 | 签到 +10 积分，积分可兑换宠物 |
+| UGC 创作工坊 | `/workshop` · `/api/ugc/generate-portrait` | ✅ P0 已上线 | 日记卡片（纯前端 Canvas 合成：头像+心情+独白+日期+站点二维码，3 主题）+ AI 宠物写真（10 种风格，免费每日 1 张低清水印版，VIP 无限高清无水印）；表情包/征集活动预留 |
 
 ---
 
@@ -85,6 +86,7 @@ npx next build     # 生产构建
 | `AUTH_SECRET` | ✅ | JWT 密钥 |
 | `XORPAY_AID` / `XORPAY_SECRET` / `XORPAY_NOTIFY_URL` / `XORPAY_PAY_TYPE` / `XORPAY_PRODUCT_NAME` | 支付功能 | 码支付 |
 | `CRON_SECRET` | 定时任务 | 守护 `/api/cron/*` |
+| `UGC_PORTRAIT_API_URL` / `UGC_PORTRAIT_API_KEY` | AI 写真 | 外部生图服务（阿里云函数计算 ComfyUI / Skill API，按量付费）；未配置时 `/api/ugc/generate-portrait` 返回 503，日记卡片不受影响 |
 
 > **手机端微信支付（/subscribe）**：微信已全面禁用「长按识别二维码」，站点按 UA 自动分流——
 > 微信内置浏览器走 JSAPI 直接拉起收银台（自动经 `/api/subscription/wechat-oauth` 完成 OAuth 取 openid），
