@@ -37,10 +37,12 @@ async function hashPassword(password) {
   }
   const passwordHash = await hashPassword(password);
   const inviteCode = "AD" + crypto.randomBytes(3).toString("hex").toUpperCase();
+  // 隐私改造：username 为 NOT NULL 公开昵称；管理员账号生成 admin_ 前缀的唯一占位昵称（可后续自行修改）
+  const username = "admin_" + crypto.randomBytes(3).toString("hex");
   const r = await pool.query(
-    `INSERT INTO users (email, password_hash, role, invite_code)
-     VALUES ($1, $2, 'admin', $3) RETURNING email, role`,
-    [email, passwordHash, inviteCode],
+    `INSERT INTO users (email, username, password_hash, role, invite_code)
+     VALUES ($1, $2, $3, 'admin', $4) RETURNING email, role`,
+    [email, username, passwordHash, inviteCode],
   );
   console.log("✅ 已新增管理员:", r.rows[0].email, "| role =", r.rows[0].role);
   await pool.end();

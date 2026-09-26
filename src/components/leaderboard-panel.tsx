@@ -12,7 +12,7 @@ type PetRank = {
   collectibleId: string;
   hashId: string;
   ownerId: string;
-  ownerEmail: string;
+  ownerName: string;
   name: string;
   rarity: string;
   element: string | null;
@@ -24,7 +24,7 @@ type PetRank = {
 type BreederRank = {
   rank: number;
   ownerId: string;
-  ownerEmail: string;
+  ownerName: string;
   mintedCount: number;
 };
 
@@ -129,7 +129,7 @@ export function LeaderboardPanel() {
                         {top && <span className="text-xs">👑</span>}
                       </div>
                       <div className="truncate text-[11px] text-zinc-400">
-                        {t("owner", { email: p.ownerEmail })} · {t("generation", { gen: p.generation })} · ⚡{p.element ?? "?"}
+                        {t("owner", { name: p.ownerName })} · {t("generation", { gen: p.generation })} · ⚡{p.element ?? "?"}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
@@ -156,7 +156,7 @@ export function LeaderboardPanel() {
                       {RANK_MEDALS[b.rank - 1] ?? b.rank}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-800">
-                      {b.ownerEmail} {top && <span className="text-xs">👑</span>}
+                      {b.ownerName} {top && <span className="text-xs">👑</span>}
                     </span>
                     <div className="shrink-0 text-right">
                       <div className="text-sm font-bold text-violet-600">{b.mintedCount}</div>

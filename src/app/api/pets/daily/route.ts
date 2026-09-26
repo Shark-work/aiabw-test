@@ -46,19 +46,12 @@ function traitEn(zh?: string): string {
   return map[zh || ""] || "unique";
 }
 
-/** 脱敏 owner 显示名：邮箱前缀截断，避免暴露完整账号。 */
-function maskOwner(email: string | null): string {
-  if (!email) return "匿名";
-  const at = email.indexOf("@");
-  const name = at > 0 ? email.slice(0, at) : email;
-  return name.length > 10 ? name.slice(0, 8) + "***" : name;
-}
-
 /**
  * GET /api/pets/daily — 首页「艾比每日灵感」数据源：
  *  - lucky: 今日幸运宠（按日期确定性选一只【未领养 + 当日星座元素匹配】的预计算宠物；
  *           该元素池为空时回退到任意未领养宠物）；
- *  - recent: 最近 3 只被领养/合成的稀有宠（rare / epic / legendary），附脱敏 owner。
+ *  - recent: 最近 3 只被领养/合成的稀有宠（rare / epic / legendary），owner 只展示公开昵称
+ *           （隐私改造：不再使用邮箱前缀，游客占位宠物回退「匿名」）。
  */
 export async function GET(req: Request) {
   const locale = resolveLocale(req);
@@ -94,7 +87,7 @@ export async function GET(req: Request) {
   const { rows: recentRows } = await pool.query(
     `SELECT p.id, p.species_id, p.image_url, p.traits, p.adopted_at,
             d.name_zh AS "nameZh", d.name_en AS "nameEn",
-            u.email AS owner_email
+            u.username AS owner_name
        FROM pets p
        JOIN pet_dictionary d ON d.id = p.species_id
        LEFT JOIN users u ON u.id = p.owner_id
@@ -125,7 +118,7 @@ export async function GET(req: Request) {
     speciesName: locale === "en" ? r.nameEn : r.nameZh,
     rarity: r.traits?.rarity ?? "rare",
     imageUrl: r.image_url,
-    ownerLabel: maskOwner(r.owner_email ?? null),
+    ownerLabel: r.owner_name ?? (locale === "en" ? "Anonymous" : "匿名"),
   }));
 
   const body = {

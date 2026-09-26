@@ -13,7 +13,7 @@ type UgcPet = {
   name: string;
   imageUrl: string;
   priceOrPoints: number;
-  creatorEmail: string | null;
+  creatorName: string | null;
 };
 
 export default function MarketplacePage() {
@@ -304,7 +304,7 @@ export default function MarketplacePage() {
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-zinc-900">{pet.name}</div>
                   <div className="text-xs text-zinc-500">
-                    {t("creatorLabel", { email: pet.creatorEmail ?? "unknown" })}
+                    {t("creatorLabel", { name: pet.creatorName ?? "unknown" })}
                   </div>
                   <div className="text-sm font-medium text-violet-600">
                     {t("pointsLabel", { points: pet.priceOrPoints })}

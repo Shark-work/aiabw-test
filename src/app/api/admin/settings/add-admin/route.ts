@@ -28,9 +28,11 @@ export async function POST(req: Request) {
     }
     const passwordHash = await hashPassword(password);
     const inviteCode = "AD" + Math.random().toString(16).slice(2, 8).toUpperCase();
+    // 隐私改造：username 为 NOT NULL 公开昵称；管理员账号生成 admin_ 前缀的唯一占位昵称（可后续自行修改）
+    const username = "admin_" + Math.random().toString(36).slice(2, 8);
     await pool.query(
-      `INSERT INTO users (email, password_hash, role, invite_code) VALUES ($1, $2, 'admin', $3)`,
-      [email, passwordHash, inviteCode],
+      `INSERT INTO users (email, username, password_hash, role, invite_code) VALUES ($1, $2, $3, 'admin', $4)`,
+      [email, username, passwordHash, inviteCode],
     );
     return NextResponse.json({ ok: true, email });
   } catch (err) {

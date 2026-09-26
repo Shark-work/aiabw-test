@@ -693,6 +693,16 @@ const SCHEMA_ALTERS: string[] = [
 
   // V1 探索遗产列（成就系统 V1 折算口径数据源，保留；current_map_id/map_progress/weather 3 列随 V1 代码删除）
   `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "exploration_steps" integer DEFAULT 0 NOT NULL`,
+
+  // ===== 隐私改造：username 公开昵称 + 排行榜 opt-out =====
+  // 1) 加列（先可空，回填后再 SET NOT NULL，保证旧库平滑迁移）
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "username" text`,
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "show_in_leaderboard" boolean DEFAULT true NOT NULL`,
+  // 2) 存量回填：按 user_0001 格式生成唯一默认昵称（序列保证逐行递増；用户自取昵称禁 user_\d+ 前缀，不会撞车）
+  `CREATE SEQUENCE IF NOT EXISTS "users_username_seq" START 1`,
+  `UPDATE "users" SET "username" = 'user_' || lpad(nextval('users_username_seq')::text, 4, '0') WHERE "username" IS NULL`,
+  // 3) 回填完成后强制非空（若存在并发插入的 NULL 行会失败 → 容错跳过，下次版本提升时重试）
+  `ALTER TABLE "users" ALTER COLUMN "username" SET NOT NULL`,
 ];
 
 /**
@@ -766,6 +776,8 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_exploration_events_rarity" ON "exploration_events" ("rarity")`,
   // 探索成就 · 按用户查询徽章列表（drizzle/0021_achievements.sql）
   `CREATE INDEX IF NOT EXISTS "idx_achievements_user" ON "achievements" ("user_id")`,
+  // 隐私改造：昵称唯一（登录双通道按 username 匹配 / 注册与改名防重）
+  `CREATE UNIQUE INDEX IF NOT EXISTS "users_username_key" ON "users" ("username")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
@@ -812,7 +824,8 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // ============================================================================
 // v2: 新增 achievements 表（drizzle/0021，探索成就系统）
 // v3: 新增垂耳兔/玄凤鹦鹉百科 + evt-041~060 探索事件种子（roadmap 任务一）
-const SCHEMA_VERSION = 3;
+// v4: 隐私改造 —— users.username 公开昵称（user_0001 回填+唯一索引）+ show_in_leaderboard 排行榜 opt-out（drizzle/0022）
+const SCHEMA_VERSION = 4;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

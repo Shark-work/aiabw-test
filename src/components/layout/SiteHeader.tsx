@@ -7,7 +7,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTheme } from "@/components/theme-provider";
 
-type Me = { email: string; points: number };
+type Me = { username: string; points: number };
 type SubStatus = { isVip: boolean; daysRemaining: number } | null;
 
 /**
@@ -38,7 +38,7 @@ export function SiteHeader() {
       .then((r) => r.json())
       .then((d) => {
         if (d?.ok && d.user) {
-          setMe({ email: d.user.email ?? "", points: d.user.points ?? 0 });
+          setMe({ username: d.user.username ?? "", points: d.user.points ?? 0 });
         } else {
           localStorage.removeItem("aiabw_token");
           setMe(null);
@@ -159,9 +159,17 @@ export function SiteHeader() {
               >
                 ⭐ {me.points}
               </Link>
-              <span className="max-w-[140px] truncate text-xs text-zinc-500" title={me.email}>
-                {me.email}
+              <span className="max-w-[140px] truncate text-xs text-zinc-500" title={me.username}>
+                {me.username}
               </span>
+              <Link
+                href="/settings"
+                aria-label={t("settings")}
+                title={t("settings")}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600"
+              >
+                ⚙️
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -287,6 +295,15 @@ export function SiteHeader() {
                     className="flex-1 rounded-full bg-amber-100 px-3 py-2 text-center text-xs font-semibold text-amber-700"
                   >
                     ⭐ {me.points}
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setOpen(false)}
+                    aria-label={t("settings")}
+                    title={t("settings")}
+                    className="flex items-center justify-center rounded-full border border-zinc-200 px-3 py-2 text-xs text-zinc-600"
+                  >
+                    ⚙️
                   </Link>
                   <button
                     type="button"

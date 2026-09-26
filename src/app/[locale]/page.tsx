@@ -31,7 +31,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [user, setUser] = useState<{
     id: string;
-    email: string;
+    username: string;
     points: number;
     isCreator: boolean;
   } | null>(null);
@@ -57,7 +57,7 @@ export default function Home() {
         if (data?.ok && data.user) {
           setUser({
             id: data.user.id,
-            email: data.user.email,
+            username: data.user.username ?? "",
             points: data.user.points ?? 0,
             isCreator: !!data.user.isCreator,
           });
@@ -268,7 +268,7 @@ export default function Home() {
               🐾 {tc("myPets")}
             </Link>
             <span className="text-zinc-300">|</span>
-            <span className="text-zinc-600">{user.email}</span>
+            <span className="text-zinc-600">{user.username}</span>
             <button
               type="button"
               onClick={handleLogout}

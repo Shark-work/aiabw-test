@@ -9,6 +9,7 @@ import { getAnonymousId } from "@/lib/anon-id";
 export default function RegisterPage() {
   const router = useRouter();
   const t = useTranslations("register");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -26,7 +27,7 @@ export default function RegisterPage() {
     try {
       // 邀请码：来自 ？ref= 参数（好友分享的注册链接）；deviceId 用于防刷
       const ref = new URLSearchParams(window.location.search).get("ref") || "";
-      const body: Record<string, unknown> = { email, password };
+      const body: Record<string, unknown> = { username, email, password };
       if (ref) body.ref = ref;
       const anonymousId = getAnonymousId();
       if (anonymousId) body.deviceId = anonymousId;
@@ -93,6 +94,19 @@ export default function RegisterPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label className="mb-1 block text-sm text-zinc-600">{t("username")}</label>
+            <input
+              type="text"
+              required
+              minLength={2}
+              maxLength={24}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={t("usernamePlaceholder")}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            />
+          </div>
           <div>
             <label className="mb-1 block text-sm text-zinc-600">{t("email")}</label>
             <input

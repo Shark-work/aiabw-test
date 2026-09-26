@@ -42,8 +42,8 @@ export async function GET() {
     const tempEmail = `diag_${Date.now()}@test.aiabw`;
     done = timed("rawInsertMs");
     await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, 'x') RETURNING id",
-      [tempEmail],
+      "INSERT INTO users (email, username, password_hash) VALUES ($1, $2, 'x') RETURNING id",
+      [tempEmail, `diag_${Date.now()}`],
     );
     done();
 
@@ -51,7 +51,7 @@ export async function GET() {
     const tempEmail2 = `diag2_${Date.now()}@test.aiabw`;
     await db
       .insert(users)
-      .values({ email: tempEmail2, passwordHash: "x" })
+      .values({ email: tempEmail2, username: `diag2_${Date.now()}`, passwordHash: "x" })
       .returning({ id: users.id });
     done();
 

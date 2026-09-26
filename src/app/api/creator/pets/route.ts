@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 /**
  * GET /api/creator/pets
- * 获取 UGC 宠物列表（公开，广场浏览用），含创作者邮箱。
+ * 获取 UGC 宠物列表（公开，广场浏览用），创作者只输出公开昵称 creatorName（隐私：不下发邮箱）。
  */
 export async function GET(req: Request) {
   await ensureDbSchemaOnce();
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
         priceOrPoints: ugcPets.priceOrPoints,
         creatorId: ugcPets.creatorId,
         createdAt: ugcPets.createdAt,
-        creatorEmail: users.email,
+        creatorName: users.username,
       })
       .from(ugcPets)
       .leftJoin(users, eq(ugcPets.creatorId, users.id))

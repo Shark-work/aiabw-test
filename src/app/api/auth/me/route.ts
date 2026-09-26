@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 /**
  * GET /api/auth/me
  * 携带 Authorization: Bearer <token> 获取当前登录用户信息。
+ * 隐私约定：响应只包含公开昵称 username；email 仅后端用途（找回/通知），不下发前端。
  */
 export async function GET(req: Request) {
   const user = await getUserFromRequest(req);
@@ -20,12 +21,14 @@ export async function GET(req: Request) {
 
   const [row] = await db
     .select({
+      username: users.username,
       points: users.points,
       role: users.role,
       isCreator: users.isCreator,
       creatorBalance: users.creatorBalance,
       lastCheckinDate: users.lastCheckinDate,
       inviteCode: users.inviteCode,
+      showInLeaderboard: users.showInLeaderboard,
     })
     .from(users)
     .where(eq(users.id, user.id))
@@ -35,13 +38,14 @@ export async function GET(req: Request) {
     ok: true,
     user: {
       id: user.id,
-      email: user.email,
+      username: row?.username ?? "",
       role: row?.role ?? "user",
       points: row?.points ?? 0,
       isCreator: !!row?.isCreator,
       creatorBalance: row?.creatorBalance ?? 0,
       lastCheckinDate: row?.lastCheckinDate ?? null,
       inviteCode: row?.inviteCode ?? null,
+      showInLeaderboard: row?.showInLeaderboard ?? true,
     },
   });
 }

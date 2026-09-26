@@ -28,6 +28,10 @@ export const users = pgTable('users', {
   invitedBy: uuid('invited_by').references((): AnyPgColumn => users.id),
   /** 金币余额：探险商城（shop_items）通用货币，新用户默认 200 */
   coins: integer('coins').notNull().default(200),
+  /** 站内唯一公开标识（昵称）：注册必填，可修改；存量用户系统回填 user_0001 格式；邮箱仅后端用途，不再对外展示 */
+  username: text('username').notNull().unique(),
+  /** 隐私设置：是否参与排行榜（默认参与；设置页可 opt-out，关闭后各榜单不再展示该用户及其宠物） */
+  showInLeaderboard: boolean('show_in_leaderboard').notNull().default(true),
 });
 
 /**

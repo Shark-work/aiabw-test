@@ -6,6 +6,7 @@ import { users } from "@/db/schema";
 import { signToken, verifyPassword } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { timer } from "@/lib/perf";
+import { redactSensitive } from "@/lib/privacy";
 import {
   captchaRequiredFor,
   clearLockAndTouchLogin,
@@ -24,7 +25,9 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/auth/login
- * 请求体：{ email, password, captchaId?, captchaAnswer? }
+ * 请求体：{ identifier, password, captchaId?, captchaAnswer? }
+ *  - identifier：用户名（公开昵称）或邮箱，双通道登录；邮箱仅做后端匹配，不对外暴露
+ *  - 兼容旧字段：email / username（视为 identifier）
  * 防暴力破解：
  *  - 同一 IP 1 分钟最多 5 次 → 429；
  *  - 同一账号连续 5 次失败 → 锁定 30 分钟；
@@ -48,10 +51,11 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     dbg["json"] = Date.now() - start;
-    const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+    const identifierRaw = body?.identifier ?? body?.email ?? body?.username;
+    const identifier = typeof identifierRaw === "string" ? identifierRaw.trim() : "";
     const password = typeof body?.password === "string" ? body.password : "";
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "emailPasswordRequired") }, { status: 400 });
     }
 
@@ -67,10 +71,12 @@ export async function POST(req: Request) {
       }
     }
 
+    // 双通道：含 @ → 邮箱匹配（仅后端用途）；否则按公开昵称 username 匹配
+    const isEmailChannel = identifier.includes("@");
     const [user] = await db
-      .select({ id: users.id, email: users.email, passwordHash: users.passwordHash })
+      .select({ id: users.id, email: users.email, username: users.username, passwordHash: users.passwordHash })
       .from(users)
-      .where(eq(users.email, email))
+      .where(isEmailChannel ? eq(users.email, identifier.toLowerCase()) : eq(users.username, identifier))
       .limit(1);
     dbg["select"] = Date.now() - start;
 
@@ -89,7 +95,7 @@ export async function POST(req: Request) {
     if (!user || !(await verifyPassword(password, user.passwordHash))) {
       recordIpFail(req);
       if (user) {
-        const shouldLock = await recordFailedLogin(req, email);
+        const shouldLock = await recordFailedLogin(req, identifier);
         if (shouldLock) await lockAccount(user.id);
       }
       return NextResponse.json(
@@ -111,9 +117,10 @@ export async function POST(req: Request) {
     perf("signToken");
     dbg["sign"] = Date.now() - start;
     dbg["total"] = Date.now() - start;
-    return NextResponse.json({ ok: true, token, user: { id: user.id, email: user.email }, dbg });
+    // 响应只携带公开昵称；邮箱不进入任何前端可见的 API 响应
+    return NextResponse.json({ ok: true, token, user: { id: user.id, username: user.username }, dbg });
   } catch (err) {
-    console.error("[auth/login] failed:", err);
+    console.error("[auth/login] failed:", redactSensitive(err instanceof Error ? err.message : String(err)));
     return NextResponse.json({ ok: false, error: apiError(resolveLocale(req), "loginFailed") }, { status: 500 });
   }
 }
