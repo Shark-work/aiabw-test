@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { CONTACT_INFO, QQ_SERVICE_URL } from "@/lib/config";
 
 type Plan = {
   id: string;
@@ -462,6 +463,20 @@ export function SubscribeClient() {
             </div>
           ))}
         </dl>
+        {/* 客服咨询入口：客服QQ（tencent:// 唤起）+ 联系我们页 */}
+        <p className="mt-5 border-t border-zinc-100 pt-4 text-xs text-zinc-500">
+          🎧 {t("faqSupport")}：
+          <a
+            href={QQ_SERVICE_URL}
+            className="font-medium text-orange-600 hover:underline"
+          >
+            QQ {CONTACT_INFO.customerServiceQQ}
+          </a>
+          {" · "}
+          <Link href="/contact" className="text-orange-600 hover:underline">
+            /contact
+          </Link>
+        </p>
       </section>
 
       <p className="mt-8 text-center text-xs text-zinc-400">{t("terms")}</p>

@@ -159,6 +159,12 @@ export default function RegisterPage() {
             {t("signIn")}
           </Link>
         </p>
+        {/* 客服入口：遇到问题联系客服 */}
+        <p className="mt-2 text-center text-xs text-zinc-400">
+          <Link href="/contact" className="transition hover:text-orange-600 hover:underline">
+            {t("needHelp")}
+          </Link>
+        </p>
       </div>
     </main>
   );

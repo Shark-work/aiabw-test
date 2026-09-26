@@ -20,6 +20,30 @@
  * ══════════════════════════════════════════════════════════════════
  */
 export const SOCIAL = {
-  x: process.env.NEXT_PUBLIC_X_URL ?? "https://x.com/aiabw",
+  x: process.env.NEXT_PUBLIC_X_URL ?? "https://x.com/Aiabw_com",
   telegram: process.env.NEXT_PUBLIC_TELEGRAM_URL ?? "https://t.me/aiabw",
 } as const;
+
+/**
+ * 全站统一联系方式（客服渠道单一事实源）。
+ * 页脚 / 悬浮客服 / 法律页 / 联系页 / 订阅页等全部引用此处，改号只改这一处。
+ */
+export const CONTACT_INFO = {
+  /** QQ 交流群群号（暂无在线加群链接，展示群号引导搜索加入） */
+  qqGroup: "1005445619",
+  /** 客服 QQ（一对一咨询） */
+  customerServiceQQ: "1206309834",
+  /** 客服 QQ 对应邮箱 */
+  customerServiceEmail: "1206309834@qq.com",
+  /** X（推特）官方账号 */
+  xHandle: "@Aiabw_com",
+  xUrl: "https://x.com/Aiabw_com",
+  /** 官方邮箱（商务合作/正式反馈） */
+  email: "aiabw@outlook.com",
+} as const;
+
+/** 客服 QQ 一键唤起会话（tencent:// 协议，PC/手机 QQ 均支持） */
+export const QQ_SERVICE_URL = `tencent://message/?uin=${CONTACT_INFO.customerServiceQQ}&Site=&Menu=yes`;
+
+/** 官方邮箱 mailto 链接 */
+export const EMAIL_URL = `mailto:${CONTACT_INFO.email}`;

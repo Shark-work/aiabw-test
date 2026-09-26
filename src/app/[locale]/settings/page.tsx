@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
+import { CONTACT_INFO, QQ_SERVICE_URL } from "@/lib/config";
 
 type Profile = { id: string; username: string; showInLeaderboard: boolean };
 
@@ -173,6 +174,23 @@ export default function SettingsPage() {
                 {privacyMsg.text}
               </p>
             )}
+          </section>
+
+          {/* 反馈与帮助：客服QQ 唤起 + 联系我们页 */}
+          <section className="rounded-2xl border border-zinc-200 bg-white/90 p-5 shadow-sm">
+            <h2 className="text-sm font-bold text-zinc-800">🎧 {t("supportTitle")}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">{t("supportDesc")}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+              <a
+                href={QQ_SERVICE_URL}
+                className="font-semibold text-orange-600 hover:underline"
+              >
+                QQ {CONTACT_INFO.customerServiceQQ} ↗
+              </a>
+              <Link href="/contact" className="font-semibold text-orange-600 hover:underline">
+                {t("supportAction")} →
+              </Link>
+            </div>
           </section>
         </div>
       )}

@@ -80,6 +80,7 @@ export function SiteHeader() {
     { href: "/marketplace", label: t("market") },
     { href: "/handbooks", label: t("journals") },
     { href: "/points", label: t("points") },
+    { href: "/contact", label: t("contact") },
   ];
 
   // usePathname() 来自 i18n/navigation，不含 locale 前缀

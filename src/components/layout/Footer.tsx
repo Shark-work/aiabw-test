@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
-import { TelegramIcon, XIcon } from "@/components/social-icons";
+import { MailIcon, QQIcon, XIcon } from "@/components/social-icons";
 import { VisitCounter } from "@/components/visit-counter";
-import { SOCIAL } from "@/lib/config";
+import { CONTACT_INFO, EMAIL_URL, QQ_SERVICE_URL } from "@/lib/config";
 
 /** 全局页脚：辅助导航 + 版权信息 + 自动版本号 + 语言切换。 */
 export async function Footer() {
@@ -39,10 +39,31 @@ export async function Footer() {
           {t("virtualGoods")}
         </Link>
       </nav>
-      {/* 国际化客服联系（X / Telegram 官方 SVG 图标，新窗口打开） */}
+      {/* 全站统一客服渠道（QQ群 / 客服QQ / X / 邮箱，来源 src/lib/config.ts CONTACT_INFO） */}
       <address className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 text-xs not-italic text-zinc-500">
+        {/* QQ 群：暂无在线加群链接，展示群号引导搜索加入 */}
+        <span
+          className="flex items-center gap-1.5 text-zinc-600"
+          title={ts("socialQqGroupHint")}
+        >
+          <QQIcon className="h-4 w-4 text-[#12B7F5]" />
+          {ts("socialQqGroup")}
+        </span>
+        <span aria-hidden className="text-zinc-200">
+          |
+        </span>
         <a
-          href={SOCIAL.x}
+          href={QQ_SERVICE_URL}
+          className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
+        >
+          <QQIcon className="h-4 w-4 text-[#12B7F5]" />
+          {ts("socialQqService")}
+        </a>
+        <span aria-hidden className="text-zinc-200">
+          |
+        </span>
+        <a
+          href={CONTACT_INFO.xUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
@@ -54,13 +75,11 @@ export async function Footer() {
           |
         </span>
         <a
-          href={SOCIAL.telegram}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={EMAIL_URL}
           className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
         >
-          <TelegramIcon className="h-4 w-4" />
-          {ts("socialTelegram")}
+          <MailIcon className="h-4 w-4" />
+          {ts("socialEmail")}
         </a>
       </address>
 

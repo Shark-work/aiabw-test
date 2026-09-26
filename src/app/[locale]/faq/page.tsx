@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { SupportContact } from "@/components/layout/SupportContact";
 
 export default async function FaqPage({
   params,
@@ -17,6 +18,8 @@ export default async function FaqPage({
         <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-zinc-600">
           {t("faqBody")}
         </p>
+        {/* 客服入口：QQ群 / 客服QQ / X / 邮箱（全站统一渠道） */}
+        <SupportContact />
         <Link
           href="/"
           className="mt-5 inline-block text-sm font-medium text-orange-600 hover:underline"

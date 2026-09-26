@@ -17,3 +17,44 @@ export function TelegramIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/** QQ 联系图标：聊天气泡 + QQ 字样（气泡色跟随 currentColor） */
+export function QQIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className}>
+      <path
+        fill="currentColor"
+        d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"
+      />
+      <text
+        x="12"
+        y="13.5"
+        textAnchor="middle"
+        fontSize="7"
+        fontWeight="bold"
+        fill="#fff"
+      >
+        QQ
+      </text>
+    </svg>
+  );
+}
+
+/** 邮箱图标（lucide mail 同款 path，stroke 跟随 currentColor） */
+export function MailIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={className}
+    >
+      <rect width="20" height="16" x="2" y="4" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
