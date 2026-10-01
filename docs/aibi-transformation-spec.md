@@ -206,15 +206,15 @@
 
 > 以下均需 Vercel / Neon / Stripe / DNS 控制台权限，代码侧已全部就绪。详细步骤见 `VERCEL_DEPLOY.md`、`CHECKLIST.md`（§0 状态总表实时跟踪）、`docs/domain-setup.md`、`docs/stripe-integration.md`。
 
-- [ ] 1. **生产库迁移**：`$env:DATABASE_URL="…生产-pooler…"` → `node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs`（输出 schema synced to version 10 + 校验全绿；迁移前先在 Neon 建备份分支）
+- [x] 1. **生产库迁移**：✅ 2026-10-01 由版本闸门冷启动自动完成（无需手动跑脚本），生产探活确认 v10 生效；备份分支建议见第 11 项
 - [ ] 2. **管理员账号**：`node scripts/add-admin.cjs <邮箱> <密码(≥6位)>`（临时指向生产库，执行后立即还原 `.env`）
 - [ ] 3. **环境变量**：对照 `.env.production.example` 在 Vercel Production 作用域逐项配置（`DATABASE_URL`/`AUTH_SECRET` 不带 `NEXT_PUBLIC_` 前缀；`AUTH_SECRET` ≥32 字节随机；AI key 仅留一个有效项；`CHAIN_PROVIDER=mock`）
-- [ ] 4. **DNS 记录**：`www` CNAME → `cname-china.vercel-dns.com`；`@` A → `76.227.212.86`（未备案域名改用全球端点，以 Vercel Dashboard 显示为准）
-- [ ] 5. **Vercel 绑域名**：Settings → Domains 加 `www.aiabw.com`（主域）+ `aiabw.com`（勾 Redirect to www），等证书状态 Ready
-- [ ] 6. **HTTPS 验证**：`curl.exe -sI https://www.aiabw.com/zh` 200 + `curl.exe -sI http://aiabw.com` 308 → https www（`docs/domain-setup.md` §6 全套 7 条命令）
+- [x] 4. **DNS 记录**：✅ 已生效（2026-10-01 实测 www.aiabw.com 正常解析并服务）
+- [x] 5. **Vercel 绑域名**：✅ 域名已在 Vercel 服务中，apex `aiabw.com` 308 → `www.aiabw.com` canonical 正常（2026-10-01 实测）
+- [x] 6. **HTTPS 验证**：✅ `https://www.aiabw.com/zh` 200 + `http://aiabw.com` → https → www 双 308 链实测通过（2026-10-01）
 - [ ] 7. **域名变量收口**：`NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_APP_URL` = `https://www.aiabw.com` → Redeploy
-- [ ] 8. **Stripe 配置（可选，配前支付走 503 降级）**：`STRIPE_SECRET_KEY` + Webhook 端点 `https://www.aiabw.com/api/stripe/webhook`（订阅 `checkout.session.completed`/`checkout.session.expired`）→ `STRIPE_WEBHOOK_SECRET` → Redeploy → 测试卡 4242 走一单（`docs/stripe-integration.md` §7）
-- [ ] 9. **生产冒烟**：`$env:SMOKE_BASE="https://www.aiabw.com"` + 生产 `DATABASE_URL` → `node scripts/smoke-production.mjs` → **ALL_SMOKE_OK（42/42）**；有 Stripe 密钥时 step 40 自动切换为校验真实 Checkout URL
+- [x] 8. **Stripe 配置**：⏸️ **2026-10-01 决策：不启用**——收款沿用 Xorpay 老链路 `/api/pay/*`（宠物位解锁/订阅/装扮，生产探活 create=400 / notify=fail 在线）；Stripe 保持 503 优雅降级，未来若启用按 `docs/stripe-integration.md` §7 三步走
+- [x] 9. **生产冒烟**：✅ 2026-10-01 生产 `https://www.aiabw.com` **42/42 ALL_SMOKE_OK**（注册→充值→余额链→传说铸造→融合→销毁→错误轴→支付降级三态）
 - [ ] 10. **管理后台核对**：`/admin/*` 登录抽查（dashboard/economy/news/pets/settings/users）
 - [ ] 11. **监控与备份**：Vercel 通知/Logs 关键词告警就位；Neon 备份分支 + 首次 pg_dump 异地；`scripts/check-resources.js` 出首份用量报告
 - [ ] 12. **回滚演练**：上线第一周按 `docs/rollback.md` §1/§5 真实演练一次并补录截图点位

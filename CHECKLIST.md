@@ -7,15 +7,15 @@
 
 | # | 检查项 | 状态 | 落点 / 说明 |
 | --- | --- | --- | --- |
-| 1 | 数据库迁移 v6→v10 执行成功 | ⬜ 待手动操作 | §1；含 Phase 11 `stripe_orders`（SCHEMA_VERSION=10） |
-| 2 | 种子数据导入（物种/卡包/道具） | ⬜ 待手动操作 | §2；随迁移自动落库 31 行，接口抽查验证 |
+| 1 | 数据库迁移 v6→v10 执行成功 | ✅ 自动完成 | §1；版本闸门冷启动自动同步，2026-10-01 生产探活确认 v10 生效；含 Phase 11 `stripe_orders` |
+| 2 | 种子数据导入（物种/卡包/道具） | ✅ 自动完成 | §2；随迁移自动落库 31 行，生产接口抽查验证（12 物种/4 卡包/5 道具） |
 | 3 | 管理员账号创建 | ⬜ 待手动操作 | §3 `scripts/add-admin.cjs` |
 | 4 | 环境变量配置（.env.production） | ⬜ 待手动操作 | §4 + `.env.production.example` |
-| 5 | 域名绑定（aiabw.com + www） | ⬜ 待手动操作 | §5 + `docs/domain-setup.md` §1-§5 |
-| 6 | HTTPS 证书自动签发 | ⬜ 待手动操作 | §6；DNS 生效后 Vercel 自动签发，验证命令见 `docs/domain-setup.md` §6 |
+| 5 | 域名绑定（aiabw.com + www） | ✅ 已生效 | www.aiabw.com 已在服务中；apex 308 → www canonical（2026-10-01 实测） |
+| 6 | HTTPS 证书自动签发 | ✅ 已签发 | https 200 + http→https 308 实测通过（2026-10-01） |
 | 7 | 完整用户流程测试（注册→充值→买包→开包→背包→互动） | ✅ 全过 | `scripts/smoke-production.mjs` 42 项（dev 42/42 + **生产 www.aiabw.com 42/42 ALL_SMOKE_OK**） |
 | 8 | 后台管理功能测试 | 🔜 待冒烟验证 | §3：`/admin/*` 登录后手工核对（自动化冒烟不覆盖管理端） |
-| 9 | Stripe 支付通道测试 | 🔜 待配置密钥后验证 | `docs/stripe-integration.md` §7 三步走 + 测试卡 4242 |
+| 9 | Stripe 支付通道测试 | ⏸️ 已决定不启用 | 2026-10-01 决策：收款沿用 Xorpay 老链路 `/api/pay/*`（宠物位/订阅/装扮，生产探活在线）；Stripe 保持 503 优雅降级，未来启用见 `docs/stripe-integration.md` |
 | 10 | 错误监控配置 | ⬜ 待手动操作 | §7 日志关键词 + Vercel 通知 + resource-check 周检 |
 | 11 | 数据库备份策略 | ⬜ 待手动操作 | §8 Neon 备份分支 + pg_dump 异地 |
 | 12 | 回滚方案文档 | ✅ 已完成 | `VERCEL_DEPLOY.md` §4 + `docs/rollback.md`（Phase 13） |
