@@ -9,6 +9,9 @@ import { LOCALES, SITE_URL } from "@/lib/site";
  *    附 lastModified（updated_at）+ <image:image> 封面图（来自 pets 表）；
  *  - 动态新闻详情页 /news/<数字id>（来自 hotnews，status='visible'，上限 50），
  *    附 lastModified（updated_at）+ <image:image> cover（为空不附）；
+ *  - 动态链上凭证页 /aibi/<AIBI-XXXXXX>（来自 aibi_tokens，status='minted'，上限 200）；
+ *  - 2026-09-30 清理审计：补收录 /soul-cards /packs /codex /shop /supply 新平台核心路由，
+ *    /news 随旧新闻系统降级（priority 0.7→0.3，页面保留）；
  *  - 排除范围：admin / login / register / chat / api 一律不收录；
  *  - DB 不可达时降级为纯静态路由，不阻断 sitemap 生成。
  */
@@ -16,8 +19,14 @@ const ROUTES: { path: string; priority: number; changeFrequency: MetadataRoute.S
   { path: "", priority: 1, changeFrequency: "daily" },
   { path: "/pets", priority: 0.9, changeFrequency: "daily" },
   { path: "/blindbox", priority: 0.8, changeFrequency: "daily" },
-  { path: "/news", priority: 0.7, changeFrequency: "daily" },
+  { path: "/news", priority: 0.3, changeFrequency: "weekly" }, // 2026-09-30 旧新闻系统降级（保留页面）
   { path: "/my-pets", priority: 0.7, changeFrequency: "daily" },
+  // 2026-09-30 AIABW 新平台核心路由补收录（此前 sitemap 停留在旧站点结构）
+  { path: "/soul-cards", priority: 0.9, changeFrequency: "daily" },
+  { path: "/packs", priority: 0.9, changeFrequency: "daily" },
+  { path: "/codex", priority: 0.8, changeFrequency: "weekly" },
+  { path: "/shop", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/supply", priority: 0.6, changeFrequency: "weekly" },
   { path: "/marketplace", priority: 0.6, changeFrequency: "weekly" },
   { path: "/handbooks", priority: 0.5, changeFrequency: "weekly" },
   { path: "/points", priority: 0.6, changeFrequency: "weekly" },
@@ -43,8 +52,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let speciesUrls: MetadataRoute.Sitemap = [];
   let newsUrls: MetadataRoute.Sitemap = [];
+  let tokenUrls: MetadataRoute.Sitemap = [];
   try {
-    const [{ rows: species }, { rows: news }] = await Promise.all([
+    const [{ rows: species }, { rows: news }, { rows: tokens }] = await Promise.all([
       pool.query(
         `SELECT d.id, d.name_zh AS "nameZh", d.updated_at AS "updatedAt",
                 (SELECT p.image_url FROM pets p
@@ -57,6 +67,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           WHERE status = 'visible'
           ORDER BY hot DESC
           LIMIT 50`,
+      ),
+      pool.query(
+        `SELECT aibi_token_id AS "tokenId", minted_at AS "mintedAt"
+           FROM aibi_tokens
+          WHERE status = 'minted'
+          ORDER BY minted_at DESC NULLS LAST
+          LIMIT 200`,
       ),
     ]);
 
@@ -81,11 +98,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         images: n.cover ? [String(n.cover)] : [],
       })),
     );
+
+    // 链上凭证页（AIBI-XXXXXX）：附 lastModified（minted_at）
+    tokenUrls = tokens.flatMap((t) =>
+      LOCALES.map((locale) => ({
+        url: `${SITE_URL}/${locale}/aibi/${encodeURIComponent(String(t.tokenId))}`,
+        lastModified: t.mintedAt ? new Date(String(t.mintedAt)) : new Date(),
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      })),
+    );
   } catch {
     // DB 不可达：仅输出静态路由
   }
 
-  return [...staticUrls, ...speciesUrls, ...newsUrls];
+  return [...staticUrls, ...speciesUrls, ...newsUrls, ...tokenUrls];
 }
 
 
