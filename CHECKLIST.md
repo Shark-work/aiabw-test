@@ -13,7 +13,7 @@
 | 4 | 环境变量配置（.env.production） | ⬜ 待手动操作 | §4 + `.env.production.example` |
 | 5 | 域名绑定（aiabw.com + www） | ⬜ 待手动操作 | §5 + `docs/domain-setup.md` §1-§5 |
 | 6 | HTTPS 证书自动签发 | ⬜ 待手动操作 | §6；DNS 生效后 Vercel 自动签发，验证命令见 `docs/domain-setup.md` §6 |
-| 7 | 完整用户流程测试（注册→充值→买包→开包→背包→互动） | 🔜 待冒烟验证 | `scripts/smoke-production.mjs` 42 项（dev 已演练 42/42） |
+| 7 | 完整用户流程测试（注册→充值→买包→开包→背包→互动） | ✅ 全过 | `scripts/smoke-production.mjs` 42 项（dev 42/42 + **生产 www.aiabw.com 42/42 ALL_SMOKE_OK**） |
 | 8 | 后台管理功能测试 | 🔜 待冒烟验证 | §3：`/admin/*` 登录后手工核对（自动化冒烟不覆盖管理端） |
 | 9 | Stripe 支付通道测试 | 🔜 待配置密钥后验证 | `docs/stripe-integration.md` §7 三步走 + 测试卡 4242 |
 | 10 | 错误监控配置 | ⬜ 待手动操作 | §7 日志关键词 + Vercel 通知 + resource-check 周检 |
