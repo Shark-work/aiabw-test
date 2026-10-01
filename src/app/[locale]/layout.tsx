@@ -10,7 +10,6 @@ import "@/app/globals.css";
 import { Footer } from "@/components/layout/Footer";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { FloatingSupport } from "@/components/layout/FloatingSupport";
-import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
 import { DailyCheckinModal } from "@/components/daily-checkin-modal";
 import { SwRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -123,15 +122,9 @@ export default async function LocaleLayout({
           <FloatingSupport />
           {/* P0-1 每日签到弹窗：每天首次访问弹出（登录且未签到时），连签心情台词 + 7 天盲盒 */}
           <DailyCheckinModal />
-          {/* 内容 + 全局右侧边栏（任务二：PC ≥lg 显示新闻热榜，sticky 跟随滚动）；
-              移动端 <lg 侧边栏隐藏，折叠到首页信息流（见 page.tsx） */}
-          <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 sm:px-6 lg:flex-row lg:py-6">
+          {/* 主内容区（2026-09-30 旧新闻系统降级：移除全局新闻侧边栏，恢复单列全宽） */}
+          <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col gap-6 px-4 sm:px-6 lg:py-6">
             <div className="min-w-0 flex-1">{children}</div>
-            <aside className="hidden w-72 shrink-0 lg:block">
-              <div className="sticky top-20">
-                <SidebarAnimalNews />
-              </div>
-            </aside>
           </div>
           {/* Footer（含 LanguageSwitcher）与 Analytics 必须在 Provider 内部：
               否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}

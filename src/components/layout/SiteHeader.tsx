@@ -11,9 +11,11 @@ type Me = { username: string; points: number };
 type SubStatus = { isVip: boolean; daysRemaining: number } | null;
 
 /**
- * 全局固定顶部导航：
- *  - 桌面端横向展示 6 个核心入口（首页 / 动物全图鉴 / 我的宠物 / 商城 / 手帐 / 积分）；
- *  - 移动端折叠为汉堡菜单（下拉面板 + 遮罩，z-50，不遮挡核心内容）；
+ * 全局固定顶部导航（2026-09-30 C2 决策：五个主入口 + 「更多」收纳次要入口）：
+ *  - 主入口：领养/我的艾比（/pets）、卡包商店（/packs）、背包/融合（/bag）、
+ *    灵魂卡/图鉴（/soul-cards）、盲盒广场（/blindbox）；
+ *  - 次要入口（首页/我的宠物/道具/图鉴/总量/主页/探索/工坊/商城/手帐/积分/联系）收纳进「更多」；
+ *  - 移动端折叠为汉堡菜单（主入口 + 更多分组展示，下拉面板 + 遮罩，z-50）；
  *  - 右侧登录态：未登录 → 登录/注册；已登录 → 积分 + 邮箱 + 退出。
  */
 export function SiteHeader() {
@@ -23,6 +25,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
   const [sub, setSub] = useState<SubStatus>(null);
 
@@ -71,13 +74,19 @@ export function SiteHeader() {
     window.location.href = `/${locale}`;
   };
 
-  const items = [
+  // 五个主入口（C2 决策，2026-09-30）
+  const mainItems = [
+    { href: "/pets", label: t("navAdoptMy") },
+    { href: "/packs", label: t("navPackShop") },
+    { href: "/bag", label: t("navBagFusion") },
+    { href: "/soul-cards", label: t("navSoulCodex") },
+    { href: "/blindbox", label: t("navBlindbox") },
+  ];
+
+  // 次要入口：桌面端收纳进「更多」下拉，移动端在汉堡面板分组展示
+  const moreItems = [
     { href: "/", label: t("home") },
-    { href: "/pets", label: t("catalog") },
     { href: "/my-pets", label: t("myPets") },
-    { href: "/soul-cards", label: t("soulCards") },
-    { href: "/packs", label: t("packs") },
-    { href: "/bag", label: t("bag") },
     { href: "/shop", label: t("shop") },
     { href: "/codex", label: t("codex") },
     { href: "/supply", label: t("supply") },
@@ -107,9 +116,9 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        {/* 桌面端主导航 */}
+        {/* 桌面端主导航：五个主入口 + 「更多」下拉 */}
         <nav className="hidden items-center gap-1 md:flex" aria-label={t("menu")}>
-          {items.map((it) => (
+          {mainItems.map((it) => (
             <Link
               key={it.href}
               href={it.href}
@@ -122,6 +131,43 @@ export function SiteHeader() {
               {it.label}
             </Link>
           ))}
+          {/* 「更多」下拉：收纳次要入口 */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-expanded={moreOpen}
+              className="rounded-full px-3 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              {t("navMore")} ▾
+            </button>
+            {moreOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-label={t("closeMenu")}
+                  onClick={() => setMoreOpen(false)}
+                  className="fixed inset-0 z-40 cursor-default"
+                />
+                <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-xl">
+                  {moreItems.map((it) => (
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`block rounded-xl px-3 py-2 text-sm font-medium transition ${
+                        isActive(it.href)
+                          ? "bg-orange-100 text-orange-700"
+                          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                      }`}
+                    >
+                      {it.label}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </nav>
 
         {/* 宠物长期记忆（仅 VIP）：跳转 /memories */}
@@ -244,7 +290,27 @@ export function SiteHeader() {
             aria-label={t("menu")}
           >
             <div className="grid grid-cols-2 gap-2">
-              {items.map((it) => (
+              {mainItems.map((it) => (
+                <Link
+                  key={it.href}
+                  href={it.href}
+                  onClick={() => setOpen(false)}
+                  className={`rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                    isActive(it.href)
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-zinc-50 text-zinc-700 hover:bg-orange-50"
+                  }`}
+                >
+                  {it.label}
+                </Link>
+              ))}
+            </div>
+            {/* 「更多」分组：次要入口 + VIP 快捷入口 */}
+            <p className="mt-3 border-t border-zinc-100 px-1 pt-2 text-xs font-semibold text-zinc-400">
+              {t("navMore")}
+            </p>
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              {moreItems.map((it) => (
                 <Link
                   key={it.href}
                   href={it.href}

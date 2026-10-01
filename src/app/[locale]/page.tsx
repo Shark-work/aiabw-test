@@ -6,8 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { HomeAibiSection } from "@/components/aibi/home-aibi-section";
 import { FortuneBanner, RecentBornMarquee } from "@/components/daily-inspiration";
-import { NewsCarousel } from "@/components/news-carousel";
-import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
 import { BlindboxPlaza } from "@/components/blindbox-plaza";
 import { LivingPet } from "@/components/LivingPet";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
@@ -305,14 +303,6 @@ export default function Home() {
 
         {/* 顶部通告栏：今日运势（Alert Banner，紧凑单行，不抢占头条视觉重心） */}
         <FortuneBanner />
-
-        {/* Top：动物世界头条（Featured News Card，置顶核心内容） */}
-        <NewsCarousel />
-
-        {/* 移动端侧栏新闻热榜折叠版（<lg 展示在首页信息流，PC 走全局侧边栏） */}
-        <div className="w-full lg:hidden">
-          <SidebarAnimalNews />
-        </div>
 
         {/* Middle：盲盒广场（营收引擎，主推放大） */}
         <BlindboxPlaza />

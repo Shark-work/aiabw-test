@@ -2,7 +2,7 @@
   "common": {
     "appName": "AIABW",
     "metaTitle": "AIABW - Adopt & Raise Your AI Virtual Pet",
-    "metaDescription": "Adopt your own AI companion pet at AIABW: meet a lucky daily spirit pet, fuse three friends into rarer legendary forms, and watch your pet remember every chat as it grows alongside you.",
+    "metaDescription": "AIABW is an AI companion-raising and digital collectibles platform: raise unique AI beings, chat and grow together, mint Soul Cards, open card packs — every collectible carries on-chain scarcity proof and verifiable supply.",
     "signIn": "Sign in",
     "register": "Register",
     "logout": "Sign out",
@@ -25,8 +25,8 @@
     "details": "Details"
   },
   "home": {
-    "title": "AIABW · Multi-Pet Collection",
-    "subtitle": "Pick a companion you love, chat with it, and help it grow.",
+    "title": "AIABW · AI Companion Raising & Digital Collectibles",
+    "subtitle": "Raise a one-of-a-kind AI being: chat and grow together, mint Soul Cards, open packs — every collectible carries on-chain scarcity proof.",
     "checkin": "📅 Daily Check-in",
     "checkinOk": "🎉 Check-in success! +{points} points!",
     "checkinAlready": "You already checked in today. See you tomorrow!",
@@ -40,7 +40,6 @@
     "adoptHint": "After adopting, you'll enter AIABW and start chatting with your companion.",
     "adoptFailed": "Adoption failed, please try again",
     "unlockFirst": "Please unlock the Multi-Pet Collection first",
-    "diagnosticLink": "🔧 Advanced: AI tool diagnostics (legacy)",
     "rareBannerTitle": "👑 Rare Pets · Radiant Catalog",
     "rareBannerSub": "Legend & epic Aibis hide in here — under 5% chance per synthesis",
     "dailyLoading": "Loading today's inspiration…",
@@ -602,7 +601,13 @@
     "shop": "Items",
     "codex": "📖 Codex",
     "supply": "📊 Supply",
-    "profile": "👤 Profile"
+    "profile": "👤 Profile",
+    "navAdoptMy": "🐾 Adopt / My Aibi",
+    "navPackShop": "🎴 Card Packs",
+    "navBagFusion": "🎒 Bag / Fusion",
+    "navSoulCodex": "✨ Soul Cards / Codex",
+    "navBlindbox": "🎁 Blind Box Plaza",
+    "navMore": "More"
   },
   "workshop": {
     "title": "Creative Studio",
@@ -1190,8 +1195,8 @@
   },
   "aibi": {
     "spotlight": {
-      "title": "Aibi World",
-      "subtitle": "AI lifeforms × blockchain scarcity certificates × collecting",
+      "title": "Aibi World · AI Companions & Collectibles",
+      "subtitle": "Raise your AI being · mint Soul Cards · on-chain scarcity proof",
       "supplyNow": "Circulating",
       "latestMinted": "Newest Aibis",
       "rareShowcase": "Rare Highlights",

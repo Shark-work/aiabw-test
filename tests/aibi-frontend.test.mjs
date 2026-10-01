@@ -205,11 +205,16 @@ test("i18n: aibi 命名空间 zh/en 深键完全对齐 + nav 新键", () => {
   assert.equal(typeof en.nav.shop, "string");
 });
 
-test("nav: SiteHeader 增加 /packs 与 /bag 入口", () => {
+test("nav: SiteHeader 五主入口（C2 决策 2026-09-30）", () => {
   const src = read("src/components/layout/SiteHeader.tsx");
-  assert.ok(src.includes('{ href: "/packs", label: t("packs") }'), "卡包商店入口");
-  assert.ok(src.includes('{ href: "/bag", label: t("bag") }'), "背包入口");
-  assert.ok(src.includes('{ href: "/shop", label: t("shop") }'), "道具商店入口（6.3）");
+  assert.ok(src.includes('{ href: "/pets", label: t("navAdoptMy") }'), "领养/我的艾比主入口");
+  assert.ok(src.includes('{ href: "/packs", label: t("navPackShop") }'), "卡包商店主入口");
+  assert.ok(src.includes('{ href: "/bag", label: t("navBagFusion") }'), "背包/融合主入口");
+  assert.ok(src.includes('{ href: "/soul-cards", label: t("navSoulCodex") }'), "灵魂卡/图鉴主入口");
+  assert.ok(src.includes('{ href: "/blindbox", label: t("navBlindbox") }'), "盲盒广场主入口");
+  // 次要入口保留在「更多」：道具商店/图鉴 href 仍需存在
+  assert.ok(src.includes('{ href: "/shop", label: t("shop") }'), "道具商店入口（6.3，收纳进更多）");
+  assert.ok(src.includes('{ href: "/codex", label: t("codex") }'), "图鉴入口（收纳进更多）");
 });
 
 // === 6) Phase 6 · 融合 / 销毁 / 道具商店（2026-09-30） ===

@@ -2,7 +2,7 @@
   "common": {
     "appName": "艾比世界",
     "metaTitle": "艾比世界 AIABW - AI 虚拟宠物领养与养成",
-    "metaDescription": "领养专属 AI 虚拟宠物艾比：每天邂逅一只幸运灵宠与灵感签，用 3 合 1 灵力融合培育稀有伙伴。宠物会记住你的每一次互动，陪你慢慢长大。",
+    "metaDescription": "AIABW 是 AI 角色养成与数字收藏平台：养育独一无二的 AI 生命体，聊天互动、铸造灵魂卡、开卡包收集，每张收藏均带链上稀缺凭证与真实发行量。",
     "signIn": "登录",
     "register": "注册",
     "logout": "退出",
@@ -25,8 +25,8 @@
     "details": "详情"
   },
   "home": {
-    "title": "艾比世界 · 多宠图鉴",
-    "subtitle": "选一只你喜欢的艾比伙伴，陪它聊天、帮它成长~",
+    "title": "AIABW · AI 角色养成与数字收藏平台",
+    "subtitle": "养育独一无二的 AI 生命体：陪它聊天成长，铸造灵魂卡、开卡包收集，每张收藏都有链上稀缺凭证。",
     "checkin": "📅 每日签到",
     "checkinOk": "🎉 签到成功 +{points} 积分！",
     "checkinAlready": "今天已经签到过啦，明天再来~",
@@ -40,7 +40,6 @@
     "adoptHint": "领养后将进入艾比世界，和你的伙伴开始聊天",
     "adoptFailed": "领养失败，请稍后重试",
     "unlockFirst": "请先解锁多宠图鉴",
-    "diagnosticLink": "🔧 高级：AI 工具诊断（旧版）",
     "rareBannerTitle": "👑 稀有宠物 · 高光图鉴",
     "rareBannerSub": "传说与史诗艾比就藏在这里，单次合成概率不到 5%",
     "dailyLoading": "每日灵感加载中…",
@@ -602,7 +601,13 @@
     "shop": "道具",
     "codex": "📖 图鉴",
     "supply": "📊 总量",
-    "profile": "👤 我的"
+    "profile": "👤 我的",
+    "navAdoptMy": "🐾 领养/我的艾比",
+    "navPackShop": "🎴 卡包商店",
+    "navBagFusion": "🎒 背包/融合",
+    "navSoulCodex": "✨ 灵魂卡/图鉴",
+    "navBlindbox": "🎁 盲盒广场",
+    "navMore": "更多"
   },
   "workshop": {
     "title": "创作工坊",
@@ -1190,8 +1195,8 @@
   },
   "aibi": {
     "spotlight": {
-      "title": "艾比世界",
-      "subtitle": "AI 生命体 × 区块链稀缺凭证 × 收集养成",
+      "title": "艾比世界 · AI 角色养成与数字收藏",
+      "subtitle": "养育你的 AI 生命体 · 铸造灵魂卡 · 链上稀缺凭证",
       "supplyNow": "当前流通",
       "latestMinted": "最新诞生",
       "rareShowcase": "热门稀有",

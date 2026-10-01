@@ -370,19 +370,21 @@ test("exploration v2: messages.{zh,en}.json nav.navExplore = 🗺️ 探索 / �
   }
 });
 
-// === 20) Mobile hamburger also exposes /explore-v2 (via same items array) ===
-test("exploration v2: mobile menu renders /explore-v2 (same items array)", () => {
+// === 20) Mobile hamburger also exposes /explore-v2（2026-09-30 C2 重组后：收纳进 moreItems「更多」分组） ===
+test("exploration v2: mobile menu renders /explore-v2 (moreItems 收纳)", () => {
   const c = readFileSync(join(ROOT, "src/components/layout/SiteHeader.tsx"), "utf8");
-  // Find the items array + ensure it appears in mobile section too (no separate copy)
-  const itemsIdx = c.indexOf("const items = [");
+  // C2 决策后导航拆为 mainItems（五主入口）+ moreItems（次要入口），/explore-v2 属于后者
+  const mainIdx = c.indexOf("const mainItems = [");
+  const moreIdx = c.indexOf("const moreItems = [");
   const mobileIdx = c.indexOf("md:hidden");
-  assert.ok(itemsIdx > 0, "items array must exist");
+  assert.ok(mainIdx > 0, "mainItems array must exist");
+  assert.ok(moreIdx > 0, "moreItems array must exist");
   assert.ok(mobileIdx > 0, "mobile menu section must exist");
-  // Both desktop <nav> and mobile <nav> render items.map(...)
-  const mapCount = (c.match(/items\.map\(/g) || []).length;
-  assert.ok(mapCount >= 2, "items.map should be used in both desktop and mobile (>=2 occurrences)");
-  // The /explore-v2 entry should appear in the items array
-  assert.ok(c.includes('"/explore-v2"'), "items array must contain /explore-v2");
+  // 桌面「更多」下拉 + 移动端分组都渲染 moreItems.map(...)
+  const mapCount = (c.match(/moreItems\.map\(/g) || []).length;
+  assert.ok(mapCount >= 2, "moreItems.map should be used in both desktop dropdown and mobile (>=2 occurrences)");
+  // The /explore-v2 entry should appear in moreItems（与 navExplore 标签绑定）
+  assert.ok(c.includes('"/explore-v2"'), "moreItems must contain /explore-v2");
 });
 
 // === 21) V1→V2 URL 兼容：/explore 308 重定向永久保留（迁移步骤 4 清理后） ===

@@ -96,8 +96,8 @@ test("SiteHeader: renders purple '💎 Nd' badge for VIP users", () => {
 
 test("SiteHeader: mobile menu has icon-only VIP entry", () => {
   // 在 grid-cols-2 之后插入 👑/💎 + 'VIP' 短文字
-  // 整个 mobile nav block 较长：放大 0,3000 容差
-  const mobile = header.match(/md:hidden[\s\S]{0,3000}?👑[\s\S]{0,400}?<\/Link>/);
+  // 整个 mobile nav block 较长：放大容差（2026-09-30 C2 五主入口+更多分组后面板变长，3000→8000）
+  const mobile = header.match(/md:hidden[\s\S]{0,8000}?👑[\s\S]{0,400}?<\/Link>/);
   assert.ok(mobile, "expected mobile menu 👑 icon entry");
   // 移动端 VIP 块（💎 紫色 - VIP 已订阅）
   assert.match(header, /<span aria-hidden>💎<\/span>/);

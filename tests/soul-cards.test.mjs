@@ -368,7 +368,8 @@ test("frontend: soul-card components + page + header nav wiring", () => {
   assert.ok(exists("src/app/[locale]/soul-cards/page.tsx"), "page exists");
   const header = read("src/components/layout/SiteHeader.tsx");
   assert.ok(header.includes('href: "/soul-cards"'), "header registers /soul-cards");
-  assert.ok(header.includes('t("soulCards")'), "header uses nav.soulCards label");
+  // 2026-09-30 C2 导航重组：/soul-cards 主入口改用合并标签 navSoulCodex（灵魂卡/图鉴）
+  assert.ok(header.includes('t("navSoulCodex")'), "header uses nav.navSoulCodex label");
   // 客户端鉴权策略：Bearer + localStorage（与 explore-v2 一致）
   const clientComp = read("src/components/soul-card/soul-cards-client.tsx");
   assert.ok(clientComp.includes("aiabw_token"), "reads aiabw_token");
