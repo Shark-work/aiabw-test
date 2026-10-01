@@ -74,5 +74,8 @@ Thumbs.db
 check-resources-report.json
 check-resources-report.md
 .env*
+# 例外：环境变量模板（仅占位值、无真实密钥）允许提交
+!.env.example
+!.env.production.example
 
 scripts/_realpay.*

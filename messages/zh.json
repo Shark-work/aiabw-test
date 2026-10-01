@@ -561,7 +561,18 @@
     "invalidPhoto": "照片格式不支持（仅 JPG/PNG/WebP 或图片 URL）",
     "portraitNotConfigured": "AI 写真服务尚未配置",
     "ugcGenerateFailed": "写真生成失败，请稍后重试",
-    "dailyPortraitLimit": "免费用户每日限生成 1 张写真，升级 VIP 可无限生成"
+    "dailyPortraitLimit": "免费用户每日限生成 1 张写真，升级 VIP 可无限生成",
+    "soulCardPetNotFound": "宠物不存在",
+    "soulCardPetNotYours": "这不是你的宠物",
+    "soulCardPetInactive": "该宠物当前不可铸造",
+    "soulCardExists": "这只宠物已经拥有灵魂卡",
+    "soulCardSupplyExhausted": "链上发行额度已售罄",
+    "soulCardNotFound": "灵魂卡不存在",
+    "soulCardNotYours": "你不是这张卡的持有人",
+    "soulCardBurned": "这张灵魂卡已被销毁",
+    "soulCardLoadFailed": "灵魂卡数据加载失败，请稍后重试",
+    "soulCardMintFailed": "铸造失败，请稍后重试",
+    "soulCardBurnFailed": "销毁失败，请稍后重试"
   },
   "nav": {
     "home": "首页",
@@ -584,7 +595,14 @@
     "explore": "探索",
     "navExplore": "🗺️ 探索",
     "workshop": "🎨 工坊",
-    "contact": "联系"
+    "contact": "联系",
+    "soulCards": "灵魂卡",
+    "packs": "🎴 卡包",
+    "bag": "🎒 背包",
+    "shop": "道具",
+    "codex": "📖 图鉴",
+    "supply": "📊 总量",
+    "profile": "👤 我的"
   },
   "workshop": {
     "title": "创作工坊",
@@ -975,16 +993,47 @@
     "celebrationTitle": "🎉 解锁新徽章！",
     "celebrationPoints": "奖励已到账：+{points} 积分",
     "celebrationButton": "太棒了！",
-    "veteranBadge": { "name": "元老探险家", "desc": "回归礼包：感谢你从 V1 时代就陪伴艾比探索世界" },
+    "veteranBadge": {
+      "name": "元老探险家",
+      "desc": "回归礼包：感谢你从 V1 时代就陪伴艾比探索世界"
+    },
     "badges": {
-      "firstExplore": { "name": "初出茅庐", "desc": "完成首次探索" },
-      "explorer10": { "name": "探险新手", "desc": "累计探索 10 次", "rewardNote": "额外奖励：垂耳兔解锁资格" },
-      "allCommonEvents": { "name": "足迹遍布", "desc": "触发全部 20 种普通事件" },
-      "allRareEvents": { "name": "奇遇猎人", "desc": "触发全部 20 种稀有事件", "rewardNote": "额外奖励：玄凤鹦鹉解锁资格" },
-      "wikiCollector": { "name": "百科达人", "desc": "解锁 5 种宠物百科" },
-      "bondMax": { "name": "亲密无间", "desc": "与任意宠物亲密度达到满值", "rewardNote": "额外奖励：专属称号" },
-      "checkin7": { "name": "全勤奖", "desc": "连续签到 7 天" },
-      "master": { "name": "艾比大师", "desc": "解锁其它全部徽章", "rewardNote": "额外奖励：限定头像框" }
+      "firstExplore": {
+        "name": "初出茅庐",
+        "desc": "完成首次探索"
+      },
+      "explorer10": {
+        "name": "探险新手",
+        "desc": "累计探索 10 次",
+        "rewardNote": "额外奖励：垂耳兔解锁资格"
+      },
+      "allCommonEvents": {
+        "name": "足迹遍布",
+        "desc": "触发全部 20 种普通事件"
+      },
+      "allRareEvents": {
+        "name": "奇遇猎人",
+        "desc": "触发全部 20 种稀有事件",
+        "rewardNote": "额外奖励：玄凤鹦鹉解锁资格"
+      },
+      "wikiCollector": {
+        "name": "百科达人",
+        "desc": "解锁 5 种宠物百科"
+      },
+      "bondMax": {
+        "name": "亲密无间",
+        "desc": "与任意宠物亲密度达到满值",
+        "rewardNote": "额外奖励：专属称号"
+      },
+      "checkin7": {
+        "name": "全勤奖",
+        "desc": "连续签到 7 天"
+      },
+      "master": {
+        "name": "艾比大师",
+        "desc": "解锁其它全部徽章",
+        "rewardNote": "额外奖励：限定头像框"
+      }
     }
   },
   "knowledge": {
@@ -1062,6 +1111,322 @@
         "风从东边带来了远方的消息，我第一个讲给你听！",
         "冠羽竖起来代表我超级感兴趣！你看你看，又竖起来了！"
       ]
+    }
+  },
+  "soulCards": {
+    "title": "灵魂卡图鉴",
+    "subtitle": "AI 生命体 × 区块链稀缺凭证 —— 每只宠物终身仅可铸造一张灵魂卡",
+    "simulatedBadge": "模拟链",
+    "loading": "加载中…",
+    "signInFirst": "请先登录",
+    "signInHint": "登录后即可铸造并查看你的灵魂卡",
+    "loadFailed": "加载失败，请刷新重试",
+    "supply": {
+      "title": "链上供应",
+      "stats": "累计铸造 {minted} · 已销毁 {burned} · 总量恒定可验证"
+    },
+    "collection": {
+      "title": "我的灵魂卡（{count}）",
+      "empty": "还没有灵魂卡 —— 从下方可铸造的宠物开始吧"
+    },
+    "mintable": {
+      "title": "可铸造的宠物（{count}）",
+      "empty": "暂无可铸造的宠物 —— 去领养一只吧"
+    },
+    "mint": {
+      "button": "🪙 铸造灵魂卡",
+      "minting": "铸造中…",
+      "namePlaceholder": "卡名（默认：{species}）",
+      "success": "铸造成功！凭证编号 {cert}"
+    },
+    "burn": {
+      "button": "🔥 销毁灵魂卡",
+      "confirm": "确认销毁（不可逆）",
+      "confirmHint": "销毁后这张卡的链上凭证将永久失效、流通量 -1，宠物本体不受影响。该操作不可逆。",
+      "cancel": "取消",
+      "burning": "销毁中…",
+      "success": "已销毁 {cert}，流通量 -1"
+    },
+    "detail": {
+      "title": "灵魂卡详情",
+      "close": "关闭",
+      "attributes": "属性",
+      "growth": "成长状态",
+      "certificate": "链上凭证"
+    },
+    "attrs": {
+      "rarity": "稀有度",
+      "element": "元素",
+      "habitat": "栖息地",
+      "personality": "AI 性格"
+    },
+    "certificate": {
+      "tokenId": "Token ID",
+      "certNo": "凭证编号",
+      "network": "网络",
+      "contract": "合约",
+      "mintTx": "铸造交易",
+      "burnTx": "销毁交易",
+      "ledger": "链上轨迹",
+      "ledgerEmpty": "暂无链上记录"
+    },
+    "status": {
+      "active": "流通中",
+      "burned": "已销毁"
+    },
+    "txType": {
+      "mint": "铸造",
+      "burn": "销毁",
+      "transfer": "转移"
+    },
+    "stages": {
+      "seed": "种子",
+      "sprout": "萌芽",
+      "bloom": "绽放",
+      "radiant": "光耀"
+    },
+    "expToNext": "距离下一级还需 {exp} 经验",
+    "growthMax": "已达最高等级",
+    "mintFailed": "铸造失败，请稍后重试",
+    "burnFailed": "销毁失败，请稍后重试"
+  },
+  "aibi": {
+    "spotlight": {
+      "title": "艾比世界",
+      "subtitle": "AI 生命体 × 区块链稀缺凭证 × 收集养成",
+      "supplyNow": "当前流通",
+      "latestMinted": "最新诞生",
+      "rareShowcase": "热门稀有",
+      "entryPacks": "卡包商店",
+      "entryPacksDesc": "开包获得新艾比",
+      "entryCodex": "艾比图鉴",
+      "entryCodexDesc": "浏览全部物种",
+      "entryBag": "我的背包",
+      "entryBagDesc": "培养你的艾比",
+      "empty": "还没有艾比诞生 —— 去卡包商店开出第一只吧",
+      "viewAll": "查看全部",
+      "mintedCount": "已铸 {count}"
+    },
+    "codex": {
+      "title": "艾比图鉴",
+      "subtitle": "全部物种 · 稀有度/元素/栖息地筛选 · 收集进度",
+      "loadFailed": "图鉴加载失败，请刷新重试",
+      "filterRarity": "稀有度",
+      "filterElement": "元素",
+      "filterHabitat": "栖息地",
+      "all": "全部",
+      "empty": "没有符合条件的物种",
+      "owned": "已获得",
+      "unowned": "未获得",
+      "ownedCount": "已收集 {owned}/{total}",
+      "prev": "上一页",
+      "next": "下一页",
+      "page": "{page}/{pages}"
+    },
+    "tokenPage": {
+      "loadFailed": "加载失败，请稍后重试",
+      "notFound": "凭证不存在或已注销",
+      "infoTitle": "基础信息",
+      "name": "名称",
+      "rarity": "稀有度",
+      "element": "元素",
+      "habitat": "栖息地",
+      "personality": "AI 性格",
+      "mood": "心情",
+      "statusLabel": "状态",
+      "statuses": {
+        "minted": "流通中",
+        "pending": "待激活",
+        "burned": "已销毁",
+        "revoked": "已回收"
+      },
+      "level": "成长等级",
+      "growthTitle": "成长状态",
+      "exp": "经验",
+      "affinity": "亲密度",
+      "energy": "精力",
+      "lastInteractedAt": "最近互动",
+      "chainTitle": "链上凭证",
+      "cert": "凭证编号",
+      "owner": "持有者",
+      "mintedAt": "铸造时间",
+      "txHash": "交易哈希",
+      "contract": "合约地址",
+      "contractMock": "链下模拟（未部署合约）",
+      "chainId": "所属链",
+      "wallet": "钱包地址",
+      "physicalBound": "绑定实物",
+      "bound": "是",
+      "unbound": "否",
+      "ownerOnlyHint": "仅持有者可与这只艾比互动",
+      "historyTitle": "流转轨迹",
+      "eventMint": "铸造",
+      "eventBurn": "销毁",
+      "interactTitle": "互动记录",
+      "interactEmpty": "暂无互动记录"
+    },
+    "profilePage": {
+      "title": "用户中心",
+      "subtitle": "你的账号、钱包与铸造/销毁记录",
+      "signInHint": "登录后查看用户中心",
+      "signIn": "去登录",
+      "loadFailed": "加载失败，请刷新重试",
+      "userTitle": "账号信息",
+      "username": "昵称",
+      "points": "积分",
+      "walletTitle": "钱包地址",
+      "walletNone": "未绑定钱包（链下模拟模式）",
+      "aibiCount": "持有艾比",
+      "itemCount": "道具总数",
+      "mintHistory": "铸造记录",
+      "burnHistory": "销毁记录",
+      "emptyMint": "暂无铸造记录",
+      "emptyBurn": "暂无销毁记录",
+      "prev": "上一页",
+      "next": "下一页",
+      "page": "{page}/{pages}"
+    },
+    "supplyPage": {
+      "title": "总量看板",
+      "subtitle": "艾比凭证的供应、增发与销毁全记录",
+      "loadFailed": "加载失败，请刷新重试",
+      "current": "当前流通",
+      "minted": "累计增发",
+      "burned": "累计销毁",
+      "maxSupply": "最大供应",
+      "maxUnlimited": "不封顶（链下模拟）",
+      "trendTitle": "供应快照",
+      "historyTitle": "增发 / 销毁历史",
+      "empty": "暂无记录",
+      "prev": "上一页",
+      "next": "下一页",
+      "page": "{page}/{pages}",
+      "eventMint": "增发",
+      "eventBurn": "销毁",
+      "colSupplyAfter": "事后供应"
+    },
+    "packs": {
+      "title": "卡包商店",
+      "subtitle": "用积分购买卡包，开出你的下一只艾比",
+      "buy": "购买卡包",
+      "buying": "购买中…",
+      "signInToBuy": "登录后购买",
+      "signInHint": "登录后即可购买卡包",
+      "signIn": "去登录",
+      "loadFailed": "卡包列表加载失败，请刷新重试",
+      "buyFailed": "购买失败，请稍后重试",
+      "animationLv": "动效 Lv.{level}"
+    },
+    "packOpen": {
+      "title": "开包结果",
+      "opening": "开启卡包中…",
+      "skip": "跳过",
+      "congrats": "恭喜获得 {rarity} 艾比！",
+      "selfIntro": "「你好，我是 {name}，{personality} 的艾比，今后请多关照！」",
+      "viewDetail": "查看艾比详情",
+      "openAnother": "再开一包",
+      "backToBag": "返回背包",
+      "backToStore": "返回商店",
+      "openFailed": "开包失败，请稍后重试",
+      "missingPack": "缺少卡包参数 —— 请从商店或背包进入"
+    },
+    "bag": {
+      "title": "我的背包",
+      "subtitle": "你的艾比、未开启卡包与道具都在这里",
+      "signInHint": "登录后即可查看你的背包",
+      "signIn": "去登录",
+      "loadFailed": "背包加载失败，请刷新重试",
+      "aibisTitle": "我的艾比（{count}）",
+      "aibisEmpty": "还没有艾比 ——",
+      "goStore": "去商店开一包吧",
+      "packsTitle": "卡包（{count}）",
+      "packsEmpty": "暂无未开启的卡包",
+      "openPack": "开包",
+      "itemsTitle": "道具（{count}）",
+      "itemsEmpty": "暂无道具",
+      "useItem": "使用",
+      "useSuccess": "道具使用成功 ✨",
+      "useFailed": "道具使用失败，请稍后重试",
+      "pickTarget": "对哪只艾比使用「{item}」？",
+      "useConfirm": "使用",
+      "using": "使用中…",
+      "cancel": "取消",
+      "fuse": "融合",
+      "fused": "融合完成，新艾比已入库 ✨",
+      "burned": "已销毁 {tokenId}"
+    },
+    "interact": {
+      "close": "关闭",
+      "mood": "心情",
+      "personality": "性格",
+      "element": "元素",
+      "cert": "凭证编号",
+      "levelUp": "升级到 Lv.{level}！",
+      "doing": "…",
+      "failed": "互动失败，请稍后重试",
+      "actions": {
+        "feed": "喂食",
+        "train": "训练",
+        "talk": "聊天",
+        "play": "玩耍"
+      }
+    },
+    "soul": {
+      "title": "艾比图鉴",
+      "subtitle": "艾比平台的供应看板、我的持有与可获得物种",
+      "loadFailed": "加载失败，请刷新重试",
+      "supply": {
+        "minted": "累计铸造",
+        "burned": "已销毁",
+        "current": "当前流通"
+      },
+      "mineTitle": "我持有的艾比（{count}）",
+      "mineGuest": "登录后展示我持有的艾比",
+      "mineEmpty": "还没有持有艾比 —— 去卡包商店开一包吧",
+      "catalogTitle": "可获得物种（{count}）",
+      "mintedCount": "已铸 {count}"
+    },
+    "fuse": {
+      "title": "艾比融合",
+      "hint": "选择 2~5 只艾比作为素材，融合诞生一只新艾比",
+      "rule": "素材将被销毁；结果稀有度 = 素材中的最高档",
+      "selected": "已选择 {count}/5 只",
+      "predicted": "结果稀有度：{rarity}",
+      "confirm": "开始融合",
+      "fusing": "融合中…",
+      "needMore": "至少选择 2 只",
+      "resultTitle": "融合成功！",
+      "resultHint": "消耗 {count} 只素材，新艾比诞生",
+      "newCert": "新凭证编号",
+      "done": "完成",
+      "failed": "融合失败，请稍后重试",
+      "viewDetail": "查看详情",
+      "continueFuse": "继续融合"
+    },
+    "burn": {
+      "open": "销毁",
+      "confirmTitle": "确认销毁这只艾比？",
+      "confirmHint": "销毁后不可恢复，凭证将从流通中永久移除。",
+      "confirm": "确认销毁",
+      "cancel": "再想想",
+      "burning": "销毁中…",
+      "failed": "销毁失败，请稍后重试"
+    },
+    "shop": {
+      "title": "道具商店",
+      "subtitle": "用积分为艾比购买培养道具",
+      "buy": "购买",
+      "buying": "购买中…",
+      "bought": "购买成功，已放入背包 ✨",
+      "goBag": "去背包使用",
+      "balance": "当前积分：{points}",
+      "buyFailed": "购买失败，请稍后重试",
+      "signInToBuy": "登录后购买",
+      "loadFailed": "道具列表加载失败，请刷新重试",
+      "affectsGrowth": "成长",
+      "affectsPersonality": "性格",
+      "quantity": "数量",
+      "subtotal": "小计 ⭐{points}"
     }
   }
 }

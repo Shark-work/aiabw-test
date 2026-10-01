@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, uuid, integer, boolean, doublePrecision, numeric, unique, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, uuid, integer, bigint, boolean, real, doublePrecision, numeric, unique, type AnyPgColumn } from 'drizzle-orm/pg-core';
 
 /** 账号：注册用户 */
 export const users = pgTable('users', {
@@ -358,6 +358,29 @@ export const userOrders = pgTable('user_orders', {
 });
 
 /**
+ * 艾比平台 Phase 11 · Stripe 支付订单（drizzle/0028）：
+ *  - id = Checkout Session ID（cs_test_/cs_live_），天然幂等键；
+ *  - status: 'pending'（下单）→ 'paid'（webhook 履约）/ 'expired'（会话过期）；
+ *  - 权益发放仅发生在 webhook 事务内（FOR UPDATE 行锁 + status='pending' 守卫，恰好一次）；
+ *  - points_amount：积分充值的到账积分快照（创建时写入，履约不重算，防配置漂移）；
+ *  - amount_total / currency：webhook 回填实收金额（分）与币种，用于对账。
+ */
+export const stripeOrders = pgTable('stripe_orders', {
+  id: text('id').primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  productType: text('product_type').notNull(),
+  productId: text('product_id'),
+  quantity: integer('quantity').notNull().default(1),
+  pointsAmount: integer('points_amount'),
+  stripePriceId: text('stripe_price_id').notNull(),
+  amountTotal: integer('amount_total'),
+  currency: text('currency'),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  paidAt: timestamp('paid_at'),
+});
+
+/**
  * 宠物旅行日记 · 聊天额度（每日按 user_id+date 唯一）：
  *  - 每日计数：message_count 达到 FREE_DAILY_LIMIT 触发硬限制
  *  - VIP 用户：直接走 unlimited 分支，chat_quotas 不会增长
@@ -576,5 +599,330 @@ export const ugcSubmissions = pgTable('ugc_submissions', {
   status: text('status', { enum: ['pending', 'approved', 'rejected', 'featured'] }).notNull().default('pending'),
   likes: integer('likes').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+/**
+ * Aibi Soul Card · AI 灵魂卡 / 动态角色卡（drizzle/0024_soul_cards.sql，平台升级 Phase 1）：
+ *  - 与 pets 实例 1:1（petId UNIQUE，一只宠物终身一张卡，销毁后也不可重铸，保证稀缺防刷）；
+ *  - 链上凭证三要素：tokenId（模拟链单调递增）/ certificateNo（AIBI-000001）/ mintTx；
+ *  - 链下业务状态：名称/稀有度/元素/栖息地/AI 性格（aiPersonality JSONB）/成长状态
+ *    （growthStage 快照 + growthLevel + growthExp，展示以 level 实时推导为准）；
+ *  - status: active=流通中 | burned=已销毁（不可逆；pets 原表不受影响）。
+ */
+export const soulCards = pgTable(
+  'soul_cards',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    petId: text('pet_id').references(() => pets.id).notNull(),
+    ownerId: uuid('owner_id').references(() => users.id).notNull(),
+    name: text('name').notNull(),
+    rarity: text('rarity', {
+      enum: ['common', 'uncommon', 'rare', 'epic', 'legendary'],
+    }).notNull(),
+    element: text('element').notNull(),
+    habitat: text('habitat'),
+    /** AI 性格档案：{ personality, mood, speechStyle, curiosity, systemPromptSeed } */
+    aiPersonality: jsonb('ai_personality').notNull().default({}),
+    growthStage: text('growth_stage').notNull().default('seed'),
+    growthLevel: integer('growth_level').notNull().default(1),
+    growthExp: integer('growth_exp').notNull().default(0),
+    /** 链上 tokenId（chain_supply 原子分配，全局单调递增、永不复用） */
+    tokenId: bigint('token_id', { mode: 'number' }).notNull(),
+    /** 链上凭证编号 AIBI-000001（tokenId 派生，全局唯一） */
+    certificateNo: text('certificate_no').notNull(),
+    mintTx: text('mint_tx'),
+    burnTx: text('burn_tx'),
+    status: text('status').notNull().default('active'),
+    mintedAt: timestamp('minted_at').defaultNow().notNull(),
+    burnedAt: timestamp('burned_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('soul_cards_pet_unique').on(t.petId),
+    unique('soul_cards_token_id_unique').on(t.tokenId),
+    unique('soul_cards_certificate_no_unique').on(t.certificateNo),
+  ],
+);
+
+/**
+ * 链下模拟账本（drizzle/0024，append-only）：
+ *  - 记录 mint/burn/transfer 全部链上事件；txHash 全局唯一；
+ *  - payload 存 ERC-721 标准 metadata 快照（公开审计 + 未来测试网对账基准）；
+ *  - 接真链（sepolia）后由 EvmChainProvider 写入真实 tx_hash / block_number。
+ */
+export const chainLedger = pgTable(
+  'chain_ledger',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    txHash: text('tx_hash').notNull(),
+    txType: text('tx_type', { enum: ['mint', 'burn', 'transfer'] }).notNull(),
+    tokenId: bigint('token_id', { mode: 'number' }).notNull(),
+    fromAddress: text('from_address'),
+    toAddress: text('to_address'),
+    soulCardId: uuid('soul_card_id').references(() => soulCards.id),
+    payload: jsonb('payload').notNull().default({}),
+    blockNumber: bigint('block_number', { mode: 'number' }).notNull(),
+    status: text('status').notNull().default('confirmed'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [unique('chain_ledger_tx_hash_unique').on(t.txHash)],
+);
+
+/**
+ * 链上供应权威（单例行 id=1，drizzle/0024）：
+ *  - 「链上数据控制凭证总量」的链下模拟：maxSupply 硬顶、tokenId/区块号计数器；
+ *  - 所有计数变更走原子 UPDATE ... RETURNING（见 chain-ledger-repository.ts），
+ *    并发安全、不超发、不重号。
+ */
+export const chainSupply = pgTable('chain_supply', {
+  id: integer('id').primaryKey(),
+  maxSupply: integer('max_supply').notNull().default(100000),
+  totalMinted: integer('total_minted').notNull().default(0),
+  totalBurned: integer('total_burned').notNull().default(0),
+  nextTokenId: bigint('next_token_id', { mode: 'number' }).notNull().default(1),
+  nextBlockNumber: bigint('next_block_number', { mode: 'number' })
+    .notNull()
+    .default(1000000),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+
+// ============================================================================
+// 艾比平台升级 Phase 2（drizzle/0025_aibi_platform.sql，2026-09-30）
+// 八张新表：凭证 / 增发日志 / 销毁日志 / 总量快照 / 实物资产 / AI 性格 / 成长日志 / 用户钱包。
+// 兼容原则：只新增，不改动 0024 及之前任何表；aibi_tokens.soul_card_id 为 Phase 1
+// 灵魂卡的可选桥接列。
+// ============================================================================
+
+/**
+ * 艾比链上凭证（2.1）：新一代通用凭证表，与 soul_cards 并存。
+ *  - aibiTokenId 全局唯一（AIBI-000001 风格编号）；ownerId/钱包/链信息接真链后填充；
+ *  - status: pending → minted → burned | revoked；
+ *  - physicalBound / physicalOrderId 关联实物资产（physical_assets）。
+ */
+export const aibiTokens = pgTable(
+  'aibi_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    /** 链上凭证唯一编号（如 AIBI-000001） */
+    aibiTokenId: text('aibi_token_id').notNull(),
+    /** 物种 ID（Phase 3 种子：mistwood-fox 等） */
+    speciesId: text('species_id').notNull(),
+    ownerId: uuid('owner_id').references(() => users.id),
+    walletAddress: text('wallet_address'),
+    chainId: text('chain_id'),
+    contractAddress: text('contract_address'),
+    txHash: text('tx_hash'),
+    status: text('status', {
+      enum: ['pending', 'minted', 'burned', 'revoked'],
+    })
+      .notNull()
+      .default('pending'),
+    mintedAt: timestamp('minted_at'),
+    burnedAt: timestamp('burned_at'),
+    burnReason: text('burn_reason'),
+    physicalBound: boolean('physical_bound').notNull().default(false),
+    physicalOrderId: text('physical_order_id'),
+    /** Phase 1 灵魂卡桥接列（可选） */
+    soulCardId: uuid('soul_card_id').references(() => soulCards.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [unique('aibi_tokens_token_id_unique').on(t.aibiTokenId)],
+);
+
+/** 增发日志（2.2，append-only）：supplyAfter 为操作后总量快照；blockNumber 十进制字符串。 */
+export const mintLogs = pgTable('mint_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  aibiTokenId: text('aibi_token_id')
+    .references(() => aibiTokens.aibiTokenId)
+    .notNull(),
+  speciesId: text('species_id').notNull(),
+  toUserId: uuid('to_user_id').references(() => users.id),
+  source: text('source', {
+    enum: ['pack_open', 'event_reward', 'fusion_generate', 'admin_mint', 'physical_claim'],
+  }).notNull(),
+  chainTxHash: text('chain_tx_hash'),
+  blockNumber: text('block_number'),
+  supplyAfter: integer('supply_after').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 销毁日志（2.3，append-only）。 */
+export const burnLogs = pgTable('burn_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  aibiTokenId: text('aibi_token_id')
+    .references(() => aibiTokens.aibiTokenId)
+    .notNull(),
+  fromUserId: uuid('from_user_id').references(() => users.id),
+  reason: text('reason', {
+    enum: ['fusion_consume', 'item_consume', 'user_burn', 'expired_burn', 'physical_redeem'],
+  }).notNull(),
+  chainTxHash: text('chain_tx_hash'),
+  blockNumber: text('block_number'),
+  supplyAfter: integer('supply_after').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 总量快照（2.4）：定时/事件驱动写入，供 /supply 看板读取历史。 */
+export const supplySnapshots = pgTable('supply_snapshots', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  totalMinted: integer('total_minted').notNull(),
+  totalBurned: integer('total_burned').notNull(),
+  currentSupply: integer('current_supply').notNull(),
+  maxSupply: integer('max_supply'),
+  chainBlock: text('chain_block'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 实物资产（2.5）：库存权威在链下；contractLimit 预留与链上凭证上限联动。 */
+export const physicalAssets = pgTable('physical_assets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  speciesId: text('species_id'),
+  totalStock: integer('total_stock').notNull().default(0),
+  issuedCount: integer('issued_count').notNull().default(0),
+  redeemedCount: integer('redeemed_count').notNull().default(0),
+  contractLimit: integer('contract_limit'),
+  status: text('status').notNull().default('active'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/** AI 性格档案（2.6）：每凭证 1:1（aibiTokenId UNIQUE）；affinity 亲密度 / energy 精力。 */
+export const aibiPersonalities = pgTable(
+  'aibi_personalities',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    aibiTokenId: text('aibi_token_id')
+      .references(() => aibiTokens.aibiTokenId)
+      .notNull(),
+    personalityType: text('personality_type').notNull(),
+    mood: text('mood').notNull(),
+    affinity: integer('affinity').notNull().default(0),
+    energy: integer('energy').notNull().default(100),
+    /** 成长等级/经验当前权威（v9 补全；成长日志 2.7 存前后快照） */
+    growthLevel: integer('growth_level').notNull().default(1),
+    growthExp: integer('growth_exp').notNull().default(0),
+    lastInteractedAt: timestamp('last_interacted_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [unique('aibi_personalities_token_unique').on(t.aibiTokenId)],
+);
+
+/** 成长日志（2.7，append-only）：beforeState/afterState 为互动前后状态快照。 */
+export const aibiGrowthLogs = pgTable('aibi_growth_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  aibiTokenId: text('aibi_token_id')
+    .references(() => aibiTokens.aibiTokenId)
+    .notNull(),
+  actionType: text('action_type', {
+    enum: ['feed', 'train', 'talk', 'play', 'evolve'],
+  }).notNull(),
+  beforeState: jsonb('before_state'),
+  afterState: jsonb('after_state'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 用户钱包绑定（2.8）：UNIQUE(user_id, wallet_address) 防重复绑定；isPrimary 由应用层保证唯一。 */
+export const userWallets = pgTable(
+  'user_wallets',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id').references(() => users.id).notNull(),
+    walletAddress: text('wallet_address').notNull(),
+    chainId: text('chain_id').notNull(),
+    isPrimary: boolean('is_primary').notNull().default(false),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [unique('user_wallets_user_addr_unique').on(t.userId, t.walletAddress)],
+);
+
+
+// ============================================================================
+// 艾比平台 Phase 3（drizzle/0026_aibi_catalog.sql，2026-09-30）：目录表
+// 稀有度 / 栖息地 / 物种 / 卡包 / 道具。种子数据单一来源：src/lib/aibi-catalog.ts。
+// ============================================================================
+
+/** 稀有度目录（3.1）：color 展示色；multiplier 结算倍率；sortOrder 展示顺序。 */
+export const aibiRarities = pgTable('aibi_rarities', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  color: text('color').notNull(),
+  multiplier: real('multiplier').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 栖息地目录（3.2）：elementAffinity 元素倾向（如 自然/暗）。 */
+export const aibiHabitats = pgTable('aibi_habitats', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  elementAffinity: text('element_affinity').notNull(),
+  elementAffinityEn: text('element_affinity_en').notNull(),
+  description: text('description').notNull(),
+  descriptionEn: text('description_en').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 物种目录（3.3）：animationLevel 1~5 动效档位；supports3d/supportsChat 能力开关。 */
+export const aibiSpecies = pgTable('aibi_species', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  rarityId: text('rarity_id')
+    .references(() => aibiRarities.id)
+    .notNull(),
+  element: text('element').notNull(),
+  habitatId: text('habitat_id')
+    .references(() => aibiHabitats.id)
+    .notNull(),
+  description: text('description').notNull(),
+  descriptionEn: text('description_en').notNull(),
+  /** AI 性格模板（对话 prompt 种子，如 傲娇型） */
+  personalityTemplate: text('personality_template').notNull(),
+  personalityTemplateEn: text('personality_template_en').notNull(),
+  animationLevel: integer('animation_level').notNull().default(1),
+  supports3d: boolean('supports_3d').notNull().default(false),
+  supportsChat: boolean('supports_chat').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/** 卡包目录（3.4）：rarityWeights 百分比合计 100；allowedRarities 产出范围（档位外降级）。 */
+export const aibiPacks = pgTable('aibi_packs', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  pricePoints: integer('price_points').notNull(),
+  rarityWeights: jsonb('rarity_weights').notNull(),
+  allowedRarities: jsonb('allowed_rarities').notNull(),
+  animationLevel: integer('animation_level').notNull().default(1),
+  status: text('status').notNull().default('active'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/** 道具目录（3.5）：effectPayload 机器可读效果（Phase 4 使用道具服务消费）。 */
+export const aibiItems = pgTable('aibi_items', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  itemType: text('item_type').notNull().default('consumable'),
+  effect: text('effect').notNull(),
+  effectEn: text('effect_en').notNull(),
+  effectPayload: jsonb('effect_payload').notNull(),
+  consumeMode: text('consume_mode').notNull().default('immediate'),
+  affectsGrowth: boolean('affects_growth').notNull().default(false),
+  affectsPersonality: boolean('affects_personality').notNull().default(false),
+  /** 积分售价（v9 补全：文档 3.5 未定价，4.2 /api/item/buy 所需，价格见 aibi-catalog.ts） */
+  pricePoints: integer('price_points').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 

@@ -362,6 +362,44 @@ body,
 .living-pet__heart--1 { animation-name: pet-heart-c; }
 .living-pet__heart--2 { animation-name: pet-heart-r; margin-left: 8px; }
 
+/* ────────────────────────────────────────────────────────────────
+   艾比平台 Phase 8 · AibiCard 五档动效关键帧
+   纯 CSS（transform/opacity/filter），不阻塞页面加载；
+   移动端经 prefers-reduced-motion 降级为静态展示。
+   ──────────────────────────────────────────────────────────────── */
+/* 全档通用：立绘轻微呼吸（普通档唯一动效） */
+@keyframes aibi-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+/* 稀有+：发光边框（box-shadow 呼吸） */
+@keyframes aibi-glow-border {
+  0%, 100% { box-shadow: 0 0 0 1px var(--aibi-c, #9EAEB8)55, 0 0 12px -2px var(--aibi-c, #9EAEB8); }
+  50% { box-shadow: 0 0 0 1px var(--aibi-c, #9EAEB8)aa, 0 0 22px 0 var(--aibi-c, #9EAEB8); }
+}
+/* 稀有+：元素粒子漂浮 */
+@keyframes aibi-particle-float {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  25% { opacity: 0.9; }
+  100% { transform: translateY(-46px) scale(1); opacity: 0; }
+}
+/* 史诗+：技能光效扫掠 */
+@keyframes aibi-beam-sweep {
+  0% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  30% { opacity: 0.55; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+/* 传说+：登场光柱（挂载时播放一次） */
+@keyframes aibi-pillar-rise {
+  0% { transform: scaleY(0); opacity: 0.9; }
+  70% { transform: scaleY(1); opacity: 0.5; }
+  100% { transform: scaleY(1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aibi-anim, .aibi-anim::before, .aibi-anim::after,
+  .aibi-anim * { animation: none !important; }
+}
+
 @keyframes pet-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3.5%); }

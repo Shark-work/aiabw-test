@@ -1,0 +1,102 @@
+### 艾比平台 Phase 4 · 接口测试用例（链下模拟模式，2026-09-30）
+### 用法：VS Code REST Client 插件逐条执行；@token 先经登录接口获取（JWT Bearer）。
+### 统一返回：成功 { data }；失败 { code, message }。
+
+@base = http://localhost:3000
+@token = <登录后 JWT>
+@adminToken = <管理员 JWT>
+@tokenId = AIBI-000001
+@wallet = 0xabc123
+@userId = 00000000-0000-0000-0000-000000000000
+
+### 4.2-1 卡包列表（公开）
+GET {{base}}/api/pack/list
+
+### 4.2-2 购买卡包（积分）
+POST {{base}}/api/pack/buy
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "packId": "starter", "quantity": 2 }
+
+### 4.2-3 打开卡包 → 铸造艾比
+POST {{base}}/api/pack/open
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "packId": "starter" }
+
+### 4.2-4 道具列表（公开）
+GET {{base}}/api/item/list
+
+### 4.2-5 购买道具（积分）
+POST {{base}}/api/item/buy
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "itemId": "energy_fruit", "quantity": 3 }
+
+### 4.2-6 查询背包
+GET {{base}}/api/bag/items
+Authorization: Bearer {{token}}
+
+### 4.2-7 使用道具作用于艾比
+POST {{base}}/api/bag/use
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "itemId": "energy_fruit", "tokenId": "{{tokenId}}" }
+
+### 4.1-1 铸造艾比（仅管理员）
+POST {{base}}/api/aibi/mint
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{ "speciesId": "mistwood-fox", "source": "admin_mint" }
+
+### 4.1-2 销毁艾比（持有人 user_burn；管理员可指定 reason）
+POST {{base}}/api/aibi/burn
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "tokenId": "{{tokenId}}" }
+
+### 4.1-3 融合艾比（2~5 只 → 1 只新艾比）
+POST {{base}}/api/aibi/fuse
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "tokenIds": ["AIBI-000002", "AIBI-000003"] }
+
+### 4.1-4 按地址/用户查询持有列表（公开；0x 走 user_wallets，UUID 走 owner_id）
+GET {{base}}/api/aibi/owner/{{wallet}}
+
+### 4.1-4b 按用户 UUID 查询（链下模拟主用）
+GET {{base}}/api/aibi/owner/{{userId}}
+
+### 4.1-5 供应看板（公开）
+GET {{base}}/api/aibi/supply
+
+### 4.3 与艾比互动（feed / train / talk / play）
+POST {{base}}/api/interact
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "tokenId": "{{tokenId}}", "action": "feed" }
+
+### 负面用例示例（预期 {code,message}）：
+###  - 无 Authorization → 401 UNAUTHORIZED
+###  - 非管理员调 /aibi/mint → 403 FORBIDDEN
+###  - 积分不足购买 → 402 INSUFFICIENT_POINTS
+###  - tokenId 不存在互动 → 404 TOKEN_NOT_FOUND
+###  - 操作他人艾比 → 403 TOKEN_NOT_OWNED
+###  - 重复销毁同一凭证 → 409 TOKEN_NOT_MINTED
+###  - 空背包开包/用道具 → 400 INSUFFICIENT_ITEM
+###  - 非法入参（缺字段/超上限）→ 400 VALIDATION_ERROR
+
+### 5.3-1 我的艾比列表（Phase 5 新增，Bearer）
+GET {{base}}/api/bag/aibis
+Authorization: Bearer {{token}}
+
+### 5.4-3 可铸物种目录（Phase 5 新增，公开，含每物种已铸数量）
+GET {{base}}/api/aibi/list

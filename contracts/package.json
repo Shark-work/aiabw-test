@@ -1,0 +1,16 @@
+{
+  "name": "aibi-soul-card-contracts",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "AibiSoulCard 合约编译/部署独立工程（与 Next.js 主仓依赖隔离；见 README.md）",
+  "scripts": {
+    "compile": "node deploy.mjs --compile-only",
+    "deploy:sepolia": "node deploy.mjs"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "solc": "^0.8.30",
+    "viem": "^2.0.0"
+  }
+}

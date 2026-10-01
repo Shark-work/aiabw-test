@@ -561,7 +561,18 @@
     "invalidPhoto": "Unsupported photo format (JPG/PNG/WebP or image URL only).",
     "portraitNotConfigured": "AI portrait service is not configured yet.",
     "ugcGenerateFailed": "Portrait generation failed, please try again later.",
-    "dailyPortraitLimit": "Free users can generate 1 portrait per day. Upgrade to VIP for unlimited."
+    "dailyPortraitLimit": "Free users can generate 1 portrait per day. Upgrade to VIP for unlimited.",
+    "soulCardPetNotFound": "Pet not found",
+    "soulCardPetNotYours": "This pet is not yours",
+    "soulCardPetInactive": "This pet is not available for minting right now",
+    "soulCardExists": "This pet already has a Soul Card",
+    "soulCardSupplyExhausted": "On-chain supply is sold out",
+    "soulCardNotFound": "Soul Card not found",
+    "soulCardNotYours": "You do not own this card",
+    "soulCardBurned": "This Soul Card has been burned",
+    "soulCardLoadFailed": "Failed to load Soul Cards. Please try again later",
+    "soulCardMintFailed": "Mint failed. Please try again later",
+    "soulCardBurnFailed": "Burn failed. Please try again later"
   },
   "nav": {
     "home": "Home",
@@ -584,7 +595,14 @@
     "explore": "Explore",
     "navExplore": "🗺️ Explore",
     "workshop": "🎨 Studio",
-    "contact": "Contact"
+    "contact": "Contact",
+    "soulCards": "Soul Cards",
+    "packs": "🎴 Packs",
+    "bag": "🎒 Bag",
+    "shop": "Items",
+    "codex": "📖 Codex",
+    "supply": "📊 Supply",
+    "profile": "👤 Profile"
   },
   "workshop": {
     "title": "Creative Studio",
@@ -975,16 +993,47 @@
     "celebrationTitle": "🎉 New badge unlocked!",
     "celebrationPoints": "Reward credited: +{points} pts",
     "celebrationButton": "Awesome!",
-    "veteranBadge": { "name": "Veteran Explorer", "desc": "Welcome-back gift: thank you for exploring with Aibi since the V1 days" },
+    "veteranBadge": {
+      "name": "Veteran Explorer",
+      "desc": "Welcome-back gift: thank you for exploring with Aibi since the V1 days"
+    },
     "badges": {
-      "firstExplore": { "name": "First Steps", "desc": "Complete your first exploration" },
-      "explorer10": { "name": "Rookie Explorer", "desc": "Complete 10 explorations", "rewardNote": "Bonus: Lop Bunny unlock eligibility" },
-      "allCommonEvents": { "name": "Trailblazer", "desc": "Trigger all 20 common events" },
-      "allRareEvents": { "name": "Adventure Hunter", "desc": "Trigger all 20 rare events", "rewardNote": "Bonus: Cockatiel unlock eligibility" },
-      "wikiCollector": { "name": "Wiki Master", "desc": "Unlock 5 pet wiki entries" },
-      "bondMax": { "name": "Inseparable", "desc": "Reach max bond with any pet", "rewardNote": "Bonus: exclusive title" },
-      "checkin7": { "name": "Perfect Attendance", "desc": "Check in 7 days in a row" },
-      "master": { "name": "Aibi Master", "desc": "Unlock all other badges", "rewardNote": "Bonus: limited avatar frame" }
+      "firstExplore": {
+        "name": "First Steps",
+        "desc": "Complete your first exploration"
+      },
+      "explorer10": {
+        "name": "Rookie Explorer",
+        "desc": "Complete 10 explorations",
+        "rewardNote": "Bonus: Lop Bunny unlock eligibility"
+      },
+      "allCommonEvents": {
+        "name": "Trailblazer",
+        "desc": "Trigger all 20 common events"
+      },
+      "allRareEvents": {
+        "name": "Adventure Hunter",
+        "desc": "Trigger all 20 rare events",
+        "rewardNote": "Bonus: Cockatiel unlock eligibility"
+      },
+      "wikiCollector": {
+        "name": "Wiki Master",
+        "desc": "Unlock 5 pet wiki entries"
+      },
+      "bondMax": {
+        "name": "Inseparable",
+        "desc": "Reach max bond with any pet",
+        "rewardNote": "Bonus: exclusive title"
+      },
+      "checkin7": {
+        "name": "Perfect Attendance",
+        "desc": "Check in 7 days in a row"
+      },
+      "master": {
+        "name": "Aibi Master",
+        "desc": "Unlock all other badges",
+        "rewardNote": "Bonus: limited avatar frame"
+      }
     }
   },
   "knowledge": {
@@ -1062,6 +1111,322 @@
         "The east wind brought news from far away, and I'm telling you first!",
         "When my crest stands up it means I'm super curious - look, it's up again!"
       ]
+    }
+  },
+  "soulCards": {
+    "title": "Soul Card Collection",
+    "subtitle": "AI lifeform × blockchain scarcity certificate — one Soul Card per pet, forever",
+    "simulatedBadge": "Simulated Chain",
+    "loading": "Loading…",
+    "signInFirst": "Please sign in first",
+    "signInHint": "Sign in to mint and view your Soul Cards",
+    "loadFailed": "Failed to load. Please refresh and retry",
+    "supply": {
+      "title": "On-chain Supply",
+      "stats": "Minted {minted} · Burned {burned} · Fixed and verifiable total supply"
+    },
+    "collection": {
+      "title": "My Soul Cards ({count})",
+      "empty": "No Soul Cards yet — start with a mintable pet below"
+    },
+    "mintable": {
+      "title": "Mintable Pets ({count})",
+      "empty": "No mintable pets right now — go adopt one"
+    },
+    "mint": {
+      "button": "🪙 Mint Soul Card",
+      "minting": "Minting…",
+      "namePlaceholder": "Card name (default: {species})",
+      "success": "Minted! Certificate No. {cert}"
+    },
+    "burn": {
+      "button": "🔥 Burn Soul Card",
+      "confirm": "Confirm burn (irreversible)",
+      "confirmHint": "Burning permanently voids this card's on-chain certificate and reduces circulating supply by 1. Your pet itself is unaffected. This action is irreversible.",
+      "cancel": "Cancel",
+      "burning": "Burning…",
+      "success": "Burned {cert}; circulating supply -1"
+    },
+    "detail": {
+      "title": "Soul Card Detail",
+      "close": "Close",
+      "attributes": "Attributes",
+      "growth": "Growth",
+      "certificate": "On-chain Certificate"
+    },
+    "attrs": {
+      "rarity": "Rarity",
+      "element": "Element",
+      "habitat": "Habitat",
+      "personality": "AI Personality"
+    },
+    "certificate": {
+      "tokenId": "Token ID",
+      "certNo": "Certificate No.",
+      "network": "Network",
+      "contract": "Contract",
+      "mintTx": "Mint Tx",
+      "burnTx": "Burn Tx",
+      "ledger": "On-chain Trail",
+      "ledgerEmpty": "No on-chain records yet"
+    },
+    "status": {
+      "active": "Active",
+      "burned": "Burned"
+    },
+    "txType": {
+      "mint": "Mint",
+      "burn": "Burn",
+      "transfer": "Transfer"
+    },
+    "stages": {
+      "seed": "Seed",
+      "sprout": "Sprout",
+      "bloom": "Bloom",
+      "radiant": "Radiant"
+    },
+    "expToNext": "{exp} EXP to next level",
+    "growthMax": "Max level reached",
+    "mintFailed": "Mint failed. Please try again later",
+    "burnFailed": "Burn failed. Please try again later"
+  },
+  "aibi": {
+    "spotlight": {
+      "title": "Aibi World",
+      "subtitle": "AI lifeforms × blockchain scarcity certificates × collecting",
+      "supplyNow": "Circulating",
+      "latestMinted": "Newest Aibis",
+      "rareShowcase": "Rare Highlights",
+      "entryPacks": "Pack Store",
+      "entryPacksDesc": "Open packs for new aibis",
+      "entryCodex": "Aibi Codex",
+      "entryCodexDesc": "Browse all species",
+      "entryBag": "My Bag",
+      "entryBagDesc": "Raise your aibis",
+      "empty": "No aibis minted yet — open the first pack in the store!",
+      "viewAll": "View all",
+      "mintedCount": "{count} minted"
+    },
+    "codex": {
+      "title": "Aibi Codex",
+      "subtitle": "All species · filter by rarity/element/habitat · your progress",
+      "loadFailed": "Failed to load the codex. Please refresh.",
+      "filterRarity": "Rarity",
+      "filterElement": "Element",
+      "filterHabitat": "Habitat",
+      "all": "All",
+      "empty": "No species match the filters.",
+      "owned": "Owned",
+      "unowned": "Not owned",
+      "ownedCount": "Collected {owned}/{total}",
+      "prev": "Prev",
+      "next": "Next",
+      "page": "{page}/{pages}"
+    },
+    "tokenPage": {
+      "loadFailed": "Failed to load. Please try again.",
+      "notFound": "Certificate not found or revoked.",
+      "name": "Name",
+      "rarity": "Rarity",
+      "statuses": {
+        "minted": "Minted",
+        "pending": "Pending",
+        "burned": "Burned",
+        "revoked": "Revoked"
+      },
+      "growthTitle": "Growth",
+      "exp": "EXP",
+      "affinity": "Affinity",
+      "energy": "Energy",
+      "lastInteractedAt": "Last interaction",
+      "chainId": "Chain",
+      "wallet": "Wallet",
+      "interactTitle": "Interactions",
+      "interactEmpty": "No interactions yet",
+      "infoTitle": "Profile",
+      "element": "Element",
+      "habitat": "Habitat",
+      "personality": "AI Personality",
+      "mood": "Mood",
+      "statusLabel": "Status",
+      "level": "Growth Level",
+      "chainTitle": "Chain Certificate",
+      "cert": "Certificate No.",
+      "owner": "Owner",
+      "mintedAt": "Minted At",
+      "txHash": "Tx Hash",
+      "contract": "Contract",
+      "contractMock": "Off-chain simulation (no contract deployed)",
+      "physicalBound": "Physical Bound",
+      "bound": "Yes",
+      "unbound": "No",
+      "ownerOnlyHint": "Only the owner can interact with this aibi.",
+      "historyTitle": "Provenance",
+      "eventMint": "Minted",
+      "eventBurn": "Burned"
+    },
+    "profilePage": {
+      "title": "Profile",
+      "subtitle": "Your account, wallet, and mint/burn records",
+      "signInHint": "Sign in to view your profile",
+      "signIn": "Sign in",
+      "loadFailed": "Failed to load. Please refresh.",
+      "userTitle": "Account",
+      "username": "Name",
+      "points": "Points",
+      "walletTitle": "Wallet Address",
+      "walletNone": "No wallet bound (off-chain simulation)",
+      "aibiCount": "Aibis",
+      "itemCount": "Items",
+      "mintHistory": "Mint History",
+      "burnHistory": "Burn History",
+      "emptyMint": "No mint records yet.",
+      "emptyBurn": "No burn records yet.",
+      "prev": "Prev",
+      "next": "Next",
+      "page": "{page}/{pages}"
+    },
+    "supplyPage": {
+      "title": "Supply Board",
+      "subtitle": "Full record of aibi certificate supply, mints and burns",
+      "loadFailed": "Failed to load. Please refresh.",
+      "current": "Circulating",
+      "minted": "Total Minted",
+      "burned": "Total Burned",
+      "maxSupply": "Max Supply",
+      "maxUnlimited": "Uncapped (off-chain sim)",
+      "trendTitle": "Supply Snapshots",
+      "historyTitle": "Mint / Burn History",
+      "empty": "No records yet.",
+      "prev": "Prev",
+      "next": "Next",
+      "page": "{page}/{pages}",
+      "eventMint": "Mint",
+      "eventBurn": "Burn",
+      "colSupplyAfter": "Supply after"
+    },
+    "packs": {
+      "title": "Pack Store",
+      "subtitle": "Spend points on packs and meet your next aibi",
+      "buy": "Buy Pack",
+      "buying": "Buying…",
+      "signInToBuy": "Sign in to buy",
+      "signInHint": "Sign in to purchase packs",
+      "signIn": "Sign in",
+      "loadFailed": "Failed to load packs. Please refresh.",
+      "buyFailed": "Purchase failed. Please try again.",
+      "animationLv": "FX Lv.{level}"
+    },
+    "packOpen": {
+      "title": "Pack Result",
+      "opening": "Opening pack…",
+      "skip": "Skip",
+      "congrats": "You got a {rarity} aibi!",
+      "selfIntro": "\"Hi, I'm {name}, a {personality} aibi. Nice to meet you!\"",
+      "viewDetail": "View Aibi",
+      "openAnother": "Open Another",
+      "backToBag": "Back to Bag",
+      "backToStore": "Back to Store",
+      "openFailed": "Failed to open pack. Please try again.",
+      "missingPack": "Missing pack parameter — enter from the store or bag."
+    },
+    "bag": {
+      "title": "My Bag",
+      "subtitle": "Your aibis, unopened packs and items live here",
+      "signInHint": "Sign in to view your bag",
+      "signIn": "Sign in",
+      "loadFailed": "Failed to load bag. Please refresh.",
+      "aibisTitle": "My Aibis ({count})",
+      "aibisEmpty": "No aibis yet —",
+      "goStore": "open a pack in the store",
+      "packsTitle": "Packs ({count})",
+      "packsEmpty": "No unopened packs",
+      "openPack": "Open",
+      "itemsTitle": "Items ({count})",
+      "itemsEmpty": "No items",
+      "useItem": "Use",
+      "useSuccess": "Item used ✨",
+      "useFailed": "Failed to use item. Please try again.",
+      "pickTarget": "Use \"{item}\" on which aibi?",
+      "useConfirm": "Use",
+      "using": "Using…",
+      "cancel": "Cancel",
+      "fuse": "Fuse",
+      "fused": "Fusion complete — new aibi in your bag ✨",
+      "burned": "Burned {tokenId}"
+    },
+    "interact": {
+      "close": "Close",
+      "mood": "Mood",
+      "personality": "Personality",
+      "element": "Element",
+      "cert": "Certificate",
+      "levelUp": "Level up to Lv.{level}!",
+      "doing": "…",
+      "failed": "Interaction failed. Please try again.",
+      "actions": {
+        "feed": "Feed",
+        "train": "Train",
+        "talk": "Talk",
+        "play": "Play"
+      }
+    },
+    "soul": {
+      "title": "Aibi Gallery",
+      "subtitle": "Supply board, my collection and obtainable species",
+      "loadFailed": "Failed to load. Please refresh.",
+      "supply": {
+        "minted": "Total Minted",
+        "burned": "Burned",
+        "current": "Circulating"
+      },
+      "mineTitle": "My Aibis ({count})",
+      "mineGuest": "Sign in to view your aibis",
+      "mineEmpty": "No aibis yet — open a pack in the store",
+      "catalogTitle": "Obtainable Species ({count})",
+      "mintedCount": "{count} minted"
+    },
+    "fuse": {
+      "title": "Aibi Fusion",
+      "hint": "Pick 2-5 aibis as materials to fuse into a brand-new aibi",
+      "rule": "Materials are burned; result rarity = the highest tier among materials",
+      "selected": "{count}/5 selected",
+      "predicted": "Result rarity: {rarity}",
+      "confirm": "Start Fusion",
+      "fusing": "Fusing…",
+      "needMore": "Pick at least 2",
+      "resultTitle": "Fusion success!",
+      "resultHint": "{count} materials consumed — a new aibi is born",
+      "newCert": "New certificate",
+      "done": "Done",
+      "failed": "Fusion failed, please try again later",
+      "viewDetail": "View details",
+      "continueFuse": "Fuse again"
+    },
+    "burn": {
+      "open": "Burn",
+      "confirmTitle": "Burn this aibi?",
+      "confirmHint": "This cannot be undone. The certificate is permanently removed from circulation.",
+      "confirm": "Confirm Burn",
+      "cancel": "Keep it",
+      "burning": "Burning…",
+      "failed": "Burn failed, please try again later"
+    },
+    "shop": {
+      "title": "Item Shop",
+      "subtitle": "Spend points on training items for your aibis",
+      "buy": "Buy",
+      "buying": "Buying…",
+      "bought": "Purchased! Check your bag ✨",
+      "goBag": "Open bag",
+      "balance": "Balance: {points}",
+      "buyFailed": "Purchase failed, please try again later",
+      "signInToBuy": "Sign in to buy",
+      "loadFailed": "Failed to load items. Please refresh.",
+      "affectsGrowth": "Growth",
+      "affectsPersonality": "Personality",
+      "quantity": "Qty",
+      "subtotal": "Subtotal ⭐{points}"
     }
   }
 }

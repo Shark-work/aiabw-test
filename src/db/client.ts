@@ -1,5 +1,6 @@
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { buildAibiCatalogSeedSql } from './aibi-catalog-seed';
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -657,6 +658,246 @@ const SCHEMA_CREATES: string[] = [
     "unlocked_at" timestamp DEFAULT now() NOT NULL,
     CONSTRAINT "achievements_user_badge_unique" UNIQUE ("user_id", "badge_id")
   )`,
+
+  // Aibi Soul Card（drizzle/0024_soul_cards.sql，平台升级 Phase 1）：
+  // 灵魂卡本体（链下业务状态）+ 链下模拟账本 + 链上供应权威单例；
+  // 不改 pets 原表任何列，1:1 关联（pet_id UNIQUE，一宠终身一卡）。
+  `CREATE TABLE IF NOT EXISTS "soul_cards" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "pet_id" text NOT NULL REFERENCES "pets"("id"),
+    "owner_id" uuid NOT NULL REFERENCES "users"("id"),
+    "name" text NOT NULL,
+    "rarity" text NOT NULL,
+    "element" text NOT NULL,
+    "habitat" text,
+    "ai_personality" jsonb DEFAULT '{}' NOT NULL,
+    "growth_stage" text DEFAULT 'seed' NOT NULL,
+    "growth_level" integer DEFAULT 1 NOT NULL,
+    "growth_exp" integer DEFAULT 0 NOT NULL,
+    "token_id" bigint NOT NULL,
+    "certificate_no" text NOT NULL,
+    "mint_tx" text,
+    "burn_tx" text,
+    "status" text DEFAULT 'active' NOT NULL,
+    "minted_at" timestamp DEFAULT now() NOT NULL,
+    "burned_at" timestamp,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "soul_cards_pet_unique" UNIQUE ("pet_id"),
+    CONSTRAINT "soul_cards_token_id_unique" UNIQUE ("token_id"),
+    CONSTRAINT "soul_cards_certificate_no_unique" UNIQUE ("certificate_no")
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS "chain_ledger" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "tx_hash" text NOT NULL,
+    "tx_type" text NOT NULL,
+    "token_id" bigint NOT NULL,
+    "from_address" text,
+    "to_address" text,
+    "soul_card_id" uuid REFERENCES "soul_cards"("id"),
+    "payload" jsonb DEFAULT '{}' NOT NULL,
+    "block_number" bigint NOT NULL,
+    "status" text DEFAULT 'confirmed' NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "chain_ledger_tx_hash_unique" UNIQUE ("tx_hash")
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS "chain_supply" (
+    "id" integer PRIMARY KEY,
+    "max_supply" integer DEFAULT 100000 NOT NULL,
+    "total_minted" integer DEFAULT 0 NOT NULL,
+    "total_burned" integer DEFAULT 0 NOT NULL,
+    "next_token_id" bigint DEFAULT 1 NOT NULL,
+    "next_block_number" bigint DEFAULT 1000000 NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+
+  // 供应单例种子（id 固定为 1，幂等）
+  `INSERT INTO "chain_supply" ("id") VALUES (1) ON CONFLICT ("id") DO NOTHING`,
+
+  // 艾比平台 Phase 2（drizzle/0025_aibi_platform.sql）：凭证/日志/快照/实物/性格/成长/钱包
+  `CREATE TABLE IF NOT EXISTS "aibi_tokens" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "aibi_token_id" text NOT NULL,
+    "species_id" text NOT NULL,
+    "owner_id" uuid REFERENCES "users"("id"),
+    "wallet_address" text,
+    "chain_id" text,
+    "contract_address" text,
+    "tx_hash" text,
+    "status" text DEFAULT 'pending' NOT NULL,
+    "minted_at" timestamp,
+    "burned_at" timestamp,
+    "burn_reason" text,
+    "physical_bound" boolean DEFAULT false NOT NULL,
+    "physical_order_id" text,
+    "soul_card_id" uuid REFERENCES "soul_cards"("id"),
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "aibi_tokens_token_id_unique" UNIQUE ("aibi_token_id")
+  )`,
+  `CREATE TABLE IF NOT EXISTS "mint_logs" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "aibi_token_id" text NOT NULL REFERENCES "aibi_tokens"("aibi_token_id"),
+    "species_id" text NOT NULL,
+    "to_user_id" uuid REFERENCES "users"("id"),
+    "source" text NOT NULL,
+    "chain_tx_hash" text,
+    "block_number" text,
+    "supply_after" integer NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "burn_logs" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "aibi_token_id" text NOT NULL REFERENCES "aibi_tokens"("aibi_token_id"),
+    "from_user_id" uuid REFERENCES "users"("id"),
+    "reason" text NOT NULL,
+    "chain_tx_hash" text,
+    "block_number" text,
+    "supply_after" integer NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "supply_snapshots" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "total_minted" integer NOT NULL,
+    "total_burned" integer NOT NULL,
+    "current_supply" integer NOT NULL,
+    "max_supply" integer,
+    "chain_block" text,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "physical_assets" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "name" text NOT NULL,
+    "species_id" text,
+    "total_stock" integer DEFAULT 0 NOT NULL,
+    "issued_count" integer DEFAULT 0 NOT NULL,
+    "redeemed_count" integer DEFAULT 0 NOT NULL,
+    "contract_limit" integer,
+    "status" text DEFAULT 'active' NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "aibi_personalities" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "aibi_token_id" text NOT NULL REFERENCES "aibi_tokens"("aibi_token_id"),
+    "personality_type" text NOT NULL,
+    "mood" text NOT NULL,
+    "affinity" integer DEFAULT 0 NOT NULL,
+    "energy" integer DEFAULT 100 NOT NULL,
+    "last_interacted_at" timestamp,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "aibi_personalities_token_unique" UNIQUE ("aibi_token_id")
+  )`,
+  `CREATE TABLE IF NOT EXISTS "aibi_growth_logs" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "aibi_token_id" text NOT NULL REFERENCES "aibi_tokens"("aibi_token_id"),
+    "action_type" text NOT NULL,
+    "before_state" jsonb,
+    "after_state" jsonb,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "user_wallets" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "wallet_address" text NOT NULL,
+    "chain_id" text NOT NULL,
+    "is_primary" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "user_wallets_user_addr_unique" UNIQUE ("user_id", "wallet_address")
+  )`,
+  // ----- 艾比平台 Phase 3（drizzle/0026_aibi_catalog.sql，2026-09-30）：目录表 -----
+  `CREATE TABLE IF NOT EXISTS "aibi_rarities" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "color" text NOT NULL,
+    "multiplier" real NOT NULL,
+    "sort_order" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "aibi_habitats" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "element_affinity" text NOT NULL,
+    "element_affinity_en" text NOT NULL,
+    "description" text NOT NULL,
+    "description_en" text NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "aibi_species" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "rarity_id" text NOT NULL REFERENCES "aibi_rarities"("id"),
+    "element" text NOT NULL,
+    "habitat_id" text NOT NULL REFERENCES "aibi_habitats"("id"),
+    "description" text NOT NULL,
+    "description_en" text NOT NULL,
+    "personality_template" text NOT NULL,
+    "personality_template_en" text NOT NULL,
+    "animation_level" integer DEFAULT 1 NOT NULL,
+    "supports_3d" boolean DEFAULT false NOT NULL,
+    "supports_chat" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "aibi_packs" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "price_points" integer NOT NULL,
+    "rarity_weights" jsonb NOT NULL,
+    "allowed_rarities" jsonb NOT NULL,
+    "animation_level" integer DEFAULT 1 NOT NULL,
+    "status" text DEFAULT 'active' NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "aibi_items" (
+    "id" text PRIMARY KEY,
+    "name_zh" text NOT NULL,
+    "name_en" text NOT NULL,
+    "item_type" text DEFAULT 'consumable' NOT NULL,
+    "effect" text NOT NULL,
+    "effect_en" text NOT NULL,
+    "effect_payload" jsonb NOT NULL,
+    "consume_mode" text DEFAULT 'immediate' NOT NULL,
+    "affects_growth" boolean DEFAULT false NOT NULL,
+    "affects_personality" boolean DEFAULT false NOT NULL,
+    "price_points" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  // ----- Phase 4 前置列（drizzle/0027，v9）：必须排在目录种子之前执行 -----
+  // （旧库 v8 的 aibi_items 无 price_points、personalities 无成长列；种子 upsert 引用这些列，
+  //   故 ALTER 与种子同置于 CREATEs 序列内保证顺序：CREATE → ALTER → 种子）
+  `ALTER TABLE "aibi_items" ADD COLUMN IF NOT EXISTS "price_points" integer DEFAULT 0 NOT NULL`,
+  `ALTER TABLE "aibi_personalities" ADD COLUMN IF NOT EXISTS "growth_level" integer DEFAULT 1 NOT NULL`,
+  `ALTER TABLE "aibi_personalities" ADD COLUMN IF NOT EXISTS "growth_exp" integer DEFAULT 0 NOT NULL`,
+  // AIBI-000001 风格编号发号序列（并发安全，替代 count+1 竞态）
+  `CREATE SEQUENCE IF NOT EXISTS "aibi_token_seq" START 1`,
+  // ----- Phase 11 · Stripe 支付订单（drizzle/0028，v10）：webhook 履约唯一入口 -----
+  `CREATE TABLE IF NOT EXISTS "stripe_orders" (
+    "id" text PRIMARY KEY,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "product_type" text NOT NULL,
+    "product_id" text,
+    "quantity" integer NOT NULL DEFAULT 1,
+    "points_amount" integer,
+    "stripe_price_id" text NOT NULL,
+    "amount_total" integer,
+    "currency" text,
+    "status" text NOT NULL DEFAULT 'pending',
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "paid_at" timestamp
+  )`,
+  // ----- 目录种子（31 行 upsert，源：src/lib/aibi-catalog.ts，见 3.1~3.5） -----
+  ...buildAibiCatalogSeedSql(),
 ];
 
 /**
@@ -815,6 +1056,29 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_ugc_creations_type" ON "ugc_creations" ("user_id", "type", "created_at" DESC)`,
   `CREATE INDEX IF NOT EXISTS "idx_ugc_submissions_campaign" ON "ugc_submissions" ("campaign_id", "created_at" DESC)`,
   `CREATE INDEX IF NOT EXISTS "idx_ugc_submissions_user" ON "ugc_submissions" ("user_id", "created_at" DESC)`,
+  // Aibi Soul Card（drizzle/0024）：按主人列卡 / 状态与稀有度筛选 / 账本追溯
+  `CREATE INDEX IF NOT EXISTS "idx_soul_cards_owner" ON "soul_cards" ("owner_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_soul_cards_status" ON "soul_cards" ("status")`,
+  `CREATE INDEX IF NOT EXISTS "idx_soul_cards_rarity" ON "soul_cards" ("rarity")`,
+  `CREATE INDEX IF NOT EXISTS "idx_chain_ledger_token" ON "chain_ledger" ("token_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_chain_ledger_card" ON "chain_ledger" ("soul_card_id")`,
+  // 艾比平台 Phase 2（drizzle/0025）：凭证筛选 / 日志追溯 / 快照历史 / 钱包查询
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_tokens_owner" ON "aibi_tokens" ("owner_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_tokens_species" ON "aibi_tokens" ("species_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_tokens_status" ON "aibi_tokens" ("status")`,
+  `CREATE INDEX IF NOT EXISTS "idx_mint_logs_token" ON "mint_logs" ("aibi_token_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_mint_logs_source" ON "mint_logs" ("source")`,
+  `CREATE INDEX IF NOT EXISTS "idx_burn_logs_token" ON "burn_logs" ("aibi_token_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_burn_logs_reason" ON "burn_logs" ("reason")`,
+  `CREATE INDEX IF NOT EXISTS "idx_supply_snapshots_created" ON "supply_snapshots" ("created_at")`,
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_growth_logs_token" ON "aibi_growth_logs" ("aibi_token_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_user_wallets_user" ON "user_wallets" ("user_id")`,
+  // Phase 3（v8）：目录表索引（drizzle/0026_aibi_catalog.sql）
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_species_rarity" ON "aibi_species" ("rarity_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_species_habitat" ON "aibi_species" ("habitat_id")`,
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_packs_status" ON "aibi_packs" ("status")`,
+  // Phase 11（v10）：Stripe 订单按用户查询（drizzle/0028_stripe_orders.sql）
+  `CREATE INDEX IF NOT EXISTS "idx_stripe_orders_user" ON "stripe_orders" ("user_id", "created_at" DESC)`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
@@ -863,7 +1127,14 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // v3: 新增垂耳兔/玄凤鹦鹉百科 + evt-041~060 探索事件种子（roadmap 任务一）
 // v4: 隐私改造 —— users.username 公开昵称（user_0001 回填+唯一索引）+ show_in_leaderboard 排行榜 opt-out（drizzle/0022）
 // v5: UGC 内容创作工坊 —— ugc_creations（P0 写真/日记卡片）+ ugc_campaigns/ugc_submissions（P1 预留）（drizzle/0023）
-const SCHEMA_VERSION = 5;
+// v6: Aibi Soul Card —— soul_cards + chain_ledger + chain_supply（drizzle/0024，平台升级 Phase 1：AI 灵魂卡 + 链下模拟账本）
+// v9: 艾比平台 Phase 4 前置列 —— aibi_items.price_points（道具定价，文档 3.5 未给、4.2 购买所需）+
+//     aibi_personalities.growth_level/growth_exp（成长当前权威）+ aibi_token_seq 发号序列（drizzle/0027）
+// v8: 艾比平台 Phase 3 —— aibi_rarities/aibi_habitats/aibi_species/aibi_packs/aibi_items 5 目录表 + 31 行种子
+//     （drizzle/0026；种子 upsert 由 src/db/aibi-catalog-seed.ts 从 src/lib/aibi-catalog.ts 生成，幂等可重导）
+// v7: 艾比平台 Phase 2 —— aibi_tokens/mint_logs/burn_logs/supply_snapshots/physical_assets/aibi_personalities/aibi_growth_logs/user_wallets（drizzle/0025）
+// v10: 艾比平台 Phase 11 —— stripe_orders 支付订单表（drizzle/0028，webhook 事务履约 + 行锁幂等）
+const SCHEMA_VERSION = 10;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

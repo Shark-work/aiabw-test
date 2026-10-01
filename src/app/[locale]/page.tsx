@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
+import { HomeAibiSection } from "@/components/aibi/home-aibi-section";
 import { FortuneBanner, RecentBornMarquee } from "@/components/daily-inspiration";
 import { NewsCarousel } from "@/components/news-carousel";
 import { SidebarAnimalNews } from "@/components/sidebar-animal-news";
@@ -297,6 +298,10 @@ export default function Home() {
       <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 pb-10">
         {/* SEO h1（视觉隐藏：Header 已承载品牌标题） */}
         <h1 className="sr-only">{t("title")}</h1>
+      {/* 艾比世界（Phase 7 · 8.1）：平台介绍/总供应量/最新铸造/热门稀有/卡包·图鉴·背包入口 */}
+      <HomeAibiSection />
+
+
 
         {/* 顶部通告栏：今日运势（Alert Banner，紧凑单行，不抢占头条视觉重心） */}
         <FortuneBanner />
