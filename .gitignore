@@ -79,3 +79,4 @@ check-resources-report.md
 !.env.production.example
 
 scripts/_realpay.*
+`n*.pid
