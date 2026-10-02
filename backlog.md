@@ -8,17 +8,19 @@
 - 方案落地：新增 GitHub Actions 工作流 `.github/workflows/handbook-cron.yml`，每天 UTC 04:30 调用 `GET /api/cron/process-handbooks` 兜底（复用 CRON_SECRET 鉴权约定，与 agent-daily.yml 同模式）。
 - 前提：GitHub 仓库 Secrets 需配置 `CRON_SECRET`（与 Vercel 环境变量同值），否则工作流打印 SKIP 不执行。
 
-## P2 · B4 /api/gallery 与 B6 agent 系 API 用量核查（需 Vercel Dashboard）
+## P2 · B4 /api/gallery 与 B6 agent 系 API 孤儿核查（待用户查 Vercel 日志后决策）
 
-- **目标**：评估 `/api/gallery` 与 `/api/agent-*` 系路由的调用频率/耗时，判断是否需要缓存或限流。
-- **阻塞**：本机 `.env.local` / `.env` 均无 `VERCEL_TOKEN`，无法 API 拉取日志；需用户到 Vercel Dashboard → 项目 → Logs 人工核查（搜 `[gallery]`、`[agent-`），或提供 VERCEL_TOKEN 后用 `scripts/check-resources.js`。
-- **现状**：两系路由均在线上正常运行（冒烟 42/42 覆盖），暂无报错迹象，属容量规划而非故障。
+- **目标**：确认 `/api/gallery`、`/api/agent/daily-digest`、`/api/agent/post-to-social`、`/api/agent/memories/verify` 最近 30 天是否有外部调用；无调用 → 建议删除，有调用 → 保留并补文档说明调用方。
+- **代码侧已知线索（2026-09-30 核实）**：
+  - `/api/agent/daily-digest` 有明确外部调用方——GitHub Actions `agent-daily.yml` 每天 UTC 03:00 POST 调用（CRON_SECRET 鉴权）→ **倾向保留**；
+  - 其余 3 个（gallery / post-to-social / memories/verify）仓库内无工作流或脚本调用记录，待日志确认。
+- **阻塞**：本机无 `VERCEL_TOKEN`，需用户到 Vercel Dashboard → 项目 → Logs 人工核查（详细查询清单见 2026-09-30 会话报告，或提供 VERCEL_TOKEN 后自动化）。
+- **约束**：不自动删除任何接口，等用户确认日志结果后再定。
+- **现状**：各路由线上运行正常（冒烟 42/42），暂无报错迹象，属去留决策而非故障。
 
-## P3 · blindbox 与 /pets/[id] 页面级 openGraph 缺分享图（批 B 同型，按约束未动）
+## ~~P3 · blindbox 与 /pets/[id] 页面级 openGraph 缺分享图~~ ✅ 已解决（2026-09-30，批 D）
 
-- **背景**：Next.js 对 `openGraph` 浅合并——页面 `generateMetadata` 导出 openGraph 后，layout 的 `siteName/locale` 与 `opengraph-image` 约定文件注入的 `images` 整体丢失。批 B 已用 `ogShareFields()` 修复 7 页（packs/soul-cards/codex/shop/supply/aibi详情/news）。
-- **遗留**：`blindbox/page.tsx`（L40）与 `pets/[id]/page.tsx`（L45）同型问题，因「/pets、/my-pets、/blindbox 不动」约束未修 → 这两页分享卡片无 og:image、无 site_name。
-- **处置**：约束解除后各加一行 `...ogShareFields(locale)` 即可（helper 已在 `src/lib/site.ts`）。
+- 两页 `generateMetadata` 的 openGraph 已展开 `...ogShareFields(locale)`（commit `668a0c6`），金丝雀实测 /zh/blindbox 与 /zh/pets/corgi 的 og:image + og:site_name + og:locale 全部注入，物种动态标题不受影响。
 
 ## P3 · B1 / B2 / B3：breed / transfer / referral API 入口决策（待产品侧确认优先级）
 
@@ -29,4 +31,4 @@
 
 ---
 
-_关联：批 A `97e1ad3`、批 B `65cc4b1`+`583ebfc`、批 C `4e1a84e` 均已上线（build ✓ / 445 测试 ✓ / 冒烟 42/42 ✓ / Xorpay 双探活 ✓）。_
+_关联：批 A `97e1ad3`、批 B `65cc4b1`+`583ebfc`、批 C `4e1a84e`、批 D `13828ef`（handbook cron）+`668a0c6`（OG 补漏）均已上线（build ✓ / 445 测试 ✓ / 冒烟 42/42 ✓ / Xorpay 双探活 ✓）。_
