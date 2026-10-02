@@ -3,15 +3,10 @@
 > 健康检查已评估但暂不执行的事项，供后续会话拾取。完成后删除对应条目。
 > 创建于 2026-09-30（批 A/B/C 已上线，以下均为暂缓项）。
 
-## P2 · 手账生成兜底 cron 未调度（B5 查明，待决策）
+## ~~P2 · 手账生成兜底 cron 未调度~~ ✅ 已解决（2026-09-30）
 
-- **现状**：`POST /api/generate/handbook` 为异步设计——先落 `handbooks(status='processing')` 立即返回，`setTimeout` 后台跑 `runHandbookTask`（原子认领 + 10 分钟卡死自愈）。兜底路由 `GET /api/cron/process-handbooks` 已实现（CRON_SECRET 鉴权、每批 5 条），**但未注册进 `vercel.json` crons**（现有 news/refresh + push-recall 已占满 Vercel Hobby 2 个 cron 名额），仓库内也无 GitHub Actions 等外部触发器。
-- **风险**：Vercel serverless 不保证响应后的 fire-and-forget 完成 → 任务可能永久卡 `processing`，手账偶发不生成。
-- **处置选项**（三选一，需用户决策）：
-  1. GitHub Actions 定时工作流（免费额度内 5-10 分钟一次）打 `Authorization: Bearer $CRON_SECRET /api/cron/process-handbooks`；
-  2. 把兜底逻辑合并进现有某个 cron 路由（如 push-recall 顺带跑一批）；
-  3. Vercel Pro 后直接在 vercel.json 注册第三个 cron。
-- **附**：生产 `handbooks` 状态分布未能核实（本机 .env.local 无 DATABASE_URL），处置前建议先查 stuck 数量。
+- 方案落地：新增 GitHub Actions 工作流 `.github/workflows/handbook-cron.yml`，每天 UTC 04:30 调用 `GET /api/cron/process-handbooks` 兜底（复用 CRON_SECRET 鉴权约定，与 agent-daily.yml 同模式）。
+- 前提：GitHub 仓库 Secrets 需配置 `CRON_SECRET`（与 Vercel 环境变量同值），否则工作流打印 SKIP 不执行。
 
 ## P2 · B4 /api/gallery 与 B6 agent 系 API 用量核查（需 Vercel Dashboard）
 
@@ -25,10 +20,12 @@
 - **遗留**：`blindbox/page.tsx`（L40）与 `pets/[id]/page.tsx`（L45）同型问题，因「/pets、/my-pets、/blindbox 不动」约束未修 → 这两页分享卡片无 og:image、无 site_name。
 - **处置**：约束解除后各加一行 `...ogShareFields(locale)` 即可（helper 已在 `src/lib/site.ts`）。
 
-## P3 · B1 / B2 / B3（沿用健康检查清单编号，整体暂缓）
+## P3 · B1 / B2 / B3：breed / transfer / referral API 入口决策（待产品侧确认优先级）
 
-- 用户决策：三项均暂不处理，具体条目描述见原始健康检查报告（2026-09-30 会话）。
-- 拾取时请回查该报告原文，按项评估后单独排期。
+- **B1** breed（繁育）：代码库无 `/api/breed` 路由（2026-09-30 全仓核实），可能为规划中功能或链上操作；入口形态与配额策略待产品确认后再实现。
+- **B2** transfer（转赠）：代码库无 `/api/transfer` 路由（同上核实）；入口与费用/冷却策略待产品确认。
+- **B3** `POST /api/referral`（邀请返利）：路由存在，入口与奖励规则待产品确认。
+- 用户决策（2026-09-30）：三项整体暂缓，**待产品侧确认优先级**后单独排期；期间不自动删除、不改动现有行为。
 
 ---
 

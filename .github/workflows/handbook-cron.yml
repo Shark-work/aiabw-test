@@ -1,0 +1,29 @@
+name: handbook-cron
+
+# 手账生成兜底：每天 GET 一次 /api/cron/process-handbooks，
+# 扫描 status='processing'（或卡死 >10 分钟的 generating）任务并调用百炼完成生成。
+# 背景：POST /api/generate/handbook 走 setTimeout 后台异步（立即返回 processing），
+# Vercel serverless 不保证响应后的 fire-and-forget 完成；Hobby 计划 vercel.json
+# 仅 2 个 cron 名额（news/refresh + push-recall 已满），故兜底调度放在 GitHub Actions。
+# 每天一次足够——该兜底只在主链路（请求内异步）失败时才有任务可捞。
+# 触发：UTC 04:30（北京时间 12:30，与 agent-daily 03:00 错峰）；另支持手动 workflow_dispatch。
+on:
+  schedule:
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: call /api/cron/process-handbooks
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "SKIP: CRON_SECRET not configured in GitHub Secrets. Add it (must equal the Vercel CRON_SECRET value) to enable the handbook fallback."
+            exit 0
+          fi
+          curl -sS --max-time 90 -X GET https://www.aiabw.com/api/cron/process-handbooks \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            || echo "process-handbooks call failed (check CRON_SECRET matches Vercel)"
