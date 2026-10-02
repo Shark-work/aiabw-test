@@ -15,12 +15,19 @@ test("referral: invite code is 6 chars uppercase alphanumeric", () => {
 });
 
 test("referral: invite codes are unique in practice", () => {
+  // 生日悖论：36^6 ≈ 2.18e9 编码空间，5000 次抽样期望碰撞 ≈ 5000²/(2·36^6) ≈ 0.006，
+  // 「零碰撞」断言自带 ~0.6%/run flake（2026-09-30 实测命中 collision: FY3ID2）。
+  // 改为统计容差：碰撞 ≤2（Poisson λ≈0.006 下 P(≥3) < 1e-7，等价确定性）。
+  // 生产唯一性由 UNIQUE INDEX idx_users_invite_code + 注册 6 次重试循环兜底，
+  // 不依赖抽样零碰撞（register/route.ts L63-65）。
   const seen = new Set();
+  let collisions = 0;
   for (let i = 0; i < 5000; i++) {
     const code = generateInviteCode();
-    assert.ok(!seen.has(code), `collision: ${code}`);
+    if (seen.has(code)) collisions++;
     seen.add(code);
   }
+  assert.ok(collisions <= 2, `too many collisions: ${collisions}`);
 });
 
 test("referral: custom length works", () => {
