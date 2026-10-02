@@ -60,7 +60,16 @@ test("makeNfrHashId 确定性 + 不同 salt 不同", () => {
   assert.equal(h1.length, 64);
 });
 
-test("双 legendary 亲本子代仍为 legendary（链顶）", () => {
-  const child = breedDna({ rarity: "legendary" }, { rarity: "legendary" });
-  assert.equal(child.rarity, "legendary");
+test("双 legendary 亲本子代 ∈ {epic, legendary}（±1 突变 clamp 链内）", () => {
+  // 原断言「必为 legendary」有 6% flake（12% 突变 × 50% 向下降 1 级 → epic）。
+  // 算法确定性边界：base = min(双亲) = legendary；突变仅 ±1 且 clamp [0, 链顶]
+  // → 子代只可能落在 [epic, legendary]，循环 100 次断言该不变量。
+  for (let i = 0; i < 100; i++) {
+    const child = breedDna({ rarity: "legendary" }, { rarity: "legendary" });
+    const idx = rarityIndex(child.rarity);
+    assert.ok(
+      idx >= rarityIndex("epic") && idx <= rarityIndex("legendary"),
+      `子代稀有度 ${child.rarity} 应在 [epic, legendary] 内`,
+    );
+  }
 });
