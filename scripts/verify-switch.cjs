@@ -80,7 +80,7 @@ async function switchTo(page, langLabel, fromPath) {
   assert(en2zh.path === "/zh/pets", "目标 URL 正确拼接 /zh/pets");
   assert(en2zh.lang === "zh", "<html lang=zh> 已更新");
   assert(en2zh.txt.includes("动物图鉴") && en2zh.txt.includes("我的宠物"), "中文导航渲染");
-  assert(en2zh.txt.includes("本站累计访问") || en2zh.txt.includes("© 2026 艾比世界"), "Footer server 文案已刷新为中文");
+  assert(en2zh.txt.includes("本站累计访问") || en2zh.txt.includes("© 2025-2026 艾比世界"), "Footer server 文案已刷新为中文");
 
   // ---- 3) 带 query 切换（/zh/pets?species=X → /en/pets?species=X）----
   await pg.goto(BASE + "/zh/pets?species=golden_retriever", { waitUntil: "domcontentloaded", timeout: 30000 });

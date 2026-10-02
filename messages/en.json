@@ -284,7 +284,7 @@
     "longPressHint": "👆 Long-press the image to scan with WeChat"
   },
   "footer": {
-    "copyright": "© 2025-2026 aiabw.com | v{version}",
+    "copyright": "aiabw.com | v{version}",
     "language": "Language",
     "about": "About",
     "faq": "FAQ",
@@ -292,7 +292,7 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "virtualGoods": "Virtual Goods & Recharge Rules",
-    "copyrightLine": "© 2026 AIABW. All Rights Reserved.",
+    "copyrightLine": "© 2025-2026 AIABW. All Rights Reserved.",
     "originalNotice": "All pet artwork, genetic settings, species descriptions and UI designs on this site are original or legally licensed and protected by copyright law. Any reproduction, scraping or commercial use without written permission is prohibited.",
     "disclaimer": "This platform is a virtual interactive community. All pet data is for entertainment and collection only and has no real-world monetary value.",
     "visitsLine": "📊 Total visits: {total}"
