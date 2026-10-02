@@ -51,7 +51,7 @@ function traitEn(zh?: string): string {
  * GET /api/pets/daily — 首页「艾比每日灵感」数据源：
  *  - lucky: 今日幸运宠（按日期确定性选一只【未领养 + 当日星座元素匹配】的预计算宠物；
  *           该元素池为空时回退到任意未领养宠物）；
- *  - recent: 最近 3 只被领养/合成的稀有宠（rare / epic / legendary），owner 只展示公开昵称
+ *  - recent: 最近 6 只被领养/合成的稀有宠（rare / epic / legendary），owner 只展示公开昵称
  *           （隐私改造：不再使用邮箱前缀，游客占位宠物回退「匿名」）。
  */
 export async function GET(req: Request) {
@@ -84,7 +84,7 @@ export async function GET(req: Request) {
     );
   }
 
-  // —— 最新诞生：最近 3 只被领养/合成的稀有宠 ——
+  // —— 最新诞生：最近 6 只被领养/合成的稀有宠（≥4 条前端才启用无缝循环，避免同屏重复） ——
   const { rows: recentRows } = await pool.query(
     `SELECT p.id, p.species_id, p.image_url, p.traits, p.adopted_at,
             d.name_zh AS "nameZh", d.name_en AS "nameEn",
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
         AND p.status = 'active'
         AND p.traits->>'rarity' IN ('rare', 'epic', 'legendary')
       ORDER BY p.adopted_at DESC NULLS LAST
-      LIMIT 3`,
+      LIMIT 6`,
   );
 
   const luckyRow = luckyRows.rows[0];

@@ -91,8 +91,9 @@ export function FortuneBanner() {
 /**
  * 🐾 实时动态 · 刚刚诞生的伙伴（首页重构版）：横向滚动跑马灯。
  *  - 紧贴盲盒卡片下方，营造「很多人正在玩」的热闹氛围；
- *  - 内容 ×2 拼接 + CSS translateX(-50%) 实现无缝循环（尊重 prefers-reduced-motion）；
- *  - 数据源 /api/pets/daily 的 recent（最近 3 只稀有宠）。
+ *  - 数据 ≥4 条时：内容 ×2 拼接 + CSS translateX(-50%) 实现无缝循环（尊重 prefers-reduced-motion）；
+ *    不足 4 条时静态展示（不倍增、不滚动），避免同屏出现重复卡片；
+ *  - 数据源 /api/pets/daily 的 recent（最近 6 只稀有宠，id 唯一无重复）。
  */
 export function RecentBornMarquee() {
   const t = useTranslations("home");
@@ -118,8 +119,10 @@ export function RecentBornMarquee() {
 
   if (loading || recent.length === 0) return null;
 
-  // 数据翻倍拼接实现无缝循环滚动
-  const items = recent.length > 1 ? [...recent, ...recent] : recent;
+  // ≥4 条才 ×2 拼接启用无缝循环（-50% 平移衔接需足够内容宽度，且避免 2~3 条时同屏重复）；
+  // 不足 4 条静态展示，不动画
+  const loop = recent.length >= 4;
+  const items = loop ? [...recent, ...recent] : recent;
 
   return (
     <div className="w-full rounded-2xl border border-zinc-200 bg-white/85 p-6 shadow-sm backdrop-blur">
@@ -133,7 +136,7 @@ export function RecentBornMarquee() {
         </Link>
       </h3>
       <div className="overflow-hidden">
-        <div className="marquee-track flex w-max gap-3">
+        <div className={`marquee-track flex w-max gap-3${loop ? "" : " marquee-static"}`}>
           {items.map((p, i) => (
             <Link
               key={`${p.id}-${i}`}
@@ -161,6 +164,10 @@ export function RecentBornMarquee() {
         }
         .marquee-track {
           animation: bxMarquee 28s linear infinite;
+        }
+        .marquee-track.marquee-static {
+          animation: none;
+          width: auto;
         }
         @media (prefers-reduced-motion: reduce) {
           .marquee-track {
