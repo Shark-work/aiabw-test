@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+
+/**
+ * 软 404 治理：本兜底页对未知路径返回 HTTP 200（见下方注释），
+ * 用 robots noindex 防止搜索引擎把已删页面/乱输 URL 计入收录（soft-404 惩罚）。
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return { robots: { index: false } };
+}
 
 /**
  * 兜底 404：捕获 [locale] 下所有未知路径（/zh/xxx、/en/xxx）。

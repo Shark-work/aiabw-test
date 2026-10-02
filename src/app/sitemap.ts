@@ -12,6 +12,7 @@ import { LOCALES, SITE_URL } from "@/lib/site";
  *  - 动态链上凭证页 /aibi/<AIBI-XXXXXX>（来自 aibi_tokens，status='minted'，上限 200）；
  *  - 2026-09-30 清理审计：补收录 /soul-cards /packs /codex /shop /supply 新平台核心路由，
  *    /news 随旧新闻系统降级（priority 0.7→0.3，页面保留）；
+ *  - 2026-09-30 健康检查批 A：再补 /bag /explore-v2 /workshop 三条主漏斗路由；
  *  - 排除范围：admin / login / register / chat / api 一律不收录；
  *  - DB 不可达时降级为纯静态路由，不阻断 sitemap 生成。
  */
@@ -21,6 +22,9 @@ const ROUTES: { path: string; priority: number; changeFrequency: MetadataRoute.S
   { path: "/blindbox", priority: 0.8, changeFrequency: "daily" },
   { path: "/news", priority: 0.3, changeFrequency: "weekly" }, // 2026-09-30 旧新闻系统降级（保留页面）
   { path: "/my-pets", priority: 0.7, changeFrequency: "daily" },
+  { path: "/bag", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/explore-v2", priority: 0.7, changeFrequency: "weekly" },
+  { path: "/workshop", priority: 0.6, changeFrequency: "weekly" },
   // 2026-09-30 AIABW 新平台核心路由补收录（此前 sitemap 停留在旧站点结构）
   { path: "/soul-cards", priority: 0.9, changeFrequency: "daily" },
   { path: "/packs", priority: 0.9, changeFrequency: "daily" },
