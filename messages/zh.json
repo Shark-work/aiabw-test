@@ -29,6 +29,7 @@
     "subtitle": "培育独一无二的 AI 宠物，一起探索，收集稀缺的数字灵魂卡。",
     "socialProof": "已有 {count}+ 位收藏家在培育他们的 AI 伙伴",
     "socialProofFallback": "已有数千位收藏家",
+    "heroCta": "立即领养",
     "checkin": "📅 每日签到",
     "checkinOk": "🎉 签到成功 +{points} 积分！",
     "checkinAlready": "今天已经签到过啦，明天再来~",

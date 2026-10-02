@@ -303,7 +303,15 @@ export default function Home() {
             {t("title")}
           </p>
           <p className="mt-2 text-sm text-zinc-500">{t("subtitle")}</p>
-          <SocialProof className="mt-1.5 text-xs text-zinc-400" />
+          {/* 行动 CTA：副标题下方、社交证明上方，指向 /pets 领养入口
+              （项目无 primary 色变量 → 沿用站点主按钮橙色系；t 已绑定 home 命名空间） */}
+          <Link
+            href="/pets"
+            className="mt-4 inline-flex items-center justify-center rounded-full bg-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
+          >
+            {t("heroCta")}
+          </Link>
+          <SocialProof className="mt-4 text-xs text-zinc-400" />
         </div>
       {/* 艾比世界（Phase 7 · 8.1）：平台介绍/总供应量/最新铸造/热门稀有/卡包·图鉴·背包入口 */}
       <HomeAibiSection />
