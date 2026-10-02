@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { CodexClient } from "@/components/aibi/codex-client";
-import { SITE_URL } from "@/lib/site";
+import { ogShareFields, SITE_URL } from "@/lib/site";
 
 /**
  * /[locale]/codex
@@ -20,7 +20,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/codex` },
+    openGraph: { ...ogShareFields(locale), title, description, type: "website", url: `${SITE_URL}/${locale}/codex` },
   };
 }
 

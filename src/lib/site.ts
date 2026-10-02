@@ -40,3 +40,20 @@ export function stripLocalePrefix(rawPathname: string): string {
   if (m) return m[2] && m[2] !== "/" ? m[2] : "/";
   return rawPathname;
 }
+
+/** 全站 OG/Twitter 分享图 alt（1200×630，由 [locale]/opengraph-image 约定路由渲染）。 */
+export const OG_SHARE_ALT = "艾比世界 · AI 角色养成与数字收藏平台";
+
+/**
+ * 页面级 openGraph 公共字段（siteName/locale/images）。
+ * 注意：Next.js 对 openGraph 是浅合并——页面 generateMetadata 一旦导出 openGraph 对象，
+ * layout 的 siteName/locale 与 opengraph-image 约定文件注入的 images 会被整体覆盖丢失，
+ * 因此页面级 openGraph 必须显式展开本字段。
+ */
+export function ogShareFields(locale: string) {
+  return {
+    siteName: locale === "en" ? "AIABW" : "艾比世界",
+    locale,
+    images: [{ url: `${SITE_URL}/${locale}/opengraph-image`, width: 1200, height: 630, alt: OG_SHARE_ALT }],
+  };
+}

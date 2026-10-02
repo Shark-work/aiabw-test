@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AibiSoulPanel } from "@/components/aibi/aibi-soul-panel";
 import { SoulCardsClient } from "@/components/soul-card/soul-cards-client";
-import { SITE_URL } from "@/lib/site";
+import { ogShareFields, SITE_URL } from "@/lib/site";
 
 /**
  * /[locale]/soul-cards
@@ -27,7 +27,7 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/soul-cards` },
+    openGraph: { ...ogShareFields(locale), title, description, type: "website", url: `${SITE_URL}/${locale}/soul-cards` },
   };
 }
 

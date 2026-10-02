@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AibiPageClient } from "@/components/aibi/aibi-page-client";
-import { SITE_URL } from "@/lib/site";
+import { ogShareFields, SITE_URL } from "@/lib/site";
 
 /**
  * /[locale]/aibi/[tokenId]
@@ -25,6 +25,7 @@ export async function generateMetadata({
     title,
     description,
     openGraph: {
+      ...ogShareFields(locale),
       title,
       description,
       type: "website",

@@ -5,7 +5,7 @@ import { pool } from "@/db/client";
 import { Link } from "@/i18n/navigation";
 import { formatHot } from "@/lib/news";
 import { queryNewsByLocale } from "@/lib/news-fetch";
-import { SITE_URL } from "@/lib/site";
+import { ogShareFields, SITE_URL } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/news` },
+    openGraph: { ...ogShareFields(locale), title, description, type: "website", url: `${SITE_URL}/${locale}/news` },
   };
 }
 
