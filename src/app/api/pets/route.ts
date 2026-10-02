@@ -8,6 +8,7 @@ import { apiError, petDisplayName, resolveLocale } from "@/i18n/api-errors";
 import { parseMemoryStore, type MemoryFact } from "@/lib/memory";
 import { getPet } from "@/lib/pet-config";
 import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
+import { rarityByWeight } from "@/lib/species-group";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,8 @@ export async function GET(req: Request) {
       ),
     ];
     const speciesAvatar = new Map<string, string>();
+    // 物种 → 当前用户/设备持有实例的最高稀有度权重（艾比名展示门槛判定用）
+    const speciesRarityW = new Map<string, number>();
     if (speciesIds.length) {
       try {
         const { rows: imgs } = await pool.query(
@@ -63,6 +66,22 @@ export async function GET(req: Request) {
         for (const r of imgs) speciesAvatar.set(r.species_id, r.image_url);
       } catch {
         // 查询失败时回退默认头像，不影响列表
+      }
+      try {
+        const { rows: rar } = await pool.query(
+          `SELECT species_id,
+                  MAX(CASE traits->>'rarity' WHEN 'legendary' THEN 5 WHEN 'epic' THEN 4
+                       WHEN 'rare' THEN 3 WHEN 'uncommon' THEN 2 WHEN 'common' THEN 1 ELSE 0 END) AS w
+             FROM pets
+            WHERE species_id = ANY($1) AND status = 'active'
+              AND (($2::text IS NOT NULL AND owner_id::text = $2)
+                   OR ($3::text IS NOT NULL AND guest_owner = $3))
+            GROUP BY species_id`,
+          [speciesIds, user ? user.id : null, user ? null : anonymousId || null],
+        );
+        for (const r of rar) speciesRarityW.set(r.species_id, Number(r.w));
+      } catch {
+        // 稀有度查询失败时全部回退原型名，不影响列表
       }
     }
 
@@ -81,8 +100,16 @@ export async function GET(req: Request) {
         id: a.id,
         petType: a.petType,
         petName: a.petName,
-        // 数据层映射：官方宠物按语言返回 display_name（不修改 DB 原始 petName）
-        displayName: petDisplayName(locale, a.petType, a.petName),
+        // 数据层映射：官方宠物按语言返回 display_name（不修改 DB 原始 petName）；
+        // 图鉴物种在该用户/设备持有实例达史诗稀有度时派生艾比名（门槛内聚于此）
+        displayName: petDisplayName(
+          locale,
+          a.petType,
+          a.petName,
+          isSpeciesPetType(a.petType)
+            ? rarityByWeight(speciesRarityW.get(speciesIdOf(a.petType)) ?? 0)
+            : null,
+        ),
         avatar,
         level: a.level,
         happiness: a.happiness,

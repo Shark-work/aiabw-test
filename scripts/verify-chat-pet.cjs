@@ -66,6 +66,11 @@ const clean = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
   const threadId = claim.json?.threadId;
   const adoptionId = claim.json?.adoption?.id;
   const speciesName = claim.json?.pet?.speciesName || "";
+  // 艾比名：物种有映射 且 该实例稀有度 ≥ epic 时，聊天头部显示艾比名（与 SSR 门槛同口径）
+  const aibiName = claim.json?.pet?.aibiName || "";
+  const rarity = claim.json?.pet?.traits?.rarity || "";
+  const expectName =
+    aibiName && (rarity === "epic" || rarity === "legendary") ? aibiName : speciesName;
   assert(!!threadId && !!adoptionId, "返回 threadId + adoption.id");
   assert(
     /^species:/.test(claim.json?.adoption?.petType || ""),
@@ -77,13 +82,13 @@ const clean = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
   const ok = await req(`/zh/chat?thread=${threadId}&adopt=${adoptionId}`);
   const okText = clean(ok.text);
   assert(ok.status === 200, "聊天页 200", "status=" + ok.status);
-  assert(okText.includes(`Lv.1 ${speciesName}`), `聊天页渲染真实物种「${speciesName}」`);
+  assert(okText.includes(`Lv.1 ${expectName}`), `聊天页渲染真实物种「${expectName}」`);
   assert(!okText.includes("Lv.1 抱抱狐"), "未退回默认抱抱狐");
 
   // ---- 3) 兜底链路：丢 adopt 参数 → 按线程反查领养记录 ----
   const noAdopt = await req(`/zh/chat?thread=${threadId}`);
   assert(
-    noAdopt.status === 200 && clean(noAdopt.text).includes(`Lv.1 ${speciesName}`),
+    noAdopt.status === 200 && clean(noAdopt.text).includes(`Lv.1 ${expectName}`),
     "丢 adopt 参数仍显示真实物种（线程反查兜底）",
     "status=" + noAdopt.status,
   );
@@ -91,7 +96,7 @@ const clean = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
   // ---- 4) 防御链路：非法 UUID 参数不 500 ----
   const bad = await req(`/zh/chat?thread=${threadId}&adopt=undefined`);
   assert(
-    bad.status === 200 && clean(bad.text).includes(`Lv.1 ${speciesName}`),
+    bad.status === 200 && clean(bad.text).includes(`Lv.1 ${expectName}`),
     "非法 adopt 参数不 500 且显示真实物种",
     "status=" + bad.status,
   );
@@ -105,7 +110,7 @@ const clean = (s) => s.replace(/<!--[\s\S]*?-->/g, "");
     `status=${old.status} location=${loc}`,
   );
   const oldFollow = await req(`/zh/threads/${threadId}`);
-  assert(clean(oldFollow.text).includes(`Lv.1 ${speciesName}`), "重定向落点显示真实物种");
+  assert(clean(oldFollow.text).includes(`Lv.1 ${expectName}`), "重定向落点显示真实物种");
 
   console.log(`\n结果: ${pass} passed, ${fail} failed`);
 

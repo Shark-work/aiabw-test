@@ -336,6 +336,7 @@
     "variantsBadge": "{count} versions",
     "variantsTitle": "💎 Rarity Variants",
     "variantsSubtitle": "{count} rarity variants",
+    "prototypeLabel": "Prototype: {name}",
     "synthesize": "🔮 Synthesize",
     "synthesizeOk": "🎉 Synthesized! Welcome your new companion!",
     "synthesizeFailed": "Synthesis failed",
@@ -810,6 +811,7 @@
   "seo": {
     "petDetailTitle": "{name} - AI Virtual Pet Encyclopedia | AIABW",
     "petDetailDesc": "Adopt your own AI virtual pet {name}: {category} · {habitat}. Chat, daily check-in and 3-to-1 fusing to level up rare pets.",
+    "aibiNameLabel": "Aibi name: {name}",
     "blindboxTitle": "Blind Box Plaza - {legendary}% Legendary Odds | AIABW",
     "blindboxDesc": "Blind boxes from ¥1 with transparent odds: {common}% Common · {rare}% Rare · {epic}% Epic · {legendary}% Legendary. Rare pets instantly.",
     "blindboxH1": "Blind Box Plaza",

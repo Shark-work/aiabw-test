@@ -1,6 +1,9 @@
 import zh from "../../messages/zh.json";
 import en from "../../messages/en.json";
 
+import { aibiNameEligible, aibiNameFor } from "@/lib/aibi-names";
+import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
+
 export type Locale = "zh" | "en";
 
 /**
@@ -50,13 +53,23 @@ export function apiError(
 /**
  * 老数据宠物名映射（数据层）：
  * 官方宠物（fox/penguin/dog）按当前 locale 返回对应语言的名字（抱抱狐 / Huggy Fox），
- * UGC 或未知宠物回退到数据库存储名。不修改数据库原始数据。
+ * 图鉴物种（species:<id>）在史诗及以上稀有度实例（rarity 参数）且物种有映射时
+ * 派生艾比名（单源 src/lib/aibi-names.ts），
+ * UGC、未达稀有度门槛或未知宠物回退到数据库存储名。不修改数据库原始数据。
  */
 export function petDisplayName(
   locale: Locale,
   petType: string,
   fallback: string,
+  rarity?: string | null,
 ): string {
+  if (isSpeciesPetType(petType)) {
+    // 稀有度门槛内聚：未传 rarity（无实例归属信息）时保守回退原型名快照
+    const aibi = aibiNameEligible(rarity)
+      ? aibiNameFor(speciesIdOf(petType), locale)
+      : null;
+    return aibi ?? fallback;
+  }
   const pets = (locale === "en" ? en : zh) as {
     pets?: Record<string, { name?: string }>;
   };

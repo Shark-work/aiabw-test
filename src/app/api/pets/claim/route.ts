@@ -10,6 +10,7 @@ import {
 } from "@/lib/pet-limit";
 import { renderPetDescription } from "@/lib/pet-dictionary";
 import { SPECIES_PET_TYPE_PREFIX } from "@/lib/species-prompt";
+import { aibiNameFor } from "@/lib/aibi-names";
 import { mintCollectible } from "@/lib/nfr";
 import { releaseInviteReward } from "@/lib/referral-reward";
 
@@ -202,6 +203,8 @@ export async function POST(req: Request) {
           id: pet.id,
           speciesId: pet.species_id,
           speciesName: locale === "en" ? pet.nameEn : pet.nameZh,
+          // 艾比名（物种在映射白名单时派生；展示门槛由调用方按 traits.rarity ≥ epic 判定）
+          aibiName: aibiNameFor(pet.species_id, locale) ?? undefined,
           imageUrl: pet.image_url,
           traits: pet.traits ?? {},
           defaultDescription: renderPetDescription(

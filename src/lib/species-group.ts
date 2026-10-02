@@ -18,6 +18,12 @@ export function rarityWeight(rarity?: string | null): number {
   return (rarity != null && RARITY_WEIGHT[rarity]) || 0;
 }
 
+/** 权重 → 稀有度名（未知权重 → null；SQL MAX(weight) 聚合结果反查用）。 */
+export function rarityByWeight(w: number): string | null {
+  for (const [k, v] of Object.entries(RARITY_WEIGHT)) if (v === w) return k;
+  return null;
+}
+
 /** groupBySpecies 的最小输入约束（catalog 行 / 测试桩均满足）。 */
 export type SpeciesGroupSource = {
   id: string;

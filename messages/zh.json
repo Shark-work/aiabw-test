@@ -336,6 +336,7 @@
     "variantsBadge": "共 {count} 种版本",
     "variantsTitle": "💎 稀有度版本",
     "variantsSubtitle": "共 {count} 种稀有度版本",
+    "prototypeLabel": "原型 {name}",
     "synthesize": "🔮 合成",
     "synthesizeOk": "🎉 合成成功，欢迎新伙伴！",
     "synthesizeFailed": "合成失败",
@@ -810,6 +811,7 @@
   "seo": {
     "petDetailTitle": "{name} - AI 虚拟宠物图鉴 | 艾比世界",
     "petDetailDesc": "领养专属 AI 虚拟宠物「{name}」：{category} · {habitat}。专属记忆、每日签到与互动养成，3 合 1 灵力融合可升级为稀有宠物。",
+    "aibiNameLabel": "艾比名：{name}",
     "blindboxTitle": "盲盒广场 - 传说 {legendary}% 高爆率开箱 | 艾比世界",
     "blindboxDesc": "盲盒广场：每日福利箱 1 元起抽，赛博神话箱传说爆率 {legendary}%。爆率公示透明：普通 {common}% · 稀有 {rare}% · 史诗 {epic}%，稀有宠物即刻拥有。",
     "blindboxH1": "盲盒广场",

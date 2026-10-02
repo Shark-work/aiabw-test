@@ -1,4 +1,4 @@
-import { db } from "@/db/client";
+import { db, pool } from "@/db/client";
 import { messages as messagesTable, adoptions, chatQuotas } from "@/db/schema";
 import { and, eq, asc } from "drizzle-orm";
 import type { UIMessage } from "ai";
@@ -14,6 +14,9 @@ import { getActiveSubscription } from "@/lib/subscription-config";
 import { getQuotaStatus, getRemaining, QUOTA_CONFIG, todayString } from "@/lib/chat-quota-config";
 import { QuotaBadge, type QuotaState } from "@/components/chat/quota-ui";
 import { verifyToken } from "@/lib/auth";
+import { aibiNameEligible, aibiNameFor } from "@/lib/aibi-names";
+import { rarityByWeight } from "@/lib/species-group";
+import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
 // 领养成功后进入的独立聊天页。
 // 服务端根据 URL 参数加载该线程的历史消息、艾比心情与宠物类型（petType），再交给客户端渲染。
 export default async function ChatPage({
@@ -70,6 +73,9 @@ export default async function ChatPage({
     level: adoptions.level,
     monthlyPoints: adoptions.monthlyPoints,
     petType: adoptions.petType,
+    // 艾比名门槛判定用（持有实例稀有度查询的归属条件），不新增 DB 字段
+    userId: adoptions.userId,
+    anonymousId: adoptions.anonymousId,
   };
   let ad = adoptionId
     ? (
@@ -109,6 +115,33 @@ export default async function ChatPage({
       personality: tp(`${petType}.personality`),
     };
     welcomeMessage = tp(`${petType}.welcome`);
+  }
+
+  // 艾比名（图鉴物种 · 史诗及以上稀有度实例）：聊天头部展示名替换为艾比名；
+  // DB 快照、线程消息与 welcome 文案不动。门槛 = 当前用户/设备持有的该物种实例
+  // 最高稀有度 ≥ epic；查询失败静默回退原型名，不影响聊天页渲染。
+  if (ad && isSpeciesPetType(petType)) {
+    const aibi = aibiNameFor(speciesIdOf(petType), locale);
+    if (aibi) {
+      try {
+        const ownerId = ad.userId && ad.userId !== "anonymous" ? ad.userId : null;
+        const guestId = ad.anonymousId ?? null;
+        const { rows: rw } = await pool.query(
+          `SELECT COALESCE(MAX(CASE traits->>'rarity' WHEN 'legendary' THEN 5 WHEN 'epic' THEN 4
+                    WHEN 'rare' THEN 3 WHEN 'uncommon' THEN 2 WHEN 'common' THEN 1 ELSE 0 END), 0) AS w
+             FROM pets
+            WHERE species_id = $1 AND status = 'active'
+              AND (($2::text IS NOT NULL AND owner_id::text = $2)
+                   OR ($3::text IS NOT NULL AND guest_owner = $3))`,
+          [speciesIdOf(petType), ownerId, guestId],
+        );
+        if (aibiNameEligible(rarityByWeight(Number(rw[0]?.w ?? 0)))) {
+          pet = { ...pet, name: aibi };
+        }
+      } catch {
+        // 稀有度查询失败：保持原型名
+      }
+    }
   }
 
   // 宠物旅行日记 · 聊天额度（SSR 初值，避免首屏空白）

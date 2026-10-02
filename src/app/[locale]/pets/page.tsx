@@ -10,6 +10,8 @@ import { PetKnowledgeModal, type KnowledgePet } from "@/components/pet-knowledge
 import { LeaderboardPanel } from "@/components/leaderboard-panel";
 import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
+import { rarityWeight } from "@/lib/species-group";
+import { AIBI_RARITY_MIN_WEIGHT } from "@/lib/aibi-names";
 import { getAnonymousId } from "@/lib/anon-id";
 import { SITE_URL } from "@/lib/site";
 
@@ -17,6 +19,8 @@ type CatalogPet = {
   id: string;
   speciesId: string;
   speciesName: string;
+  /** 艾比名（物种在映射白名单时由 API 派生；展示门槛：卡稀有度 ≥ epic，未达门槛仍显示原型名） */
+  aibiName?: string;
   category: string;
   habitat?: string | null;
   imageUrl: string;
@@ -339,6 +343,10 @@ export default function PetsCatalogPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pets.map((pet, i) => {
             const rarityMeta = getRarityMeta(String(pet.traits.rarity ?? ""));
+            // 艾比名展示门槛：物种有映射 且 卡稀有度（rep = 物种最高版本）≥ epic
+            const showAibi =
+              !!pet.aibiName &&
+              rarityWeight(pet.traits.rarity) >= AIBI_RARITY_MIN_WEIGHT;
             return (
               <div
                 key={pet.id}
@@ -353,7 +361,14 @@ export default function PetsCatalogPage() {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-zinc-900">{pet.speciesName}</span>
+                      <span className="font-semibold text-zinc-900">
+                        {showAibi ? pet.aibiName : pet.speciesName}
+                      </span>
+                      {showAibi && (
+                        <span className="text-[10px] font-normal text-zinc-400">
+                          {t("prototypeLabel", { name: pet.speciesName })}
+                        </span>
+                      )}
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${rarityMeta.badgeClass}`}
                       >

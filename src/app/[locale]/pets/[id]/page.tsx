@@ -9,6 +9,7 @@ import { renderPetDescription, type DictionarySpecies } from "@/lib/pet-dictiona
 import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
 import { rarityWeight } from "@/lib/species-group";
+import { aibiNameFor } from "@/lib/aibi-names";
 import { SITE_URL, ogShareFields } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string; id: string }> };
@@ -77,6 +78,8 @@ export default async function PetSpeciesPage({ params }: Props) {
   };
   const name = locale === "en" ? species.nameEn : species.nameZh;
   const desc = renderPetDescription(species, null, locale);
+  // 艾比名（物种级副标题，仅页面内展示）：title / OG / sitemap / JSON-LD 一律维持原型名（SEO 强约束）
+  const aibi = aibiNameFor(species.id, locale);
 
   // 该物种的全部稀有度版本（图鉴已按物种去重，各版本在详情页展示）：
   //  - 按稀有度聚合（legendary > … > common），每版本一卡；
@@ -141,6 +144,11 @@ export default async function PetSpeciesPage({ params }: Props) {
               <p className="mt-0.5 text-xs text-zinc-400">
                 {species.nameZh}｜{species.nameEn}
               </p>
+              {aibi && (
+                <p className="mt-0.5 text-xs font-medium text-orange-500">
+                  {t("aibiNameLabel", { name: aibi })}
+                </p>
+              )}
               <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
                 <span className="rounded-full bg-orange-50 px-2 py-0.5 font-medium text-orange-600">
                   {species.category}
