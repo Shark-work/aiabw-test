@@ -32,10 +32,14 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const zhFolded = await pg.evaluate(() => {
     const foot = document.querySelector("footer");
     const btn = foot?.querySelector("button[aria-expanded]");
+    const region = [...(foot?.children ?? [])].find((el) => el.classList?.contains("grid"));
     return {
       t: foot?.innerText ?? "",
       btnText: (btn?.innerText ?? "").trim(),
       expanded: btn?.getAttribute("aria-expanded") ?? null,
+      // 视觉隐藏用几何判定（innerText 不感知 overflow 裁剪/opacity）
+      regionH: region?.getBoundingClientRect().height ?? -1,
+      regionOp: region ? getComputedStyle(region).opacity : "?",
       // 折叠内容保留在 DOM（SEO 保障，未条件卸载）
       navInDom: !!foot?.querySelector("nav a"),
       legalInDom: (foot?.textContent ?? "").includes("受著作权法保护"),
@@ -47,7 +51,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert(zhFolded.t.includes("© 2025-2026 艾比世界 (AIABW). All Rights Reserved."), "折叠态：主版权行始终显示");
   assert(zhFolded.expanded === "false", "折叠态：按钮 aria-expanded=false");
   assert(zhFolded.btnText.includes("展开") && zhFolded.btnText.includes("▸"), "折叠态：按钮文案「展开 ▸」");
-  assert(!zhFolded.t.includes("关于我们") && !zhFolded.t.includes("受著作权法保护"), "折叠态：链接组/法律条款默认视觉隐藏");
+  assert(zhFolded.regionH === 0 && zhFolded.regionOp === "0", "折叠态：折叠区高度 0 + 透明（视觉隐藏，内容留 DOM）");
   assert(zhFolded.navInDom && zhFolded.legalInDom, "折叠态：内容保留在 DOM（SEO 可抓取）");
   // 点击展开按钮
   await pg.evaluate(() => { document.querySelector("footer button[aria-expanded]")?.click(); });
@@ -89,17 +93,20 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const enFolded = await pg.evaluate(() => {
     const foot = document.querySelector("footer");
     const btn = foot?.querySelector("button[aria-expanded]");
+    const region = [...(foot?.children ?? [])].find((el) => el.classList?.contains("grid"));
     return {
       t: foot?.innerText ?? "",
       btnText: (btn?.innerText ?? "").trim(),
       expanded: btn?.getAttribute("aria-expanded") ?? null,
+      regionH: region?.getBoundingClientRect().height ?? -1,
+      regionOp: region ? getComputedStyle(region).opacity : "?",
     };
   });
   console.log("--- en footer（折叠态）---");
   console.log("  text:", JSON.stringify(enFolded.t.slice(0, 120)));
   assert(enFolded.t.includes("© 2025-2026 AIABW. All Rights Reserved."), "en 折叠态：版权行始终显示");
   assert(enFolded.expanded === "false" && enFolded.btnText.includes("Expand") && enFolded.btnText.includes("▸"), "en 折叠态：按钮「Expand ▸」aria-expanded=false");
-  assert(!enFolded.t.includes("About") && !enFolded.t.includes("Total visits"), "en 折叠态：链接组/计数默认隐藏");
+  assert(enFolded.regionH === 0 && enFolded.regionOp === "0", "en 折叠态：折叠区高度 0 + 透明（视觉隐藏）");
   // 点击展开按钮
   await pg.evaluate(() => { document.querySelector("footer button[aria-expanded]")?.click(); });
   // 轮询等待访问计数渲染
