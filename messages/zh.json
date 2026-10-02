@@ -25,8 +25,10 @@
     "details": "详情"
   },
   "home": {
-    "title": "AIABW · AI 角色养成与数字收藏平台",
-    "subtitle": "养育独一无二的 AI 生命体：陪它聊天成长，铸造灵魂卡、开卡包收集，每张收藏都有链上稀缺凭证。",
+    "title": "领养你的 AI 伙伴 · 收集 · 聊天 · 成长",
+    "subtitle": "培育独一无二的 AI 宠物，一起探索，收集稀缺的数字灵魂卡。",
+    "socialProof": "已有 {count}+ 位收藏家在培育他们的 AI 伙伴",
+    "socialProofFallback": "已有数千位收藏家",
     "checkin": "📅 每日签到",
     "checkinOk": "🎉 签到成功 +{points} 积分！",
     "checkinAlready": "今天已经签到过啦，明天再来~",

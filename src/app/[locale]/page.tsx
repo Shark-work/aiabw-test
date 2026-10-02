@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { HomeAibiSection } from "@/components/aibi/home-aibi-section";
 import { FortuneBanner, RecentBornMarquee } from "@/components/daily-inspiration";
+import { SocialProof } from "@/components/social-proof";
 import { BlindboxPlaza } from "@/components/blindbox-plaza";
 import { LivingPet } from "@/components/LivingPet";
 import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal";
@@ -296,6 +297,14 @@ export default function Home() {
       <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 pb-10">
         {/* SEO h1（视觉隐藏：Header 已承载品牌标题） */}
         <h1 className="sr-only">{t("title")}</h1>
+        {/* 可视 Hero：主标题 + 副标题 + 社交证明（转化优化；一页一 h1 原则，可视主标题用 p） */}
+        <div className="text-center">
+          <p className="text-2xl font-black tracking-tight text-zinc-900 sm:text-3xl">
+            {t("title")}
+          </p>
+          <p className="mt-2 text-sm text-zinc-500">{t("subtitle")}</p>
+          <SocialProof className="mt-1.5 text-xs text-zinc-400" />
+        </div>
       {/* 艾比世界（Phase 7 · 8.1）：平台介绍/总供应量/最新铸造/热门稀有/卡包·图鉴·背包入口 */}
       <HomeAibiSection />
 
