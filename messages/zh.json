@@ -823,7 +823,19 @@
     "newsOriginalSource": "查看原始来源",
     "newsSourceLabel": "来源",
     "newsPublishedAt": "发布于 {time}",
-    "newsNotFound": "新闻不存在或已下线"
+    "newsNotFound": "新闻不存在或已下线",
+    "packsTitle": "卡包商城 - 开包收集稀有 AI 宠物 | 艾比世界",
+    "packsDesc": "艾比卡包商城：用积分开启卡包，随机获得稀有 AI 宠物与养成道具，新宠物即刻加入你的灵魂图鉴。",
+    "soulCardsTitle": "灵魂图鉴 - 我的链上宠物收藏 | 艾比世界",
+    "soulCardsDesc": "灵魂图鉴：查看你持有的全部链上宠物凭证、供应看板与可铸造列表，每一枚都是唯一的数字收藏。",
+    "codexTitle": "艾比图鉴 - 全物种稀有度与栖息地档案 | 艾比世界",
+    "codexDesc": "艾比图鉴：浏览全部 AI 宠物物种，按稀有度、元素与栖息地筛选，追踪你的收集进度。",
+    "shopTitle": "道具商城 - 养成道具与探索好物 | 艾比世界",
+    "shopDesc": "艾比道具商城：用积分兑换养成道具，加速宠物成长，提升探索收益。",
+    "supplyTitle": "供应公证 - 铸造与燃尽全透明 | 艾比世界",
+    "supplyDesc": "艾比供应量公证：当前流通、累计增发、累计销毁与最大供应实时公示，快照趋势与增发销毁历史全部可查。",
+    "aibiTitle": "{tokenId} - 唯一链上宠物凭证 | 艾比世界",
+    "aibiDesc": "{tokenId}：艾比世界唯一链上宠物凭证，铸造与流转记录公开可查。"
   },
   "shop": {
     "title": "探险商城",

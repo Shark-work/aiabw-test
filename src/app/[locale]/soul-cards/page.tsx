@@ -1,7 +1,9 @@
-import { setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AibiSoulPanel } from "@/components/aibi/aibi-soul-panel";
 import { SoulCardsClient } from "@/components/soul-card/soul-cards-client";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * /[locale]/soul-cards
@@ -13,6 +15,22 @@ import { SoulCardsClient } from "@/components/soul-card/soul-cards-client";
  * 因此鉴权与首屏数据全部移至客户端容器（SoulCardsClient）：
  * 仅确认无 token（或接口 401）时展示登录引导；链状态公开可读，无需登录。
  */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("seo");
+  const title = t("soulCardsTitle");
+  const description = t("soulCardsDesc").slice(0, 160);
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/soul-cards` },
+  };
+}
+
 export default async function SoulCardsPage({
   params,
 }: {

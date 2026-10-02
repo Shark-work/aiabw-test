@@ -45,6 +45,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       description: t("metaDescription"),
       url: `${SITE_URL}/${locale}${pathname === "/" ? "" : pathname}`,
     },
+    // Twitter Card 大图模式（图片由 [locale]/twitter-image 约定文件注入）
+    twitter: {
+      card: "summary_large_image",
+      title: t("metaTitle"),
+      description: t("metaDescription"),
+    },
   };
 }
 
