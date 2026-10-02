@@ -10,12 +10,17 @@ export default async function AboutPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("pages");
+  const tAbout = await getTranslations("about");
   return (
     <main className="flex min-h-[70vh] flex-col items-center justify-center p-6">
       <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white/90 p-6 shadow-sm">
         <h1 className="text-xl font-bold text-zinc-900">{t("aboutTitle")}</h1>
         <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-zinc-600">
           {t("aboutBody")}
+        </p>
+        {/* 「艾比」名词定义：补充注解样式（橙色细边引用条），层级低于主文，不打断现有结构 */}
+        <p className="mt-3 border-l-2 border-orange-200 pl-3 text-[13px] leading-relaxed text-zinc-500">
+          {tAbout("abiDefinition")}
         </p>
         <Link
           href="/"

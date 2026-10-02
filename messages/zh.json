@@ -659,6 +659,9 @@
       "remainingToday": "今日剩余 {n} 次"
     }
   },
+  "about": {
+    "abiDefinition": "艾比是艾比世界对平台内所有虚拟宠物的统称，每只艾比都有对应的自然原型。"
+  },
   "pages": {
     "backHome": "← 返回首页",
     "aboutTitle": "关于艾比世界",

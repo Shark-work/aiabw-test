@@ -659,6 +659,9 @@
       "remainingToday": "{n} left today"
     }
   },
+  "about": {
+    "abiDefinition": "Aibi is AIABW's collective name for all virtual pets on the platform — every Aibi has a corresponding natural animal prototype."
+  },
   "pages": {
     "backHome": "← Back to home",
     "aboutTitle": "About AIABW",
