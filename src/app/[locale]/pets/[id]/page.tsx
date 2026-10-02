@@ -9,7 +9,7 @@ import { renderPetDescription, type DictionarySpecies } from "@/lib/pet-dictiona
 import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
 import { rarityWeight } from "@/lib/species-group";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, ogShareFields } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/pets/${id}` },
+      openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/pets/${id}`, ...ogShareFields(locale) },
     };
   } catch {
     return {};

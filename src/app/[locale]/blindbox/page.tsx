@@ -3,7 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { pool } from "@/db/client";
 import { BlindboxPlaza } from "@/components/blindbox-plaza";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, ogShareFields } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/blindbox` },
+      openGraph: { title, description, type: "website", url: `${SITE_URL}/${locale}/blindbox`, ...ogShareFields(locale) },
     };
   } catch {
     return {};
