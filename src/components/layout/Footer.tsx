@@ -5,11 +5,10 @@ import { MailIcon, QQIcon, XIcon } from "@/components/social-icons";
 import { VisitCounter } from "@/components/visit-counter";
 import { CONTACT_INFO, EMAIL_URL, QQ_SERVICE_URL } from "@/lib/config";
 
-/** 全局页脚：辅助导航 + 版权信息 + 自动版本号 + 语言切换。 */
+/** 全局页脚：辅助导航 + 版权信息 + 语言切换。 */
 export async function Footer() {
   const t = await getTranslations("footer");
   const ts = await getTranslations("support");
-  const version = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
   return (
     <footer className="border-t border-zinc-200 bg-white/60 pb-4 pt-5 text-center text-xs text-muted-foreground">
       {/* 页脚辅助导航（关于 / FAQ / 联系 + 法律合规三件套） */}
@@ -91,8 +90,6 @@ export async function Footer() {
         <p className="text-sm font-semibold text-zinc-600">{t("copyrightLine")}</p>
         <p className="text-[11px] leading-snug text-slate-500">{t("originalNotice")}</p>
         <p className="text-[11px] leading-snug text-slate-500">{t("disclaimer")}</p>
-        {/* 版权行 + 语义化版本号（v1.2.0），弱化视觉存在感 */}
-        <p className="pt-1 text-[11px] text-slate-400">{t("copyright", { version })}</p>
       </div>
       {/* 访问计数（人气感）：客户端加载，失败静默 */}
       <VisitCounter />

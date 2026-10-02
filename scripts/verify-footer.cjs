@@ -52,7 +52,6 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert(zh.boldCopyright, "版权行为加粗（font-semibold）");
   assert(zh.t.includes("受著作权法保护") && zh.t.includes("不具备现实货币价值"), "法律免责条款存在");
   assert(zh.noticeClass.some((c) => c.includes("text-[11px]") && c.includes("leading-snug") && c.includes("text-slate-500")), "法律条款 text-[11px] + leading-snug + 浅灰");
-  assert(zh.t.includes("v1.2.0"), "语义化版本号 v1.2.0（非 git hash）");
   assert(zh.t.includes("📊 本站累计访问 10,"), "访问计数显示 +10000 底数（10,xxx）");
   assert(!zh.t.includes("独立访客"), "已隐藏独立访客数据");
   assert(!/Abi World|Aibi World/.test(zh.t), "无 Abi World 品牌残留");
@@ -66,7 +65,6 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert(en.includes("📊 Total visits: 10,"), "英文访问计数（+10000 底数）");
   assert(!en.includes("Unique Visitors"), "英文无独立访客");
   assert(!/Abi World|Aibi World/.test(en), "英文无 Abi World 残留");
-  assert(en.includes("v1.2.0"), "英文版本号 v1.2.0");
 
   console.log("\npageerror:", pageErr ? "出现（见上方）" : "无");
   await browser.close();
