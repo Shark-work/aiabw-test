@@ -3,14 +3,20 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { MailIcon, QQIcon, XIcon } from "@/components/social-icons";
 import { VisitCounter } from "@/components/visit-counter";
+import { FooterCollapsible } from "@/components/layout/FooterCollapsible";
 import { CONTACT_INFO, EMAIL_URL, QQ_SERVICE_URL } from "@/lib/config";
 
-/** 全局页脚：辅助导航 + 版权信息 + 语言切换。 */
+/** 全局页脚：默认折叠仅显示主版权行（+展开按钮）；展开后显示辅助导航 / 联系方式 / 法律条款 / 访问计数。 */
 export async function Footer() {
   const t = await getTranslations("footer");
   const ts = await getTranslations("support");
   return (
     <footer className="border-t border-zinc-200 bg-white/60 pb-4 pt-5 text-center text-xs text-muted-foreground">
+      <FooterCollapsible
+        copyrightLine={t("copyrightLine")}
+        expandLabel={t("expand")}
+        collapseLabel={t("collapse")}
+      >
       {/* 页脚辅助导航（关于 / FAQ / 联系 + 法律合规三件套） */}
       <nav
         className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
@@ -85,14 +91,14 @@ export async function Footer() {
         </a>
       </address>
 
-      {/* 版权声明与免责条款（紧凑排版：版权主体加粗，法律条款缩小浅灰弱化） */}
+      {/* 法律条款（原创声明 + 虚拟社区声明，缩小浅灰弱化；主版权行始终显示，见 FooterCollapsible） */}
       <div className="mx-auto max-w-3xl space-y-1.5 border-t border-zinc-100 px-6 pb-2 pt-3">
-        <p className="text-sm font-semibold text-zinc-600">{t("copyrightLine")}</p>
         <p className="text-[11px] leading-snug text-slate-500">{t("originalNotice")}</p>
         <p className="text-[11px] leading-snug text-slate-500">{t("disclaimer")}</p>
       </div>
       {/* 访问计数（人气感）：客户端加载，失败静默 */}
       <VisitCounter />
+      </FooterCollapsible>
     </footer>
   );
 }

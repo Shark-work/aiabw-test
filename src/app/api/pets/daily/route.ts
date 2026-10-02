@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { pool } from "@/db/client";
-import { resolveLocale } from "@/i18n/api-errors";
+import { apiMessage, resolveLocale } from "@/i18n/api-errors";
+import { RESERVED_USERNAME_RE } from "@/lib/privacy";
 
 export const runtime = "nodejs";
 
@@ -118,7 +119,20 @@ export async function GET(req: Request) {
     speciesName: locale === "en" ? r.nameEn : r.nameZh,
     rarity: r.traits?.rarity ?? "rare",
     imageUrl: r.image_url,
-    ownerLabel: r.owner_name ?? (locale === "en" ? "Anonymous" : "匿名"),
+    // owner 展示三级判定（相互独立，不互相覆盖）：
+    //  1) 无主（游客占位宠物）→ 既有「匿名 / Anonymous」兜底；
+    //  2) 系统回填占位名（user_\d+ 格式，用户自取昵称已被禁，见 src/lib/privacy.ts）
+    //     → 本地化占位文案「某位玩家 / A player」（i18n api.playerPlaceholder）；
+    //     ※ 与规划中的 CJK 用户名降级（P3）是独立判断链，将来落地时各管各的；
+    //  3) 真实用户名 → 原样返回。
+    ownerLabel:
+      r.owner_name == null
+        ? locale === "en"
+          ? "Anonymous"
+          : "匿名"
+        : RESERVED_USERNAME_RE.test(r.owner_name)
+          ? apiMessage(locale, "playerPlaceholder")
+          : r.owner_name,
   }));
 
   const body = {
