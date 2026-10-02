@@ -311,12 +311,15 @@ export default function Home() {
         <RecentBornMarquee />
 
         {/* Bottom：热门宠物展示（Grid 4 列，稀有度角标激发收集欲） */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-bold text-zinc-900">{t("featuredTitle")}</h2>
+        <div className="space-y-3 border-t border-zinc-200/70 pt-6">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-zinc-900">{t("featuredTitle")}</h2>
+              <p className="mt-0.5 text-xs text-zinc-500">{t("featuredSubtitle")}</p>
+            </div>
             <Link
               href="/pets"
-              className="shrink-0 text-xs font-medium text-orange-500 transition hover:text-orange-600"
+              className="shrink-0 pb-0.5 text-xs font-medium text-orange-500 transition hover:text-orange-600"
             >
               {ts("viewAll")} →
             </Link>
