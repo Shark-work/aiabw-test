@@ -47,7 +47,7 @@ export function FortuneBanner() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/pets/daily")
+    fetch(`/api/pets/daily?locale=${locale}`)
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;
@@ -61,7 +61,7 @@ export function FortuneBanner() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [locale]);
 
   // 加载中/无幸运宠：通告栏直接让位，不占页面高度
   if (!ready || !lucky) return null;
@@ -97,12 +97,13 @@ export function FortuneBanner() {
 export function RecentBornMarquee() {
   const t = useTranslations("home");
   const ts = useTranslations("seo");
+  const locale = useLocale();
   const [recent, setRecent] = useState<RecentBorn[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/pets/daily")
+    fetch(`/api/pets/daily?locale=${locale}`)
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;
@@ -113,7 +114,7 @@ export function RecentBornMarquee() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [locale]);
 
   if (loading || recent.length === 0) return null;
 

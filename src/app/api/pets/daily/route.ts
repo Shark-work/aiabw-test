@@ -130,10 +130,13 @@ export async function GET(req: Request) {
   };
   // 首页模块数据：每日变化，但允许 Vercel CDN 缓存 60s（s-maxage 只作用于 CDN，
   // 浏览器不带 max-age 不缓存，保证「最新诞生」相对实时）。
+  // 跨语言分片：客户端显式传 ?locale=（CDN 缓存键含 query 但不含 Cookie）；
+  // Vary 作为额外保障，防不带 locale 参数的请求在缓存窗口内跨语言串味。
   const res = NextResponse.json(body);
   res.headers.set(
     "Cache-Control",
     "public, s-maxage=60, stale-while-revalidate=60",
   );
+  res.headers.set("Vary", "Cookie, Accept-Language");
   return res;
 }

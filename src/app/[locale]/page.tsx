@@ -99,7 +99,7 @@ export default function Home() {
   // 拉取动态推荐宠（每次刷新随机 3 只）
   useEffect(() => {
     let alive = true;
-    fetch("/api/pets/featured?count=4")
+    fetch(`/api/pets/featured?count=4&locale=${locale}`)
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;
@@ -110,7 +110,7 @@ export default function Home() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [locale]);
 
   const handleLogout = () => {
     localStorage.removeItem("aiabw_token");

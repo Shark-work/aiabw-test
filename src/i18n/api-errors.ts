@@ -4,10 +4,19 @@ import en from "../../messages/en.json";
 export type Locale = "zh" | "en";
 
 /**
- * 从请求 Cookie 中解析用户语言（next-intl 中间件写入的 NEXT_LOCALE），
- * 供服务端 API 路由返回对应语言的错误文案；默认中文。
+ * 解析用户语言：?locale= 显式参数优先，缺省按 Cookie（next-intl 中间件写入的
+ * NEXT_LOCALE），默认中文。供服务端 API 路由返回对应语言的错误文案/数据。
+ * query 优先的原因：CDN 缓存键含 query 但不含 Cookie —— 带 s-maxage 的接口
+ * （如 /api/pets/daily）客户端显式传 ?locale= 后 zh/en 缓存天然分片，
+ * 避免跨语言串味（模式与 src/lib/news.ts resolveNewsLocale 一致）。
  */
 export function resolveLocale(req: Request): Locale {
+  try {
+    const q = new URL(req.url).searchParams.get("locale");
+    if (q === "en" || q === "zh") return q;
+  } catch {
+    // req.url 无法解析时静默回退 Cookie 判定
+  }
   const cookie = req.headers.get("cookie") ?? "";
   const m = cookie.match(/(?:^|;\s*)NEXT_LOCALE=(zh|en)/);
   return m && (m[1] === "en" || m[1] === "zh") ? m[1] : "zh";
