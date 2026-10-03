@@ -3,7 +3,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
 // UGC 内容创作工坊 · 聚合页（[locale]/workshop）
-//  - 已上线模块：日记卡片 / AI 写真（卡片可点击进入）
+//  - 已上线模块：日记卡片（卡片可点击进入）
+//  - AI 写真：依赖外部生图服务（UGC_PORTRAIT_API_URL），未配置时入口自动降级为
+//    置灰 + coming soon 角标（复用未上线模块模式），配置后重新部署自动恢复
 //  - 未上线模块：表情包工坊 / 征集活动（置灰 + coming soon 角标）
 type Module = {
   key: string;
@@ -14,7 +16,7 @@ type Module = {
 
 const MODULES: Module[] = [
   { key: "diaryCard", emoji: "📔", href: "/workshop/diary-card", gradient: "from-emerald-50 to-teal-100" },
-  { key: "portrait", emoji: "📸", href: "/workshop/portrait", gradient: "from-violet-50 to-fuchsia-100" },
+  { key: "portrait", emoji: "📸", gradient: "from-violet-50 to-fuchsia-100" },
   { key: "sticker", emoji: "😆", gradient: "from-amber-50 to-orange-100" },
   { key: "campaign", emoji: "🏆", gradient: "from-sky-50 to-indigo-100" },
 ];
@@ -28,6 +30,13 @@ export default async function WorkshopPage({
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "workshop" });
 
+  // AI 写真入口按外部生图服务配置自动显隐（Vercel env 变更本就需重新部署生效，
+  // 与 SSG 构建时求值时点一致）；未配置 → 走现有「置灰 + 敬请期待」分支
+  const portraitLive = Boolean(process.env.UGC_PORTRAIT_API_URL?.trim());
+  const modules = MODULES.map((m) =>
+    m.key === "portrait" && portraitLive ? { ...m, href: "/workshop/portrait" } : m,
+  );
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-violet-50/50 via-white to-amber-50/40">
       <title>{t("title")} | Huggy Fox</title>
@@ -40,7 +49,7 @@ export default async function WorkshopPage({
         </header>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {MODULES.map((m) => {
+          {modules.map((m) => {
             const live = !!m.href;
             const body = (
               <div

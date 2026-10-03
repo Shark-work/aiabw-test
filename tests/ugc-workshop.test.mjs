@@ -165,6 +165,17 @@ test("workshop api: VIP vs free quota split + daily limit 429", () => {
   assert.match(r, /dailyLimit:\s*isVip\s*\?\s*-1/, "VIP dailyLimit=-1 无限");
 });
 
+test("workshop entry: AI 写真入口随 UGC_PORTRAIT_API_URL 配置自动降级", () => {
+  const hub = read("src/app/[locale]/workshop/page.tsx");
+  assert.match(hub, /process\.env\.UGC_PORTRAIT_API_URL/, "聚合页按 env 判定写真入口");
+  assert.match(hub, /key === "portrait" && portraitLive/, "配置时恢复可点入口");
+  assert.ok(hub.includes('t("comingSoon")'), "未配置复用「敬请期待」置灰分支");
+  const sub = read("src/app/[locale]/workshop/portrait/page.tsx");
+  assert.match(sub, /process\.env\.UGC_PORTRAIT_API_URL/, "子页直达 URL 兜底降级");
+  assert.ok(sub.includes("<PortraitClient />"), "配置时挂载写真客户端");
+  assert.ok(sub.includes('t("comingSoon")'), "降级文案复用 comingSoon");
+});
+
 test("workshop api: external generation call + watermark split + persistence", () => {
   const r = read("src/app/api/ugc/generate-portrait/route.ts");
   assert.match(r, /process\.env\.UGC_PORTRAIT_API_URL/, "外部生图服务端点 env");
