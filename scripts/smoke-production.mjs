@@ -90,9 +90,10 @@ try {
   }
 
   // ── 9-10) 注册 + 登录（实际路由 /api/auth/*）────────────────────────────
+  const username = `smk${ts.toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
   const reg = await api("/api/auth/register", {
     method: "POST",
-    body: { email, password, username: `smk${ts.toString(36)}${Math.floor(Math.random() * 1296).toString(36)}` },
+    body: { email, password, username },
   });
   const token = reg.json?.token ?? reg.json?.data?.token ?? null;
   const userId = reg.json?.user?.id ?? reg.json?.data?.user?.id ?? null;
