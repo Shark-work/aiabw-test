@@ -261,9 +261,9 @@ try {
   const breed404 = await api("/api/pets/breed", { method: "POST", token, body: { parentIds: ["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000001"] } });
   check("POST /api/pets/breed 假亲本 → 404 parentNotFound（未扣分）",
     breed404.status === 404 && /亲本|Parent/i.test(breed404.json.error ?? ""), breed404);
-  const transferNoAuth = await api("/api/pets/transfer", { method: "POST", body: { collectibleId: "x", toEmail: email } });
+  const transferNoAuth = await api("/api/pets/transfer", { method: "POST", body: { collectibleId: "x", toUsername: username } });
   check("POST /api/pets/transfer 未登录 → 401", transferNoAuth.status === 401, transferNoAuth);
-  // 自我转赠护栏：SQL 造一枚临时确权实例 → toEmail=本人 → 400 transferSelf（ROLLBACK），事后删除
+  // 自我转赠护栏：SQL 造一枚临时确权实例 → toUsername=本人昵称 → 400 transferSelf（ROLLBACK），事后删除
   const dcDef = await pool.query(`SELECT id FROM digital_collectibles LIMIT 1`);
   const tmpHash = `smoke-self-${ts}`;
   const ins = await pool.query(
@@ -272,9 +272,9 @@ try {
     [userId, String(dcDef.rows[0].id), tmpHash],
   );
   const tmpId = String(ins.rows[0].id);
-  const selfT = await api("/api/pets/transfer", { method: "POST", token, body: { collectibleId: tmpId, toEmail: email } });
+  const selfT = await api("/api/pets/transfer", { method: "POST", token, body: { collectibleId: tmpId, toUsername: username } });
   await pool.query(`DELETE FROM user_collectibles WHERE id = $1`, [tmpId]);
-  check("transfer toEmail=本人 → 400 transferSelf（临时实例已清理）",
+  check("transfer toUsername=本人 → 400 transferSelf（临时实例已清理）",
     selfT.status === 400 && /自己|yourself/i.test(selfT.json.error ?? ""), selfT);
 } catch (err) {
   failures += 1;

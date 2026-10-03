@@ -647,14 +647,14 @@
       "transfer": {
         "title": "转赠藏品",
         "pick": "选择要转赠的个体",
-        "emailLabel": "接收方注册邮箱",
-        "emailPlaceholder": "friend@example.com",
+        "userLabel": "接收方昵称",
+        "userPlaceholder": "输入对方昵称",
         "next": "下一步",
         "confirmTitle": "确认转赠",
-        "confirmDesc": "将把「{name}」（{hash}）转赠给 {email}。转赠不可撤销，对方接收后 7 天内不可再次转赠。",
+        "confirmDesc": "将把「{name}」（{hash}）转赠给 {user}。转赠不可撤销，对方接收后 7 天内不可再次转赠。",
         "confirm": "确认转赠",
         "working": "转赠中…",
-        "success": "✅ 已转赠给 {email}",
+        "success": "✅ 已转赠给 {user}",
         "cooldown": "转赠冷却 {remaining}"
       },
       "common": {

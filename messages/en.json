@@ -647,14 +647,14 @@
       "transfer": {
         "title": "Gift Collectible",
         "pick": "Choose an instance to gift",
-        "emailLabel": "Receiver's sign-up email",
-        "emailPlaceholder": "friend@example.com",
+        "userLabel": "Receiver's username",
+        "userPlaceholder": "Enter their username",
         "next": "Next",
         "confirmTitle": "Confirm Gift",
-        "confirmDesc": "Gift \"{name}\" ({hash}) to {email}. This cannot be undone; the receiver cannot re-gift it for 7 days.",
+        "confirmDesc": "Gift \"{name}\" ({hash}) to {user}. This cannot be undone; the receiver cannot re-gift it for 7 days.",
         "confirm": "Confirm Gift",
         "working": "Gifting…",
-        "success": "✅ Gifted to {email}",
+        "success": "✅ Gifted to {user}",
         "cooldown": "Gift cooldown {remaining}"
       },
       "common": {

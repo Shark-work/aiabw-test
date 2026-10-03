@@ -2,10 +2,10 @@
 
 /**
  * NfrTransferModal · 转赠弹窗（2026-10-08 收藏中心 NFR 操作入口）
- *  - 三步：选择个体（lockedUntil > now 置灰 + 倒计时）→ 输入接收方注册邮箱 →
- *    二次确认（不可撤销提示）→ POST /api/pets/transfer { collectibleId, toEmail }；
- *  - 服务端按邮箱解析接收者（receiverNotFound 404 / transferSelf 400），
- *    错误文案已由 API 按 x-locale 本地化，直接展示；
+ *  - 三步：选择个体（lockedUntil > now 置灰 + 倒计时）→ 输入接收方昵称 →
+ *    二次确认（不可撤销提示）→ POST /api/pets/transfer { collectibleId, toUsername }；
+ *  - 服务端按公开昵称解析接收者（receiverNotFound 404 / transferSelf 400；
+ *    邮箱属隐私字段不对外，见 drizzle/0022），错误文案已由 API 按 x-locale 本地化，直接展示；
  *  - 成功后对方需 7 天冷却才能再次转赠（服务端 TRANSFER_COOLDOWN_MS 强制）。
  */
 import { useState } from "react";
@@ -19,8 +19,6 @@ import {
   type CollectibleInstance,
 } from "@/components/collection/nfr-shared";
 import type { NfrDefinitionLite } from "@/components/collection/nfr-breed-modal";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Step = "pick" | "confirm" | "done";
 
@@ -43,18 +41,19 @@ export function NfrTransferModal({
 
   const [step, setStep] = useState<Step>("pick");
   const [instId, setInstId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
+  const [target, setTarget] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const chosen = instances.find((i) => i.id === instId) ?? null;
-  const emailOk = EMAIL_RE.test(email.trim());
+  // 昵称规则（2-24 位）由服务端兜底，前端仅做最短长度预检
+  const targetOk = target.trim().length >= 2;
   const meta = getRarityMeta(item.rarity);
 
   async function submit() {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("aiabw_token") : null;
-    if (!token || !chosen || !emailOk || busy) return;
+    if (!token || !chosen || !targetOk || busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -65,7 +64,7 @@ export function NfrTransferModal({
           Authorization: `Bearer ${token}`,
           "x-locale": locale,
         },
-        body: JSON.stringify({ collectibleId: chosen.id, toEmail: email.trim() }),
+        body: JSON.stringify({ collectibleId: chosen.id, toUsername: target.trim() }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -97,7 +96,7 @@ export function NfrTransferModal({
         {step === "done" ? (
           <div className="space-y-4 text-center">
             <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
-              {t("transfer.success", { email: email.trim() })}
+              {t("transfer.success", { user: target.trim() })}
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {item.name} · <span className="font-mono">{chosen ? shortHash(chosen.hashId) : ""}</span>
@@ -132,7 +131,7 @@ export function NfrTransferModal({
               {t("transfer.confirmDesc", {
                 name: item.name,
                 hash: shortHash(chosen.hashId),
-                email: email.trim(),
+                user: target.trim(),
               })}
             </p>
             <div className="flex gap-2">
@@ -201,13 +200,13 @@ export function NfrTransferModal({
 
             <label className="block space-y-1">
               <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                {t("transfer.emailLabel")}
+                {t("transfer.userLabel")}
               </span>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("transfer.emailPlaceholder")}
+                type="text"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                placeholder={t("transfer.userPlaceholder")}
                 className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-violet-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
               />
             </label>
@@ -228,7 +227,7 @@ export function NfrTransferModal({
               </button>
               <button
                 type="button"
-                disabled={!chosen || !emailOk || busy}
+                disabled={!chosen || !targetOk || busy}
                 onClick={() => setStep("confirm")}
                 className="flex-1 rounded-full bg-violet-500 py-2 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
               >

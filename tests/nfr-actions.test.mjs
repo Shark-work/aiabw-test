@@ -32,10 +32,11 @@ test("collectibles API: 鉴权前置 401 + 个体维度字段（id/hashId/双冷
   }
 });
 
-test("transfer API: toEmail 解析 + transferSelf 护栏 + toUserId 旧契约保留", () => {
+test("transfer API: toUsername 昵称解析（UI 主路径）+ toEmail 兼容 + transferSelf 护栏", () => {
   const api = read("src/app/api/pets/transfer/route.ts");
-  assert.ok(api.includes("body?.toEmail"), "接收 toEmail 参数");
-  assert.ok(api.includes("SELECT id FROM users WHERE lower(email) = $1"), "按邮箱解析接收者");
+  assert.ok(api.includes("body?.toUsername"), "接收 toUsername 参数");
+  assert.ok(api.includes("SELECT id FROM users WHERE username = $1"), "按公开昵称解析接收者（邮箱隐私不对外，drizzle/0022）");
+  assert.ok(api.includes("body?.toEmail"), "toEmail 后端兼容路径保留");
   assert.ok(api.includes('apiError(locale, "transferSelf")'), "自我转赠 400 护栏");
   assert.ok(api.includes("SELECT id FROM users WHERE id = $1"), "toUserId 旧路径保留（verify-nfr E2E 兼容）");
   assert.ok(api.includes("receiverId === user.id"), "护栏比较接收者与本人");
@@ -75,15 +76,16 @@ test("breed modal: BREED_COST_POINTS 与 genetics.ts BREED_COST 同步（200）"
   assert.equal(costInModal, costInGenetics, "弹窗展示成本必须与服务端扣费一致");
 });
 
-test("transfer modal: 选个体 → 邮箱 → 二次确认 → toEmail 提交 + 冷却禁用", () => {
+test("transfer modal: 选个体 → 昵称 → 二次确认 → toUsername 提交 + 冷却禁用", () => {
   const modal = read("src/components/collection/nfr-transfer-modal.tsx");
   assert.ok(modal.includes('"pick" | "confirm" | "done"'), "三步状态机");
   assert.ok(modal.includes('fetch("/api/pets/transfer"'), "提交 /api/pets/transfer");
-  assert.ok(modal.includes("toEmail: email.trim()"), "toEmail 请求体");
+  assert.ok(modal.includes("toUsername: target.trim()"), "toUsername 请求体（昵称隐私对齐）");
+  assert.ok(!modal.includes("EMAIL_RE"), "不再要求邮箱格式");
+  assert.ok(modal.includes("target.trim().length >= 2"), "昵称最短长度预检");
   assert.ok(modal.includes("collectibleId: chosen.id"), "作用于所选个体实例");
   assert.ok(modal.includes("confirmDesc"), "二次确认文案");
   assert.ok(modal.includes("lockedUntil"), "转赠冷却字段驱动禁用");
-  assert.ok(modal.includes("EMAIL_RE"), "邮箱格式校验");
 });
 
 test("i18n: collection.nfr 新增子命名空间 zh/en 深键对齐 + api.transferSelf 双语", () => {

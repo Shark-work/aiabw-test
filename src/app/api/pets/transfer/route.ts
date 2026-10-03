@@ -9,9 +9,10 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/pets/transfer   — 数字藏品转赠
- * 请求体：{ collectibleId: string, toUserId?: string, toEmail?: string }
- *  - toUserId：接收者用户 ID（E2E / 内部调用）；toEmail：接收者注册邮箱（收藏中心 UI），
- *    二者至少提供一个，toUserId 优先；解析出的接收者不能是本人（400 transferSelf）。
+ * 请求体：{ collectibleId: string, toUserId?: string, toUsername?: string, toEmail?: string }
+ *  - 接收者三选一：toUserId（E2E / 内部调用）> toUsername（公开昵称，收藏中心 UI 主路径；
+ *    邮箱属隐私字段不对外，见 drizzle/0022）> toEmail（后端内部兼容）；
+ *    至少提供一个；解析出的接收者不能是本人（400 transferSelf）。
  *
  * 事务（任何失败 → ROLLBACK）：
  *   1. SELECT ... FOR UPDATE 锁定藏品（防并发转赠/繁育）；
@@ -31,8 +32,9 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const collectibleId = typeof body?.collectibleId === "string" ? body.collectibleId.trim() : "";
     const toUserId = typeof body?.toUserId === "string" ? body.toUserId.trim() : "";
+    const toUsername = typeof body?.toUsername === "string" ? body.toUsername.trim() : "";
     const toEmail = typeof body?.toEmail === "string" ? body.toEmail.trim().toLowerCase() : "";
-    if (!collectibleId || (!toUserId && !toEmail)) {
+    if (!collectibleId || (!toUserId && !toUsername && !toEmail)) {
       return NextResponse.json({ ok: false, error: apiError(locale, "invalidTransfer") }, { status: 400 });
     }
 
@@ -75,10 +77,12 @@ export async function POST(req: Request) {
         );
       }
 
-      // 3) 接收者存在校验（toUserId 优先；否则按注册邮箱解析）+ 禁止自我转赠
+      // 3) 接收者存在校验（toUserId > toUsername > toEmail）+ 禁止自我转赠
       const receiver = toUserId
         ? await client.query("SELECT id FROM users WHERE id = $1", [toUserId])
-        : await client.query("SELECT id FROM users WHERE lower(email) = $1", [toEmail]);
+        : toUsername
+          ? await client.query("SELECT id FROM users WHERE username = $1", [toUsername])
+          : await client.query("SELECT id FROM users WHERE lower(email) = $1", [toEmail]);
       if (!receiver.rows.length) {
         await client.query("ROLLBACK");
         return NextResponse.json({ ok: false, error: apiError(locale, "receiverNotFound") }, { status: 404 });

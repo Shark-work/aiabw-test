@@ -47,7 +47,7 @@
 ## P3 · B1 / B2 / B3：breed / transfer / referral API 入口决策（待产品侧确认优先级）
 
 - **B1** breed（繁育）：✅ 已落地（2026-10-08，审计任务 2）——实际路由 `POST /api/pets/breed`（同物种 2 亲本 + 7 天亲本冷却 + 200 积分），入口 = 收藏中心 NFR Tab 卡片「繁育」按钮（配对弹窗 + 冷却倒计时禁用态）。
-- **B2** transfer（转赠）：✅ 已落地（2026-10-08，审计任务 2）——实际路由 `POST /api/pets/transfer`（首铸 24h / 再转赠 7 天冷却，一阶段免费），入口 = 收藏中心 NFR Tab 卡片「转赠」按钮（选个体 → 接收方邮箱 toEmail → 二次确认）；同期新增 `GET /api/pets/collectibles` 个体实例端点与 transferSelf 自赠护栏。
+- **B2** transfer（转赠）：✅ 已落地（2026-10-08，审计任务 2）——实际路由 `POST /api/pets/transfer`（首铸 24h / 再转赠 7 天冷却，一阶段免费），入口 = 收藏中心 NFR Tab 卡片「转赠」按钮（选个体 → 接收方昵称 toUsername → 二次确认；邮箱隐私不对外故不用 email 标识）；同期新增 `GET /api/pets/collectibles` 个体实例端点与 transferSelf 自赠护栏。
 - **B3** `POST /api/referral`（邀请返利）：路由存在，入口与奖励规则待产品确认。
 - 用户决策（2026-09-30）：三项整体暂缓，**待产品侧确认优先级**后单独排期；期间不自动删除、不改动现有行为。
 
