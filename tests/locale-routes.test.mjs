@@ -108,3 +108,18 @@ test("F: soul-cards 不再有「图鉴」旧文案（Tab 标题 + SEO 均为收�
   assert.ok(en.seo.soulCardsTitle.includes("Collection Center"), "en SEO 标题 = Collection Center");
   assert.ok(zh.seo.soulCardsDesc.includes("收藏中心"), "zh SEO 描述同步");
 });
+
+// ---- G) 页脚重复版权（2026-10-06）----
+// 渲染层：copyrightLine 全站仅 FooterCollapsible 渲染一次（originalNotice 为原创声明长文，
+// 非版权行，保留）；死键 footer.copyright（aiabw.com | v{version}）零消费方 → 已删除。
+test("G: 页脚版权行单一渲染 + 无版权死键", () => {
+  const footer = read("src/components/layout/Footer.tsx");
+  assert.equal(footer.split('t("copyrightLine")').length - 1, 1, "Footer 仅取一次 copyrightLine");
+  assert.ok(!footer.includes('t("copyright")'), "Footer 不消费死键 copyright");
+  const coll = read("src/components/layout/FooterCollapsible.tsx");
+  assert.equal(coll.split("{copyrightLine}").length - 1, 1, "FooterCollapsible 仅渲染一次版权行");
+  assert.ok(!("copyright" in zh.footer), "zh footer.copyright 死键已删");
+  assert.ok(!("copyright" in en.footer), "en footer.copyright 死键已删");
+  assert.equal(zh.footer.copyrightLine, "© 2025-2026 艾比世界 (AIABW). All Rights Reserved.", "zh 唯一版权行保留");
+  assert.equal(en.footer.copyrightLine, "© 2025-2026 AIABW. All Rights Reserved.", "en 唯一版权行保留");
+});

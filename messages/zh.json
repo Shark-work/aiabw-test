@@ -288,7 +288,6 @@
     "longPressHint": "👆 长按图片可识别微信支付"
   },
   "footer": {
-    "copyright": "aiabw.com | v{version}",
     "language": "语言",
     "about": "关于我们",
     "faq": "常见问题",
