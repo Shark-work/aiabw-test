@@ -594,6 +594,26 @@
     "navBlindbox": "🎁 Blind Box Plaza",
     "navMore": "More"
   },
+  "collection": {
+    "title": "Collection",
+    "subtitle": "Aibi credentials, Soul Cards and NFR collectibles — everything you own in one place",
+    "tabs": {
+      "aibi": "Aibi",
+      "soul": "Soul Cards",
+      "nfr": "NFR Collectibles"
+    },
+    "nfr": {
+      "signInHint": "Sign in to view your NFR collectibles",
+      "signIn": "Sign in",
+      "loadFailed": "Failed to load collectibles, please refresh and try again",
+      "emptyTitle": "No collectibles yet",
+      "emptyDesc": "NFR collectibles come from blind box draws and pet breeding — each one carries a unique on-chain hash credential.",
+      "emptyCta": "Draw one at Blind Box Plaza",
+      "holdings": "Owned ×{count}",
+      "supply": "Minted {minted} / {total}",
+      "unlimited": "Unlimited"
+    }
+  },
   "workshop": {
     "title": "Creative Studio",
     "subtitle": "Turn every day with your pet into shareable art",

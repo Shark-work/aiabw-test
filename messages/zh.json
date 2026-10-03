@@ -594,6 +594,26 @@
     "navBlindbox": "🎁 盲盒广场",
     "navMore": "更多"
   },
+  "collection": {
+    "title": "收藏中心",
+    "subtitle": "艾比凭证、灵魂卡与数字藏品 —— 你的全部收藏在这里",
+    "tabs": {
+      "aibi": "艾比凭证",
+      "soul": "灵魂卡",
+      "nfr": "数字藏品"
+    },
+    "nfr": {
+      "signInHint": "登录后查看你持有的数字藏品",
+      "signIn": "去登录",
+      "loadFailed": "藏品加载失败，请刷新重试",
+      "emptyTitle": "还没有数字藏品",
+      "emptyDesc": "数字藏品来自盲盒抽取与宠物繁育，每一件都有唯一的链上哈希凭证。",
+      "emptyCta": "去盲盒广场抽一个",
+      "holdings": "持有 ×{count}",
+      "supply": "已铸 {minted} / {total}",
+      "unlimited": "不限量"
+    }
+  },
   "workshop": {
     "title": "创作工坊",
     "subtitle": "把和艾比的每一天，变成可以分享的作品",

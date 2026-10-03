@@ -86,8 +86,12 @@ test("pages: packs / packs/result / bag 页面存在；soul-cards 挂载 AibiSou
   assert.ok(result.includes("<PackResultClient />"));
   assert.ok(read("src/app/[locale]/bag/page.tsx").includes("<BagClient />"));
   const soul = read("src/app/[locale]/soul-cards/page.tsx");
-  assert.ok(soul.includes("<AibiSoulPanel />"), "5.4 艾比板块挂载");
-  assert.ok(soul.includes("<SoulCardsClient />"), "V1 板块保留");
+  // 2026-10-06 收藏中心三 Tab 重构：页面改为挂载 CollectionClient 容器，
+  // 两个旧面板移入容器内（aibi/soul Tab），详细契约见 tests/collection-center.test.mjs
+  assert.ok(soul.includes("<CollectionClient />"), "收藏中心容器挂载");
+  const cc = read("src/components/collection/collection-client.tsx");
+  assert.ok(cc.includes("<AibiSoulPanel />"), "5.4 艾比板块挂载（aibi Tab）");
+  assert.ok(cc.includes("<SoulCardsClient />"), "V1 板块保留（soul Tab）");
 });
 
 // === 4) 组件接线 ===
