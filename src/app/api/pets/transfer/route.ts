@@ -9,7 +9,9 @@ export const runtime = "nodejs";
 
 /**
  * POST /api/pets/transfer   — 数字藏品转赠
- * 请求体：{ collectibleId: string, toUserId: string }
+ * 请求体：{ collectibleId: string, toUserId?: string, toEmail?: string }
+ *  - toUserId：接收者用户 ID（E2E / 内部调用）；toEmail：接收者注册邮箱（收藏中心 UI），
+ *    二者至少提供一个，toUserId 优先；解析出的接收者不能是本人（400 transferSelf）。
  *
  * 事务（任何失败 → ROLLBACK）：
  *   1. SELECT ... FOR UPDATE 锁定藏品（防并发转赠/繁育）；
@@ -29,7 +31,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const collectibleId = typeof body?.collectibleId === "string" ? body.collectibleId.trim() : "";
     const toUserId = typeof body?.toUserId === "string" ? body.toUserId.trim() : "";
-    if (!collectibleId || !toUserId) {
+    const toEmail = typeof body?.toEmail === "string" ? body.toEmail.trim().toLowerCase() : "";
+    if (!collectibleId || (!toUserId && !toEmail)) {
       return NextResponse.json({ ok: false, error: apiError(locale, "invalidTransfer") }, { status: 400 });
     }
 
@@ -72,11 +75,18 @@ export async function POST(req: Request) {
         );
       }
 
-      // 3) 接收者存在校验
-      const receiver = await client.query("SELECT id FROM users WHERE id = $1", [toUserId]);
+      // 3) 接收者存在校验（toUserId 优先；否则按注册邮箱解析）+ 禁止自我转赠
+      const receiver = toUserId
+        ? await client.query("SELECT id FROM users WHERE id = $1", [toUserId])
+        : await client.query("SELECT id FROM users WHERE lower(email) = $1", [toEmail]);
       if (!receiver.rows.length) {
         await client.query("ROLLBACK");
         return NextResponse.json({ ok: false, error: apiError(locale, "receiverNotFound") }, { status: 404 });
+      }
+      const receiverId = String(receiver.rows[0].id);
+      if (receiverId === user.id) {
+        await client.query("ROLLBACK");
+        return NextResponse.json({ ok: false, error: apiError(locale, "transferSelf") }, { status: 400 });
       }
 
       // 4) 转赠费用（第一阶段免转赠费）
@@ -98,20 +108,20 @@ export async function POST(req: Request) {
         `UPDATE user_collectibles
             SET owner_id = $1, locked_until = $2, transferred_count = transferred_count + 1
           WHERE id = $3`,
-        [toUserId, nextCooldown, collectibleId],
+        [receiverId, nextCooldown, collectibleId],
       );
 
       // 6) 同步现有资产归属（宠物实例 + 领养记录 → 保证聊天/图鉴归属一致）
       if (row.source_pet_id) {
         await client.query(
           `UPDATE pets SET owner_id = $1, adopted_at = now() WHERE id = $2`,
-          [toUserId, row.source_pet_id],
+          [receiverId, row.source_pet_id],
         );
       }
       if (row.adoption_id) {
         await client.query(
           `UPDATE adoptions SET user_id = $1 WHERE id = $2`,
-          [toUserId, row.adoption_id],
+          [receiverId, row.adoption_id],
         );
       }
 
@@ -120,7 +130,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         ok: true,
         collectibleId,
-        newOwnerId: toUserId,
+        newOwnerId: receiverId,
         nextCooldown: nextCooldown.toISOString(),
         transferredCount: Number(row.transferred_count ?? 0) + 1,
       });

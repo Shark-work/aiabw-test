@@ -1,8 +1,8 @@
 /**
- * Phase 13 · 生产冒烟脚本（2026-09-30）：对正式域名执行完整用户流程验收，42 项检查。
+ * Phase 13 · 生产冒烟脚本（2026-09-30）：对正式域名执行完整用户流程验收，50 项检查。
  * 流程：8 页面 → 注册/登录 → 鉴权负例 → 公开目录/看板 → SQL 充值 → 买包/开包 →
  * 详情页/焦点 → 背包/道具/互动 → 再买包 → 融合 → 销毁 → 负例 → 详情/用户中心 →
- * Stripe 降级 → webhook → 国内支付占位。
+ * Stripe 降级 → webhook → 国内支付占位 → 积分充值档位/鉴权 → NFR 繁育/转赠端点。
  * 用法（PowerShell，仓库根目录）：
  *   $env:DATABASE_URL="postgresql://…生产-pooler…"   # 必需：SQL 充值直写目标库
  *   $env:SMOKE_BASE="https://www.aiabw.com"           # 默认即此值
@@ -249,6 +249,33 @@ try {
     badPack.status === 400 && badPack.json.code === "INVALID_POINTS_PACK", badPack);
   const noAuthPack = await api("/api/pay/create", { method: "POST", body: { kind: "points", points: 100 } });
   check("pay/create kind=points 未登录 → 401", noAuthPack.status === 401, noAuthPack);
+
+  // ── 45-50) NFR 繁育/转赠（收藏中心 UI 依赖的端点）：鉴权 + 负例（除 50 外零副作用）──
+  const collNoAuth = await api("/api/pets/collectibles");
+  check("GET /api/pets/collectibles 未登录 → 401", collNoAuth.status === 401, collNoAuth);
+  const collAuth = await api("/api/pets/collectibles", { token });
+  check("GET /api/pets/collectibles 登录 → 200 + items 数组",
+    collAuth.status === 200 && collAuth.json.ok === true && Array.isArray(collAuth.json.items), collAuth);
+  const breedNoAuth = await api("/api/pets/breed", { method: "POST", body: { parentIds: ["a", "b"] } });
+  check("POST /api/pets/breed 未登录 → 401", breedNoAuth.status === 401, breedNoAuth);
+  const breed404 = await api("/api/pets/breed", { method: "POST", token, body: { parentIds: ["00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000001"] } });
+  check("POST /api/pets/breed 假亲本 → 404 parentNotFound（未扣分）",
+    breed404.status === 404 && /亲本|Parent/i.test(breed404.json.error ?? ""), breed404);
+  const transferNoAuth = await api("/api/pets/transfer", { method: "POST", body: { collectibleId: "x", toEmail: email } });
+  check("POST /api/pets/transfer 未登录 → 401", transferNoAuth.status === 401, transferNoAuth);
+  // 自我转赠护栏：SQL 造一枚临时确权实例 → toEmail=本人 → 400 transferSelf（ROLLBACK），事后删除
+  const dcDef = await pool.query(`SELECT id FROM digital_collectibles LIMIT 1`);
+  const tmpHash = `smoke-self-${ts}`;
+  const ins = await pool.query(
+    `INSERT INTO user_collectibles (owner_id, collectible_id, dna_sequence, hash_id)
+     VALUES ($1, $2, '{}'::jsonb, $3) RETURNING id`,
+    [userId, String(dcDef.rows[0].id), tmpHash],
+  );
+  const tmpId = String(ins.rows[0].id);
+  const selfT = await api("/api/pets/transfer", { method: "POST", token, body: { collectibleId: tmpId, toEmail: email } });
+  await pool.query(`DELETE FROM user_collectibles WHERE id = $1`, [tmpId]);
+  check("transfer toEmail=本人 → 400 transferSelf（临时实例已清理）",
+    selfT.status === 400 && /自己|yourself/i.test(selfT.json.error ?? ""), selfT);
 } catch (err) {
   failures += 1;
   console.error(`\nsmoke crashed at step ${stepNo + 1}:`, err);
@@ -257,7 +284,7 @@ try {
 }
 
 console.log(`\n=== production smoke: ${stepNo - failures}/${stepNo} passed ===`);
-if (failures === 0 && stepNo === 44) {
+if (failures === 0 && stepNo === 50) {
   console.log("ALL_SMOKE_OK");
   process.exit(0);
 }

@@ -516,6 +516,7 @@
     "noPermissionTransfer": "只能转赠自己拥有的藏品",
     "transferCooldown": "藏品仍在转赠冷却期，请稍后再试",
     "receiverNotFound": "接收者账号不存在",
+    "transferSelf": "不能转赠给自己",
     "transferFailed": "转赠失败，请稍后再试",
     "invalidInviteCode": "邀请码无效",
     "alreadyInvited": "你已经绑定过邀请码啦",
@@ -623,7 +624,44 @@
       "emptyCta": "去盲盒广场抽一个",
       "holdings": "持有 ×{count}",
       "supply": "已铸 {minted} / {total}",
-      "unlimited": "不限量"
+      "unlimited": "不限量",
+      "actions": {
+        "breed": "繁育",
+        "transfer": "转赠"
+      },
+      "breed": {
+        "title": "繁育配对",
+        "hint": "从同物种藏品中选择 2 只亲本",
+        "cost": "繁育消耗 {cost} 积分",
+        "cooldown": "繁育冷却 {remaining}",
+        "gen": "第 {gen} 代",
+        "submit": "开始繁育",
+        "working": "繁育中…",
+        "needTwo": "再选 1 只亲本",
+        "empty": "该物种只有 1 只藏品，暂无法配对繁育",
+        "success": "🎉 繁育成功！",
+        "childGen": "第 {gen} 代 · 新 NFR 已确权",
+        "hash": "确权哈希",
+        "recharge": "积分不足，去充值 →"
+      },
+      "transfer": {
+        "title": "转赠藏品",
+        "pick": "选择要转赠的个体",
+        "emailLabel": "接收方注册邮箱",
+        "emailPlaceholder": "friend@example.com",
+        "next": "下一步",
+        "confirmTitle": "确认转赠",
+        "confirmDesc": "将把「{name}」（{hash}）转赠给 {email}。转赠不可撤销，对方接收后 7 天内不可再次转赠。",
+        "confirm": "确认转赠",
+        "working": "转赠中…",
+        "success": "✅ 已转赠给 {email}",
+        "cooldown": "转赠冷却 {remaining}"
+      },
+      "common": {
+        "cancel": "取消",
+        "close": "关闭",
+        "done": "完成"
+      }
     }
   },
   "workshop": {

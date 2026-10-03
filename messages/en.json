@@ -516,6 +516,7 @@
     "noPermissionTransfer": "You can only transfer collectibles you own",
     "transferCooldown": "Collectible is in transfer cooldown, please try again later",
     "receiverNotFound": "Receiver account does not exist",
+    "transferSelf": "You cannot gift a collectible to yourself",
     "transferFailed": "Transfer failed, please try again later",
     "invalidInviteCode": "Invalid invite code",
     "alreadyInvited": "You have already been invited",
@@ -623,7 +624,44 @@
       "emptyCta": "Draw one at Blind Box Plaza",
       "holdings": "Owned ×{count}",
       "supply": "Minted {minted} / {total}",
-      "unlimited": "Unlimited"
+      "unlimited": "Unlimited",
+      "actions": {
+        "breed": "Breed",
+        "transfer": "Gift"
+      },
+      "breed": {
+        "title": "Breeding Pair",
+        "hint": "Pick 2 parents of the same species",
+        "cost": "Breeding costs {cost} points",
+        "cooldown": "Breed cooldown {remaining}",
+        "gen": "Gen {gen}",
+        "submit": "Start Breeding",
+        "working": "Breeding…",
+        "needTwo": "Pick 1 more parent",
+        "empty": "Only 1 collectible of this species — cannot pair yet",
+        "success": "🎉 Breeding success!",
+        "childGen": "Gen {gen} · New NFR minted",
+        "hash": "Ownership hash",
+        "recharge": "Not enough points, top up →"
+      },
+      "transfer": {
+        "title": "Gift Collectible",
+        "pick": "Choose an instance to gift",
+        "emailLabel": "Receiver's sign-up email",
+        "emailPlaceholder": "friend@example.com",
+        "next": "Next",
+        "confirmTitle": "Confirm Gift",
+        "confirmDesc": "Gift \"{name}\" ({hash}) to {email}. This cannot be undone; the receiver cannot re-gift it for 7 days.",
+        "confirm": "Confirm Gift",
+        "working": "Gifting…",
+        "success": "✅ Gifted to {email}",
+        "cooldown": "Gift cooldown {remaining}"
+      },
+      "common": {
+        "cancel": "Cancel",
+        "close": "Close",
+        "done": "Done"
+      }
     }
   },
   "workshop": {
