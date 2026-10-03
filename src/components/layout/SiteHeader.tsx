@@ -7,7 +7,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useTheme } from "@/components/theme-provider";
 
-type Me = { username: string; points: number };
+type Me = { username: string; points: number; isCreator: boolean };
 type SubStatus = { isVip: boolean; daysRemaining: number } | null;
 
 /**
@@ -15,6 +15,7 @@ type SubStatus = { isVip: boolean; daysRemaining: number } | null;
  *  - 主入口：领养/我的艾比（/pets）、卡包商店（/packs）、背包/融合（/bag）、
  *    灵魂卡/图鉴（/soul-cards）、盲盒广场（/blindbox）；
  *  - 次要入口（首页/我的宠物/道具/图鉴/总量/主页/探索/工坊/商城/手帐/积分/联系）收纳进「更多」；
+ *  - 「更多」附「成为创作者」申请入口（2026-10-08 自首页账号条迁入，登录且未成为创作者可见）；
  *  - 移动端折叠为汉堡菜单（主入口 + 更多分组展示，下拉面板 + 遮罩，z-50）；
  *  - 右侧登录态：未登录 → 登录/注册；已登录 → 积分 + 邮箱 + 退出。
  */
@@ -41,7 +42,7 @@ export function SiteHeader() {
       .then((r) => r.json())
       .then((d) => {
         if (d?.ok && d.user) {
-          setMe({ username: d.user.username ?? "", points: d.user.points ?? 0 });
+          setMe({ username: d.user.username ?? "", points: d.user.points ?? 0, isCreator: !!d.user.isCreator });
         } else {
           localStorage.removeItem("aiabw_token");
           setMe(null);
@@ -72,6 +73,27 @@ export function SiteHeader() {
     localStorage.removeItem("aiabw_token");
     setMe(null);
     window.location.href = `/${locale}`;
+  };
+
+  // 创作者申请（2026-10-08 自首页账号条迁入「更多」）：仅登录且未成为创作者时可见
+  const handleApplyCreator = async () => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/creator/apply", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setMe((prev) => (prev ? { ...prev, isCreator: true } : prev));
+        alert(t("creatorOk"));
+      } else {
+        alert(data?.error ?? t("creatorFailed"));
+      }
+    } catch {
+      alert(tc("networkError"));
+    }
   };
 
   // 五个主入口（C2 决策，2026-09-30）
@@ -164,6 +186,22 @@ export function SiteHeader() {
                       {it.label}
                     </Link>
                   ))}
+                  {/* 成为创作者申请（仅登录且未成为创作者可见） */}
+                  {me && !me.isCreator && (
+                    <>
+                      <div className="my-1 border-t border-zinc-100" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMoreOpen(false);
+                          void handleApplyCreator();
+                        }}
+                        className="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-violet-600 transition hover:bg-violet-50"
+                      >
+                        {t("becomeCreator")}
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -324,6 +362,19 @@ export function SiteHeader() {
                   {it.label}
                 </Link>
               ))}
+              {/* 成为创作者申请（仅登录且未成为创作者可见） */}
+              {me && !me.isCreator && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    void handleApplyCreator();
+                  }}
+                  className="rounded-xl px-3 py-2.5 text-left text-sm font-medium text-violet-600 transition hover:bg-violet-50"
+                >
+                  {t("becomeCreator")}
+                </button>
+              )}
               {/* 宠物长期记忆（仅 VIP） */}
               {me && sub && sub.isVip ? (
                 <Link

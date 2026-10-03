@@ -79,15 +79,17 @@ test("checkin-points: 签到路由契约——使用加权随机，固定 10 已
   assert.ok(/rollCheckinPoints\(\)\s*\*\s*multiplier/.test(src), "premium multiplier must apply to rolled points");
 });
 
-test("checkin-points: 前端文案契约——不再承诺固定 +10，统一参数化 {points}", () => {
+test("checkin-points: 前端文案契约——弹窗参数化 {points}；首页手动签到已随账号条移除", () => {
   const zh = JSON.parse(read("../messages/zh.json"));
   const en = JSON.parse(read("../messages/en.json"));
   for (const m of [zh, en]) {
-    assert.ok(!m.home.checkin.includes("+10"), "home.checkin button must not promise +10");
-    assert.ok(m.home.checkinOk.includes("{points}"), "home.checkinOk must be parameterized");
-    assert.ok(!/\+10(?!\})/.test(m.home.checkinOk), "home.checkinOk must not hardcode +10");
     assert.ok(m.checkin.pointsGain.includes("{points}"), "checkin.pointsGain (modal) stays parameterized");
+    assert.ok(!/\+10(?!\})/.test(m.checkin.pointsGain), "checkin.pointsGain must not hardcode +10");
+    // 2026-10-08 首页账号条去重：home.checkin* / home.becomeCreator* 键随手动签到/创作者按钮一并移除
+    assert.ok(!("checkin" in m.home), "home.checkin key removed");
+    assert.ok(!("becomeCreator" in m.home), "home.becomeCreator key removed");
+    assert.equal(typeof m.nav.becomeCreator, "string", "nav.becomeCreator added");
   }
   const homeSrc = read("../src/app/[locale]/page.tsx");
-  assert.ok(homeSrc.includes('t("checkinOk", { points:'), "home page must pass actual pointsGain to checkinOk");
+  assert.ok(!homeSrc.includes("handleCheckin"), "home page no longer hosts manual checkin");
 });

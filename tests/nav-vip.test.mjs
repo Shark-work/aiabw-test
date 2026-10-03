@@ -117,3 +117,30 @@ test("SiteHeader: not regressing on existing /api/auth/me + login/logout/registe
   assert.match(header, /t\("register"\)/);
   assert.match(header, /t\("logout"\)/);
 });
+
+
+// ---- 2026-10-08 首页账号条去重：「成为创作者」迁入「更多」 ----
+test("i18n: zh/en nav has becomeCreator / creatorOk / creatorFailed", () => {
+  const zh = readJson(join(ROOT, "messages/zh.json"));
+  const en = readJson(join(ROOT, "messages/en.json"));
+  for (const j of [zh, en]) {
+    assert.equal(typeof j.nav.becomeCreator, "string");
+    assert.equal(typeof j.nav.creatorOk, "string");
+    assert.equal(typeof j.nav.creatorFailed, "string");
+  }
+});
+
+test("SiteHeader: creator apply posts /api/creator/apply, gated by me && !me.isCreator (desktop + mobile)", () => {
+  assert.match(header, /\/api\/creator\/apply/);
+  assert.match(header, /isCreator: !!d\.user\.isCreator/);
+  const gates = (header.match(/\{me && !me\.isCreator && \(/g) || []).length;
+  assert.ok(gates >= 2, `expected 2+ creator gates, got ${gates}`);
+});
+
+test("home page: legacy account bar removed (dedup with global SiteHeader)", () => {
+  const home = readFileSync(join(ROOT, "src/app/[locale]/page.tsx"), "utf8");
+  assert.ok(!home.includes("账号入口"), "首页账号条区块已删除");
+  assert.ok(!home.includes("handleCheckin"), "手动签到已移除（DailyCheckinModal 覆盖）");
+  assert.ok(!home.includes("handleApplyCreator"), "成为创作者已迁入 SiteHeader「更多」");
+  assert.ok(!home.includes("/api/auth/me"), "首页不再自拉登录态（SiteHeader 统一承载）");
+});

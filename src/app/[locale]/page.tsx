@@ -29,12 +29,6 @@ export default function Home() {
   const [featuredLoading, setFeaturedLoading] = useState(true);
   const [detailPet, setDetailPet] = useState<FeaturedPet | null>(null);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<{
-    id: string;
-    username: string;
-    points: number;
-    isCreator: boolean;
-  } | null>(null);
   // 单宠限制：用户已有宠物数量 / 是否已解锁 / 可用于支付的宠物 id
   const [petState, setPetState] = useState<{
     petCount: number;
@@ -44,29 +38,6 @@ export default function Home() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   // 用户想领养但被单宠限制拦截的推荐宠；支付解锁后自动完成领养并跳转聊天
   const [pendingPet, setPendingPet] = useState<FeaturedPet | null>(null);
-
-  // 从 localStorage 恢复登录态
-  useEffect(() => {
-    const token = localStorage.getItem("aiabw_token");
-    if (!token) return;
-    fetch("/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.ok && data.user) {
-          setUser({
-            id: data.user.id,
-            username: data.user.username ?? "",
-            points: data.user.points ?? 0,
-            isCreator: !!data.user.isCreator,
-          });
-        } else {
-          localStorage.removeItem("aiabw_token");
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // 读取当前用户宠物数量 / 解锁状态（单宠限制前端提示）
   const refreshPetState = useCallback(async () => {
@@ -112,51 +83,6 @@ export default function Home() {
       alive = false;
     };
   }, [locale]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("aiabw_token");
-    setUser(null);
-  };
-
-  const handleCheckin = async () => {
-    const token = localStorage.getItem("aiabw_token");
-    if (!token) return;
-    try {
-      const res = await fetch("/api/user/checkin", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data?.ok) {
-        setUser((prev) => (prev ? { ...prev, points: data.points ?? prev.points } : prev));
-        alert(data.already ? t("checkinAlready") : t("checkinOk", { points: data.pointsGain ?? 0 }));
-      } else {
-        alert(data?.error ?? t("checkinFailed"));
-      }
-    } catch {
-      alert(tc("networkError"));
-    }
-  };
-
-  const handleApplyCreator = async () => {
-    const token = localStorage.getItem("aiabw_token");
-    if (!token) return;
-    try {
-      const res = await fetch("/api/creator/apply", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data?.ok) {
-        setUser((prev) => (prev ? { ...prev, isCreator: true } : prev));
-        alert(t("creatorOk"));
-      } else {
-        alert(data?.error ?? t("creatorFailed"));
-      }
-    } catch {
-      alert(tc("networkError"));
-    }
-  };
 
   // —— 核心领养：认领用户实际点击的这只推荐宠（图鉴同款 /api/pets/claim 链路）——
   // 成功后带 threadId + adoptionId 跳转聊天页，聊天页按 adoption.petType
@@ -232,67 +158,6 @@ export default function Home() {
       />
       {/* 半透明白色遮罩，保证内容可读 */}
       <div aria-hidden className="absolute inset-0 bg-white/60" />
-
-      {/* 账号入口 */}
-      <div className="relative z-20 flex justify-end px-2 pt-2">
-        {user ? (
-          <div className="flex flex-wrap items-center justify-end gap-2 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
-            <span className="font-medium text-violet-600">
-              <Link href="/points" className="hover:underline" title={tc("points")}>
-                {tc("points")} {user.points}
-              </Link>
-            </span>
-            <button
-              type="button"
-              onClick={handleCheckin}
-              className="font-medium text-emerald-600 hover:underline"
-            >
-              {t("checkin")}
-            </button>
-            {!user.isCreator && (
-              <button
-                type="button"
-                onClick={handleApplyCreator}
-                className="font-medium text-violet-600 hover:underline"
-              >
-                {t("becomeCreator")}
-              </button>
-            )}
-            <Link href="/marketplace" className="font-medium text-zinc-600 hover:text-orange-600">
-              🛍️ {tc("market")}
-            </Link>
-            <Link href="/handbooks" className="font-medium text-zinc-600 hover:text-orange-600">
-              📔 {tc("journals")}
-            </Link>
-            <Link href="/my-pets" className="font-medium text-zinc-600 hover:text-orange-600">
-              🐾 {tc("myPets")}
-            </Link>
-            <span className="text-zinc-300">|</span>
-            <span className="text-zinc-600">{user.username}</span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="font-medium text-orange-600 hover:underline"
-            >
-              {tc("logout")}
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 rounded-full border border-zinc-200 bg-white/80 px-4 py-1.5 text-sm shadow-sm backdrop-blur">
-            <Link href="/marketplace" className="font-medium text-zinc-600 hover:text-orange-600">
-              🛍️ {tc("market")}
-            </Link>
-            <span className="text-zinc-300">|</span>
-            <Link href="/login" className="font-medium text-zinc-600 hover:text-orange-600">
-              {tc("signIn")}
-            </Link>
-            <span className="text-zinc-300">|</span>
-            <Link href="/register" className="font-medium text-orange-600 hover:underline">
-              {tc("register")}
-            </Link>
-          </div>
-        )}
-      </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 pb-10">
         {/* SEO h1（视觉隐藏：Header 已承载品牌标题） */}

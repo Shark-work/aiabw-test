@@ -143,9 +143,10 @@ test("frontend: email display replaced by username everywhere", () => {
   assert.ok(!/me\.email/.test(header), "导航不再展示邮箱");
   assert.match(header, /me\.username/);
   assert.match(header, /href="\/settings"/, "导航提供设置入口");
+  // 2026-10-08 首页账号条去重：账号身份（昵称/积分/退出）统一由全局 SiteHeader 承载，
+  // 首页不再渲染任何账号信息 —— 昵称断言上移到上方 SiteHeader 断言（me.username），首页侧零邮箱泄露面。
   const home = read("src/app/[locale]/page.tsx");
-  assert.ok(!/user\.email/.test(home), "首页不再展示邮箱");
-  assert.match(home, /user\.username/);
+  assert.ok(!/user\.(email|username)/.test(home), "首页不再渲染账号身份（统一由 SiteHeader 承载）");
   const panel = read("src/components/leaderboard-panel.tsx");
   assert.ok(!/ownerEmail/.test(panel), "排行榜组件不渲染邮箱");
   assert.match(panel, /ownerName/);

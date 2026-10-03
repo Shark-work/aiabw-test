@@ -30,13 +30,6 @@
     "socialProof": "已有 {count}+ 位收藏家在培育他们的 AI 伙伴",
     "socialProofFallback": "已有数千位收藏家",
     "heroCta": "立即领养",
-    "checkin": "📅 每日签到",
-    "checkinOk": "🎉 签到成功 +{points} 积分！",
-    "checkinAlready": "今天已经签到过啦，明天再来~",
-    "checkinFailed": "签到失败",
-    "becomeCreator": "✨ 成为创作者",
-    "creatorOk": "🎉 恭喜！你现在是创作者了，可以去发布 UGC 宠物。",
-    "creatorFailed": "申请失败",
     "adopt": "🐾 领养",
     "upgrade": "🔒 需升级",
     "crafting": "⏳ 打造中...",
@@ -598,7 +591,10 @@
     "navBagFusion": "🎒 背包/融合",
     "navSoulCodex": "✨ 灵魂卡/收藏",
     "navBlindbox": "🎁 盲盒广场",
-    "navMore": "更多"
+    "navMore": "更多",
+    "becomeCreator": "✨ 成为创作者",
+    "creatorOk": "🎉 恭喜！你现在是创作者了，可以去发布 UGC 宠物。",
+    "creatorFailed": "申请失败"
   },
   "collection": {
     "title": "收藏中心",
