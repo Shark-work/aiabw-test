@@ -221,7 +221,9 @@
     "moodHappy": "Happy",
     "moodEcstatic": "Ecstatic",
     "monthlyPoints": "Monthly points: {points}",
-    "refreshing": "Refreshing…"
+    "refreshing": "Refreshing…",
+    "aibiBadge": "Aibi",
+    "aibiWelcome": "Hi! I'm {name}, your very own on-chain aibi. What's on your mind?"
   },
   "chatPanel": {
     "you": "You",

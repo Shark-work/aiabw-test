@@ -18,6 +18,8 @@ export type PetConfig = {
   personality: string;
   /** System prompt for the model - decides tone and behaviour */
   systemPrompt: string;
+  /** emoji 立绘占位（aibi 链上凭证无图片资源时的展示替身；有值时渲染端优先于 avatar） */
+  emoji?: string;
 };
 
 /**

@@ -9,6 +9,12 @@ import {
   buildSpeciesPetConfig,
   type SpeciesInfo,
 } from "@/lib/species-prompt";
+import {
+  isAibiPetType,
+  aibiTokenIdOf,
+  buildAibiPetConfig,
+} from "@/lib/aibi-prompt";
+import { getAibiSpecies, getAibiHabitat, getAibiRarity } from "@/lib/aibi-catalog";
 
 /** UGC 宠物在 adoptions.petType 中的编码：ugc:<petId> */
 export function isUgcPetType(petType?: string | null): boolean {
@@ -69,7 +75,50 @@ export async function getSpeciesPetConfig(
   return buildSpeciesPetConfig(info, locale);
 }
 
-/** 统一解析宠物配置：UGC 宠物读取数据库，图鉴物种动态构建，官方宠物走 PETS 配置，未知回退狐狸 */
+/**
+ * 根据 petType（aibi:<aibiTokenId>）读取链上艾比凭证 + 性格档案，构建专属人设；
+ * 凭证不存在（或已销毁后残留线程）返回 null，调用方回退默认宠物。
+ */
+export async function getAibiPetConfig(
+  petType: string,
+  locale: "zh" | "en" = "zh",
+): Promise<PetConfig | null> {
+  const tokenId = aibiTokenIdOf(petType);
+  if (!tokenId) return null;
+  const { rows } = await pool.query(
+    `SELECT t.aibi_token_id AS "aibiTokenId", t.species_id AS "speciesId",
+            p.personality_type AS "personalityType", p.mood, p.affinity, p.energy,
+            p.growth_level AS "growthLevel"
+       FROM aibi_tokens t
+       LEFT JOIN aibi_personalities p ON p.aibi_token_id = t.aibi_token_id
+      WHERE t.aibi_token_id = $1
+      LIMIT 1`,
+    [tokenId],
+  );
+  const r = rows[0];
+  if (!r) return null;
+  const sp = getAibiSpecies(r.speciesId) ?? null;
+  const habitat = sp ? getAibiHabitat(sp.habitatId) : undefined;
+  const rarity = sp ? getAibiRarity(sp.rarityId) : undefined;
+  return buildAibiPetConfig(
+    {
+      aibiTokenId: r.aibiTokenId,
+      species: sp,
+      rarityNameZh: rarity?.nameZh,
+      rarityNameEn: rarity?.nameEn,
+      habitatNameZh: habitat?.nameZh,
+      habitatNameEn: habitat?.nameEn,
+      personalityType: r.personalityType ?? null,
+      mood: r.mood ?? null,
+      affinity: r.affinity ?? null,
+      energy: r.energy ?? null,
+      growthLevel: r.growthLevel ?? null,
+    },
+    locale,
+  );
+}
+
+/** 统一解析宠物配置：UGC 宠物读取数据库，图鉴物种动态构建，Aibi 链上凭证按实例构建，官方宠物走 PETS 配置，未知回退狐狸 */
 export async function resolvePetConfig(
   petType?: string | null,
   locale: "zh" | "en" = "zh",
@@ -81,6 +130,10 @@ export async function resolvePetConfig(
   if (isSpeciesPetType(petType)) {
     const species = await getSpeciesPetConfig(petType as string, locale);
     if (species) return species;
+  }
+  if (isAibiPetType(petType)) {
+    const aibi = await getAibiPetConfig(petType as string, locale);
+    if (aibi) return aibi;
   }
   return getPet(petType);
 }

@@ -221,7 +221,9 @@
     "moodHappy": "开心",
     "moodEcstatic": "狂喜",
     "monthlyPoints": "本月活跃度积分：{points}",
-    "refreshing": "刷新中…"
+    "refreshing": "刷新中…",
+    "aibiBadge": "艾比",
+    "aibiWelcome": "嗨！我是{name}，你的专属链上艾比，想和我聊点什么呀？"
   },
   "chatPanel": {
     "you": "你",

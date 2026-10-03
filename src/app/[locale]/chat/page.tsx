@@ -102,6 +102,27 @@ export default async function ChatPage({
     petType = ad.petType || DEFAULT_PET_TYPE;
   }
 
+  // —— Aibi 线程（方案 a）：adoptions 未命中时按 thread_id 反查链上艾比 ——
+  // 「进了谁的对话就显示谁」对艾比同样成立；仅 minted 可聊（pending/burned 不命中，
+  // 与经典线孤儿线程一致回退默认宠物）。心情条映射 affinity（0-100），等级取 growth_level。
+  if (!ad && threadId) {
+    const { rows: aibiRows } = await pool.query(
+      `SELECT t.aibi_token_id AS "aibiTokenId",
+              p.affinity, p.growth_level AS "growthLevel"
+         FROM aibi_tokens t
+         LEFT JOIN aibi_personalities p ON p.aibi_token_id = t.aibi_token_id
+        WHERE t.thread_id = $1::uuid AND t.status = 'minted'
+        LIMIT 1`,
+      [threadId],
+    );
+    const at = aibiRows[0];
+    if (at) {
+      petType = `aibi:${at.aibiTokenId}`;
+      happiness = Math.max(0, Math.min(100, Number(at.affinity ?? 0)));
+      level = Number(at.growthLevel ?? 1);
+    }
+  }
+
   // 根据 petType 解析宠物配置（UGC 宠物读取数据库；图鉴物种动态构建；未知类型自动回退狐狸）
   const basePet = await resolvePetConfig(petType, locale as "zh" | "en");
 
@@ -186,12 +207,22 @@ export default async function ChatPage({
   return (
     <main className="flex h-dvh w-full flex-col gap-2 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
       <div className="flex items-center gap-3 px-1">
-        <LivingPet
-          src={pet.avatar}
-          alt={`${tc("appName")}-${pet.name}`}
-          tail={false}
-          className="h-10 w-10 rounded-full border border-orange-200 bg-orange-50 object-cover"
-        />
+        {pet.emoji ? (
+          // Aibi 会话主体：emoji 立绘 + 紫色边框（与经典宠物橙色头像视觉区分）
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-300 bg-violet-50 text-2xl"
+            aria-hidden
+          >
+            {pet.emoji}
+          </span>
+        ) : (
+          <LivingPet
+            src={pet.avatar}
+            alt={`${tc("appName")}-${pet.name}`}
+            tail={false}
+            className="h-10 w-10 rounded-full border border-orange-200 bg-orange-50 object-cover"
+          />
+        )}
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-zinc-900">{tc("appName")}</span>
@@ -199,6 +230,12 @@ export default async function ChatPage({
             <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
               Lv.{level} {pet.name}
             </span>
+            {/* 线程来源标识：Aibi 链上凭证 vs 经典宠物（adoptions） */}
+            {pet.emoji ? (
+              <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                ⛓️ {tchat("aibiBadge")}
+              </span>
+            ) : null}
             <QuotaBadge initial={initialQuota} />
           </div>
           <div className="text-xs text-zinc-500">{tchat("chatWith", { name: pet.name })}</div>
@@ -213,7 +250,9 @@ export default async function ChatPage({
           initialHappiness={happiness}
           initialLevel={level}
           initialMonthlyPoints={monthlyPoints}
-          fallbackWelcome={welcomeMessage || undefined}
+          fallbackWelcome={
+            pet.emoji ? tchat("aibiWelcome", { name: pet.name }) : welcomeMessage || undefined
+          }
           petType={petType}
           pet={pet}
         />

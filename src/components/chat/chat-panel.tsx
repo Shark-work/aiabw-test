@@ -23,6 +23,17 @@ function AgentAvatar({
   pet: PetConfig;
   className?: string;
 }) {
+  // Aibi 会话主体：emoji 立绘 + 紫色边框（与经典宠物橙色头像细微区分）
+  if (pet.emoji) {
+    return (
+      <span
+        className={`${className} flex shrink-0 items-center justify-center rounded-full border border-violet-300 bg-violet-50 text-xl`}
+        aria-hidden
+      >
+        {pet.emoji}
+      </span>
+    );
+  }
   return (
     <LivingPet
       src={pet.avatar}
