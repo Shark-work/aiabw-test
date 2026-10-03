@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { AibiCard } from "./aibi-card";
+import { AibiChatButton } from "./aibi-chat-button";
 import { AibiErrorBanner } from "./aibi-error-banner";
 import { aibiFetch, AibiClientError } from "@/lib/aibi-client";
 import { getAibiHabitat } from "@/lib/aibi-catalog";
@@ -77,6 +78,8 @@ interface TokenDetailDto {
   growthLevel: number | null;
   growthExp: number | null;
   lastInteractedAt: string | null;
+  /** Aibi ↔ 聊天（方案 a）：已绑定对话线程；仅持有者（viewerIsOwner）由 API 下放 */
+  threadId?: string | null;
   ownerDisplay: string | null;
   provenance: ProvenanceRow[];
   interactions: InteractionRow[];
@@ -412,6 +415,16 @@ export function AibiPageClient({ tokenId }: { tokenId: string }) {
                 );
               })}
             </div>
+            {/* Aibi ↔ 聊天入口（方案 a）：minted 持有者可聊；无线程时按钮幂等创建 */}
+            {detail.status === "minted" ? (
+              <div className="mt-3">
+                <AibiChatButton
+                  aibiTokenId={detail.aibiTokenId}
+                  threadId={detail.threadId}
+                  className="w-full rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-2.5 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
+                />
+              </div>
+            ) : null}
             {error ? (
               <div className="mt-3">
                 <AibiErrorBanner code={error.code} message={error.message} onClose={() => setError(null)} />

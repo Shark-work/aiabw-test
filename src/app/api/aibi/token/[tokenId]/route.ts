@@ -27,13 +27,17 @@ export async function GET(
     const viewer = await getUserFromRequest(req);
     const viewerIsOwner = !!viewer && !!detail.ownerId && viewer.id === detail.ownerId;
 
-    // 剥离内部字段（ownerId 不下发；void 标记显式丢弃，过 no-unused-vars）
-    const { ownerId, ...publicDetail } = detail;
+    // 剥离内部字段（ownerId 不下发；void 标记显式丢弃，过 no-unused-vars）。
+    // threadId 同样默认剥离：/chat?thread=<id> 的 SSR 消息加载不校验归属，
+    // threadId 即「窥视钥匙」——仅持有者（viewerIsOwner）下放，绝不公开。
+    const { ownerId, threadId, ...publicDetail } = detail;
     void ownerId;
+    void threadId;
     return aibiOk({
       ...publicDetail,
       species: getAibiSpecies(detail.speciesId) ?? null,
       viewerIsOwner,
+      ...(viewerIsOwner ? { threadId } : {}),
     });
   } catch (err) {
     return aibiCatch(err, req);

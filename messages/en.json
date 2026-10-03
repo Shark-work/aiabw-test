@@ -223,7 +223,10 @@
     "monthlyPoints": "Monthly points: {points}",
     "refreshing": "Refreshing…",
     "aibiBadge": "Aibi",
-    "aibiWelcome": "Hi! I'm {name}, your very own on-chain aibi. What's on your mind?"
+    "aibiWelcome": "Hi! I'm {name}, your very own on-chain aibi. What's on your mind?",
+    "chatAction": "💬 Chat",
+    "startChatting": "✨ Start chatting",
+    "creatingThread": "Creating…"
   },
   "chatPanel": {
     "you": "You",

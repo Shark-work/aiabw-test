@@ -14,6 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link, useRouter } from "@/i18n/navigation";
 import { AibiCard } from "./aibi-card";
+import { AibiChatButton } from "./aibi-chat-button";
 import { AibiDetailModal } from "./aibi-detail-modal";
 import { AibiErrorBanner } from "./aibi-error-banner";
 import { FusionModal } from "./fusion-modal";
@@ -206,13 +207,16 @@ export function BagClient() {
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {aibis.map((tk) => (
-                  <AibiCard
-                    key={tk.aibiTokenId}
-                    token={tk}
-                    locale={locale}
-                    showGrowth
-                    onClick={() => setDetail(tk)}
-                  />
+                  <div key={tk.aibiTokenId} className="flex flex-col gap-1.5">
+                    <AibiCard
+                      token={tk}
+                      locale={locale}
+                      showGrowth
+                      onClick={() => setDetail(tk)}
+                    />
+                    {/* Aibi ↔ 聊天入口（方案 a）：有线程直接进，无线程幂等创建 */}
+                    <AibiChatButton aibiTokenId={tk.aibiTokenId} threadId={tk.threadId} />
+                  </div>
                 ))}
               </div>
             )}

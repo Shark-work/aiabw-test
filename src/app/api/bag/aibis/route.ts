@@ -20,6 +20,7 @@ export async function GET(req: Request) {
     const { rows } = await pool.query(
       `SELECT t.aibi_token_id AS "aibiTokenId", t.species_id AS "speciesId",
               t.status, t.physical_bound AS "physicalBound",
+              t.thread_id AS "threadId",
               t.created_at AS "createdAt",
               p.personality_type AS "personalityType", p.mood, p.affinity, p.energy,
               p.growth_level AS "growthLevel", p.growth_exp AS "growthExp"

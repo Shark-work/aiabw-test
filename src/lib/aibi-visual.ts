@@ -143,6 +143,8 @@ export interface AibiTokenDto {
   speciesId: string;
   status: string;
   physicalBound: boolean;
+  /** Aibi ↔ 聊天（方案 a）：已绑定的对话线程；NULL=未创建（按钮显示「创建聊天」） */
+  threadId?: string | null;
   createdAt: string;
   personalityType: string | null;
   mood: string | null;

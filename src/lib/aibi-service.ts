@@ -396,6 +396,8 @@ export interface AibiTokenDetail {
   growthLevel: number | null;
   growthExp: number | null;
   lastInteractedAt: string | null;
+  /** Aibi ↔ 聊天（方案 a）：已绑定对话线程；仅持有者可得（路由层按 viewerIsOwner 下放） */
+  threadId: string | null;
   /** 服务端内部字段（路由剥离，不下发）：仅用于比对 viewerIsOwner */
   ownerId: string | null;
   ownerDisplay: string | null;
@@ -424,7 +426,7 @@ export async function readTokenDetail(client: DbClient, tokenId: string): Promis
             t.chain_id AS "chainId", t.contract_address AS "contractAddress", t.tx_hash AS "txHash",
             t.physical_bound AS "physicalBound", t.physical_order_id AS "physicalOrderId",
             t.minted_at AS "mintedAt", t.burned_at AS "burnedAt", t.burn_reason AS "burnReason",
-            t.created_at AS "createdAt",
+            t.thread_id AS "threadId", t.created_at AS "createdAt",
             p.personality_type AS "personalityType", p.mood, p.affinity, p.energy,
             p.growth_level AS "growthLevel", p.growth_exp AS "growthExp",
             p.last_interacted_at AS "lastInteractedAt"
