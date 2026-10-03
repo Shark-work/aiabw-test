@@ -282,13 +282,24 @@ export default function PetCollectionPage() {
           </div>
         </div>
 
+        {/* 互跳条：引导到聊天宠物页 /my-pets（2026-10-06 术语与信息架构对齐） */}
+        <Link
+          href="/my-pets"
+          className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-100 to-amber-50 p-4 transition hover:border-orange-300 hover:shadow-sm"
+        >
+          <span className="text-sm font-semibold text-orange-800">{t("crossBanner")}</span>
+          <span className="shrink-0 rounded-full bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm">
+            {t("crossGo")}
+          </span>
+        </Link>
+
         {toast && (
           <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-700">
             {toast}
           </div>
         )}
 
-        {/* 筛选器：仅显示可合成 + 稀有度（图鉴已下线此入口，我的宠物页接管） */}
+        {/* 筛选器：仅显示可融合 + 稀有度（图鉴已下线此入口，我的宠物页接管） */}
         <div className="mb-4 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => setShowOnlyEvolvable((v) => !v)} className={chip(showOnlyEvolvable)}>
