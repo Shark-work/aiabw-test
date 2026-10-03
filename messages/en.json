@@ -860,8 +860,8 @@
     "newsNotFound": "News not found or removed",
     "packsTitle": "Card Packs - Collect Rare AI Pets | AIABW",
     "packsDesc": "Open card packs with points to collect rare AI pets and raising items. New pets join your soul collection instantly.",
-    "soulCardsTitle": "Soul Collection - My On-chain Pet Collectibles | AIABW",
-    "soulCardsDesc": "View every on-chain pet credential you hold, the supply dashboard and the mintable list. Each token is a unique digital collectible.",
+    "soulCardsTitle": "Collection Center - Aibi Credentials · Soul Cards · Collectibles | AIABW",
+    "soulCardsDesc": "One hub for your Aibi credentials, Soul Cards and digital collectibles, with the supply dashboard and mintable list. Each token is a unique on-chain collectible.",
     "codexTitle": "Aibi Codex - Species, Rarity & Habitat Archive | AIABW",
     "codexDesc": "Browse all AI pet species, filter by rarity, element and habitat, and track your collection progress.",
     "shopTitle": "Item Shop - Raising Items & Exploration Supplies | AIABW",
@@ -1398,7 +1398,7 @@
       }
     },
     "soul": {
-      "title": "Aibi Gallery",
+      "title": "Soul Cards",
       "subtitle": "Supply board, my collection and obtainable species",
       "loadFailed": "Failed to load. Please refresh.",
       "supply": {

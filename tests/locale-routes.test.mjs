@@ -94,3 +94,17 @@ test("H: en 运势文案不含 \"a {sign} day\" 语法错误", () => {
   assert.ok(en.home.fortune.includes("{sign} day"), "en fortune 含 {sign} day");
   assert.ok(!en.home.fortune.includes("a {sign} day"), "无多余冠词 a");
 });
+
+// ---- F) soul-cards 旧内容清理（2026-10-06）----
+// soul Tab 标题「艾比图鉴 / Aibi Gallery」与 /codex 页（aibi.codex.title「艾比图鉴 /
+// Aibi Codex」）撞名 → 改术语标准词「灵魂卡 / Soul Cards」；
+// 页面 SEO（三 Tab 收藏中心上线后仍写「灵魂图鉴 / Soul Collection」）→ 更新为收藏中心。
+test("F: soul-cards 不再有「图鉴」旧文案（Tab 标题 + SEO 均为收藏中心/灵魂卡）", () => {
+  assert.equal(zh.aibi.soul.title, "灵魂卡", "zh soul Tab 标题");
+  assert.equal(en.aibi.soul.title, "Soul Cards", "en soul Tab 标题");
+  assert.notEqual(zh.aibi.soul.title, zh.aibi.codex.title, "soul Tab 与 /codex 页不撞名");
+  assert.ok(zh.seo.soulCardsTitle.includes("收藏中心"), "zh SEO 标题 = 收藏中心");
+  assert.ok(!zh.seo.soulCardsTitle.includes("图鉴"), "zh SEO 标题不再含图鉴");
+  assert.ok(en.seo.soulCardsTitle.includes("Collection Center"), "en SEO 标题 = Collection Center");
+  assert.ok(zh.seo.soulCardsDesc.includes("收藏中心"), "zh SEO 描述同步");
+});
