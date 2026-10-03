@@ -1393,7 +1393,7 @@
       "actions": {
         "feed": "Feed",
         "train": "Train",
-        "talk": "Talk",
+        "talk": "Greet",
         "play": "Play"
       }
     },

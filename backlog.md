@@ -22,6 +22,15 @@
 
 - 两页 `generateMetadata` 的 openGraph 已展开 `...ogShareFields(locale)`（commit `668a0c6`），金丝雀实测 /zh/blindbox 与 /zh/pets/corgi 的 og:image + og:site_name + og:locale 全部注入，物种动态标题不受影响。
 
+## P1 · Aibi 聊天能力（方案 a）待排期（2026-10-06 登记）
+
+- **背景**：`aibi_species.supports_chat` 原为 9/12 物种 true，但全站无任何代码路径消费该字段（2026-10-06 全仓核实），属"能力开关空转"，给用户造成"艾比可聊天"的预期落差。已执行方案 b：种子值全物种置 false（SCHEMA_VERSION 11 同步生产），`aibi.interact.actions.talk` 显示名改为「问候 / Greet」（字段与 actionType 枚举保留）。
+- **方案 a（正式打通聊天）三件事**：
+  1. `aibi_tokens` 增加 `thread_id` 列（关联 threads，需 schema 迁移 + SCHEMA_VERSION bump）；
+  2. `/chat` 页宠物源扩展：当前只读经典线 adoptions，需支持 aibi_tokens 作为会话主体；
+  3. prompt 构建：chat 路由按主体类型分支，aibi 使用 `personality_template` + 成长状态（growth_level/affinity/mood）构建系统提示。
+- **预估**：3–5 天（含迁移 + 前后端 + 测试）。启用时将 supports_chat 种子值恢复 true 并更新本条目。
+
 ## P3 · B1 / B2 / B3：breed / transfer / referral API 入口决策（待产品侧确认优先级）
 
 - **B1** breed（繁育）：代码库无 `/api/breed` 路由（2026-09-30 全仓核实），可能为规划中功能或链上操作；入口形态与配额策略待产品确认后再实现。

@@ -1134,7 +1134,9 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     （drizzle/0026；种子 upsert 由 src/db/aibi-catalog-seed.ts 从 src/lib/aibi-catalog.ts 生成，幂等可重导）
 // v7: 艾比平台 Phase 2 —— aibi_tokens/mint_logs/burn_logs/supply_snapshots/physical_assets/aibi_personalities/aibi_growth_logs/user_wallets（drizzle/0025）
 // v10: 艾比平台 Phase 11 —— stripe_orders 支付订单表（drizzle/0028，webhook 事务履约 + 行锁幂等）
-const SCHEMA_VERSION = 10;
+// v11: 产品逻辑一致性修复 —— aibi_species.supports_chat 种子值全物种置 false
+//     （聊天能力未上线、无任何代码路径消费；schema 字段保留，方案 a 排期见 backlog.md）
+const SCHEMA_VERSION = 11;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,
