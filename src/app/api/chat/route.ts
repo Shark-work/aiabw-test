@@ -122,6 +122,9 @@ async function handlePost(req: Request) {
       );
     }
   } else {
+    // 到达此处 aibiTokenId 为空 → 上方守卫已确保 adoptionId 是非空 string；
+    // TS 无法跨复合守卫条件反向收窄，用局部变量显式固定类型。
+    const classicAdoptionId = adoptionId as string;
     const [row] = await db
       .select({
         userId: adoptions.userId,
@@ -131,7 +134,7 @@ async function handlePost(req: Request) {
         petType: adoptions.petType,
       })
       .from(adoptions)
-      .where(eq(adoptions.id, adoptionId))
+      .where(eq(adoptions.id, classicAdoptionId))
       .limit(1);
     adoption = row;
 
