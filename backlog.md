@@ -31,6 +31,18 @@
   3. prompt 构建：chat 路由按主体类型分支，aibi 使用 `personality_template` + 成长状态（growth_level/affinity/mood）构建系统提示。
 - **预估**：3–5 天（含迁移 + 前后端 + 测试）。启用时将 supports_chat 种子值恢复 true 并更新本条目。
 
+## P2 · /my-pets 与 /pets/my 双页合并（2026-10-06 登记，功能融合度诊断 #5）
+
+- **现状**：/my-pets（聊天宠物：心情/记忆/排序搜索）与 /pets/my（宠物图鉴：持有管理/融合/兑换商店）数据源同为 adoptions，职责割裂，用户需在两个"我的宠物"间来回。2026-10-06 已互加跳转条缓解（myPets.evolveBanner ↔ petsCatalog.crossBanner），未治本。
+- **合并方向**：以 /pets/my 为主框架并入聊天/心情/记忆能力（或反向），保留双 URL 308 兼容；需梳理 PetDetailModal 与 my-pets 客户端的状态重叠。
+- **预估**：2–3 天。合并后撤掉互跳条。
+
+## P2 · 积分/金币双货币统一叙事（2026-10-06 登记，功能融合度诊断 #6）
+
+- **现状**：单一 users.points 贯穿全部业务线（points_log 13 种 reason），但 UI 存在"积分/金币"两套话术混用，schema 注释（"仅用于 UGC 宠物与抽奖"）已过时。
+- **方向**：统一术语为一种叫法并全站替换；同步更新 schema.ts 注释与 legal.goodsBody 表述；若未来确需双货币（软/硬通货），再单独设计。
+- **预估**：1 天（纯文案 + 注释）。
+
 ## P3 · B1 / B2 / B3：breed / transfer / referral API 入口决策（待产品侧确认优先级）
 
 - **B1** breed（繁育）：代码库无 `/api/breed` 路由（2026-09-30 全仓核实），可能为规划中功能或链上操作；入口形态与配额策略待产品确认后再实现。
