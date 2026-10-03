@@ -34,3 +34,25 @@
 
 - 不擅自改阈值 / 不擅自升级套餐 / 不删除生产数据（先备份或确认）。
 - 涉及付费变更时，给出利弊与替代方案，交由用户决策。
+
+## 部署含 SCHEMA_VERSION bump 的版本：必须手动跑迁移（2026-10-03 事故教训）
+
+**规则**：任何 bump `SCHEMA_VERSION` 的 commit 推送上线后，立即执行：
+
+```powershell
+node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs
+```
+
+确认输出 `[db] schema synced to version N` 且 `_schema_meta.version = N`，再跑 smoke。
+
+**根因**（2026-10-03 v12 部署事故）：冷启动自动全量同步耗时 ~60s，**超 Vercel hobby 函数 maxDuration 必被杀**，`_schema_meta.version` 遗留 -1 死锁；10 分钟重试窗口在低流量时段（无新实例冷启动）不自愈，期间所有引用新列的 API 持续 500（smoke 5/42 失败）。手动脚本在本地进程跑完同步，不受函数时限约束。
+
+**诊断三连**（怀疑迁移未生效时）：
+
+```sql
+SELECT * FROM "_schema_meta";                                    -- version 应 = SCHEMA_VERSION，-1 = 死锁
+SELECT column_name FROM information_schema.columns WHERE table_name='<表>';  -- 新列是否存在
+SELECT pid, state, wait_event, query FROM pg_stat_activity WHERE datname = current_database();  -- 有无卡住的 DDL
+```
+
+**症状识别**：新版本代码已上线（新路由 401≠404）但引用新 schema 对象的接口 500 INTERNAL_ERROR，而旧功能正常 → 先查 `_schema_meta`，不要先怀疑代码。
