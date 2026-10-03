@@ -6,6 +6,7 @@ import { adoptions, cosmetics, blindboxPools } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { PREMIUM_PRICE_CNY } from "@/lib/premium";
+import { findPointsPack } from "@/lib/points-recharge";
 import {
   XORPAY_AID,
   XORPAY_APP_SECRET,
@@ -34,11 +35,12 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const locale = resolveLocale(req);
     // 商品类型：unlock（多宠解锁，默认）/ cosmetic（宠物装扮）/ premium（高级公民月卡）
-    // / blindbox（盲盒抽奖）
-    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" =
+    // / blindbox（盲盒抽奖）/ points（积分充值）
+    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" | "points" =
       body?.kind === "cosmetic" ? "cosmetic"
       : body?.kind === "premium" ? "premium"
       : body?.kind === "blindbox" ? "blindbox"
+      : body?.kind === "points" ? "points"
       : "unlock";
     const adoptionId =
       typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
@@ -47,16 +49,28 @@ export async function POST(req: Request) {
     const poolId =
       typeof body?.poolId === "string" ? body.poolId.trim() : "";
 
-    // unlock / cosmetic 需要宠物；premium 无需；blindbox 需要奖池
+    // unlock / cosmetic 需要宠物；premium / points 无需；blindbox 需要奖池
     if (kind === "blindbox") {
       if (!poolId) {
         return NextResponse.json({ ok: false, error: apiError(locale, "invalidBlindboxPool") }, { status: 400 });
       }
-    } else if (kind !== "premium" && !adoptionId) {
+    } else if (kind !== "premium" && kind !== "points" && !adoptionId) {
       return NextResponse.json({ ok: false, error: apiError(locale, "missingAdoptionId") }, { status: 400 });
     }
     if (kind === "cosmetic" && !cosmeticId) {
       return NextResponse.json({ ok: false, error: apiError(locale, "invalidCosmetic") }, { status: 400 });
+    }
+
+    // points 充值：档位必须命中服务端价格表（src/lib/points-recharge.ts）。
+    // 价格/积分只信服务端常量，绝不读客户端金额 —— 防「1 分钱买 5000 积分」改价攻击。
+    // 此校验在鉴权与 XorPay 下单之前，非法档位不会产生任何外部调用。
+    const requestedPoints = typeof body?.points === "number" ? Math.floor(body.points) : NaN;
+    const pointsPack = kind === "points" ? findPointsPack(requestedPoints) ?? null : null;
+    if (kind === "points" && !pointsPack) {
+      return NextResponse.json(
+        { ok: false, code: "INVALID_POINTS_PACK", error: apiError(locale, "invalidPointsPack") },
+        { status: 400 },
+      );
     }
 
     // —— 鉴权：必须登录，且只能为自己的宠物发起支付 ——
@@ -81,8 +95,8 @@ export async function POST(req: Request) {
     // 首次访问自动建表（幂等）
     await ensureDbSchemaOnce();
 
-    // 校验领养记录存在，且属于当前登录用户（premium 月卡 / blindbox 盲盒无需宠物）
-    if (kind !== "premium" && kind !== "blindbox") {
+    // 校验领养记录存在，且属于当前登录用户（premium 月卡 / blindbox 盲盒 / points 积分充值无需宠物）
+    if (kind !== "premium" && kind !== "blindbox" && kind !== "points") {
       const [a] = await db
         .select({ id: adoptions.id, userId: adoptions.userId })
         .from(adoptions)
@@ -133,6 +147,13 @@ export async function POST(req: Request) {
       name = locale === "en" ? bp.nameEn : bp.nameZh;
       price = Number(bp.priceCny).toFixed(2);
       order_id = `blindbox-${poolId}-${user.id}-${nonce}`;
+    } else if (kind === "points") {
+      // 积分充值：pointsPack 已在上方校验非空（非法档位已 400），价格/积分全取服务端档位表
+      const pack = pointsPack!;
+      name = `AIABW 积分充值（${pack.points} 积分）`;
+      price = pack.priceCny.toFixed(2);
+      amount = pack.priceCny;
+      order_id = `points-${pack.points}-${user.id}-${nonce}`;
     } else {
       const rawAmount = body?.amount ?? DEFAULT_AMOUNT;
       amount = Number(rawAmount);

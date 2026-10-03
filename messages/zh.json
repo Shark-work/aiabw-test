@@ -185,7 +185,16 @@
     "redeemOk": "🎉 兑换成功！新伙伴已加入你的图鉴",
     "redeemFail": "兑换失败，请稍后重试",
     "redeemNoPoints": "积分不足（需要 500 积分）",
-    "redeemAlready": "今天已兑换过，明天再来吧~"
+    "redeemAlready": "今天已兑换过，明天再来吧~",
+    "rechargeTitle": "充值积分",
+    "rechargeSub": "扫码支付 · 到账自动入账",
+    "rechargeDesc": "支付成功后自动到账 {points} 积分，可用于抽宠 / 开卡包 / 买道具",
+    "packPointsLabel": "积分",
+    "rechargeOk": "🎉 充值成功，积分已到账！",
+    "rechargeFail": "充值下单失败，请稍后重试",
+    "rechargeHistory": "充值记录",
+    "rechargeEmpty": "暂无充值记录",
+    "recharge": "积分充值"
   },
   "handbooks": {
     "title": "记忆手账",
@@ -436,6 +445,7 @@
     "adoptionNotFound": "未找到该领养记录",
     "noPermissionPet": "无权为该宠物发起支付",
     "invalidAmount": "金额不合法",
+    "invalidPointsPack": "无效的积分充值档位",
     "orderCreateFailed": "下单失败",
     "payServiceUnavailable": "支付服务暂时不可用，请检查后台日志",
     "missingPaymentConfig": "缺少支付配置",

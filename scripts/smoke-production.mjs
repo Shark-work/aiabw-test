@@ -242,6 +242,13 @@ try {
   check("GET /api/payment/domestic → 501 DOMESTIC_PAYMENT_PENDING",
     dom.status === 501 && dom.json.code === "DOMESTIC_PAYMENT_PENDING" &&
     Array.isArray(dom.json.details?.plannedProviders) && dom.json.details.plannedProviders.includes("alipay"), dom);
+
+  // ── 43-44) 积分充值（XorPay points 商品）：非法档位 400 + 未登录 401（均不触达 XorPay 下单）──
+  const badPack = await api("/api/pay/create", { method: "POST", body: { kind: "points", points: 123 } });
+  check("pay/create kind=points 非法档位 → 400 INVALID_POINTS_PACK",
+    badPack.status === 400 && badPack.json.code === "INVALID_POINTS_PACK", badPack);
+  const noAuthPack = await api("/api/pay/create", { method: "POST", body: { kind: "points", points: 100 } });
+  check("pay/create kind=points 未登录 → 401", noAuthPack.status === 401, noAuthPack);
 } catch (err) {
   failures += 1;
   console.error(`\nsmoke crashed at step ${stepNo + 1}:`, err);
@@ -250,7 +257,7 @@ try {
 }
 
 console.log(`\n=== production smoke: ${stepNo - failures}/${stepNo} passed ===`);
-if (failures === 0 && stepNo === 42) {
+if (failures === 0 && stepNo === 44) {
   console.log("ALL_SMOKE_OK");
   process.exit(0);
 }

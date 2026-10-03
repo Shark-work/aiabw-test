@@ -5,6 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { LivingPet } from "@/components/LivingPet";
+import { PointsRechargeModal } from "@/components/points-recharge-modal";
+import { POINTS_PACKS, type PointsPack } from "@/lib/points-recharge";
 
 type Log = { id: string; amount: number; reason: string; createdAt: string };
 
@@ -20,6 +22,8 @@ export default function PointsPage() {
   const [redeeming, setRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState<{ id: string; speciesName: string; imageUrl: string; traits: { rarity?: string } } | null>(null);
   const [redeemMsg, setRedeemMsg] = useState("");
+  // 积分充值（XorPay 码支付）：选中的档位，null = 弹窗关闭
+  const [rechargePack, setRechargePack] = useState<PointsPack | null>(null);
 
   const REDEEM_PRICE = 500;
 
@@ -72,6 +76,7 @@ export default function PointsPage() {
       gacha: t("gacha"),
       ugc_buy: t("ugcBuy"),
       invite_reward: t("inviteReward"),
+      recharge: t("recharge"),
     };
     return map[r] ?? r;
   };
@@ -100,6 +105,8 @@ export default function PointsPage() {
   }, [load]);
 
   const total = logs.reduce((s, l) => s + l.amount, 0);
+  // 充值记录：从积分流水过滤 reason='recharge'（与总流水共用一次 /api/points-log 拉取）
+  const rechargeLogs = logs.filter((l) => l.reason === "recharge");
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
@@ -117,6 +124,47 @@ export default function PointsPage() {
           >
             {tc("back")}
           </Link>
+        </div>
+
+        {/* 积分充值（XorPay 码支付；档位价格以服务端价格表 src/lib/points-recharge 为准） */}
+        <div className="mb-4 rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-zinc-800">{t("rechargeTitle")}</h2>
+            <span className="text-right text-[11px] text-zinc-400">{t("rechargeSub")}</span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {POINTS_PACKS.map((p) => (
+              <button
+                key={p.points}
+                type="button"
+                onClick={() => setRechargePack(p)}
+                className="rounded-xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white px-2 py-3 text-center transition hover:border-amber-400 hover:shadow"
+              >
+                <div className="text-base font-extrabold text-amber-600">{p.points}</div>
+                <div className="text-[11px] text-zinc-400">{t("packPointsLabel")}</div>
+                <div className="mt-1 text-sm font-semibold text-zinc-700">¥{p.priceCny}</div>
+              </button>
+            ))}
+          </div>
+          {/* 充值记录（流水过滤 reason='recharge'，最多展示最近 5 条） */}
+          <div className="mt-3 border-t border-dashed border-amber-100 pt-3">
+            <h3 className="text-xs font-semibold text-zinc-500">{t("rechargeHistory")}</h3>
+            {rechargeLogs.length === 0 ? (
+              <p className="mt-1 text-[11px] text-zinc-400">{t("rechargeEmpty")}</p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {rechargeLogs.slice(0, 5).map((l) => (
+                  <li
+                    key={l.id}
+                    className="flex items-center justify-between text-[11px] text-zinc-500"
+                  >
+                    <span>{new Date(l.createdAt).toLocaleString(locale)}</span>
+                    <span className="font-semibold text-emerald-600">+{l.amount}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* 积分兑换盲盒（心理学激励：目标渐进 + 稀缺） */}
@@ -221,6 +269,19 @@ export default function PointsPage() {
           ))}
         </div>
       </div>
+
+      {/* 积分充值弹窗：下单 → 扫码 → 轮询余额到账 → 刷新流水 */}
+      <PointsRechargeModal
+        open={rechargePack !== null}
+        pack={rechargePack}
+        baselinePoints={points}
+        onClose={() => setRechargePack(null)}
+        onCredited={(now) => {
+          setPoints(now);
+          setRechargePack(null);
+          void load();
+        }}
+      />
     </main>
   );
 }

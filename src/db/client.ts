@@ -83,6 +83,7 @@ const SCHEMA_CREATES: string[] = [
     "user_id" uuid NOT NULL REFERENCES "users"("id"),
     "amount" integer DEFAULT 0 NOT NULL,
     "reason" text NOT NULL,
+    "ref" text,
     "created_at" timestamp DEFAULT now() NOT NULL
   )`,
 
@@ -267,6 +268,8 @@ const SCHEMA_CREATES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_blindbox_logs_pool ON "blindbox_logs" ("pool_id")`,
   // XorPay 盲盒通道：order_id 唯一（回调幂等，防重复抽奖）
   `ALTER TABLE "blindbox_logs" ADD COLUMN IF NOT EXISTS "order_id" text`,
+  // 积分充值幂等键（2026-10-07，v13）：存量库补列，新装库已由上方 CREATE 覆盖
+  `ALTER TABLE "points_log" ADD COLUMN IF NOT EXISTS "ref" text`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_blindbox_logs_order ON "blindbox_logs" ("order_id")`,
 
   // 站点访问计数：单行汇总（id=1），原子自增 visit_count / unique_count
@@ -1001,6 +1004,8 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_uc_locked ON "user_collectibles" ("locked_until")`,
   `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
+  // 积分充值幂等：同一支付订单号只允许入账一次（Postgres 唯一索引天然忽略多 NULL）
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_points_log_ref ON "points_log" ("ref")`,
   // P0-1 道具背包：按用户查列表 / 装备筛选
   `CREATE INDEX IF NOT EXISTS idx_user_items_user ON "user_items" ("user_id")`,
   // P1 零摩擦领养：游客占有的宠物实例（登录归并 / 图鉴 owned 判定）
@@ -1146,7 +1151,7 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     FK→threads(id) ON DELETE SET NULL，drizzle/0029）+ supports_chat 种子恢复 true
 //     （聊天能力已上线：POST /api/threads 建线程、/api/chat petType=aibi:<tokenId> 人设分支、
 //     背包/详情页聊天入口），能力开关有了真实消费路径
-const SCHEMA_VERSION = 12;
+const SCHEMA_VERSION = 13;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

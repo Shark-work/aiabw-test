@@ -18,6 +18,7 @@
 | 商城 / 装扮 | `/marketplace` · `/api/shop/*` | ✅ 已上线 | 积分购买装扮、装备到宠物 |
 | VIP 订阅 | `/api/subscription/*` | ✅ 已上线 | 每日聊天配额：免费 10 条/天，VIP 无限 + 长期记忆 |
 | 支付解锁 | `/api/pay/*`（XorPay 码支付） | ✅ 已上线 | 微信/支付宝扫码，异步 notify 回调解锁 |
+| 积分充值 | `/api/pay/create(kind=points)` + `/api/pay/notify` | ✅ 已上线 | 4 档积分包（服务端定价防改价），`points_log.ref` 唯一索引幂等入账 |
 | 宠物市场（UGC） | `/api/creator/*` | ✅ 已上线 | 创作者发布自定义人设宠物，购买者分成 |
 | 盲盒 / 合成 / 繁殖 | `/api/blindbox/*` · `/api/pets/synthesize` | ✅ 已上线 | 抽宠、多宠合成、繁殖进化 |
 | 每日签到 / 积分 | `/api/user/checkin` · `/api/points-log` | ✅ 已上线 | 签到 +10 积分，积分可兑换宠物 |

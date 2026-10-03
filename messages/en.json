@@ -185,7 +185,16 @@
     "redeemOk": "🎉 Redeemed! Your new companion is ready",
     "redeemFail": "Redemption failed, please try again",
     "redeemNoPoints": "Not enough points (need 500)",
-    "redeemAlready": "Already redeemed today, come back tomorrow~"
+    "redeemAlready": "Already redeemed today, come back tomorrow~",
+    "rechargeTitle": "Top Up Points",
+    "rechargeSub": "Scan to pay · auto-credited",
+    "rechargeDesc": "{points} points will be credited automatically after payment — for gacha, card packs and items",
+    "packPointsLabel": "points",
+    "rechargeOk": "🎉 Top-up successful! Points credited.",
+    "rechargeFail": "Failed to create the order, please try again",
+    "rechargeHistory": "Top-up History",
+    "rechargeEmpty": "No top-ups yet",
+    "recharge": "Points top-up"
   },
   "handbooks": {
     "title": "Memory Journals",
@@ -436,6 +445,7 @@
     "adoptionNotFound": "Adoption record not found",
     "noPermissionPet": "You are not allowed to pay for this pet",
     "invalidAmount": "Invalid amount",
+    "invalidPointsPack": "Invalid points pack",
     "orderCreateFailed": "Order creation failed",
     "payServiceUnavailable": "Payment service is temporarily unavailable, check server logs",
     "missingPaymentConfig": "Missing payment config",

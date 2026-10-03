@@ -157,8 +157,13 @@ export const pointsLog = pgTable('points_log', {
   userId: uuid('user_id').references(() => users.id).notNull(),
   /** 正为入账，负为支出 */
   amount: integer('amount').notNull().default(0),
-  /** checkin | gacha | ugc_buy */
+  /** checkin | gacha | ugc_buy | invite_reward | achievement | recharge | ... */
   reason: text('reason').notNull(),
+  /**
+   * 幂等键：支付订单号等外部引用（唯一索引 idx_points_log_ref 兜底，
+   * 防支付回调重发导致重复入账）；NULL = 无外部引用（不参与唯一约束）。
+   */
+  ref: text('ref'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

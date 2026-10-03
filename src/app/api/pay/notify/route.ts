@@ -3,6 +3,7 @@ import { adoptions, cosmetics } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { XORPAY_APP_SECRET, md5 } from "@/lib/xorpay";
 import { executeBlindboxDraw } from "@/lib/blindbox-draw";
+import { findPointsPack } from "@/lib/points-recharge";
 import { postBreedShare } from "@/lib/social-poster";
 
 export const runtime = "nodejs";
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
     pay_time,
   });
 
-  // 2) 从 order_id 解析订单类型与业务参数（unlock / cosmetic / premium / subscription / blindbox）
+  // 2) 从 order_id 解析订单类型与业务参数（unlock / cosmetic / premium / subscription / blindbox / points）
   const adoptionMatch = order_id.match(
     /^unlock-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
@@ -70,6 +71,10 @@ export async function POST(req: Request) {
   );
   const blindboxMatch = order_id.match(
     /^blindbox-([^-]+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  // points-<points>-<userId>-<nonce>  积分充值（points 对应服务端档位表）
+  const pointsMatch = order_id.match(
+    /^points-(\d+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
   const adoptionId = adoptionMatch ? adoptionMatch[1] : "";
 
@@ -171,6 +176,38 @@ export async function POST(req: Request) {
       return new Response("fail", { status: 200 });
     } finally {
       client.release();
+    }
+  } else if (pointsMatch) {
+    // —— 积分充值：单条 CTE 原子完成「幂等登记 + 入账」——
+    // points_log.ref 唯一索引兜底：同一 order_id 重复回调 → INSERT 冲突返回空 → UPDATE 不执行，
+    // 无论回调多少次积分只入账一次（exactly-once）。
+    const pack = findPointsPack(Number(pointsMatch[1]));
+    const userId = pointsMatch[2];
+    if (!pack) {
+      // 非本站档位表生成的订单号（防伪造纵深）：不入账，但仍返回 success 终止 XorPay 重试
+      console.warn("[pay/notify] points order with unknown pack, skipped", { order_id });
+    } else {
+      const { rowCount } = await pool.query(
+        `WITH ins AS (
+           INSERT INTO points_log (user_id, amount, reason, ref)
+           VALUES ($1::uuid, $2, 'recharge', $3)
+           ON CONFLICT (ref) DO NOTHING
+           RETURNING 1
+         )
+         UPDATE users SET points = points + $2
+         WHERE id = $1::uuid AND EXISTS (SELECT 1 FROM ins)`,
+        [userId, pack.points, order_id],
+      );
+      if ((rowCount ?? 0) > 0) {
+        console.log("[pay/notify] points credited", {
+          userId,
+          points: pack.points,
+          orderId: order_id,
+          payPrice: pay_price,
+        });
+      } else {
+        console.log("[pay/notify] points no-op (duplicate callback or user missing)", { orderId: order_id });
+      }
     }
   } else if (adoptionId) {
     // 解锁该宠物（畅聊解锁）
