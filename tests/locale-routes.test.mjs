@@ -56,3 +56,17 @@ test("B: 旧 Hero 文案（养育你的 AI 生命体 / Raise your AI being）全
   assert.ok(!home.includes("养育你的 AI 生命体"), "首页源码无硬编码旧 Hero");
   assert.ok(!home.includes("铸造艾比凭证"), "首页源码无硬编码旧 Hero(en/zh)");
 });
+
+// ---- C) Just Born（刚刚诞生的伙伴）重复数据（2026-10-06）----
+// 双语共用同一 RecentBornMarquee（i18n 驱动），前端按 id 防御去重；双语一并覆盖。
+test("C: RecentBornMarquee 渲染前按 id 去重（双语共用组件）", () => {
+  const comp = read("src/components/daily-inspiration.tsx");
+  assert.ok(
+    comp.includes("Array.from(new Map(list.map((item) => [item.id, item])).values())"),
+    "setRecent 前 new Map 按 id 去重",
+  );
+  // API 层：recent 查询以 pets.id 主键 SELECT，JOIN 均 1:1，不产生重复行
+  const api = read("src/app/api/pets/daily/route.ts");
+  assert.ok(api.includes("FROM pets p"), "recent 源表 pets（id 主键唯一）");
+  assert.ok(api.includes("LIMIT 6"), "recent 上限 6 条");
+});

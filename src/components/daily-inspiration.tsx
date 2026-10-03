@@ -108,7 +108,13 @@ export function RecentBornMarquee() {
       .then((r) => r.json())
       .then((d) => {
         if (!alive) return;
-        if (d?.ok) setRecent(d.recent ?? []);
+        if (d?.ok) {
+          // 防御性去重（2026-10-06 审计修复 C）：API 按 pets.id 主键查询理论上 id 唯一，
+          // 此处兜底 CDN 缓存窗口内跨版本响应/异常数据导致同 id 重复渲染；
+          // 与下方 ≥4 条时的 ×2 无缝循环（有意为之）是两套独立逻辑。
+          const list = (d.recent ?? []) as RecentBorn[];
+          setRecent(Array.from(new Map(list.map((item) => [item.id, item])).values()));
+        }
       })
       .catch(() => {})
       .finally(() => alive && setLoading(false));
