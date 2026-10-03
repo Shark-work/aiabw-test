@@ -64,20 +64,21 @@ test("species: 12 个与文档属性逐项一致", () => {
   assert.equal(AIBI_SPECIES.length, 12);
   const byId = Object.fromEntries(AIBI_SPECIES.map((s) => [s.id, s]));
   const expect = {
-    // 2026-10-06：supportsChat 全物种置 false（聊天能力未上线、无任何代码路径消费，
-    // 消除能力开关空转造成的用户预期落差；schema 字段保留，方案 a 排期见 backlog）
-    "mist-fox": ["雾尾狐", "rare", "自然", "mistwood", "傲娇型", 2, false, false],
-    "pyro-dragon": ["炎鳞龙", "legendary", "火", "lavaforge", "高冷型", 4, true, false],
-    "frost-bird": ["冰羽鸟", "epic", "冰", "frostshore", "活泼型", 3, false, false],
-    "steel-beast": ["钢甲兽", "rare", "雷", "mechwaste", "调皮型", 2, false, false],
-    "light-butterfly": ["光翼蝶", "mythic", "光", "skyisles", "神秘型", 5, true, false],
-    "moss-turtle": ["苔甲龟", "common", "自然", "mistwood", "温顺型", 1, false, false],
-    "magma-monkey": ["熔核猴", "common", "火", "lavaforge", "活泼型", 1, false, false],
-    "frost-wolf": ["霜狼", "rare", "冰", "frostshore", "守护型", 2, false, false],
-    "volt-snake": ["电蛇", "epic", "雷", "mechwaste", "好奇型", 3, false, false],
-    "wind-spirit": ["风灵", "legendary", "风", "skyisles", "神秘型", 4, true, false],
-    "rock-beetle": ["岩甲虫", "common", "岩", "mechwaste", "温顺型", 1, false, false],
-    "star-cat": ["星灵猫", "mythic", "光", "mistwood", "傲娇型", 5, true, false],
+    // 2026-10-07：supportsChat 全物种恢复 true —— Aibi ↔ 聊天（方案 a）已落地
+    // （aibi_tokens.thread_id + POST /api/threads + /api/chat petType=aibi:<tokenId> 人设分支
+    // + 背包/详情页聊天入口），能力开关有了真实消费路径（详见 tests/aibi-chat-e2e.test.mjs）
+    "mist-fox": ["雾尾狐", "rare", "自然", "mistwood", "傲娇型", 2, false, true],
+    "pyro-dragon": ["炎鳞龙", "legendary", "火", "lavaforge", "高冷型", 4, true, true],
+    "frost-bird": ["冰羽鸟", "epic", "冰", "frostshore", "活泼型", 3, false, true],
+    "steel-beast": ["钢甲兽", "rare", "雷", "mechwaste", "调皮型", 2, false, true],
+    "light-butterfly": ["光翼蝶", "mythic", "光", "skyisles", "神秘型", 5, true, true],
+    "moss-turtle": ["苔甲龟", "common", "自然", "mistwood", "温顺型", 1, false, true],
+    "magma-monkey": ["熔核猴", "common", "火", "lavaforge", "活泼型", 1, false, true],
+    "frost-wolf": ["霜狼", "rare", "冰", "frostshore", "守护型", 2, false, true],
+    "volt-snake": ["电蛇", "epic", "雷", "mechwaste", "好奇型", 3, false, true],
+    "wind-spirit": ["风灵", "legendary", "风", "skyisles", "神秘型", 4, true, true],
+    "rock-beetle": ["岩甲虫", "common", "岩", "mechwaste", "温顺型", 1, false, true],
+    "star-cat": ["星灵猫", "mythic", "光", "mistwood", "傲娇型", 5, true, true],
   };
   for (const [id, [nameZh, rarityId, element, habitatId, personality, anim, d3, chat]] of Object.entries(expect)) {
     const s = byId[id];

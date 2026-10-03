@@ -733,6 +733,7 @@ const SCHEMA_CREATES: string[] = [
     "physical_bound" boolean DEFAULT false NOT NULL,
     "physical_order_id" text,
     "soul_card_id" uuid REFERENCES "soul_cards"("id"),
+    "thread_id" uuid REFERENCES "threads"("id") ON DELETE SET NULL,
     "created_at" timestamp DEFAULT now() NOT NULL,
     "updated_at" timestamp DEFAULT now() NOT NULL,
     CONSTRAINT "aibi_tokens_token_id_unique" UNIQUE ("aibi_token_id")
@@ -976,6 +977,9 @@ const SCHEMA_ALTERS: string[] = [
   `UPDATE "users" SET "username" = 'user_' || lpad(nextval('users_username_seq')::text, 4, '0') WHERE "username" IS NULL`,
   // 3) 回填完成后强制非空（若存在并发插入的 NULL 行会失败 → 容错跳过，下次版本提升时重试）
   `ALTER TABLE "users" ALTER COLUMN "username" SET NOT NULL`,
+
+  // ===== Aibi ↔ 聊天（方案 a，drizzle/0029）：aibi_tokens.thread_id 绑定对话线程 =====
+  `ALTER TABLE "aibi_tokens" ADD COLUMN IF NOT EXISTS "thread_id" uuid REFERENCES "threads"("id") ON DELETE SET NULL`,
 ];
 
 /**
@@ -1079,6 +1083,8 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_aibi_packs_status" ON "aibi_packs" ("status")`,
   // Phase 11（v10）：Stripe 订单按用户查询（drizzle/0028_stripe_orders.sql）
   `CREATE INDEX IF NOT EXISTS "idx_stripe_orders_user" ON "stripe_orders" ("user_id", "created_at" DESC)`,
+  // Aibi ↔ 聊天（v12，drizzle/0029）：chat 页按 thread_id 反查会话主体
+  `CREATE INDEX IF NOT EXISTS "idx_aibi_tokens_thread_id" ON "aibi_tokens" ("thread_id")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
@@ -1136,7 +1142,11 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // v10: 艾比平台 Phase 11 —— stripe_orders 支付订单表（drizzle/0028，webhook 事务履约 + 行锁幂等）
 // v11: 产品逻辑一致性修复 —— aibi_species.supports_chat 种子值全物种置 false
 //     （聊天能力未上线、无任何代码路径消费；schema 字段保留，方案 a 排期见 backlog.md）
-const SCHEMA_VERSION = 11;
+// v12: Aibi ↔ 聊天（方案 a 落地）—— aibi_tokens.thread_id（uuid，nullable，
+//     FK→threads(id) ON DELETE SET NULL，drizzle/0029）+ supports_chat 种子恢复 true
+//     （聊天能力已上线：POST /api/threads 建线程、/api/chat petType=aibi:<tokenId> 人设分支、
+//     背包/详情页聊天入口），能力开关有了真实消费路径
+const SCHEMA_VERSION = 12;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

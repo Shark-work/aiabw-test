@@ -726,6 +726,12 @@ export const aibiTokens = pgTable(
     physicalOrderId: text('physical_order_id'),
     /** Phase 1 灵魂卡桥接列（可选） */
     soulCardId: uuid('soul_card_id').references(() => soulCards.id),
+    /**
+     * Aibi ↔ 聊天（方案 a）：该凭证绑定的对话线程。
+     * nullable —— 老数据为 NULL，首次点「创建聊天」经 POST /api/threads 回填；
+     * 物理层 FK ON DELETE SET NULL（线程删除时凭证保留、绑定自动解除）。
+     */
+    threadId: uuid('thread_id').references(() => threads.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
