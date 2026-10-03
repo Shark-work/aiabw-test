@@ -70,3 +70,27 @@ test("C: RecentBornMarquee 渲染前按 id 去重（双语共用组件）", () =
   assert.ok(api.includes("FROM pets p"), "recent 源表 pets（id 主键唯一）");
   assert.ok(api.includes("LIMIT 6"), "recent 上限 6 条");
 });
+
+// ---- D) /en 路径同步更新（2026-10-06 核实：五 key + 导航 en 值均已存在且正确）----
+test("D: en home 五 key 与导航 en 值完整正确", () => {
+  assert.equal(en.home.title, "Adopt Your AI Companion · Collect · Chat · Grow");
+  assert.equal(
+    en.home.subtitle,
+    "Raise a unique AI pet, explore together, and collect scarce digital Soul Cards.",
+  );
+  assert.equal(en.home.heroCta, "Adopt Now");
+  assert.equal(en.home.socialProof, "Join {count}+ collectors raising their AI companions");
+  assert.equal(en.home.socialProofFallback, "Join thousands of collectors");
+  assert.equal(en.nav.navAdoptMy, "🐾 Adopt / My Pets");
+  assert.equal(en.nav.navSoulCodex, "✨ Soul Cards / Collection");
+  // zh 侧镜像（双语同源同步）
+  assert.equal(zh.home.heroCta, "立即领养");
+  assert.equal(zh.nav.navAdoptMy, "🐾 领养/我的宠物");
+  assert.equal(zh.nav.navSoulCodex, "✨ 灵魂卡/收藏");
+});
+
+// ---- H) /en 运势语法（2026-10-06 核实：已是 "{sign} day"，无 "a {sign} day"）----
+test("H: en 运势文案不含 \"a {sign} day\" 语法错误", () => {
+  assert.ok(en.home.fortune.includes("{sign} day"), "en fortune 含 {sign} day");
+  assert.ok(!en.home.fortune.includes("a {sign} day"), "无多余冠词 a");
+});
