@@ -43,3 +43,16 @@ test("A: vercel.json 不自定义页面缓存头（部署即整体失效 CDN，�
   const vercel = JSON.parse(read("vercel.json"));
   assert.ok(!vercel.headers, "无 headers 覆盖（默认缓存策略，部署自动失效）");
 });
+
+// ---- B) 旧 Hero 文案残留（2026-10-06）----
+// 首页 page.tsx 全走 i18n key（无硬编码旧 Hero）；唯一残留是 aibi.spotlight.subtitle
+// 重复了首页「养育你的 AI 生命体 / 铸造艾比凭证」叙事 —— 已改为区块自述文案。
+test("B: 旧 Hero 文案（养育你的 AI 生命体 / Raise your AI being）全站无残留", () => {
+  assert.ok(!zh.aibi.spotlight.subtitle.includes("养育你的 AI 生命体"), "zh 旧 Hero 残留已清");
+  assert.ok(!en.aibi.spotlight.subtitle.includes("Raise your AI being"), "en 旧 Hero 残留已清");
+  assert.equal(zh.aibi.spotlight.subtitle, "实时供应 · 最新铸造 · 稀有橱窗", "zh 新区块自述");
+  assert.equal(en.aibi.spotlight.subtitle, "Live supply · newest mints · rare showcase", "en 新区块自述");
+  const home = read("src/app/[locale]/page.tsx");
+  assert.ok(!home.includes("养育你的 AI 生命体"), "首页源码无硬编码旧 Hero");
+  assert.ok(!home.includes("铸造艾比凭证"), "首页源码无硬编码旧 Hero(en/zh)");
+});
