@@ -22,14 +22,15 @@
 
 - 两页 `generateMetadata` 的 openGraph 已展开 `...ogShareFields(locale)`（commit `668a0c6`），金丝雀实测 /zh/blindbox 与 /zh/pets/corgi 的 og:image + og:site_name + og:locale 全部注入，物种动态标题不受影响。
 
-## P1 · Aibi 聊天能力（方案 a）待排期（2026-10-06 登记）
+## ~~P1 · Aibi 聊天能力（方案 a）~~ ✅ 已完成（2026-10-07，方案 a 正式落地）
 
 - **背景**：`aibi_species.supports_chat` 原为 9/12 物种 true，但全站无任何代码路径消费该字段（2026-10-06 全仓核实），属"能力开关空转"，给用户造成"艾比可聊天"的预期落差。已执行方案 b：种子值全物种置 false（SCHEMA_VERSION 11 同步生产），`aibi.interact.actions.talk` 显示名改为「问候 / Greet」（字段与 actionType 枚举保留）。
-- **方案 a（正式打通聊天）三件事**：
-  1. `aibi_tokens` 增加 `thread_id` 列（关联 threads，需 schema 迁移 + SCHEMA_VERSION bump）；
-  2. `/chat` 页宠物源扩展：当前只读经典线 adoptions，需支持 aibi_tokens 作为会话主体；
-  3. prompt 构建：chat 路由按主体类型分支，aibi 使用 `personality_template` + 成长状态（growth_level/affinity/mood）构建系统提示。
-- **预估**：3–5 天（含迁移 + 前后端 + 测试）。启用时将 supports_chat 种子值恢复 true 并更新本条目。
+- **落地**（commits `3febc28` / `6309e7a` / `305ac59` / `424688f` + 测试 commit）：
+  1. `aibi_tokens.thread_id`（uuid，nullable，FK→threads ON DELETE SET NULL；SCHEMA_VERSION 12 同步生产，drizzle/0029 档案 + scripts/migrate-add-aibi-threadid.mjs 幂等补列）；
+  2. `/chat` 页宠物源扩展：`petType=aibi:<aibiTokenId>` 编码；adoptions 未命中时按 thread_id 反查 aibi_tokens（仅 minted）；emoji 头像（紫色边框）+「艾比」来源徽章 + affinity→心情条 / growth_level→等级；
+  3. prompt 构建：`src/lib/aibi-prompt.ts` 以 personality_template 为种子，注入成长状态（mood/affinity/energy/growth_level）+ 稀有度/元素/栖息地 lore；/api/chat 按主体类型分支（凭证归属 + minted 校验，经典线逻辑零改动）；每日 quota 与 VIP 记忆两条线共用（pet_memories.pet_id 存 `aibi:<tokenId>`）；
+  4. 入口：POST /api/threads（zod + 幂等 + 并发守护，不产生孤儿线程）；背包卡片与 /aibi/[tokenId] 详情页 AibiChatButton（有线程直跳 /chat?thread=，无线程「创建聊天」）；/api/bag/aibis 与 token 详情携带 threadId（后者仅持有者下放——threadId 即窥视钥匙）。
+- **supports_chat 种子已恢复 true**（全物种，随 v12 同步生产）；契约测试 tests/aibi-chat-e2e.test.mjs（16 项）。
 
 ## P2 · /my-pets 与 /pets/my 双页合并（2026-10-06 登记，功能融合度诊断 #5）
 
