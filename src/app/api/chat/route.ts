@@ -15,6 +15,7 @@ import { hasMemoryAccess } from "@/lib/memory-gate";
 import { compressConversation, sanitizeForTextModel } from "@/lib/context-compress";
 import { resolvePetConfig } from "@/lib/ugc";
 import { getUserFromRequest } from "@/lib/auth";
+import { isAibiPetType, aibiTokenIdOf } from "@/lib/aibi-prompt";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { db, ensureDbSchemaOnce, pool } from "@/db/client";
 import { adoptions, chatQuotas, users } from "@/db/schema";
@@ -69,7 +70,13 @@ async function handlePost(req: Request) {
       { status: 401 },
     );
   }
-  if (typeof adoptionId !== "string" || !adoptionId) {
+  // —— 会话主体判定：petType=aibi:<aibiTokenId> → Aibi 链上凭证线程（方案 a）；——
+  // 否则为经典线（adoptions），沿用 adoptionId 强校验。两条线互不影响。
+  const aibiTokenId = isAibiPetType(petType) ? aibiTokenIdOf(petType as string) : null;
+  // VIP 长期记忆的 pet 维度键：经典线=adoptionId；Aibi 线=aibi:<tokenId>
+  // （pet_memories.pet_id 为 text 列，天然兼容两种编码）。
+  const memoryPetId = aibiTokenId ? (petType as string) : (adoptionId ?? null);
+  if (!aibiTokenId && (typeof adoptionId !== "string" || !adoptionId)) {
     return NextResponse.json(
       { ok: false, error: apiError(locale, "noPermissionPet"), code: "OWNERSHIP_REQUIRED" },
       { status: 403 },
@@ -87,33 +94,64 @@ async function handlePost(req: Request) {
   // 商业化变现：10 句免费门槛。达到后且未解锁时才拒绝调用 AI 模型。
   // 同时读取长期记忆用于注入。
   let memoryContext: string | null = null;
-  const [adoption] = await db
-    .select({
-      userId: adoptions.userId,
-      chatCount: adoptions.chatCount,
-      isUnlocked: adoptions.isUnlocked,
-      memoryContext: adoptions.memoryContext,
-      petType: adoptions.petType,
-    })
-    .from(adoptions)
-    .where(eq(adoptions.id, adoptionId))
-    .limit(1);
+  let adoption:
+    | {
+        userId: string;
+        chatCount: number;
+        isUnlocked: boolean;
+        memoryContext: string | null;
+        petType: string;
+      }
+    | undefined;
 
-  // 宠物必须存在且属于当前登录用户（所有权绑定）
-  if (!adoption) {
-    return NextResponse.json(
-      { ok: false, error: apiError(locale, "adoptionNotFound"), code: "OWNERSHIP_REQUIRED" },
-      { status: 404 },
+  if (aibiTokenId) {
+    // —— Aibi 分支（方案 a）：凭证必须存在、归属当前登录用户、且为 minted ——
+    // （pending 未激活 / burned 已销毁不可聊）。经典线「10 句免费 + 赞助解锁」门槛挂在
+    // adoptions.chatCount/isUnlocked 上，Aibi 无此表行 → 天然跳过；每日 quota
+    // （chat_quotas，用户维度）与 VIP 规则两条线完全共用。
+    const { rows: owned } = await pool.query(
+      `SELECT 1 AS ok FROM aibi_tokens
+        WHERE aibi_token_id = $1 AND owner_id = $2::uuid AND status = 'minted'
+        LIMIT 1`,
+      [aibiTokenId, user.id],
     );
-  }
-  if (adoption.userId !== user.id) {
-    return NextResponse.json(
-      { ok: false, error: apiError(locale, "noPermissionPet"), code: "OWNERSHIP_REQUIRED" },
-      { status: 403 },
-    );
+    if (!owned[0]) {
+      return NextResponse.json(
+        { ok: false, error: apiError(locale, "noPermissionPet"), code: "OWNERSHIP_REQUIRED" },
+        { status: 403 },
+      );
+    }
+  } else {
+    const [row] = await db
+      .select({
+        userId: adoptions.userId,
+        chatCount: adoptions.chatCount,
+        isUnlocked: adoptions.isUnlocked,
+        memoryContext: adoptions.memoryContext,
+        petType: adoptions.petType,
+      })
+      .from(adoptions)
+      .where(eq(adoptions.id, adoptionId))
+      .limit(1);
+    adoption = row;
+
+    // 宠物必须存在且属于当前登录用户（所有权绑定）
+    if (!adoption) {
+      return NextResponse.json(
+        { ok: false, error: apiError(locale, "adoptionNotFound"), code: "OWNERSHIP_REQUIRED" },
+        { status: 404 },
+      );
+    }
+    if (adoption.userId !== user.id) {
+      return NextResponse.json(
+        { ok: false, error: apiError(locale, "noPermissionPet"), code: "OWNERSHIP_REQUIRED" },
+        { status: 403 },
+      );
+    }
   }
 
-  if (adoption.chatCount >= FREE_MESSAGE_LIMIT && !adoption.isUnlocked) {
+  // 经典线专属：10 句免费门槛（Aibi 线程无 adoptions 行，不适用）
+  if (adoption && adoption.chatCount >= FREE_MESSAGE_LIMIT && !adoption.isUnlocked) {
     return NextResponse.json(
       {
         blocked: true,
@@ -155,14 +193,14 @@ async function handlePost(req: Request) {
           remaining: 0,
           isVip: false,
           // 拟人化文案（按宠物 kind × locale）—— 前端弹窗展示
-          message: getHardLimitMessage(adoption.petType, locale),
+          message: getHardLimitMessage(adoption?.petType, locale),
         },
       },
       { status: 429 },
     );
   }
 
-  memoryContext = adoption.memoryContext ?? null;
+  memoryContext = adoption?.memoryContext ?? null;
 
   // —— Token 优化：上下文压缩 ——
   // 对话超过阈值时，把早期轮次归档为一条规则化语义摘要（零 Token），
@@ -182,7 +220,7 @@ async function handlePost(req: Request) {
   // 配额软提醒文案（如有）—— 通过 stream response header 透传给前端
   const softWarnMessage =
     status === "soft_warn"
-      ? getSoftWarnMessage(adoption.petType, locale, remaining)
+      ? getSoftWarnMessage(adoption?.petType, locale, remaining)
       : null;
 
   // 长期记忆注入 + 早期对话摘要 → 拼入 System Prompt（会话内仅发送一次，不随每轮重复）
@@ -201,7 +239,7 @@ async function handlePost(req: Request) {
       const recalled = await recallMemory({
         userId: user.id,
         query,
-        petId: adoptionId ?? null,
+        petId: memoryPetId,
       });
       vipMemorySection = renderMemoryContext(recalled);
     } catch (err) {
@@ -243,7 +281,7 @@ async function handlePost(req: Request) {
       void hasMemoryAccess(user.id).then((hasAccess) => {
         if (!hasAccess) return;
         return extractMemories(user.id, sanitizeForTextModel(messages), {
-          petId: adoptionId ?? null,
+          petId: memoryPetId,
         }).catch((err) =>
           console.error("[memory] extractMemories failed:", err),
         );
