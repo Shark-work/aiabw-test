@@ -2,7 +2,7 @@
   "common": {
     "appName": "艾比世界",
     "metaTitle": "艾比世界 AIABW - AI 虚拟宠物领养与养成",
-    "metaDescription": "AIABW 是 AI 角色养成与数字收藏平台：养育独一无二的 AI 生命体，聊天互动、铸造灵魂卡、开卡包收集，每张收藏均带链上稀缺凭证与真实发行量。",
+    "metaDescription": "AIABW 是 AI 角色养成与数字收藏平台：养育独一无二的 AI 生命体，聊天互动、唤醒灵宠自动获得灵魂卡、抽盲盒收集，每张收藏均带唯一稀缺凭证与真实发行量。",
     "signIn": "登录",
     "register": "注册",
     "logout": "退出",
@@ -225,7 +225,7 @@
     "monthlyPoints": "本月活跃度积分：{points}",
     "refreshing": "刷新中…",
     "aibiBadge": "艾比",
-    "aibiWelcome": "嗨！我是{name}，你的专属链上艾比，想和我聊点什么呀？",
+    "aibiWelcome": "嗨！我是{name}，你的专属艾比，想和我聊点什么呀？",
     "chatAction": "💬 聊天",
     "startChatting": "✨ 创建聊天",
     "creatingThread": "创建中…"
@@ -562,14 +562,14 @@
     "dailyPortraitLimit": "免费用户每日限生成 1 张写真，升级 VIP 可无限生成",
     "soulCardPetNotFound": "宠物不存在",
     "soulCardPetNotYours": "这不是你的宠物",
-    "soulCardPetInactive": "该宠物当前不可铸造",
+    "soulCardPetInactive": "该宠物当前不可生成灵魂卡",
     "soulCardExists": "这只宠物已经拥有灵魂卡",
-    "soulCardSupplyExhausted": "链上发行额度已售罄",
+    "soulCardSupplyExhausted": "发行额度已售罄",
     "soulCardNotFound": "灵魂卡不存在",
     "soulCardNotYours": "你不是这张卡的持有人",
     "soulCardBurned": "这张灵魂卡已被销毁",
     "soulCardLoadFailed": "灵魂卡数据加载失败，请稍后重试",
-    "soulCardMintFailed": "铸造失败，请稍后重试",
+    "soulCardMintFailed": "灵魂卡生成失败，请稍后重试",
     "soulCardBurnFailed": "销毁失败，请稍后重试"
   },
   "nav": {
@@ -623,10 +623,10 @@
       "signIn": "去登录",
       "loadFailed": "藏品加载失败，请刷新重试",
       "emptyTitle": "还没有数字藏品",
-      "emptyDesc": "数字藏品来自盲盒抽取与宠物繁育，每一件都有唯一的链上哈希凭证。",
+      "emptyDesc": "数字藏品来自盲盒抽取与宠物繁育，每一件都有唯一的确权凭证。",
       "emptyCta": "去盲盒广场抽一个",
       "holdings": "持有 ×{count}",
-      "supply": "已铸 {minted} / {total}",
+      "supply": "已发行 {minted} / {total}",
       "unlimited": "不限量",
       "actions": {
         "breed": "繁育",
@@ -643,8 +643,8 @@
         "needTwo": "再选 1 只亲本",
         "empty": "该物种只有 1 只藏品，暂无法配对繁育",
         "success": "🎉 繁育成功！",
-        "childGen": "第 {gen} 代 · 新 NFR 已确权",
-        "hash": "确权哈希",
+        "childGen": "第 {gen} 代 · 新藏品已确权",
+        "hash": "确权编号",
         "recharge": "积分不足，去充值 →"
       },
       "transfer": {
@@ -920,15 +920,15 @@
     "packsTitle": "卡包商城 - 开包收集稀有 AI 宠物 | 艾比世界",
     "packsDesc": "艾比卡包商城：用积分开启卡包，随机获得稀有 AI 宠物与养成道具，新宠物即刻加入你的灵魂图鉴。",
     "soulCardsTitle": "收藏中心 - 艾比凭证 · 灵魂卡 · 数字藏品 | 艾比世界",
-    "soulCardsDesc": "收藏中心：一站式管理你的艾比凭证、灵魂卡与数字藏品，查看供应看板与可铸造列表，每一枚都是唯一的链上收藏。",
+    "soulCardsDesc": "收藏中心：一站式管理我的灵宠与世界藏品，查看发行看板，每一枚都是唯一收藏。",
     "codexTitle": "艾比图鉴 - 全物种稀有度与栖息地档案 | 艾比世界",
     "codexDesc": "艾比图鉴：浏览全部 AI 宠物物种，按稀有度、元素与栖息地筛选，追踪你的收集进度。",
     "shopTitle": "道具商城 - 养成道具与探索好物 | 艾比世界",
     "shopDesc": "艾比道具商城：用积分兑换养成道具，加速宠物成长，提升探索收益。",
-    "supplyTitle": "供应公证 - 铸造与燃尽全透明 | 艾比世界",
+    "supplyTitle": "供应公证 - 发行与销毁全透明 | 艾比世界",
     "supplyDesc": "艾比供应量公证：当前流通、累计增发、累计销毁与最大供应实时公示，快照趋势与增发销毁历史全部可查。",
-    "aibiTitle": "{tokenId} - 唯一链上宠物凭证 | 艾比世界",
-    "aibiDesc": "{tokenId}：艾比世界唯一链上宠物凭证，铸造与流转记录公开可查。"
+    "aibiTitle": "{tokenId} - 唯一宠物凭证 | 艾比世界",
+    "aibiDesc": "{tokenId}：艾比世界唯一宠物凭证，发行与流转记录公开可查。"
   },
   "shop": {
     "title": "探险商城",
@@ -1200,15 +1200,15 @@
   },
   "soulCards": {
     "title": "灵魂卡图鉴",
-    "subtitle": "AI 生命体 × 区块链稀缺凭证 —— 每只宠物终身仅可铸造一张灵魂卡",
-    "simulatedBadge": "模拟链",
+    "subtitle": "AI 生命体 × 稀缺数字凭证 —— 每只灵宠终身仅有一张灵魂卡",
+    "simulatedBadge": "演示环境",
     "loading": "加载中…",
     "signInFirst": "请先登录",
     "signInHint": "登录后查看你的灵魂卡（领养灵宠时自动生成）",
     "loadFailed": "加载失败，请刷新重试",
     "supply": {
-      "title": "链上供应",
-      "stats": "累计铸造 {minted} · 已销毁 {burned} · 总量恒定可验证"
+      "title": "发行总量",
+      "stats": "累计发行 {minted} · 已销毁 {burned} · 总量恒定"
     },
     "collection": {
       "title": "我的灵魂卡（{count}）",
@@ -1218,7 +1218,7 @@
     "burn": {
       "button": "🔥 销毁灵魂卡",
       "confirm": "确认销毁（不可逆）",
-      "confirmHint": "销毁后这张卡的链上凭证将永久失效、流通量 -1，宠物本体不受影响。该操作不可逆。",
+      "confirmHint": "销毁后这张卡的唯一凭证将永久失效、发行总量 -1，宠物本体不受影响。该操作不可逆。",
       "cancel": "取消",
       "burning": "销毁中…",
       "success": "已销毁 {cert}，流通量 -1"
@@ -1228,7 +1228,7 @@
       "close": "关闭",
       "attributes": "属性",
       "growth": "成长状态",
-      "certificate": "链上凭证",
+      "certificate": "唯一凭证",
       "legacyTokens": "历史凭证 · 艾比时代（{count}）",
       "legacyEmpty": "无历史凭证",
       "legacyHint": "艾比凭证已停止增发，存量永久保留，仅供查看"
@@ -1240,21 +1240,21 @@
       "personality": "AI 性格"
     },
     "certificate": {
-      "tokenId": "Token ID",
+      "tokenId": "凭证序号",
       "certNo": "凭证编号",
       "network": "网络",
-      "contract": "合约",
-      "mintTx": "铸造交易",
-      "burnTx": "销毁交易",
-      "ledger": "链上轨迹",
-      "ledgerEmpty": "暂无链上记录"
+      "contract": "登记地址",
+      "mintTx": "发行记录",
+      "burnTx": "销毁记录",
+      "ledger": "流转记录",
+      "ledgerEmpty": "暂无记录"
     },
     "status": {
       "active": "流通中",
       "burned": "已销毁"
     },
     "txType": {
-      "mint": "铸造",
+      "mint": "发行",
       "burn": "销毁",
       "transfer": "转移"
     },
@@ -1271,7 +1271,7 @@
   "aibi": {
     "spotlight": {
       "title": "艾比世界 · AI 角色养成与数字收藏",
-      "subtitle": "实时供应 · 最新铸造 · 稀有橱窗",
+      "subtitle": "实时供应 · 最新诞生 · 稀有橱窗",
       "supplyNow": "当前流通",
       "latestMinted": "最新诞生",
       "rareShowcase": "热门稀有",
@@ -1281,9 +1281,9 @@
       "entryCodexDesc": "浏览全部物种",
       "entryBag": "我的背包",
       "entryBagDesc": "培养你的艾比",
-      "empty": "还没有艾比诞生 —— 去卡包商店开出第一只吧",
+      "empty": "暂无艾比 —— 凭证已停止增发，存量可在背包中查看",
       "viewAll": "查看全部",
-      "mintedCount": "已铸 {count}"
+      "mintedCount": "已发行 {count}"
     },
     "codex": {
       "title": "艾比图鉴",
@@ -1324,41 +1324,41 @@
       "affinity": "亲密度",
       "energy": "精力",
       "lastInteractedAt": "最近互动",
-      "chainTitle": "链上凭证",
+      "chainTitle": "唯一凭证",
       "cert": "凭证编号",
       "owner": "持有者",
-      "mintedAt": "铸造时间",
-      "txHash": "交易哈希",
-      "contract": "合约地址",
-      "contractMock": "链下模拟（未部署合约）",
-      "chainId": "所属链",
-      "wallet": "钱包地址",
+      "mintedAt": "发行时间",
+      "txHash": "记录指纹",
+      "contract": "登记地址",
+      "contractMock": "演示环境（未接真实发行网络）",
+      "chainId": "所属网络",
+      "wallet": "绑定地址",
       "physicalBound": "绑定实物",
       "bound": "是",
       "unbound": "否",
       "ownerOnlyHint": "仅持有者可与这只艾比互动",
       "historyTitle": "流转轨迹",
-      "eventMint": "铸造",
+      "eventMint": "发行",
       "eventBurn": "销毁",
       "interactTitle": "互动记录",
       "interactEmpty": "暂无互动记录"
     },
     "profilePage": {
       "title": "用户中心",
-      "subtitle": "你的账号、钱包与铸造/销毁记录",
+      "subtitle": "你的账号、绑定地址与发行/销毁记录",
       "signInHint": "登录后查看用户中心",
       "signIn": "去登录",
       "loadFailed": "加载失败，请刷新重试",
       "userTitle": "账号信息",
       "username": "昵称",
       "points": "积分",
-      "walletTitle": "钱包地址",
-      "walletNone": "未绑定钱包（链下模拟模式）",
+      "walletTitle": "绑定地址",
+      "walletNone": "未绑定地址（演示模式）",
       "aibiCount": "持有艾比",
       "itemCount": "道具总数",
-      "mintHistory": "铸造记录",
+      "mintHistory": "发行记录",
       "burnHistory": "销毁记录",
-      "emptyMint": "暂无铸造记录",
+      "emptyMint": "暂无发行记录",
       "emptyBurn": "暂无销毁记录",
       "prev": "上一页",
       "next": "下一页",
@@ -1372,7 +1372,7 @@
       "minted": "累计增发",
       "burned": "累计销毁",
       "maxSupply": "最大供应",
-      "maxUnlimited": "不封顶（链下模拟）",
+      "maxUnlimited": "不封顶（演示模式）",
       "trendTitle": "供应快照",
       "historyTitle": "增发 / 销毁历史",
       "empty": "暂无记录",
@@ -1455,7 +1455,7 @@
       "subtitle": "艾比平台的供应看板、我的持有与可获得物种",
       "loadFailed": "加载失败，请刷新重试",
       "supply": {
-        "minted": "累计铸造",
+        "minted": "累计发行",
         "burned": "已销毁",
         "current": "当前流通"
       },
@@ -1463,7 +1463,7 @@
       "mineGuest": "登录后展示我持有的艾比",
       "mineEmpty": "还没有持有艾比 —— 去卡包商店开一包吧",
       "catalogTitle": "可获得物种（{count}）",
-      "mintedCount": "已铸 {count}"
+      "mintedCount": "已发行 {count}"
     },
     "fuse": {
       "title": "艾比融合",

@@ -2,7 +2,7 @@
   "common": {
     "appName": "AIABW",
     "metaTitle": "AIABW - Adopt & Raise Your AI Virtual Pet",
-    "metaDescription": "AIABW is an AI companion-raising and digital collectibles platform: raise unique AI beings, chat and grow together, mint Soul Cards, open card packs — every collectible carries on-chain scarcity proof and verifiable supply.",
+    "metaDescription": "AIABW is an AI companion-raising and digital collectibles platform: raise unique AI beings, chat and grow together, awaken Soul Pets to receive Soul Cards, draw blind boxes — every collectible carries a unique scarcity proof and verifiable supply.",
     "signIn": "Sign in",
     "register": "Register",
     "logout": "Sign out",
@@ -225,7 +225,7 @@
     "monthlyPoints": "Monthly points: {points}",
     "refreshing": "Refreshing…",
     "aibiBadge": "Aibi",
-    "aibiWelcome": "Hi! I'm {name}, your very own on-chain aibi. What's on your mind?",
+    "aibiWelcome": "Hi! I'm {name}, your very own aibi. What's on your mind?",
     "chatAction": "💬 Chat",
     "startChatting": "✨ Start chatting",
     "creatingThread": "Creating…"
@@ -562,14 +562,14 @@
     "dailyPortraitLimit": "Free users can generate 1 portrait per day. Upgrade to VIP for unlimited.",
     "soulCardPetNotFound": "Pet not found",
     "soulCardPetNotYours": "This pet is not yours",
-    "soulCardPetInactive": "This pet is not available for minting right now",
+    "soulCardPetInactive": "This pet cannot receive a Soul Card right now",
     "soulCardExists": "This pet already has a Soul Card",
-    "soulCardSupplyExhausted": "On-chain supply is sold out",
+    "soulCardSupplyExhausted": "Supply is sold out",
     "soulCardNotFound": "Soul Card not found",
     "soulCardNotYours": "You do not own this card",
     "soulCardBurned": "This Soul Card has been burned",
     "soulCardLoadFailed": "Failed to load Soul Cards. Please try again later",
-    "soulCardMintFailed": "Mint failed. Please try again later",
+    "soulCardMintFailed": "Failed to create the Soul Card. Please try again later",
     "soulCardBurnFailed": "Burn failed. Please try again later"
   },
   "nav": {
@@ -623,10 +623,10 @@
       "signIn": "Sign in",
       "loadFailed": "Failed to load collectibles, please refresh and try again",
       "emptyTitle": "No collectibles yet",
-      "emptyDesc": "NFR collectibles come from blind box draws and pet breeding — each one carries a unique on-chain hash credential.",
+      "emptyDesc": "World collectibles come from blind box draws and pet breeding — each one carries a unique ownership credential.",
       "emptyCta": "Draw one at Blind Box Plaza",
       "holdings": "Owned ×{count}",
-      "supply": "Minted {minted} / {total}",
+      "supply": "Issued {minted} / {total}",
       "unlimited": "Unlimited",
       "actions": {
         "breed": "Breed",
@@ -643,8 +643,8 @@
         "needTwo": "Pick 1 more parent",
         "empty": "Only 1 collectible of this species — cannot pair yet",
         "success": "🎉 Breeding success!",
-        "childGen": "Gen {gen} · New NFR minted",
-        "hash": "Ownership hash",
+        "childGen": "Gen {gen} · New collectible issued",
+        "hash": "Ownership ID",
         "recharge": "Not enough points, top up →"
       },
       "transfer": {
@@ -920,15 +920,15 @@
     "packsTitle": "Card Packs - Collect Rare AI Pets | AIABW",
     "packsDesc": "Open card packs with points to collect rare AI pets and raising items. New pets join your soul collection instantly.",
     "soulCardsTitle": "Collection Center - Aibi Credentials · Soul Cards · Collectibles | AIABW",
-    "soulCardsDesc": "One hub for your Aibi credentials, Soul Cards and digital collectibles, with the supply dashboard and mintable list. Each token is a unique on-chain collectible.",
+    "soulCardsDesc": "One hub for My Soul Pets and World Collectibles, with the supply dashboard. Each token is a unique collectible.",
     "codexTitle": "Aibi Codex - Species, Rarity & Habitat Archive | AIABW",
     "codexDesc": "Browse all AI pet species, filter by rarity, element and habitat, and track your collection progress.",
     "shopTitle": "Item Shop - Raising Items & Exploration Supplies | AIABW",
     "shopDesc": "Redeem points for pet-raising items to boost growth and exploration rewards.",
-    "supplyTitle": "Supply Transparency - Mint & Burn Records | AIABW",
-    "supplyDesc": "Live circulation, total minted, total burned and max supply, with snapshot trends and full mint/burn history.",
-    "aibiTitle": "{tokenId} - Unique On-chain Pet Credential | AIABW",
-    "aibiDesc": "{tokenId}: a unique on-chain pet credential on AIABW. Mint and transfer records are publicly verifiable."
+    "supplyTitle": "Supply Transparency - Issue & Burn Records | AIABW",
+    "supplyDesc": "Live circulation, total issued, total burned and max supply, with snapshot trends and full issue/burn history.",
+    "aibiTitle": "{tokenId} - Unique Pet Credential | AIABW",
+    "aibiDesc": "{tokenId}: a unique pet credential on AIABW. Issue and transfer records are publicly verifiable."
   },
   "shop": {
     "title": "Explorer Shop",
@@ -1200,15 +1200,15 @@
   },
   "soulCards": {
     "title": "Soul Card Collection",
-    "subtitle": "AI lifeform × blockchain scarcity certificate — one Soul Card per pet, forever",
-    "simulatedBadge": "Simulated Chain",
+    "subtitle": "AI lifeform × scarce digital certificate — one Soul Card per pet, forever",
+    "simulatedBadge": "Demo Mode",
     "loading": "Loading…",
     "signInFirst": "Please sign in first",
     "signInHint": "Sign in to view your Soul Cards (created automatically when you adopt a pet)",
     "loadFailed": "Failed to load. Please refresh and retry",
     "supply": {
-      "title": "On-chain Supply",
-      "stats": "Minted {minted} · Burned {burned} · Fixed and verifiable total supply"
+      "title": "Total Supply",
+      "stats": "Issued {minted} · Burned {burned} · Fixed total supply"
     },
     "collection": {
       "title": "My Soul Cards ({count})",
@@ -1218,7 +1218,7 @@
     "burn": {
       "button": "🔥 Burn Soul Card",
       "confirm": "Confirm burn (irreversible)",
-      "confirmHint": "Burning permanently voids this card's on-chain certificate and reduces circulating supply by 1. Your pet itself is unaffected. This action is irreversible.",
+      "confirmHint": "Burning permanently voids this card's unique certificate and reduces total supply by 1. Your pet itself is unaffected. This action is irreversible.",
       "cancel": "Cancel",
       "burning": "Burning…",
       "success": "Burned {cert}; circulating supply -1"
@@ -1228,10 +1228,10 @@
       "close": "Close",
       "attributes": "Attributes",
       "growth": "Growth",
-      "certificate": "On-chain Certificate",
+      "certificate": "Unique Certificate",
       "legacyTokens": "Legacy tokens · Aibi era ({count})",
       "legacyEmpty": "No legacy tokens",
-      "legacyHint": "Aibi tokens are no longer minted. Existing ones are kept forever, view only."
+      "legacyHint": "Aibi tokens are no longer issued. Existing ones are kept forever, view only."
     },
     "attrs": {
       "rarity": "Rarity",
@@ -1240,21 +1240,21 @@
       "personality": "AI Personality"
     },
     "certificate": {
-      "tokenId": "Token ID",
+      "tokenId": "Certificate ID",
       "certNo": "Certificate No.",
       "network": "Network",
-      "contract": "Contract",
-      "mintTx": "Mint Tx",
-      "burnTx": "Burn Tx",
-      "ledger": "On-chain Trail",
-      "ledgerEmpty": "No on-chain records yet"
+      "contract": "Registry Address",
+      "mintTx": "Issue Record",
+      "burnTx": "Burn Record",
+      "ledger": "History",
+      "ledgerEmpty": "No records yet"
     },
     "status": {
       "active": "Active",
       "burned": "Burned"
     },
     "txType": {
-      "mint": "Mint",
+      "mint": "Issued",
       "burn": "Burn",
       "transfer": "Transfer"
     },
@@ -1271,7 +1271,7 @@
   "aibi": {
     "spotlight": {
       "title": "Aibi World · AI Companions & Collectibles",
-      "subtitle": "Live supply · newest mints · rare showcase",
+      "subtitle": "Live supply · newest arrivals · rare showcase",
       "supplyNow": "Circulating",
       "latestMinted": "Newest Aibis",
       "rareShowcase": "Rare Highlights",
@@ -1281,9 +1281,9 @@
       "entryCodexDesc": "Browse all species",
       "entryBag": "My Bag",
       "entryBagDesc": "Raise your aibis",
-      "empty": "No aibis minted yet — open the first pack in the store!",
+      "empty": "No aibis yet — tokens are no longer issued; find your existing ones in the bag.",
       "viewAll": "View all",
-      "mintedCount": "{count} minted"
+      "mintedCount": "{count} issued"
     },
     "codex": {
       "title": "Aibi Codex",
@@ -1307,7 +1307,7 @@
       "name": "Name",
       "rarity": "Rarity",
       "statuses": {
-        "minted": "Minted",
+        "minted": "Issued",
         "pending": "Pending",
         "burned": "Burned",
         "revoked": "Revoked"
@@ -1317,8 +1317,8 @@
       "affinity": "Affinity",
       "energy": "Energy",
       "lastInteractedAt": "Last interaction",
-      "chainId": "Chain",
-      "wallet": "Wallet",
+      "chainId": "Network",
+      "wallet": "Linked Address",
       "interactTitle": "Interactions",
       "interactEmpty": "No interactions yet",
       "infoTitle": "Profile",
@@ -1328,37 +1328,37 @@
       "mood": "Mood",
       "statusLabel": "Status",
       "level": "Growth Level",
-      "chainTitle": "Chain Certificate",
+      "chainTitle": "Unique Certificate",
       "cert": "Certificate No.",
       "owner": "Owner",
-      "mintedAt": "Minted At",
-      "txHash": "Tx Hash",
-      "contract": "Contract",
-      "contractMock": "Off-chain simulation (no contract deployed)",
+      "mintedAt": "Issued At",
+      "txHash": "Record Hash",
+      "contract": "Registry Address",
+      "contractMock": "Demo environment (no live registry)",
       "physicalBound": "Physical Bound",
       "bound": "Yes",
       "unbound": "No",
       "ownerOnlyHint": "Only the owner can interact with this aibi.",
       "historyTitle": "Provenance",
-      "eventMint": "Minted",
+      "eventMint": "Issued",
       "eventBurn": "Burned"
     },
     "profilePage": {
       "title": "Profile",
-      "subtitle": "Your account, wallet, and mint/burn records",
+      "subtitle": "Your account, linked address, and issue/burn records",
       "signInHint": "Sign in to view your profile",
       "signIn": "Sign in",
       "loadFailed": "Failed to load. Please refresh.",
       "userTitle": "Account",
       "username": "Name",
       "points": "Points",
-      "walletTitle": "Wallet Address",
-      "walletNone": "No wallet bound (off-chain simulation)",
+      "walletTitle": "Linked Address",
+      "walletNone": "No address linked (demo mode)",
       "aibiCount": "Aibis",
       "itemCount": "Items",
-      "mintHistory": "Mint History",
+      "mintHistory": "Issue History",
       "burnHistory": "Burn History",
-      "emptyMint": "No mint records yet.",
+      "emptyMint": "No issue records yet.",
       "emptyBurn": "No burn records yet.",
       "prev": "Prev",
       "next": "Next",
@@ -1366,20 +1366,20 @@
     },
     "supplyPage": {
       "title": "Supply Board",
-      "subtitle": "Full record of aibi certificate supply, mints and burns",
+      "subtitle": "Full record of aibi certificate supply, issues and burns",
       "loadFailed": "Failed to load. Please refresh.",
       "current": "Circulating",
-      "minted": "Total Minted",
+      "minted": "Total Issued",
       "burned": "Total Burned",
       "maxSupply": "Max Supply",
-      "maxUnlimited": "Uncapped (off-chain sim)",
+      "maxUnlimited": "Uncapped (demo mode)",
       "trendTitle": "Supply Snapshots",
-      "historyTitle": "Mint / Burn History",
+      "historyTitle": "Issue / Burn History",
       "empty": "No records yet.",
       "prev": "Prev",
       "next": "Next",
       "page": "{page}/{pages}",
-      "eventMint": "Mint",
+      "eventMint": "Issued",
       "eventBurn": "Burn",
       "colSupplyAfter": "Supply after"
     },
@@ -1416,7 +1416,7 @@
       "signIn": "Sign in",
       "loadFailed": "Failed to load bag. Please refresh.",
       "aibisTitle": "My Aibis ({count})",
-      "aibisEmpty": "No aibis yet — aibi tokens are no longer minted",
+      "aibisEmpty": "No aibis yet — aibi tokens are no longer issued",
       "fuseDiscontinued": "Fusion was retired with the Soul Pets upgrade. Your aibis are kept forever.",
       "packsTitle": "Packs ({count})",
       "packsEmpty": "No unopened packs",
@@ -1455,7 +1455,7 @@
       "subtitle": "Supply board, my collection and obtainable species",
       "loadFailed": "Failed to load. Please refresh.",
       "supply": {
-        "minted": "Total Minted",
+        "minted": "Total Issued",
         "burned": "Burned",
         "current": "Circulating"
       },
@@ -1463,7 +1463,7 @@
       "mineGuest": "Sign in to view your aibis",
       "mineEmpty": "No aibis yet — open a pack in the store",
       "catalogTitle": "Obtainable Species ({count})",
-      "mintedCount": "{count} minted"
+      "mintedCount": "{count} issued"
     },
     "fuse": {
       "title": "Aibi Fusion",

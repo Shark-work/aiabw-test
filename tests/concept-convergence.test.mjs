@@ -133,6 +133,31 @@ test("i18n: collection tabs without aibi; discontinued/legacy keys bilingual & a
     "aibi zh/en deep keys aligned");
 });
 
+// === 7) Commit 3 · 用户-facing 文案去链上表述（防回归） ===
+test("de-chained: no blockchain jargon in any user-facing message value", () => {
+  const zh = JSON.parse(read("messages/zh.json"));
+  const en = JSON.parse(read("messages/en.json"));
+  const ZH_BANNED = /链上|区块链|合约|NFT|铸造|模拟链|钱包地址|交易哈希/;
+  // 词边界防误伤（Fusion chain 融合链 / 模板占位符 {minted} 不算链上表述）
+  const EN_BANNED = /blockchain|\bon[- ]chain\b|\boff-chain\b|Simulated Chain|\bNFT\b|\bmint(ing|ed)?\b/i;
+  const stripPlaceholders = (s) => s.replace(/\{[^}]*\}/g, "");
+  const scan = (obj, path, re, out) => {
+    for (const [k, v] of Object.entries(obj)) {
+      const p = path ? `${path}.${k}` : k;
+      if (typeof v === "string") {
+        if (re.test(stripPlaceholders(v))) out.push(`${p} = ${v.slice(0, 60)}`);
+      } else if (v && typeof v === "object") scan(v, p, re, out);
+    }
+    return out;
+  };
+  assert.deepEqual(scan(zh, "", ZH_BANNED, []), [], "zh messages 无链上表述");
+  assert.deepEqual(scan(en, "", EN_BANNED, []), [], "en messages 无 blockchain jargon");
+  // AI 聊天语料同属用户-facing：aibi-prompt 不得自称链上
+  const prompt = read("src/lib/aibi-prompt.ts");
+  assert.ok(!prompt.includes("链上艾比"), "aibi prompt zh welcome de-chained");
+  assert.ok(!/on-chain/i.test(prompt), "aibi prompt en copy de-chained");
+});
+
   assert.ok(!cc.includes('"aibi"'), "no aibi tab id");
   assert.ok(cc.includes('?? "soul"'), "default tab = soul");
   assert.ok(!cc.includes("AibiSoulPanel"), "panel unmounted");
