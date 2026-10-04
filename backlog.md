@@ -32,6 +32,14 @@
   4. 入口：POST /api/threads（zod + 幂等 + 并发守护，不产生孤儿线程）；背包卡片与 /aibi/[tokenId] 详情页 AibiChatButton（有线程直跳 /chat?thread=，无线程「创建聊天」）；/api/bag/aibis 与 token 详情携带 threadId（后者仅持有者下放——threadId 即窥视钥匙）。
 - **supports_chat 种子已恢复 true**（全物种，随 v12 同步生产）；契约测试 tests/aibi-chat-e2e.test.mjs（16 项）。
 
+## P1 · Stripe 正式账户开通（⏸️ 暂缓/阻塞 · 2026-10-04 登记）
+
+- **状态**：集成代码 100% 就绪并锁定（契约测试 19 项 + 冒烟 step 40-41）；test 模式端到端验证已于 2026-10-04 通过（create-checkout 真实 Session → 4242 沙盒支付 → webhook 履约 +1000 积分落库 → 真实事件重放 `duplicate` 幂等）。**生产 live 收款暂缓**。
+- **阻塞原因**：缺海外运营主体（香港/新加坡），无法开通 Stripe live 账户——非技术问题，待公司主体落地。
+- **启用条件（获得主体后，约 30 分钟）**：Stripe Dashboard live 模式开户 → 建 3 个 Product/Price → 创建 live webhook 端点（`https://www.aiabw.com/api/stripe/webhook`，订阅 `checkout.session.completed`）→ Vercel 替换 5 个环境变量（`STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID_{POINTS,PACK,ITEM}`）→ Redeploy → 冒烟 step 40-41 复验 + 真实小额一单。代码零变更。
+- **当前降级行为**：未配置 live 密钥时 `503 PAYMENT_NOT_CONFIGURED` 优雅降级，全站零影响。⚠️ 现网 Vercel 配的是 **test 密钥**（支付入口会打开 test 沙盒页，真实卡无法扣款）；若需彻底隐藏入口，移除 Vercel 上 5 个变量即自动回到 503 降级（无需改代码）。
+- **文档**：`docs/stripe-integration.md` 顶部已挂「⏸️ 暂缓」状态块（含启用清单）。
+
 ## P2 · 积分/金币双货币统一叙事（2026-10-06 登记，功能融合度诊断 #6）
 
 - **现状**：单一 users.points 贯穿全部业务线（points_log 13 种 reason），但 UI 存在"积分/金币"两套话术混用，schema 注释（"仅用于 UGC 宠物与抽奖"）已过时。

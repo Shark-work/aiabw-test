@@ -1,5 +1,12 @@
 # Stripe 支付接入文档（艾比平台 Phase 11）
 
+> ## ⏸️ 集成状态：暂缓（Deferred · 2026-10-04 标记）
+>
+> - **当前状态**：test 模式就绪（2026-10-04 端到端验证通过：create-checkout 真实 Session → 4242 沙盒支付 → webhook 履约落库 +1000 积分 → 真实事件重放 `duplicate` 幂等，全链路绿），**生产环境（live 收款）暂缓**。
+> - **阻塞原因**：缺海外运营主体，无法开通 Stripe live 账户。
+> - **启用条件**：获得香港/新加坡主体后，替换 5 个环境变量即可启用（`STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID_{POINTS,PACK,ITEM}` 全部换成 live 值 → Vercel Redeploy；live 端点需在 Dashboard live 模式另行创建并取其 signing secret；代码零变更）。
+> - **当前降级行为**：未配置 live 密钥时优雅返回 `503 PAYMENT_NOT_CONFIGURED`（前端支付按钮降级提示，全站其余功能零影响；冒烟 step 40-41 锁定该语义）。
+
 > 适用：艾比商业化收款 —— 积分充值 / 卡包购买 / 道具购买（面向海外支付）。
 > 国内支付（支付宝/微信/聚合）本期仅占位，见 §9。
 > 代码：`src/app/api/stripe/*` + `src/lib/stripe{,-config,-service}.ts` + `stripe_orders` 表（drizzle/0028，SCHEMA_VERSION=10）。
