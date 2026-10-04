@@ -144,6 +144,40 @@ export function applyGrowthExp(
   return { level: lv, exp: cur, stage: stageForLevel(lv).id, leveledUp: lv > startLevel };
 }
 
+/** 阶段进度（P1 卡面「成长进度条」数据）：当前阶段 → 下一阶段的完成度。 */
+export type StageProgress = {
+  /** 当前阶段 */
+  current: GrowthStage;
+  /** 下一阶段（radiant 已是终点 → null） */
+  next: GrowthStage | null;
+  /** 完成度 0-100（radiant 恒 100） */
+  percent: number;
+  /** 距下一阶段还需总 EXP（radiant 恒 0；口径 = 阶段区间各级经验之和） */
+  expRemaining: number;
+};
+
+/**
+ * 阶段进度纯函数：EXP 口径与 applyGrowthExp 一致（每级需 level×100，exp 为当前等级内进度）。
+ * 例：Lv.12 exp 50（sprout，下一阶段 bloom@30）：total = Σ(10..29)×100，done = Σ(10..11)×100 + 50。
+ */
+export function stageProgress(level: number, exp: number): StageProgress {
+  const lv = Math.max(1, Math.trunc(level));
+  const current = stageForLevel(lv);
+  const idx = GROWTH_STAGES.findIndex((s) => s.id === current.id);
+  const next =
+    idx >= 0 && idx < GROWTH_STAGES.length - 1 ? GROWTH_STAGES[idx + 1] : null;
+  if (!next) {
+    return { current, next: null, percent: 100, expRemaining: 0 };
+  }
+  let total = 0;
+  for (let l = current.minLevel; l < next.minLevel; l += 1) total += expToNextLevel(l);
+  let done = 0;
+  for (let l = current.minLevel; l < lv; l += 1) done += expToNextLevel(l);
+  done += Math.max(0, Math.trunc(exp));
+  const percent = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 100;
+  return { current, next, percent, expRemaining: Math.max(0, total - done) };
+}
+
 /** 链上凭证编号：AIBI-000001（tokenId 六位补齐，全局唯一）。 */
 export function certificateNoForTokenId(tokenId: number): string {
   return `AIBI-${String(Math.trunc(tokenId)).padStart(6, "0")}`;

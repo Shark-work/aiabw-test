@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { SoulCardAttributes } from "./soul-card-attributes";
 import { SoulCardCertificate } from "./soul-card-certificate";
 import { SoulCardGrowth } from "./soul-card-growth";
+import { SoulCardStory } from "./soul-card-story";
 import { SoulCardView } from "./soul-card-view";
 import type {
   ChainStatusDto,
@@ -106,6 +107,8 @@ export function SoulCardDetailModal({
             exp={card.growthExp}
             locale={locale}
           />
+          {/* P1 故事外显：成长故事（阶段门控）+ 分享卡 */}
+          <SoulCardStory card={card} locale={locale} />
           <SoulCardCertificate
             card={card}
             ledger={ledger}

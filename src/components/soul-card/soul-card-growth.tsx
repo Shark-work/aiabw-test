@@ -11,6 +11,7 @@ import {
   expToNextLevel,
   GROWTH_LEVEL_MAX,
   stageForLevel,
+  stageProgress,
 } from "@/lib/soul-card-config";
 
 export function SoulCardGrowth({
@@ -49,6 +50,24 @@ export function SoulCardGrowth({
           ? t("growthMax")
           : t("expToNext", { exp: Math.max(0, need - exp) })}
       </p>
+      {/* P1 故事外显：阶段进度（当前形态 → 下一形态，stageProgress 纯函数口径） */}
+      {(() => {
+        const sp = stageProgress(level, exp);
+        return sp.next ? (
+          <p className="mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+            {t("toNextStage", {
+              stage: `${sp.next.emoji} ${isEn ? sp.next.labelEn : sp.next.labelZh}`,
+              exp: sp.expRemaining,
+            })}
+            {" · "}
+            {sp.percent}%
+          </p>
+        ) : (
+          <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+            {t("stageMax")}
+          </p>
+        );
+      })()}
     </section>
   );
 }

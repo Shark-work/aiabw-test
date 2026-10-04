@@ -1271,6 +1271,27 @@
     },
     "expToNext": "距离下一级还需 {exp} 经验",
     "growthMax": "已达最高等级",
+    "toNextStage": "距 {stage} 还需 {exp} 经验",
+    "stageMax": "已达最终形态",
+    "sleeping": "沉睡中",
+    "radiantMark": "光辉形态",
+    "story": {
+      "title": "成长故事",
+      "sleepingHint": "沉睡中 · 每日互动（喂食/抚摸）可助它积蓄成长经验",
+      "milestoneSprout": "🌱 首次成长里程碑达成 · 萌芽形态已解锁",
+      "exploreSummary": "共同探索 {count} 次 · 带回 {postcards} 张明信片",
+      "statsExplorations": "探索 {n} 次",
+      "statsPostcards": "明信片 {n} 张",
+      "statsGifts": "礼物 {n} 件",
+      "statsKnowledge": "知识 {n} 条",
+      "statsRare": "奇遇 {n} 次",
+      "statsHappiness": "幸福度 {n}",
+      "rareMark": "稀有标识"
+    },
+    "share": {
+      "button": "🖼️ 分享卡",
+      "hint": "生成卡面分享图，晒到社交平台"
+    },
     "burnFailed": "销毁失败，请稍后重试"
   },
   "aibi": {

@@ -1271,6 +1271,27 @@
     },
     "expToNext": "{exp} EXP to next level",
     "growthMax": "Max level reached",
+    "toNextStage": "{exp} EXP to {stage}",
+    "stageMax": "Final form reached",
+    "sleeping": "Sleeping",
+    "radiantMark": "Radiant form",
+    "story": {
+      "title": "Growth Story",
+      "sleepingHint": "Sleeping · daily interactions (feed/pet) help it gather growth EXP",
+      "milestoneSprout": "🌱 First growth milestone reached · Sprout form unlocked",
+      "exploreSummary": "{count} explorations together · {postcards} postcards brought back",
+      "statsExplorations": "{n} explorations",
+      "statsPostcards": "{n} postcards",
+      "statsGifts": "{n} gifts",
+      "statsKnowledge": "{n} knowledge",
+      "statsRare": "{n} rare encounters",
+      "statsHappiness": "Happiness {n}",
+      "rareMark": "Rarity mark"
+    },
+    "share": {
+      "button": "🖼️ Share card",
+      "hint": "Generate a card image to share on social media"
+    },
     "burnFailed": "Burn failed. Please try again later"
   },
   "aibi": {

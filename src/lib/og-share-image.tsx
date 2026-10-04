@@ -20,7 +20,8 @@ const FONT_URLS = [
 
 let cachedFont: ArrayBuffer | null | undefined;
 
-async function loadCjkFont(): Promise<ArrayBuffer | null> {
+/** CJK 字体加载（模块级缓存；P1 灵魂卡分享图 share.png 复用）。 */
+export async function loadCjkFont(): Promise<ArrayBuffer | null> {
   if (cachedFont !== undefined) return cachedFont;
   for (const url of FONT_URLS) {
     try {
