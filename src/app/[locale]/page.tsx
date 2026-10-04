@@ -13,6 +13,7 @@ import { PetDetailModal, type FeaturedPet } from "@/components/pet-detail-modal"
 import { UpgradePetModal } from "@/components/upgrade-pet-modal";
 import { getRarityMeta } from "@/lib/pet-status";
 import { getAnonymousId } from "@/lib/anon-id";
+import { OnboardingBanner } from "@/components/onboarding/onboarding-banner";
 
 export default function Home() {
   const router = useRouter();
@@ -160,6 +161,8 @@ export default function Home() {
       <div aria-hidden className="absolute inset-0 bg-white/60" />
 
       <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 pb-10">
+        {/* P1 故事外显：未完成唤醒仪式且无灵宠 → 沉睡 banner 引导继续（客户端自判，静默降级） */}
+        <OnboardingBanner />
         {/* SEO h1（视觉隐藏：Header 已承载品牌标题） */}
         <h1 className="sr-only">{t("title")}</h1>
         {/* 可视 Hero：主标题 + 副标题 + 社交证明（转化优化；一页一 h1 原则，可视主标题用 p） */}

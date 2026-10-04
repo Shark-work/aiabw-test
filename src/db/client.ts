@@ -991,6 +991,9 @@ const SCHEMA_ALTERS: string[] = [
 
   // ===== Aibi ↔ 聊天（方案 a，drizzle/0029）：aibi_tokens.thread_id 绑定对话线程 =====
   `ALTER TABLE "aibi_tokens" ADD COLUMN IF NOT EXISTS "thread_id" uuid REFERENCES "threads"("id") ON DELETE SET NULL`,
+
+  // ===== P1 故事外显（drizzle/0031）：新手引导「唤醒仪式」完成标记 =====
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_completed" boolean DEFAULT false NOT NULL`,
 ];
 
 /**
@@ -1161,7 +1164,11 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     背包/详情页聊天入口），能力开关有了真实消费路径
 // v14: 探险商城死表清理 —— users.coins 默认值 200→0（原默认 200 无任何获取渠道，
 //     新用户误以为是可再生的免费货币；存量用户余额不受影响，仅列默认值变更）
-const SCHEMA_VERSION = 15;
+// v15: 邀请返利（2026-10-14）—— subscription_plans 种子新增隐藏档 trial3d（3 天体验卡，
+//     is_active=false 不对外售卖，仅供裂变奖励发放）
+// v16: P1 故事外显 —— users.onboarding_completed（新手引导「唤醒仪式」完成标记，
+//     drizzle/0031；未完成且无灵宠的用户首页展示沉睡 banner 引导继续）
+const SCHEMA_VERSION = 16;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

@@ -507,6 +507,9 @@
     "releaseFailed": "Release failed, please try again",
     "petUnavailable": "This pet has already been adopted by another owner - check out the others!",
     "claimFailed": "Adoption failed, please try again later",
+    "petNameInvalid": "Name must be 1-24 characters",
+    "adoptionNotFound": "Adoption record not found",
+    "onboardingFailed": "Something went wrong, please try again",
     "pushNotConfigured": "Push notifications are not configured yet",
     "pushSubscribeFailed": "Failed to subscribe to push notifications, please try again later",
     "invalidBreedSet": "Please choose exactly 2 pets to breed",
@@ -1509,6 +1512,53 @@
       "affectsPersonality": "Personality",
       "quantity": "Qty",
       "subtotal": "Subtotal ⭐{points}"
+    }
+  },
+  "onboarding": {
+    "metaTitle": "Awakening Ritual · Aibi World",
+    "stepOf": "Step {step} of 3",
+    "loading": "Loading…",
+    "loadFailed": "Failed to load. Please refresh.",
+    "meet": {
+      "title": "Encounter",
+      "desc": "A sleeping soul is waiting to be awakened",
+      "hint": "In Aibi World, every soul pet has a one-of-a-kind soul.",
+      "cta": "Begin the ritual"
+    },
+    "awaken": {
+      "title": "Awaken",
+      "desc": "Tap gently to wake this sleeping soul",
+      "cta": "✨ Awaken it",
+      "working": "Awakening…",
+      "failed": "Awakening failed, please try again",
+      "gone": "This soul pet was just awakened by someone else. Finding another…"
+    },
+    "awakened": {
+      "title": "Awakened!",
+      "certLabel": "Globally unique ID",
+      "certHint": "Its exclusive soul credential has been generated — the only one of its kind",
+      "certPending": "Generating credential…",
+      "certPendingHint": "The soul credential is being generated. Check the Collection Center later for its ID.",
+      "cta": "Continue"
+    },
+    "journey": {
+      "title": "Set Off",
+      "nameLabel": "Give it a name",
+      "namePlaceholder": "Enter a name (1-24 chars)",
+      "nameInvalid": "Name must be 1-24 characters",
+      "choiceHint": "What would you like to do with {name} first?",
+      "chatCta": "💬 First chat",
+      "exploreCta": "🗺️ First exploration",
+      "later": "Maybe later"
+    },
+    "banner": {
+      "text": "🌰 Your soul pet is still sleeping",
+      "cta": "Continue the ritual →"
+    },
+    "empty": {
+      "title": "The forest is quiet for now",
+      "desc": "No soul pets are waiting to be awakened right now. Visit the codex!",
+      "cta": "Back to home"
     }
   }
 }

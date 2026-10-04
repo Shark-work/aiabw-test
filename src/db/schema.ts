@@ -32,6 +32,8 @@ export const users = pgTable('users', {
   username: text('username').notNull().unique(),
   /** 隐私设置：是否参与排行榜（默认参与；设置页可 opt-out，关闭后各榜单不再展示该用户及其宠物） */
   showInLeaderboard: boolean('show_in_leaderboard').notNull().default(true),
+  /** 新手引导「唤醒仪式」完成标记（P1 故事外显）：完成后不再进入引导、不展示沉睡 banner */
+  onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
 });
 
 /**

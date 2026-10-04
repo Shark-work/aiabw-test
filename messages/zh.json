@@ -507,6 +507,9 @@
     "releaseFailed": "放生失败，请稍后重试",
     "petUnavailable": "这只宠物已经被其他主人领养啦，去图鉴看看别的吧~",
     "claimFailed": "领养失败，请稍后再试",
+    "petNameInvalid": "名字需要 1-24 个字符",
+    "adoptionNotFound": "没有找到这条领养记录",
+    "onboardingFailed": "操作失败，请稍后再试",
     "pushNotConfigured": "推送服务尚未配置",
     "pushSubscribeFailed": "订阅推送失败，请稍后再试",
     "invalidBreedSet": "请选择恰好 2 只宠物进行繁育",
@@ -1509,6 +1512,53 @@
       "affectsPersonality": "性格",
       "quantity": "数量",
       "subtotal": "小计 ⭐{points}"
+    }
+  },
+  "onboarding": {
+    "metaTitle": "唤醒仪式 · 艾比世界",
+    "stepOf": "第 {step} 步 · 共 3 步",
+    "loading": "加载中…",
+    "loadFailed": "加载失败，请刷新重试",
+    "meet": {
+      "title": "遇 见",
+      "desc": "一段沉睡的灵魂正在等待唤醒",
+      "hint": "在艾比世界，每一只灵宠都有独一无二的灵魂。",
+      "cta": "开始唤醒仪式"
+    },
+    "awaken": {
+      "title": "唤 醒",
+      "desc": "轻轻点击，唤醒这段沉睡的灵魂",
+      "cta": "✨ 唤醒它",
+      "working": "唤醒中…",
+      "failed": "唤醒失败，请再试一次",
+      "gone": "这只灵宠刚被其他人唤醒了，正在为你重新寻找…"
+    },
+    "awakened": {
+      "title": "唤醒成功！",
+      "certLabel": "全球唯一编号",
+      "certHint": "已为它生成专属灵魂凭证，此生仅此一份",
+      "certPending": "凭证生成中…",
+      "certPendingHint": "灵魂凭证正在生成，稍后可在收藏中心查看编号",
+      "cta": "继续"
+    },
+    "journey": {
+      "title": "启 程",
+      "nameLabel": "给它起个名字吧",
+      "namePlaceholder": "输入名字（1-24 字）",
+      "nameInvalid": "名字需要 1-24 个字符",
+      "choiceHint": "接下来，想和 {name} 一起做什么？",
+      "chatCta": "💬 第一次对话",
+      "exploreCta": "🗺️ 第一次探索",
+      "later": "稍后再说"
+    },
+    "banner": {
+      "text": "🌰 你的灵宠还在沉睡",
+      "cta": "继续唤醒仪式 →"
+    },
+    "empty": {
+      "title": "灵宠之森暂时安静",
+      "desc": "暂时没有等待唤醒的灵宠，去图鉴看看吧",
+      "cta": "返回首页"
     }
   }
 }

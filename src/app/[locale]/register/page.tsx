@@ -67,8 +67,11 @@ export default function RegisterPage() {
         })();
       }
 
+      // P1 故事外显：新用户注册成功默认进入「唤醒仪式」新手引导（/onboarding）；
+      // 显式携带 redirect 参数（如登录拦截回跳）时尊重原目标。
       const redirect =
-        new URLSearchParams(window.location.search).get("redirect") || "/";
+        new URLSearchParams(window.location.search).get("redirect") ||
+        "/onboarding";
       router.push(redirect);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failed"));
