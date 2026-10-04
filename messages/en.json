@@ -155,6 +155,12 @@
       "newNfr": "Bond crystal collectible",
       "certNo": "Soul credential ID",
       "failed": "Crystallization failed, please try again"
+    },
+    "digest": {
+      "title": "🗺️ Exploration Log",
+      "empty": "No explorations yet",
+      "emptyCta": "Go explore →",
+      "rare": "Rare find"
     }
   },
   "marketplace": {
@@ -531,6 +537,10 @@
     "petNameInvalid": "Name must be 1-24 characters",
     "adoptionNotFound": "Adoption record not found",
     "onboardingFailed": "Something went wrong, please try again",
+    "postcardSetInvalid": "Unknown postcard series",
+    "postcardSetIncomplete": "You haven't collected all postcards of this series yet",
+    "postcardSetClaimed": "This series reward has already been claimed",
+    "postcardSetClaimFailed": "Claim failed, please try again",
     "pushNotConfigured": "Push notifications are not configured yet",
     "pushSubscribeFailed": "Failed to subscribe to push notifications, please try again later",
     "invalidBreedSet": "Please choose exactly 2 soul pets to crystallize",
@@ -1096,7 +1106,20 @@
     "groupToday": "Today",
     "groupYesterday": "Yesterday",
     "groupWeek": "This week",
-    "groupEarlier": "Earlier"
+    "groupEarlier": "Earlier",
+    "postcardWall": {
+      "title": "💌 Postcard Wall",
+      "subtitle": "Every postcard it brings back is a message meant for you",
+      "empty": "No postcards yet — go explore and bring back the first one!",
+      "collected": "{owned}/{total}",
+      "claim": "Claim codex reward +{points}",
+      "claimed": "✓ Claimed",
+      "claimSuccess": "🎉 Codex reward credited: +{points} pts",
+      "claimFailed": "Claim failed, please try again",
+      "storyTitle": "Postcard Story",
+      "rare": "Rare",
+      "epic": "Epic"
+    }
   },
   "achievements": {
     "title": "Exploration Badges",

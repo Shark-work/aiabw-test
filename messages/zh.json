@@ -155,6 +155,12 @@
       "newNfr": "羁绊结晶藏品",
       "certNo": "灵魂凭证编号",
       "failed": "结晶失败，请稍后再试"
+    },
+    "digest": {
+      "title": "🗺️ 探索履历",
+      "empty": "还没有探索记录",
+      "emptyCta": "去探索 →",
+      "rare": "奇遇"
     }
   },
   "marketplace": {
@@ -531,6 +537,10 @@
     "petNameInvalid": "名字需要 1-24 个字符",
     "adoptionNotFound": "没有找到这条领养记录",
     "onboardingFailed": "操作失败，请稍后再试",
+    "postcardSetInvalid": "没有这个明信片系列",
+    "postcardSetIncomplete": "还没有集齐这个系列的明信片",
+    "postcardSetClaimed": "这个系列的图鉴奖励已经领取过了",
+    "postcardSetClaimFailed": "领取失败，请稍后再试",
     "pushNotConfigured": "推送服务尚未配置",
     "pushSubscribeFailed": "订阅推送失败，请稍后再试",
     "invalidBreedSet": "请选择恰好 2 只灵宠进行结晶",
@@ -1096,7 +1106,20 @@
     "groupToday": "今天",
     "groupYesterday": "昨天",
     "groupWeek": "本周",
-    "groupEarlier": "更早"
+    "groupEarlier": "更早",
+    "postcardWall": {
+      "title": "💌 明信片墙",
+      "subtitle": "探索带回来的每一张明信片，都是它想对你说的话",
+      "empty": "还没有明信片，去探索带回第一张吧！",
+      "collected": "{owned}/{total}",
+      "claim": "领取图鉴奖励 +{points}",
+      "claimed": "✓ 已领取",
+      "claimSuccess": "🎉 图鉴奖励到账：+{points} 积分",
+      "claimFailed": "领取失败，请稍后再试",
+      "storyTitle": "明信片故事",
+      "rare": "稀有",
+      "epic": "史诗"
+    }
   },
   "achievements": {
     "title": "探索徽章",

@@ -25,6 +25,7 @@ import {
   ExploreResultModal,
   type ExploreResultModalData,
 } from "@/components/exploration-v2/explore-result-modal";
+import { PostcardWall } from "@/components/exploration-v2/postcard-wall";
 import { AchievementPanel } from "@/components/achievements/achievement-panel";
 
 type Quota = { todayCount: number; maxCount: number; isVip: boolean };
@@ -242,6 +243,9 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
           {t("loadFailedRetry")}
         </button>
       ) : null}
+
+      {/* P1 故事外显：明信片墙（探索产出外显 + 系列集齐图鉴奖励） */}
+      <PostcardWall refreshKey={achvRefreshKey} />
 
       <section>
         <h3 className="mb-2 text-sm font-semibold text-zinc-700">

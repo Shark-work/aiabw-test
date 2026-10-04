@@ -8,6 +8,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { moodInfo, moodLabel } from "@/components/chat/chat-client";
 import { LivingPet } from "@/components/LivingPet";
 import { BondPanel } from "./bond-panel";
+import { ExplorationDigest } from "./exploration-digest";
 import { CosmeticsShopModal } from "@/components/cosmetics-shop-modal";
 import { PushOptIn } from "@/components/push-optin";
 import { getAnonymousId } from "@/lib/anon-id";
@@ -571,6 +572,9 @@ export function CompanionPanel() {
 
             {/* P1 羁绊结晶：同物种灵宠羁绊达标 → 共鸣结晶（结晶灵宠 + 羁绊结晶藏品） */}
             <BondPanel adoptionId={selectedPet.id} />
+
+            {/* P1 探索履历：最近 5 次探索产出（明信片/道具/奇遇） */}
+            <ExplorationDigest />
 
             {/* P0-1 道具背包：签到盲盒道具装备 / 卸下 */}
             <div className="mt-4">

@@ -15,7 +15,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
+  // 路由参数就绪即可（next-intl getTranslations 内部按请求 locale 解析）
+  await params;
   const t = await getTranslations("onboarding");
   return {
     title: t("metaTitle"),
