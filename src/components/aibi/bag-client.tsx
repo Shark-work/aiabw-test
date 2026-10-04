@@ -19,6 +19,7 @@ import { AibiDetailModal } from "./aibi-detail-modal";
 import { AibiErrorBanner } from "./aibi-error-banner";
 import { FusionModal } from "./fusion-modal";
 import { aibiFetch, AibiClientError } from "@/lib/aibi-client";
+import { AIBI_MINT_DISCONTINUED } from "@/lib/aibi-flags";
 import { aibiItemEmoji, type AibiTokenDto } from "@/lib/aibi-visual";
 
 interface BagPackDto {
@@ -186,12 +187,14 @@ export function BagClient() {
               <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 {t("aibisTitle", { count: aibis.length })}
               </h2>
-              {/* 6.1.1 融合入口：持有 ≥2 只时可用 */}
+              {/* 6.1.1 融合入口：持有 ≥2 只时可用；P0 概念收敛后停用（产物需铸新） */}
               {aibis.length >= 2 ? (
                 <button
                   type="button"
                   onClick={() => setFuseOpen(true)}
-                  className="shrink-0 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90"
+                  disabled={AIBI_MINT_DISCONTINUED}
+                  title={AIBI_MINT_DISCONTINUED ? t("fuseDiscontinued") : undefined}
+                  className="shrink-0 rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-500 px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   🧬 {t("fuse")}
                 </button>
@@ -199,10 +202,7 @@ export function BagClient() {
             </div>
             {aibis.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-zinc-300 py-8 text-center text-xs text-zinc-400 dark:border-zinc-700">
-                {t("aibisEmpty")}{" "}
-                <Link href="/packs" className="font-bold text-orange-500 underline">
-                  {t("goStore")}
-                </Link>
+                {t("aibisEmpty")}
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

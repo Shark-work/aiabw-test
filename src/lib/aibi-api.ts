@@ -30,6 +30,7 @@ const MESSAGES: Record<string, { zh: string; en: string }> = {
   PAYMENT_NOT_CONFIGURED: { zh: "支付通道未配置，请稍后再试", en: "Payment provider is not configured yet." },
   SIGNATURE_INVALID: { zh: "Webhook 签名校验失败", en: "Webhook signature verification failed." },
   DOMESTIC_PAYMENT_PENDING: { zh: "国内支付通道接入中，敬请期待", en: "Domestic payment channel is coming soon." },
+  DISCONTINUED: { zh: "该玩法已随「我的灵宠」体系升级下线；已有收藏永久保留，可在收藏中心查看", en: "This feature was retired with the Soul Pets upgrade. Your existing collectibles are kept forever in the Collection Center." },
   INTERNAL_ERROR: { zh: "服务器内部错误", en: "Internal server error." },
 };
 

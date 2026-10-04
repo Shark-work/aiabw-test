@@ -613,11 +613,10 @@
   },
   "collection": {
     "title": "收藏中心",
-    "subtitle": "艾比凭证、灵魂卡与数字藏品 —— 你的全部收藏在这里",
+    "subtitle": "我的灵宠与世界藏品 —— 你的全部收藏在这里",
     "tabs": {
-      "aibi": "艾比凭证",
-      "soul": "灵魂卡",
-      "nfr": "数字藏品"
+      "soul": "🐾 我的灵宠",
+      "nfr": "🌍 世界藏品"
     },
     "nfr": {
       "signInHint": "登录后查看你持有的数字藏品",
@@ -1229,7 +1228,10 @@
       "close": "关闭",
       "attributes": "属性",
       "growth": "成长状态",
-      "certificate": "链上凭证"
+      "certificate": "链上凭证",
+      "legacyTokens": "历史凭证 · 艾比时代（{count}）",
+      "legacyEmpty": "无历史凭证",
+      "legacyHint": "艾比凭证已停止增发，存量永久保留，仅供查看"
     },
     "attrs": {
       "rarity": "稀有度",
@@ -1391,7 +1393,8 @@
       "signIn": "去登录",
       "loadFailed": "卡包列表加载失败，请刷新重试",
       "buyFailed": "购买失败，请稍后重试",
-      "animationLv": "动效 Lv.{level}"
+      "animationLv": "动效 Lv.{level}",
+      "discontinued": "卡包已随「我的灵宠」体系升级停止售卖；你的艾比与未开启卡包永久保留，可在背包中继续互动"
     },
     "packOpen": {
       "title": "开包结果",
@@ -1413,8 +1416,8 @@
       "signIn": "去登录",
       "loadFailed": "背包加载失败，请刷新重试",
       "aibisTitle": "我的艾比（{count}）",
-      "aibisEmpty": "还没有艾比 ——",
-      "goStore": "去商店开一包吧",
+      "aibisEmpty": "还没有艾比 —— 艾比凭证已停止增发",
+      "fuseDiscontinued": "融合已随「我的灵宠」体系升级停用；你的艾比将永久保留",
       "packsTitle": "卡包（{count}）",
       "packsEmpty": "暂无未开启的卡包",
       "openPack": "开包",
@@ -1477,7 +1480,8 @@
       "done": "完成",
       "failed": "融合失败，请稍后重试",
       "viewDetail": "查看详情",
-      "continueFuse": "继续融合"
+      "continueFuse": "继续融合",
+      "discontinued": "融合已随「我的灵宠」体系升级停用；你的艾比将永久保留，仍可互动"
     },
     "burn": {
       "open": "销毁",

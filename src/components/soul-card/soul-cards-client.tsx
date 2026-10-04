@@ -18,6 +18,7 @@ import { SoulCardView } from "./soul-card-view";
 import type {
   ChainStatusDto,
   LedgerEntryDto,
+  LegacyTokenDto,
   SoulCardDto,
 } from "./soul-card-types";
 
@@ -26,6 +27,8 @@ type LoadState = "loading" | "signedOut" | "ready" | "error";
 type DetailState = {
   card: SoulCardDto;
   ledger: LedgerEntryDto[];
+  /** 历史艾比凭证（仅卡主本人可见；公开访问/未登录为 null） */
+  legacyTokens: LegacyTokenDto[] | null;
 } | null;
 
 export function SoulCardsClient() {
@@ -87,14 +90,24 @@ export function SoulCardsClient() {
 
   async function openDetail(cardId: string) {
     try {
-      const res = await fetch(`/api/soul-cards/${cardId}`);
+      // 带 Bearer：卡主本人时服务端附带历史艾比凭证（legacyTokens）
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("aiabw_token") : null;
+      const res = await fetch(`/api/soul-cards/${cardId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       const data = (await res.json()) as {
         ok: boolean;
         card?: SoulCardDto;
         ledger?: LedgerEntryDto[];
+        legacyTokens?: LegacyTokenDto[] | null;
       };
       if (res.ok && data.ok && data.card) {
-        setDetail({ card: data.card, ledger: data.ledger ?? [] });
+        setDetail({
+          card: data.card,
+          ledger: data.ledger ?? [],
+          legacyTokens: data.legacyTokens ?? null,
+        });
       }
     } catch {
       /* 详情打开失败静默，列表仍可用 */
@@ -214,6 +227,7 @@ export function SoulCardsClient() {
         <SoulCardDetailModal
           card={detail.card}
           ledger={detail.ledger}
+          legacyTokens={detail.legacyTokens}
           chain={chain}
           locale={locale}
           onClose={() => setDetail(null)}

@@ -1,6 +1,7 @@
-// 收藏中心三 Tab 重构（2026-10-06）契约测试：
+// 收藏中心契约测试（2026-10-06 三 Tab → 2026-10-14 P0 概念收敛双 Tab）：
 //  1) /soul-cards 页挂载 CollectionClient（Suspense），不再直接拼合两个旧面板；
-//  2) CollectionClient：三 Tab（aibi/soul/nfr）+ URL query ?tab= 状态 + 复用旧面板不重写；
+//  2) CollectionClient：两 Tab（soul=我的灵宠 / nfr=世界藏品）+ URL query ?tab= 状态，
+//     旧 ?tab=aibi 链接白名单兜底自动落 soul；艾比凭证面板（AibiSoulPanel）已移除；
 //  3) NfrGalleryPanel：消费 GET /api/gallery?mine=1（Bearer + x-locale），
 //     登录引导 / 空状态引导去 /blindbox / 稀有度徽章复用 getRarityMeta；
 //  4) i18n collection 命名空间 zh/en 深键完全对齐；
@@ -22,14 +23,15 @@ test("page: /soul-cards 挂载 CollectionClient（Suspense），不再直接拼�
   assert.ok(!page.includes("<SoulCardsClient />"), "页面不再直接拼合 SoulCardsClient");
 });
 
-test("container: 三 Tab + URL query 状态 + 旧面板原样复用", () => {
+test("container: 双 Tab + URL query 状态 + 艾比凭证面板移除", () => {
   const cc = read("src/components/collection/collection-client.tsx");
-  assert.ok(cc.includes('["aibi", "soul", "nfr"]'), "三 Tab 定义");
+  assert.ok(cc.includes('["soul", "nfr"]'), "双 Tab 定义");
+  assert.ok(!cc.includes('"aibi"'), "aibi Tab 移除（旧链接白名单兜底落 soul）");
   assert.ok(cc.includes('searchParams.get("tab")'), "Tab 状态来自 URL query");
   assert.ok(cc.includes("router.replace("), "切换 Tab 写回 ?tab=");
-  assert.ok(cc.includes("<AibiSoulPanel />"), "aibi Tab 复用 5.4 面板");
-  assert.ok(cc.includes("<SoulCardsClient />"), "soul Tab 复用 V1 面板");
-  assert.ok(cc.includes("<NfrGalleryPanel />"), "nfr Tab 挂载藏品面板");
+  assert.ok(!cc.includes("AibiSoulPanel"), "艾比凭证面板不再挂载");
+  assert.ok(cc.includes("<SoulCardsClient />"), "soul Tab = 我的灵宠（灵魂卡）");
+  assert.ok(cc.includes("<NfrGalleryPanel />"), "nfr Tab = 世界藏品");
   assert.ok(cc.includes('useTranslations("collection")'), "collection 命名空间");
 });
 

@@ -31,6 +31,14 @@ export type SoulCardDto = {
   speciesNameEn: string;
 };
 
+/** 历史艾比凭证（只读，/api/soul-cards/[id] 仅对卡主本人附带）。 */
+export type LegacyTokenDto = {
+  aibiTokenId: string;
+  speciesId: string;
+  status: string;
+  mintedAt: string | null;
+};
+
 export type LedgerEntryDto = {
   id: string;
   txHash: string;

@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 import { AibiCard } from "./aibi-card";
 import { AibiErrorBanner } from "./aibi-error-banner";
 import { aibiFetch, AibiClientError } from "@/lib/aibi-client";
+import { AIBI_MINT_DISCONTINUED } from "@/lib/aibi-flags";
 import { getAibiRarity } from "@/lib/aibi-catalog";
 import { aibiSpeciesEmoji, rarityVisual, type AibiTokenDto } from "@/lib/aibi-visual";
 
@@ -115,6 +116,11 @@ export function FusionModal({
   /** 6.1.3 融合：POST /api/aibi/fuse；成功 → 父级刷新 + 播放结果动画 */
   async function doFuse() {
     if (picked.length < MIN_MATERIALS || fusing) return;
+    // P0 概念收敛（2026-10-14）：融合已停用（产物需铸新，艾比凭证停铸配套）
+    if (AIBI_MINT_DISCONTINUED) {
+      setError({ code: "DISCONTINUED", message: t("discontinued") });
+      return;
+    }
     setFusing(true);
     setError(null);
     try {

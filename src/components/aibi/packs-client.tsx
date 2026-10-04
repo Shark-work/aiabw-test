@@ -14,6 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { AibiErrorBanner } from "./aibi-error-banner";
 import { aibiFetch, AibiClientError, readAibiToken } from "@/lib/aibi-client";
+import { AIBI_PACK_SALES_DISCONTINUED } from "@/lib/aibi-flags";
 import { AIBI_RARITIES } from "@/lib/aibi-catalog";
 import { rarityVisual } from "@/lib/aibi-visual";
 
@@ -57,6 +58,11 @@ export function PacksClient() {
   }, [load]);
 
   async function buy(packId: string) {
+    // P0 概念收敛（2026-10-14）：卡包停售，前端先行拦截（服务端同步 410 短路）
+    if (AIBI_PACK_SALES_DISCONTINUED) {
+      setError({ code: "DISCONTINUED", message: t("discontinued") });
+      return;
+    }
     setBuying(packId);
     setError(null);
     try {
@@ -85,6 +91,13 @@ export function PacksClient() {
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{t("subtitle")}</p>
       </header>
 
+      {/* P0 概念收敛：卡包停售公告（购买按钮同步禁用） */}
+      {AIBI_PACK_SALES_DISCONTINUED ? (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
+          {t("discontinued")}
+        </p>
+      ) : null}
+
       {error ? <AibiErrorBanner code={error.code} message={error.message} onClose={() => setError(null)} /> : null}
 
       {state === "loading" ? (
@@ -110,7 +123,7 @@ export function PacksClient() {
               isEn={isEn}
               signedIn={signedIn}
               buying={buying === p.id}
-              disabled={buying !== null}
+              disabled={buying !== null || AIBI_PACK_SALES_DISCONTINUED}
               onBuy={() => void buy(p.id)}
             />
           ))}

@@ -15,12 +15,14 @@ import { SoulCardView } from "./soul-card-view";
 import type {
   ChainStatusDto,
   LedgerEntryDto,
+  LegacyTokenDto,
   SoulCardDto,
 } from "./soul-card-types";
 
 export function SoulCardDetailModal({
   card,
   ledger,
+  legacyTokens,
   chain,
   locale,
   onClose,
@@ -28,6 +30,8 @@ export function SoulCardDetailModal({
 }: {
   card: SoulCardDto;
   ledger: LedgerEntryDto[];
+  /** 历史艾比凭证（仅卡主本人可见；null = 公开访问/未登录，不渲染区块） */
+  legacyTokens: LegacyTokenDto[] | null;
   chain: ChainStatusDto | null;
   locale: string;
   onClose: () => void;
@@ -108,6 +112,37 @@ export function SoulCardDetailModal({
             chain={chain}
             locale={locale}
           />
+
+          {/* 历史凭证 · 艾比时代（P0 概念收敛：停铸存量只读，折叠展示；仅卡主本人可见） */}
+          {legacyTokens ? (
+            <details className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700">
+              <summary className="cursor-pointer select-none text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                🕰️ {t("detail.legacyTokens", { count: legacyTokens.length })}
+              </summary>
+              {legacyTokens.length === 0 ? (
+                <p className="mt-2 text-[11px] text-zinc-400">
+                  {t("detail.legacyEmpty")}
+                </p>
+              ) : (
+                <ul className="mt-2 space-y-1">
+                  {legacyTokens.map((tk) => (
+                    <li
+                      key={tk.aibiTokenId}
+                      className="flex items-center justify-between gap-2 font-mono text-[11px] text-zinc-500 dark:text-zinc-400"
+                    >
+                      <span className="shrink-0">{tk.aibiTokenId}</span>
+                      <span className="truncate">
+                        {tk.speciesId} · {tk.status}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-2 text-[10px] leading-4 text-zinc-400 dark:text-zinc-500">
+                {t("detail.legacyHint")}
+              </p>
+            </details>
+          ) : null}
 
           {/* 销毁区（仅流通中的卡） */}
           {active ? (

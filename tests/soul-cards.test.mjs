@@ -311,8 +311,12 @@ test("controllers: thin routes exist; error mapper covers all codes", () => {
   assert.ok(read("src/app/api/soul-cards/[id]/burn/route.ts").includes("getUserFromRequest"));
   assert.ok(!read("src/app/api/chain/status/route.ts").includes("getUserFromRequest"),
     "chain status is public");
-  assert.ok(!read("src/app/api/soul-cards/[id]/route.ts").includes("getUserFromRequest"),
-    "card detail is public (verifiable certificate)");
+  // 卡详情公开可读（可验证凭证）；P0 概念收敛起引入可选 Bearer——仅用于对卡主本人
+  // 附带 legacyTokens，不产生 401，公开访问语义不变
+  const detailRoute = read("src/app/api/soul-cards/[id]/route.ts");
+  assert.ok(!detailRoute.includes("status: 401"), "card detail is public (no 401)");
+  assert.ok(detailRoute.includes("detail.card.ownerId === user.id"),
+    "legacyTokens gated to card owner only");
 
   const mapper = read("src/server/http/soul-card-error.ts");
   for (const code of [

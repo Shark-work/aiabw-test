@@ -12,6 +12,7 @@
  *    不含时，降级到产出范围内最高一档稀有度。
  */
 import { AibiError } from "./aibi-errors";
+import { AIBI_MINT_DISCONTINUED } from "./aibi-flags";
 import {
   AIBI_SPECIES,
   getAibiRarity,
@@ -128,11 +129,15 @@ export interface MintedToken {
 /**
  * 铸造一只艾比（调用方须已持有事务）：
  * 发号 → aibi_tokens(status=minted) → aibi_personalities(物种性格模板) → mint_logs → supply_snapshots。
+ * P0 概念收敛（2026-10-14）：已停止新铸造——全入口（开包/融合/管理员/实物认领）
+ * 统一 410 DISCONTINUED，存量只读；历史实现保留以便回滚评估（见 aibi-flags.ts）。
  */
 export async function mintAibi(
   client: DbClient,
   opts: { speciesId: string; ownerId: string | null; source: MintSource; walletAddress?: string | null },
 ): Promise<MintedToken> {
+  if (AIBI_MINT_DISCONTINUED) throw new AibiError("DISCONTINUED", 410);
+
   const species = getAibiSpecies(opts.speciesId);
   if (!species) throw new AibiError("SPECIES_NOT_FOUND", 404);
 

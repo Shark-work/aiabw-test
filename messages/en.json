@@ -613,11 +613,10 @@
   },
   "collection": {
     "title": "Collection",
-    "subtitle": "Aibi credentials, Soul Cards and NFR collectibles — everything you own in one place",
+    "subtitle": "My Soul Pets and World Collectibles — everything you own in one place",
     "tabs": {
-      "aibi": "Aibi",
-      "soul": "Soul Cards",
-      "nfr": "NFR Collectibles"
+      "soul": "🐾 My Soul Pets",
+      "nfr": "🌍 World Collectibles"
     },
     "nfr": {
       "signInHint": "Sign in to view your NFR collectibles",
@@ -1229,7 +1228,10 @@
       "close": "Close",
       "attributes": "Attributes",
       "growth": "Growth",
-      "certificate": "On-chain Certificate"
+      "certificate": "On-chain Certificate",
+      "legacyTokens": "Legacy tokens · Aibi era ({count})",
+      "legacyEmpty": "No legacy tokens",
+      "legacyHint": "Aibi tokens are no longer minted. Existing ones are kept forever, view only."
     },
     "attrs": {
       "rarity": "Rarity",
@@ -1391,7 +1393,8 @@
       "signIn": "Sign in",
       "loadFailed": "Failed to load packs. Please refresh.",
       "buyFailed": "Purchase failed. Please try again.",
-      "animationLv": "FX Lv.{level}"
+      "animationLv": "FX Lv.{level}",
+      "discontinued": "Pack sales ended with the Soul Pets upgrade. Your aibis and unopened packs are kept forever — keep playing with them in your bag."
     },
     "packOpen": {
       "title": "Pack Result",
@@ -1413,8 +1416,8 @@
       "signIn": "Sign in",
       "loadFailed": "Failed to load bag. Please refresh.",
       "aibisTitle": "My Aibis ({count})",
-      "aibisEmpty": "No aibis yet —",
-      "goStore": "open a pack in the store",
+      "aibisEmpty": "No aibis yet — aibi tokens are no longer minted",
+      "fuseDiscontinued": "Fusion was retired with the Soul Pets upgrade. Your aibis are kept forever.",
       "packsTitle": "Packs ({count})",
       "packsEmpty": "No unopened packs",
       "openPack": "Open",
@@ -1477,7 +1480,8 @@
       "done": "Done",
       "failed": "Fusion failed, please try again later",
       "viewDetail": "View details",
-      "continueFuse": "Fuse again"
+      "continueFuse": "Fuse again",
+      "discontinued": "Fusion was retired with the Soul Pets upgrade. Your aibis are kept forever and can still interact."
     },
     "burn": {
       "open": "Burn",

@@ -1,21 +1,22 @@
 "use client";
 
 /**
- * CollectionClient · /[locale]/soul-cards 收藏中心容器（2026-10-06 三 Tab 重构）
- *  - 三个 Tab：艾比凭证（AibiSoulPanel，aibi_tokens）/ 灵魂卡（SoulCardsClient，soul_cards）/
- *    数字藏品（NfrGalleryPanel，/api/gallery?mine=1 → user_collectibles）；
- *  - Tab 状态写入 URL query（?tab=aibi|soul|nfr，默认 aibi），便于分享直达与回退；
- *  - 两个旧面板组件原样复用，不改动其内部逻辑。
+ * CollectionClient · /[locale]/soul-cards 收藏中心容器
+ * P0 概念收敛（2026-10-14）：三 Tab（aibi/soul/nfr）收为两 Tab——
+ *  - 我的灵宠（SoulCardsClient，soul_cards，唤醒即铸卡自动获得）；
+ *  - 世界藏品（NfrGalleryPanel，/api/gallery?mine=1 → user_collectibles）。
+ * 艾比凭证（aibi_tokens）停铸，存量折叠进灵魂卡详情弹窗「历史凭证」只读展示；
+ * 旧链接 ?tab=aibi 自动落到默认的 soul Tab（TABS 白名单兜底）。
+ * Tab 状态写入 URL query（?tab=soul|nfr，默认 soul），便于分享直达与回退。
  */
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { AibiSoulPanel } from "@/components/aibi/aibi-soul-panel";
 import { SoulCardsClient } from "@/components/soul-card/soul-cards-client";
 import { NfrGalleryPanel } from "@/components/collection/nfr-gallery-panel";
 
-const TABS = ["aibi", "soul", "nfr"] as const;
+const TABS = ["soul", "nfr"] as const;
 type TabId = (typeof TABS)[number];
 
 export function CollectionClient() {
@@ -24,8 +25,8 @@ export function CollectionClient() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const raw = searchParams.get("tab") ?? "aibi";
-  const tab: TabId = (TABS as readonly string[]).includes(raw) ? (raw as TabId) : "aibi";
+  const raw = searchParams.get("tab") ?? "soul";
+  const tab: TabId = (TABS as readonly string[]).includes(raw) ? (raw as TabId) : "soul";
 
   function switchTab(id: TabId) {
     router.replace(`${pathname}?tab=${id}`, { scroll: false });
@@ -60,7 +61,6 @@ export function CollectionClient() {
         })}
       </div>
 
-      {tab === "aibi" ? <AibiSoulPanel /> : null}
       {tab === "soul" ? <SoulCardsClient /> : null}
       {tab === "nfr" ? <NfrGalleryPanel /> : null}
     </div>

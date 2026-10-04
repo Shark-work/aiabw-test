@@ -7,10 +7,11 @@ import { ogShareFields, SITE_URL } from "@/lib/site";
 
 /**
  * /[locale]/soul-cards
- * 收藏中心（2026-10-06 三 Tab 重构，CollectionClient）：
- *  - ?tab=aibi 艾比凭证（AibiSoulPanel，aibi_tokens，Phase 5 · 5.4）
- *  - ?tab=soul 灵魂卡（SoulCardsClient，soul_cards，Phase 1）
- *  - ?tab=nfr  数字藏品（NfrGalleryPanel，/api/gallery?mine=1 → user_collectibles）
+ * 收藏中心（P0 概念收敛 2026-10-14 双 Tab，CollectionClient）：
+ *  - ?tab=soul 我的灵宠（SoulCardsClient，soul_cards，唤醒即铸卡自动获得）
+ *  - ?tab=nfr  世界藏品（NfrGalleryPanel，/api/gallery?mine=1 → user_collectibles）
+ * 艾比凭证（aibi_tokens）已停铸：独立 Tab 移除，存量折叠进灵魂卡详情弹窗
+ * 「历史凭证」只读展示；旧链接 ?tab=aibi 自动落到默认 soul Tab。
  *
  * 登录门槛与 explore-v2 同策略：本站登录态只保存在 localStorage 的
  * aiabw_token（API 一律 Authorization: Bearer），cookie 中无令牌，

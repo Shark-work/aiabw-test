@@ -86,11 +86,12 @@ test("pages: packs / packs/result / bag 页面存在；soul-cards 挂载 AibiSou
   assert.ok(result.includes("<PackResultClient />"));
   assert.ok(read("src/app/[locale]/bag/page.tsx").includes("<BagClient />"));
   const soul = read("src/app/[locale]/soul-cards/page.tsx");
-  // 2026-10-06 收藏中心三 Tab 重构：页面改为挂载 CollectionClient 容器，
-  // 两个旧面板移入容器内（aibi/soul Tab），详细契约见 tests/collection-center.test.mjs
+  // 2026-10-06 收藏中心三 Tab 重构：页面改为挂载 CollectionClient 容器；
+  // 2026-10-14 P0 概念收敛：双 Tab（soul/nfr），AibiSoulPanel 随停铸移除，
+  // 详细契约见 tests/collection-center.test.mjs / tests/concept-convergence.test.mjs
   assert.ok(soul.includes("<CollectionClient />"), "收藏中心容器挂载");
   const cc = read("src/components/collection/collection-client.tsx");
-  assert.ok(cc.includes("<AibiSoulPanel />"), "5.4 艾比板块挂载（aibi Tab）");
+  assert.ok(!cc.includes("AibiSoulPanel"), "概念收敛：艾比板块已移除（停铸）");
   assert.ok(cc.includes("<SoulCardsClient />"), "V1 板块保留（soul Tab）");
 });
 
@@ -137,14 +138,15 @@ test("bag-client(5.3): bag/aibis + bag/items + bag/use + 分组 + 卡片进详�
 });
 
 
-test("aibi-soul-panel(5.4): supply + aibi/list + owner/:wallet + 详情弹窗", () => {
-  const src = read("src/components/aibi/aibi-soul-panel.tsx");
-  assert.ok(src.includes('"/api/aibi/supply"'), "5.4.2 供应看板");
-  assert.ok(src.includes('"/api/aibi/list"'), "5.4.3 可铸列表");
-  assert.ok(src.includes("`/api/aibi/owner/${encodeURIComponent(userId)}`"), "5.4.1 持有列表");
-  assert.ok(src.includes("/api/user/profile"), "用户 ID 来源");
-  assert.ok(src.includes("<AibiCard"), "持有卡片复用 AibiCard");
-  assert.ok(src.includes("<AibiDetailModal"), "5.4.4 详情弹窗（凭证/成长/互动）");
+test("aibi-soul-panel(5.4): 概念收敛后已随停铸移除（存量折叠进灵魂卡详情「历史凭证」）", () => {
+  // P0 概念收敛（2026-10-14）：独立艾比面板组件删除；
+  // 存量凭证改由 /api/soul-cards/[id] 对卡主附带 legacyTokens（见 tests/concept-convergence.test.mjs）
+  assert.ok(!exists("src/components/aibi/aibi-soul-panel.tsx"), "面板组件已删除");
+  const cc = read("src/components/collection/collection-client.tsx");
+  assert.ok(!cc.includes("AibiSoulPanel"), "收藏中心不再引用");
+  // 供应/目录/持有查询 API 本体保留（只读，供背包与公开页继续使用）
+  assert.ok(exists("src/app/api/aibi/supply/route.ts"), "供应 API 保留");
+  assert.ok(exists("src/app/api/aibi/list/route.ts"), "目录 API 保留");
 });
 
 test("aibi-detail-modal(5.5): interact 四动作 + 实时状态 + 升级动画", () => {

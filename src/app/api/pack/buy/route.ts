@@ -3,6 +3,7 @@ import { z } from "zod";
 import { pool, ensureDbSchemaOnce } from "@/db/client";
 import { getUserFromRequest } from "@/lib/auth";
 import { aibiCatch, aibiFail, aibiOk, parseBody, AibiError } from "@/lib/aibi-api";
+import { AIBI_PACK_SALES_DISCONTINUED } from "@/lib/aibi-flags";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
     await ensureDbSchemaOnce();
     const user = await getUserFromRequest(req);
     if (!user) return aibiFail("UNAUTHORIZED", 401, req);
+
+    // P0 概念收敛（2026-10-14）：卡包停售（艾比凭证停铸配套），410 短路；
+    // 历史实现完整保留（积分原子扣费/背包入库），便于回滚评估。
+    if (AIBI_PACK_SALES_DISCONTINUED) return aibiFail("DISCONTINUED", 410, req);
 
     const body = await parseBody(req, bodySchema);
     const client = await pool.connect();

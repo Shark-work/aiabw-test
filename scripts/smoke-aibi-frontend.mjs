@@ -70,19 +70,44 @@ try {
   const list = await api("/api/pack/list");
   check("GET /api/pack/list = 4 卡包", list.status === 200 && list.json.data?.packs?.length === 4);
 
-  // 4) 购买 summon（10000 积分，保底传说/神话 → 触发 4/5 档动画路径）
-  const buy = await api("/api/pack/buy", { method: "POST", token, body: { packId: "summon", quantity: 1 } });
-  // 余额口径：20（注册欢迎礼）+ 20000（SQL 充值）- 10000（summon 价格）= 10020
-  check("POST /api/pack/buy(summon)", buy.status === 200 && buy.json.data?.balance === 10020,
-    `balance=${buy.json.data?.balance}`);
+  // 4-5) 卡包购买/开包：默认走 P0 概念收敛（2026-10-14）停售/停铸验证；
+  //      回滚 aibi-flags.ts 开关后设 AIBI_LEGACY_E2E=1 恢复历史铸新链路断言。
+  const legacyE2E = process.env.AIBI_LEGACY_E2E === "1";
+  let opened = null;
+  let tokenId = null;
+  if (legacyE2E) {
+    const buy = await api("/api/pack/buy", { method: "POST", token, body: { packId: "summon", quantity: 1 } });
+    // 历史余额口径：20（注册欢迎礼）+ 20000（SQL 充值）- 10000（summon 价格）= 10020
+    check("POST /api/pack/buy(summon)", buy.status === 200 && buy.json.data?.balance === 10020,
+      `balance=${buy.json.data?.balance}`);
+    const open = await api("/api/pack/open", { method: "POST", token, body: { packId: "summon" } });
+    opened = open.json.data;
+    check("POST /api/pack/open → legendary/mythic",
+      open.status === 200 && ["legendary", "mythic"].includes(opened?.rarity),
+      `rarity=${opened?.rarity} species=${opened?.species?.id} token=${opened?.token?.aibiTokenId}`);
+    tokenId = opened?.token?.aibiTokenId;
+  } else {
+    const buyNoAuth = await api("/api/pack/buy", { method: "POST", body: { packId: "summon", quantity: 1 } });
+    check("未登录购买 → 401 UNAUTHORIZED（鉴权先于停售短路）",
+      buyNoAuth.status === 401 && buyNoAuth.json.code === "UNAUTHORIZED");
+    const buy = await api("/api/pack/buy", { method: "POST", token, body: { packId: "summon", quantity: 1 } });
+    check("POST /api/pack/buy → 410 DISCONTINUED（卡包停售）",
+      buy.status === 410 && buy.json.code === "DISCONTINUED",
+      `HTTP ${buy.status} code=${buy.json.code}`);
+    // 开包：卡包消耗校验（400）先于铸新守卫（410），两者皆证明无法铸新
+    const open = await api("/api/pack/open", { method: "POST", token, body: { packId: "summon" } });
+    check("POST /api/pack/open → 410 DISCONTINUED 或 400 INSUFFICIENT_ITEM（停铸/无包）",
+      (open.status === 410 && open.json.code === "DISCONTINUED") ||
+      (open.status === 400 && open.json.code === "INSUFFICIENT_ITEM"),
+      `HTTP ${open.status} code=${open.json.code}`);
+  }
 
-  // 5) 开包
-  const open = await api("/api/pack/open", { method: "POST", token, body: { packId: "summon" } });
-  const opened = open.json.data;
-  check("POST /api/pack/open → legendary/mythic",
-    open.status === 200 && ["legendary", "mythic"].includes(opened?.rarity),
-    `rarity=${opened?.rarity} species=${opened?.species?.id} token=${opened?.token?.aibiTokenId}`);
-  const tokenId = opened?.token?.aibiTokenId;
+  // —— 步骤 6-20（铸新链路：背包新艾比/道具互动/融合/销毁/用户中心铸造计数）——
+  // 随 P0 概念收敛停铸整体下线，默认跳过；回滚 aibi-flags.ts 开关后设
+  // AIBI_LEGACY_E2E=1 可恢复本段历史验证。
+  if (!legacyE2E) {
+    console.log("  ⏭ 步骤 6-20（铸新链路）随 P0 概念收敛停铸跳过；AIBI_LEGACY_E2E=1 可恢复");
+  } else {
 
   // 6) 背包：艾比 + 道具
   const bagA = await api("/api/bag/aibis", { token });
@@ -220,6 +245,8 @@ try {
     `aibi=${prof.json.data?.aibiCount} items=${prof.json.data?.itemCount} mints=${prof.json.data?.mints?.total} burns=${prof.json.data?.burns?.total}`);
   const profNoAuth = await api("/api/aibi/profile");
   check("未登录 /api/aibi/profile → 401", profNoAuth.status === 401 && profNoAuth.json.code === "UNAUTHORIZED");
+
+  } // AIBI_LEGACY_E2E（步骤 6-20 铸新链路结束）
 
   // 21) Phase 11 · Stripe 支付：未配置环境走降级路径（配置密钥后走真实 Checkout，两种结果都合法）
   const scNoAuth = await api("/api/stripe/create-checkout", { method: "POST", body: { type: "points", quantity: 1 } });

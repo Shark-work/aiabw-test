@@ -97,12 +97,15 @@ export function SiteHeader() {
   };
 
   // 五个主入口（C2 决策，2026-09-30）
+  // P0 概念收敛（2026-10-14）：一级导航收敛为两条资产线 + 核心玩法——
+  // 我的灵宠（/pets）→ 收藏中心（/soul-cards）→ 世界藏品（/blindbox）+ 探索；
+  // 卡包商店（/packs，停售）与背包/融合（/bag，融合停用）降为「更多」二级入口，
+  // 避免用户在一级导航同时看到多套资产体系。
   const mainItems = [
     { href: "/pets", label: t("navAdoptMy") },
-    { href: "/packs", label: t("navPackShop") },
-    { href: "/bag", label: t("navBagFusion") },
     { href: "/soul-cards", label: t("navSoulCodex") },
     { href: "/blindbox", label: t("navBlindbox") },
+    { href: "/explore-v2", label: t("navExplore") },
   ];
 
   // 次要入口：桌面端收纳进「更多」下拉，移动端在汉堡面板分组展示
@@ -113,7 +116,8 @@ export function SiteHeader() {
     { href: "/codex", label: t("codex") },
     { href: "/supply", label: t("supply") },
     { href: "/profile", label: t("profile") },
-    { href: "/explore-v2", label: t("navExplore") },
+    { href: "/packs", label: t("navPackShop") }, // 概念收敛：卡包停售，页面保留（存量说明）
+    { href: "/bag", label: t("navBagFusion") }, // 概念收敛：融合停用，背包查看/互动保留
     { href: "/workshop", label: t("workshop") },
     { href: "/marketplace", label: t("market") },
     { href: "/handbooks", label: t("journals") },

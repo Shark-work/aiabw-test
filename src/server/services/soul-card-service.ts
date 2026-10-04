@@ -13,7 +13,10 @@
  *  - 查询/链状态：组装卡片+宠物展示信息+账本轨迹，供前端灵魂卡图鉴与公开审计。
  */
 
+import { desc, eq } from "drizzle-orm";
+
 import { db } from "@/db/client";
+import { aibiTokens } from "@/db/schema";
 import {
   certificateNoForTokenId,
   normalizeElement,
@@ -250,6 +253,21 @@ export async function getSoulCardDetail(id: string) {
 /** 我的灵魂卡列表（铸造时间倒序）。 */
 export async function listMySoulCards(userId: string) {
   return soulCardRepo.listSoulCardsByOwner(userId);
+}
+
+/** 历史艾比凭证（只读）：概念收敛后停铸，存量在灵魂卡详情弹窗「历史凭证」折叠展示。 */
+export async function listLegacyAibiTokens(ownerId: string) {
+  return db
+    .select({
+      aibiTokenId: aibiTokens.aibiTokenId,
+      speciesId: aibiTokens.speciesId,
+      status: aibiTokens.status,
+      mintedAt: aibiTokens.mintedAt,
+    })
+    .from(aibiTokens)
+    .where(eq(aibiTokens.ownerId, ownerId))
+    .orderBy(desc(aibiTokens.createdAt))
+    .limit(50);
 }
 
 /** 链状态公开概览：provider 信息 + 供应计数 + 最近链上动态。 */
