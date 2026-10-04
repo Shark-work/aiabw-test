@@ -59,6 +59,7 @@ export function CompanionPanel() {
   const [selectedPet, setSelectedPet] = useState<PetItem | null>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteStats, setInviteStats] = useState<{ invited: number; rewarded: number } | null>(null);
   // 装扮商城（情绪与特权消费）
   const [shopOpen, setShopOpen] = useState(false);
   // P0-1 道具背包（签到盲盒产出，宠物详情页可装备展示）
@@ -90,17 +91,18 @@ export function CompanionPanel() {
     loadPets();
   }, [loadPets]);
 
-  // 拉取当前用户邀请码（裂变入口：好友通过分享链接注册后邀请人 +50 积分）
+  // 拉取当前用户邀请返利概览（裂变入口：好友注册并完成首次领养后双方各得 3 天 VIP）
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
     if (!token) return;
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/referral", { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
       .then((data) => {
-        if (data?.ok && data.user?.inviteCode) setInviteCode(data.user.inviteCode);
+        if (data?.ok && data.inviteCode) setInviteCode(data.inviteCode);
+        if (data?.ok && data.stats) setInviteStats(data.stats);
       })
       .catch(() => {
-        /* 邀请码拉取失败不影响页面主体 */
+        /* 邀请数据拉取失败不影响页面主体 */
       });
   }, []);
 
@@ -260,6 +262,14 @@ export function CompanionPanel() {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-orange-900">{t("inviteTitle")}</p>
               <p className="mt-0.5 text-xs text-orange-700">{t("inviteHint")}</p>
+              {inviteStats ? (
+                <p className="mt-1 text-[11px] font-medium text-orange-600/80">
+                  {t("inviteStats", {
+                    invited: inviteStats.invited,
+                    rewarded: inviteStats.rewarded,
+                  })}
+                </p>
+              ) : null}
             </div>
             <button
               type="button"

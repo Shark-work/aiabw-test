@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   generateInviteCode,
   getClientIp,
-  INVITE_REWARD_POINTS,
+  INVITE_REWARD_VIP_DAYS,
   WELCOME_BONUS_POINTS,
   INVITE_DAILY_LIMIT,
 } from "../src/lib/referral.ts";
@@ -34,8 +34,9 @@ test("referral: custom length works", () => {
   assert.equal(generateInviteCode(12).length, 12);
 });
 
-test("referral: reward amount is 50 points / welcome bonus 20", () => {
-  assert.equal(INVITE_REWARD_POINTS, 50);
+test("referral: reward is 3-day VIP for both sides / welcome bonus 20 points", () => {
+  // P0 概念收敛（2026-10-14）：邀请返利从「邀请人 +50 积分」升级为「双方各 3 天 VIP」
+  assert.equal(INVITE_REWARD_VIP_DAYS, 3);
   assert.equal(WELCOME_BONUS_POINTS, 20);
   assert.equal(INVITE_DAILY_LIMIT, 3);
 });

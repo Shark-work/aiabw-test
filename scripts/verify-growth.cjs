@@ -131,8 +131,17 @@ function yesterday() {
   const claimInvited = await req("POST", "/api/pets/claim", { petId: freePet.id }, tokenInvited);
   assert(claimInvited.status === 200, "被邀请人完成首次领养", "status=" + claimInvited.status);
   await wait(2000);
+  // P0 概念收敛（2026-10-14）：邀请返利从「邀请人 +50 积分」升级为「双方各 3 天 VIP（trial3d）」
   const invPoints2 = (await pool.query("SELECT points FROM users WHERE id=$1", [uidInv])).rows[0].points;
-  assert(invPoints2 === invPoints0 + 50, "活跃验证通过后邀请人 +50", `p2=${invPoints2} expect=${invPoints0 + 50}`);
+  assert(invPoints2 === invPoints0, "活跃验证通过后不再发放积分（积分不变）", `p2=${invPoints2} p0=${invPoints0}`);
+  const uidInvitedVip = (await pool.query("SELECT id FROM users WHERE email=$1", [invited])).rows[0]?.id;
+  const vipRows = (await pool.query(
+    `SELECT user_id, plan_id, status, expires_at > now() AS active_unexpired
+       FROM user_subscriptions WHERE plan_id='trial3d' AND user_id = ANY($1::uuid[])`,
+    [[uidInv, uidInvitedVip]],
+  )).rows;
+  assert(vipRows.length === 2, "双方各得 1 行 trial3d 体验卡", `rows=${vipRows.length}`);
+  assert(vipRows.every((r) => r.status === "active" && r.active_unexpired), "体验卡均为 active 且未到期");
   const irRow = (await pool.query(
     `SELECT status FROM invite_rewards WHERE invited_user_id=(SELECT id FROM users WHERE email=$1)`,
     [invited],

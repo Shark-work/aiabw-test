@@ -1,9 +1,9 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { inviteRewards, pointsLog, users } from "@/db/schema";
+import { inviteRewards, users } from "@/db/schema";
 import {
-  INVITE_REWARD_POINTS,
+  INVITE_REWARD_VIP_DAYS,
   INVITE_DAILY_LIMIT,
   INVITE_ACTIVITY_WINDOW_MS,
 } from "@/lib/referral";
@@ -85,23 +85,56 @@ export async function createPendingInviteReward(opts: {
     invitedUserId: opts.invitedUserId,
     ip: ip || null,
     deviceId: deviceId || null,
-    amount: INVITE_REWARD_POINTS,
+    // amount 语义（P0 概念收敛起）：奖励面值 = 双方各得的 VIP 天数（原积分值废弃）
+    amount: INVITE_REWARD_VIP_DAYS,
     status: "pending",
   });
   return { ok: true, reason: "pending" };
 }
 
+/** drizzle db 或事务句柄（execute 子集）。 */
+type SqlExecutor = { execute: (q: ReturnType<typeof sql>) => Promise<unknown> };
+
+/**
+ * 发放 VIP 天数（plan=trial3d，幂等）：
+ *  - 确定性订阅 id + ON CONFLICT (id) DO NOTHING → 同一奖励来源重复执行/重试不叠加；
+ *  - expires_at = GREATEST(now(), 现有 active 订阅最晚到期) + days → 未到期向后顺延，
+ *    与 pay/notify 的 VIP 发放顺延口径一致；多笔体验卡可叠加。
+ */
+export async function grantVipDays(
+  userId: string,
+  days: number,
+  subscriptionId: string,
+  tx?: SqlExecutor,
+): Promise<void> {
+  const executor: SqlExecutor = tx ?? (db as unknown as SqlExecutor);
+  await executor.execute(sql`
+    INSERT INTO user_subscriptions (id, user_id, plan_id, status, started_at, expires_at, auto_renew)
+    VALUES (
+      ${subscriptionId}, ${userId}::uuid, 'trial3d', 'active', now(),
+      GREATEST(now(), COALESCE((
+        SELECT max(expires_at) FROM user_subscriptions
+         WHERE user_id = ${userId}::uuid AND status = 'active'
+      ), now())) + (${String(days)} || ' days')::interval,
+      false
+    )
+    ON CONFLICT (id) DO NOTHING
+  `);
+}
+
 /**
  * 被邀请人完成首次领养后调用：释放冻结奖励。
- *  - 注册后 24h 内 → 邀请人 +50（points_log reason='referral'），奖励置 credited；
+ *  - 注册后 24h 内 → 邀请人与被邀请人各得 INVITE_REWARD_VIP_DAYS 天 VIP（trial3d），
+ *    奖励置 credited（P0 概念收敛：替代原邀请人单方 +50 积分）；
  *  - 超过 24h → 置 expired（不发放）。
- * 并发安全：先原子抢占 status='pending'→'credited'，抢到者才发积分。
+ * 并发安全：先原子抢占 status='pending'→'credited'，抢到者才发放；
+ * VIP 发放本身幂等（确定性订阅 id），事务重试不叠加。
  */
 export async function releaseInviteReward(invitedUserId: string): Promise<{
   released: boolean;
   reason: string;
   inviterId?: string;
-  amount?: number;
+  vipDays?: number;
 }> {
   await ensureDbSchemaOnce();
   const [row] = await db
@@ -133,15 +166,21 @@ export async function releaseInviteReward(invitedUserId: string): Promise<{
   }
 
   await db.transaction(async (tx) => {
-    await tx
-      .update(users)
-      .set({ points: sql`${users.points} + ${INVITE_REWARD_POINTS}` })
-      .where(eq(users.id, row.inviterId));
-    await tx
-      .insert(pointsLog)
-      .values({ userId: row.inviterId, amount: INVITE_REWARD_POINTS, reason: "referral" });
+    const executor = tx as unknown as SqlExecutor;
+    await grantVipDays(
+      row.inviterId,
+      INVITE_REWARD_VIP_DAYS,
+      `referral-${row.id}-inviter`,
+      executor,
+    );
+    await grantVipDays(
+      row.invitedUserId,
+      INVITE_REWARD_VIP_DAYS,
+      `referral-${row.id}-invited`,
+      executor,
+    );
   });
 
-  return { released: true, inviterId: row.inviterId, amount: INVITE_REWARD_POINTS, reason: "credited" };
+  return { released: true, inviterId: row.inviterId, vipDays: INVITE_REWARD_VIP_DAYS, reason: "credited" };
 }
 

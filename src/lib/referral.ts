@@ -4,8 +4,10 @@ import crypto from "crypto";
  * 裂变邀请 - 纯逻辑层（无 DB / 无 Next 依赖，便于单元测试）。
  */
 
-/** 邀请人奖励积分（活跃验证通过后发放） */
-export const INVITE_REWARD_POINTS = 50;
+/** 邀请返利 VIP 天数（P0 概念收敛 2026-10-14，替代原 +50 积分）：
+ *  被邀请人活跃验证（注册 24h 内首次领养）通过后，邀请人与被邀请人各得该天数的
+ *  VIP 体验卡（plan=trial3d，见 referral-reward.ts grantVipDays）。 */
+export const INVITE_REWARD_VIP_DAYS = 3;
 /** 被邀请人新手礼包积分（注册即发放） */
 export const WELCOME_BONUS_POINTS = 20;
 /** 同 IP / 设备指纹 24h 内最多发放次数（防刷） */

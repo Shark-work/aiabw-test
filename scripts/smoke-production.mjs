@@ -127,6 +127,29 @@ try {
   const catalog = await api("/api/aibi/list");
   check("GET /api/aibi/list = 12 物种", catalog.status === 200 && catalog.json.data?.count === 12, catalog);
 
+  // ── 18-40) 铸新链路：P0 概念收敛（2026-10-14）停铸后默认跳过 ─────────────────
+  // 默认路径：验证「卡包停售 410 / 开包停铸 410|400 / 路由级负例保留」；
+  // 回滚 src/lib/aibi-flags.ts 开关后设 AIBI_LEGACY_E2E=1 恢复完整历史链路。
+  const legacyE2E = process.env.AIBI_LEGACY_E2E === "1";
+  if (!legacyE2E) {
+    await pool.query(`UPDATE users SET points = points + 20000 WHERE id = $1::uuid`, [userId]);
+    check("SQL 充值 20000 积分（冒烟专用，直写目标库）", true);
+    const buyGone = await api("/api/pack/buy", { method: "POST", token, body: { packId: "summon", quantity: 1 } });
+    check("POST /api/pack/buy → 410 DISCONTINUED（卡包停售）",
+      buyGone.status === 410 && buyGone.json.code === "DISCONTINUED", buyGone);
+    const openGone = await api("/api/pack/open", { method: "POST", token, body: { packId: "summon" } });
+    check("POST /api/pack/open → 410 DISCONTINUED 或 400 INSUFFICIENT_ITEM（停铸/无库存）",
+      (openGone.status === 410 && openGone.json.code === "DISCONTINUED") ||
+      (openGone.status === 400 && openGone.json.code === "INSUFFICIENT_ITEM"), openGone);
+    const fuseDup = await api("/api/aibi/fuse", { method: "POST", token, body: { tokenIds: ["AIBI-000001", "AIBI-000001"] } });
+    check("重复素材融合 → 400 FUSION_INVALID（路由级校验保留）",
+      fuseDup.status === 400 && fuseDup.json.code === "FUSION_INVALID", fuseDup);
+    const burn404 = await api("/api/aibi/burn", { method: "POST", token, body: { tokenId: "AIBI-999999" } });
+    check("销毁不存在 → 404 TOKEN_NOT_FOUND",
+      burn404.status === 404 && burn404.json.code === "TOKEN_NOT_FOUND", burn404);
+    console.log("  ⏭ 步骤 18-40（铸新链路）随 P0 概念收敛停铸跳过；AIBI_LEGACY_E2E=1 可恢复");
+  } else {
+
   // ── 18-20) SQL 充值 → 买 summon → 开包（余额口径与 dev 冒烟一致）─────────────
   await pool.query(`UPDATE users SET points = points + 20000 WHERE id = $1::uuid`, [userId]);
   check("SQL 充值 20000 积分（冒烟专用，直写目标库）", true);
@@ -228,6 +251,8 @@ try {
     prof.status === 200 && prof.json.data?.aibiCount === 0 && prof.json.data?.itemCount === 1 &&
     prof.json.data?.mints?.total === 3 && prof.json.data?.burns?.total === 3 && prof.json.data?.mints?.page === 1,
     { ...prof, extra: `mints=${prof.json.data?.mints?.total} burns=${prof.json.data?.burns?.total}` });
+
+  } // AIBI_LEGACY_E2E（步骤 18-40 铸新链路结束）
 
   // ── 41-42) 支付：Stripe 降级 + webhook 非 2xx + 国内占位 501 ───────────────
   const sc = await api("/api/stripe/create-checkout", { method: "POST", token, body: { type: "points", quantity: 1 } });

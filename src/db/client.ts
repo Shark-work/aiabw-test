@@ -392,6 +392,12 @@ const SCHEMA_CREATES: string[] = [
     "payment_id" text,
     "auto_renew" boolean DEFAULT true NOT NULL
   )`,
+  // 邀请返利 VIP 体验卡档位（P0 概念收敛，drizzle/0030_referral_vip_trial.sql）：
+  // is_active=false → 不出现在 /api/subscription/plans 购买列表，仅由邀请奖励发放
+  // （referral-reward.ts grantVipDays）；权益与月卡一致（完整 VIP 体验，促进转化）。
+  `INSERT INTO "subscription_plans" ("id","name_zh","name_en","price_rmb","duration_days","daily_chat_limit","features","badge_zh","badge_en","sort_order","is_active") VALUES
+    ('trial3d','3 天体验卡','3-Day Trial',0,3,-1,'["unlimitedChat","memoryAccess","rareEquipment","exploreBoost","rareEventBoost","adFree","vipBadge","prioritySupport"]'::jsonb,'邀请奖励','Invite Reward',0,false)
+   ON CONFLICT ("id") DO NOTHING`,
   // 宠物旅行日记 · 宠物长期记忆库（VIP 专属，drizzle/0019_pet_memories.sql）
   `CREATE TABLE IF NOT EXISTS "pet_memories" (
     "id"               text PRIMARY KEY,
@@ -1155,7 +1161,7 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     背包/详情页聊天入口），能力开关有了真实消费路径
 // v14: 探险商城死表清理 —— users.coins 默认值 200→0（原默认 200 无任何获取渠道，
 //     新用户误以为是可再生的免费货币；存量用户余额不受影响，仅列默认值变更）
-const SCHEMA_VERSION = 14;
+const SCHEMA_VERSION = 15;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,
