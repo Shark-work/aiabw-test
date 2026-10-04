@@ -2,7 +2,7 @@
 //  - mintCollectible：为一只宠物铸造 NFR 确权记录
 //    · upsert 藏品定义（digital_collectibles，物种×稀有度，首铸自动建定义）
 //    · 锁定定义行校验发行量（total_supply>0 且已铸造达标 → 拒绝超发）
-//    · 生成唯一 hash_id，插入 user_collectibles，置转赠/繁育冷却期
+//    · 生成唯一 hash_id，插入 user_collectibles，置转赠/结晶冷却期
 //    · minted 原子 +1
 //  - drizzleQueryable：把 Drizzle 事务（tx）适配成 { query(sql, params) } 接口，
 //    使 mintCollectible 可在 db.transaction 内与 Drizzle 查询共处同一事务。

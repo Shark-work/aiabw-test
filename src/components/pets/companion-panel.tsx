@@ -7,6 +7,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 
 import { moodInfo, moodLabel } from "@/components/chat/chat-client";
 import { LivingPet } from "@/components/LivingPet";
+import { BondPanel } from "./bond-panel";
 import { CosmeticsShopModal } from "@/components/cosmetics-shop-modal";
 import { PushOptIn } from "@/components/push-optin";
 import { getAnonymousId } from "@/lib/anon-id";
@@ -567,6 +568,9 @@ export function CompanionPanel() {
                 </div>
               </div>
             </div>
+
+            {/* P1 羁绊结晶：同物种灵宠羁绊达标 → 共鸣结晶（结晶灵宠 + 羁绊结晶藏品） */}
+            <BondPanel adoptionId={selectedPet.id} />
 
             {/* P0-1 道具背包：签到盲盒道具装备 / 卸下 */}
             <div className="mt-4">

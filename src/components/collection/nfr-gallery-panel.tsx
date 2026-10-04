@@ -7,7 +7,7 @@
  *  - 登录策略与 SoulCardsClient 一致：localStorage aiabw_token + Authorization: Bearer，
  *    无 token / 401 → 登录引导；
  *  - 空状态引导去盲盒广场（NFR 当前唯一用户可见获取入口）。
- *  - 2026-10-08 繁育/转赠入口：卡片操作区挂「繁育」「转赠」按钮；操作作用于
+ *  - 2026-10-08 结晶/转赠入口：卡片操作区挂「结晶」「转赠」按钮；操作作用于
  *    user_collectibles 个体，实例数据来自 GET /api/pets/collectibles（定义级
  *    /api/gallery 契约保持不变，实例加载失败仅隐藏操作按钮不阻断列表）。
  */
@@ -72,7 +72,7 @@ export function NfrGalleryPanel() {
         return;
       }
       setItems(data.items ?? []);
-      // 个体实例（繁育/转赠操作对象）：加载失败仅隐藏操作按钮，不阻断定义级列表
+      // 个体实例（结晶/转赠操作对象）：加载失败仅隐藏操作按钮，不阻断定义级列表
       try {
         const res2 = await fetch("/api/pets/collectibles", {
           headers: { Authorization: `Bearer ${token}`, "x-locale": locale },

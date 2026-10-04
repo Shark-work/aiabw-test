@@ -1,13 +1,13 @@
 // NFR 基因遗传算法（纯函数，无 DB / 无 Next 依赖，便于单元测试）：
 //  - breedDna：双亲 DNA 交叉（元素 50/50、性格交叉+变异、稀有度按链遗传+小概率突变）
 //  - makeNfrHashId：确权哈希（sha256，唯一防伪）
-//  - 常量：繁育/转赠积分费用、转赠冷却期、繁育冷却期
+//  - 常量：结晶/转赠积分费用、转赠冷却期、结晶冷却期
 import crypto from "crypto";
 
 export const RARITY_CHAIN = ["common", "uncommon", "rare", "epic", "legendary"] as const;
 export type Rarity = (typeof RARITY_CHAIN)[number];
 
-/** 繁育一次消耗的积分 */
+/** 结晶一次消耗的积分 */
 export const BREED_COST = 200;
 /** 转赠费用（第一阶段免转赠费） */
 export const TRANSFER_FEE = 0;
@@ -15,7 +15,7 @@ export const TRANSFER_FEE = 0;
 export const TRANSFER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 /** 首次铸造后的转赠冷却期：24 小时（防刚领养就转手） */
 export const FIRST_MINT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-/** 亲本繁育冷却期：7 天（防无限繁殖） */
+/** 亲本结晶冷却期：7 天（防无限连锁结晶） */
 export const BREED_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type Dna = {

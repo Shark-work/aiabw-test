@@ -15,7 +15,7 @@ export const runtime = "nodejs";
  *    至少提供一个；解析出的接收者不能是本人（400 transferSelf）。
  *
  * 事务（任何失败 → ROLLBACK）：
- *   1. SELECT ... FOR UPDATE 锁定藏品（防并发转赠/繁育）；
+ *   1. SELECT ... FOR UPDATE 锁定藏品（防并发转赠/结晶）；
  *   2. 校验存在 + 归属当前用户 + active；
  *   3. 冷却期校验：locked_until > now() → 403 COOLDOWN（含 retryAfter）；
  *   4. 转移所有权：owner_id 变更 + 新主人 locked_until = now() + 7 天 +

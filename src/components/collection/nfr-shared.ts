@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * 收藏中心 NFR 繁育/转赠弹窗共享物（2026-10-08）：
- *  - CollectibleInstance：GET /api/pets/collectibles 返回的个体维度实例（繁育/转赠操作对象）；
+ * 收藏中心 NFR 结晶/转赠弹窗共享物（2026-10-08）：
+ *  - CollectibleInstance：GET /api/pets/collectibles 返回的个体维度实例（结晶/转赠操作对象）；
  *  - useNow：秒级心跳，驱动冷却倒计时禁用态实时刷新；
  *  - formatRemaining：剩余毫秒 → 双语紧凑文本（6天 3小时 / 3h 12m）；
  *  - shortHash：确权哈希缩略展示（前 8…后 4）。
@@ -21,7 +21,7 @@ export type CollectibleInstance = {
   hashId: string;
   /** 转赠冷却截止（ISO 字符串；> now 时禁止转赠） */
   lockedUntil: string;
-  /** 繁育冷却截止（ISO 字符串；> now 时禁止作为亲本） */
+  /** 结晶冷却截止（ISO 字符串；> now 时禁止作为亲本） */
   breedCooldownUntil: string;
   mintedAt: string;
 };

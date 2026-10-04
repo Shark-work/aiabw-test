@@ -20,8 +20,8 @@
 | 支付解锁 | `/api/pay/*`（XorPay 码支付） | ✅ 已上线 | 微信/支付宝扫码，异步 notify 回调解锁 |
 | 积分充值 | `/api/pay/create(kind=points)` + `/api/pay/notify` | ✅ 已上线 | 4 档积分包（服务端定价防改价），`points_log.ref` 唯一索引幂等入账 |
 | 宠物市场（UGC） | `/api/creator/*` | ✅ 已上线 | 创作者发布自定义人设宠物，购买者分成 |
-| 盲盒 / 合成 / 繁殖 | `/api/blindbox/*` · `/api/pets/synthesize` | ✅ 已上线 | 抽宠、多宠合成、繁殖进化 |
-| NFR 繁育 / 转赠 | `/soul-cards?tab=nfr` · `/api/pets/breed` · `/api/pets/transfer` | ✅ 已上线 | 收藏中心卡片直达：同物种配对繁育（200 积分，亲本 7 天冷却）、按昵称转赠（首铸 24h/再转赠 7 天冷却，倒计时禁用态） |
+| 盲盒 / 合成 / 结晶 | `/api/blindbox/*` · `/api/pets/synthesize` | ✅ 已上线 | 抽宠、多宠合成、结晶进化 |
+| NFR 结晶 / 转赠 | `/soul-cards?tab=nfr` · `/api/pets/breed` · `/api/pets/transfer` | ✅ 已上线 | 收藏中心卡片直达：同物种共鸣结晶（200 积分，亲本 7 天冷却）、按昵称转赠（首铸 24h/再转赠 7 天冷却，倒计时禁用态） |
 | 每日签到 / 积分 | `/api/user/checkin` · `/api/points-log` | ✅ 已上线 | 签到 +1~10 加权积分（月卡×2）、连签 7 天开心情盲盒；断签 ¥1 补签（`/api/pay/create kind=checkin_makeup` → notify 幂等回填 last_checkin_date，只前进） |
 | UGC 创作工坊 | `/workshop` · `/api/ugc/generate-portrait` | ✅ P0 已上线 | 日记卡片（纯前端 Canvas 合成：头像+心情+独白+日期+站点二维码，3 主题）+ AI 宠物写真（10 种风格，免费每日 1 张低清水印版，VIP 无限高清无水印；外部生图服务未配置时入口自动降级「敬请期待」）；表情包/征集活动预留 |
 
@@ -107,7 +107,7 @@ src/
 │   │   ├── chat/route.ts            # AI 聊天主路由（streamText + 工具 + 配额/记忆/解锁校验）
 │   │   ├── exploration/             # 探索 V2：start / history / quota
 │   │   ├── animal-wiki/[id]/        # 动物百科卡片（公共接口）
-│   │   ├── pets/                    # 领养 claim / 图鉴 catalog / 合成 / 进化 / 繁殖
+│   │   ├── pets/                    # 领养 claim / 图鉴 catalog / 合成 / 进化 / 结晶
 │   │   ├── shop|subscription|pay/   # 商城、VIP 订阅、XorPay 支付
 │   │   └── auth/                    # 注册 / 登录 / 游客数据迁移
 │   ├── chat/                        # 聊天页（?thread=X&adopt=Y）

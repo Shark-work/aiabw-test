@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 /**
  * GET /api/leaderboard?type=pets|breeders
  *  - type=pets：全服最强宠物榜 Top 20（user_collectibles 综合战力分：稀有度×代数 + 元素）
- *  - type=breeders：本周繁育达人榜 Top 20（本周 minted 新藏品最多的用户）
+ *  - type=breeders：本周结晶达人榜 Top 20（本周共鸣结晶新藏品最多的用户）
  * 隐私约定：
  *  - DTO 只返回 ownerId + ownerName（公开昵称）+ 数值；绝不返回邮箱/手机号/IP/注册时间；
  *  - users.show_in_leaderboard = false 的用户（设置页 opt-out）不出现在任何榜单。
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     const type = url.searchParams.get("type") ?? "pets";
 
     if (type === "breeders") {
-      // 本周繁育达人：本周（本周一 00:00 起）铸造新藏品最多的用户（排除 opt-out）
+      // 本周结晶达人：本周（本周一 00:00 起）共鸣结晶新藏品最多的用户（排除 opt-out）
       const weekStart = startOfWeek();
       const { rows } = await pool.query(
         `SELECT uc.owner_id AS "ownerId", u.username AS owner_name,

@@ -25,7 +25,7 @@ export function petPower(generation: number, rarity?: string | null, element?: s
   return rw * Math.pow(10, gen) + (ELEMENT_BONUS[element ?? ""] ?? 0);
 }
 
-/** 返回本周一 00:00（本地时区），用于「本周繁育达人榜」统计窗口。 */
+/** 返回本周一 00:00（本地时区），用于「本周结晶达人榜」统计窗口。 */
 export function startOfWeek(now: Date = new Date()): Date {
   const d = new Date(now);
   const day = d.getDay() === 0 ? 7 : d.getDay(); // 周日=7

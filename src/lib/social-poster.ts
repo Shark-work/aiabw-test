@@ -1,4 +1,4 @@
-// 社交分享模块：微博 / X(Twitter) / Telegram 自动推送（供「繁育出传说/史诗宠物」炫耀动态触发）。
+// 社交分享模块：微博 / X(Twitter) / Telegram 自动推送（供「结晶出传说/史诗灵宠」炫耀动态触发）。
 //
 // 安全规范：
 //  - 凭证仅通过 process.env 动态读取（支持 X_* / TWITTER_* / WEIBO_* / TELEGRAM_* /
@@ -70,9 +70,9 @@ export function buildFallbackShareText(meta: BreedShareMeta): string {
   const elem = meta.element ? ` · ${meta.element}元素` : "";
   const shortHash = meta.hashId ? ` #${meta.hashId.slice(0, 8)}` : "";
   return (
-    `🎉 我的艾比繁育出了${r}级「${meta.speciesName}」！` +
+    `🎉 我的灵宠共鸣结晶出了${r}级「${meta.speciesName}」！` +
     `第 ${meta.generation} 代${elem}，独一无二${shortHash}～` +
-    ` #艾比世界 #${r}宠物 #繁育炫耀`
+    ` #艾比世界 #${r}灵宠 #羁绊结晶`
   );
 }
 
@@ -85,7 +85,7 @@ export async function generateShareText(meta: BreedShareMeta): Promise<string> {
       model: getModel(),
       system:
         "你是艾比世界（AIABW）的社媒运营助手。请用活泼、有成就感的语气生成一条用于微博/X 的宠物炫耀文案，必须自然带上话题标签：#艾比世界 和稀有度标签。",
-      prompt: `请为下面这只新繁育的宠物生成一条中文炫耀文案（不超过 100 字，包含 emoji 与话题标签）：${JSON.stringify(meta)}`,
+      prompt: `请为下面这只共鸣结晶诞生的灵宠生成一条中文炫耀文案（不超过 100 字，包含 emoji 与话题标签）：${JSON.stringify(meta)}`,
       maxOutputTokens: 160,
     });
     const clean = text.trim().replace(/\s+/g, " ").slice(0, 280);

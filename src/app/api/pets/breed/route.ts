@@ -11,21 +11,23 @@ import {
 } from "@/lib/genetics";
 import { mintCollectible } from "@/lib/nfr";
 import { postBreedShare } from "@/lib/social-poster";
+import { findSoulCardByPetId } from "@/server/repositories/soul-card-repository";
+import { mintSoulCard, SoulCardError } from "@/server/services/soul-card-service";
 
 export const runtime = "nodejs";
 
 /**
- * POST /api/pets/breed   — 数字藏品繁育（NFR 遗传算法）
+ * POST /api/pets/breed   — 数字藏品共鸣结晶（NFR 遗传算法）
  * 请求体：{ parentIds: string[] }（恰好 2 只属于当前用户的 user_collectibles.id）
  *
  * 事务（任何环节失败 → ROLLBACK，绝不出现「扣了积分但没生出宠物」）：
  *   1. SELECT ... FOR UPDATE 锁定 2 只亲本（防并发转赠/消耗）；
- *   2. 校验：2 只均归属当前用户 + 同物种 + 亲本繁育冷却已过；
+ *   2. 校验：2 只均归属当前用户 + 同物种 + 亲本结晶冷却已过；
  *   3. 原子扣积分（points >= BREED_COST 才允许）并写积分流水；
  *   4. 基因遗传算法生成子代 DNA（元素交叉/性格变异/稀有度保底）；
  *   5. 创建 pets 实例 + adoptions 线程（子代可进入「我的宠物」聊天）；
  *   6. 铸造 NFR（mintCollectible：藏品定义 upsert + 确权记录 + 发行量自增）；
- *   7. 重置亲本繁育冷却期（7 天）。
+ *   7. 重置亲本结晶冷却期（7 天）。
  */
 export async function POST(req: Request) {
   const locale = resolveLocale(req);
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
         );
       }
 
-      // 3) 亲本繁育冷却校验
+      // 3) 亲本结晶冷却校验
       const now = new Date();
       for (const p of parents) {
         if (new Date(p.breed_cooldown_until as string) > now) {
@@ -168,8 +170,8 @@ export async function POST(req: Request) {
               type: "text",
               text:
                 locale === "en"
-                  ? `Hi! I'm ${petName} - a brand new companion born from breeding!`
-                  : `嗨！我是${petName}，是繁育诞生的新伙伴~`,
+                  ? `Hi! I'm ${petName} - a crystal soul pet born from soul resonance!`
+                  : `嗨！我是${petName}，在灵魂共鸣中诞生的结晶灵宠~`,
             },
           ]),
         ],
@@ -195,7 +197,7 @@ export async function POST(req: Request) {
         adoptionId: String(adoption.rows[0].id),
       });
 
-      // 8) 重置亲本繁育冷却期
+      // 8) 重置亲本结晶冷却期
       await client.query(
         `UPDATE user_collectibles SET breed_cooldown_until = $1 WHERE id = ANY($2)`,
         [new Date(Date.now() + BREED_COOLDOWN_MS), parentIds],
@@ -203,8 +205,44 @@ export async function POST(req: Request) {
 
       await client.query("COMMIT");
 
-      // 社交炫耀：繁育出传说/史诗级宠物 → 异步非阻塞发帖。
-      // 发帖失败仅记录错误日志，绝不影响已提交的繁育事务。
+      // —— 结晶灵宠自动铸卡（P1 羁绊结晶，与 /api/pets/claim 唤醒即铸卡同模式）——
+      // 容错：铸卡失败不阻断已 COMMIT 的结晶事务，响应 soulCard=null；
+      // SOUL_CARD_EXISTS（异常数据态）回查已有卡返回，保证前端总能展示编号。
+      let soulCard: Record<string, unknown> | null = null;
+      try {
+        const mintedCard = await mintSoulCard({ userId: user.id, petId });
+        soulCard = {
+          id: mintedCard.id,
+          tokenId: mintedCard.tokenId,
+          certificateNo: mintedCard.certificateNo,
+          name: mintedCard.name,
+          rarity: mintedCard.rarity,
+          element: mintedCard.element,
+          growthStage: mintedCard.growthStage,
+          growthLevel: mintedCard.growthLevel,
+        };
+      } catch (err) {
+        if (err instanceof SoulCardError && err.code === "SOUL_CARD_EXISTS") {
+          const existing = await findSoulCardByPetId(petId).catch(() => null);
+          if (existing) {
+            soulCard = {
+              id: existing.id,
+              tokenId: existing.tokenId,
+              certificateNo: existing.certificateNo,
+              name: existing.name,
+              rarity: existing.rarity,
+              element: existing.element,
+              growthStage: existing.growthStage,
+              growthLevel: existing.growthLevel,
+            };
+          }
+        } else {
+          console.error("[pets/breed] soul card mint failed:", err);
+        }
+      }
+
+      // 社交炫耀：结晶出传说/史诗级灵宠 → 异步非阻塞发帖。
+      // 发帖失败仅记录错误日志，绝不影响已提交的结晶事务。
       if (childDna.rarity === "legendary" || childDna.rarity === "epic") {
         void postBreedShare({
           speciesName: petName,
@@ -219,6 +257,7 @@ export async function POST(req: Request) {
         ok: true,
         breedCost: BREED_COST,
         parentHashIds,
+        soulCard,
         nfr: {
           id: minted.id,
           hashId: minted.hashId,

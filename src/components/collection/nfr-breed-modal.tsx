@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * NfrBreedModal · 繁育配对弹窗（2026-10-08 收藏中心 NFR 操作入口）
+ * NfrBreedModal · 结晶共鸣弹窗（2026-10-08 收藏中心 NFR 操作入口）
  *  - 亲本池：当前用户与该卡片同物种（speciesId）的全部确权实例（不限稀有度，
  *    与 /api/pets/breed 服务端同物种校验口径一致）；breedCooldownUntil > now 的个体
  *    置灰并显示倒计时，不可选；
