@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { XORPAY_APP_SECRET, md5 } from "@/lib/xorpay";
 import { executeBlindboxDraw } from "@/lib/blindbox-draw";
 import { findPointsPack } from "@/lib/points-recharge";
+import { MAKEUP_ORDER_RE } from "@/lib/checkin-makeup";
 import { postBreedShare } from "@/lib/social-poster";
 
 export const runtime = "nodejs";
@@ -76,6 +77,8 @@ export async function POST(req: Request) {
   const pointsMatch = order_id.match(
     /^points-(\d+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
   );
+  // checkin-makeup-<userId>-<yyyy-mm-dd>-<nonce>  断签补签（补签日期下单时固化进订单号）
+  const makeupMatch = order_id.match(MAKEUP_ORDER_RE);
   const adoptionId = adoptionMatch ? adoptionMatch[1] : "";
 
   // 首次访问自动建表（幂等）
@@ -208,6 +211,22 @@ export async function POST(req: Request) {
       } else {
         console.log("[pay/notify] points no-op (duplicate callback or user missing)", { orderId: order_id });
       }
+    }
+  } else if (makeupMatch) {
+    // —— 断签补签：回填 last_checkin_date = 下单时固化的昨天 ——
+    // 幂等 + 只前进：重复回调 / 用户已签到更晚日期 → UPDATE 条件不满足 → no-op，不多生效；
+    // streak 不在此修改（签到连签判定只看 last_checkin_date 是否昨天，用户当天签到即自然 +1 延续）。
+    const muUserId = makeupMatch[1];
+    const muDate = makeupMatch[2];
+    const { rowCount } = await pool.query(
+      `UPDATE users SET last_checkin_date = $2
+         WHERE id = $1::uuid AND (last_checkin_date IS NULL OR last_checkin_date < $2)`,
+      [muUserId, muDate],
+    );
+    if ((rowCount ?? 0) > 0) {
+      console.log("[pay/notify] checkin makeup granted", { userId: muUserId, makeupDate: muDate, orderId: order_id });
+    } else {
+      console.log("[pay/notify] checkin makeup no-op (duplicate callback or already checked later)", { orderId: order_id });
     }
   } else if (adoptionId) {
     // 解锁该宠物（畅聊解锁）

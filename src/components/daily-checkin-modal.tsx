@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { LivingPet } from "@/components/LivingPet";
+import { PaymentModal } from "@/components/payment-modal";
+import { CHECKIN_MAKEUP_PRICE_CNY } from "@/lib/checkin-makeup";
 import {
   MOOD_EXPRESSIONS,
   RARITY_BADGE_CLASS,
@@ -24,9 +26,17 @@ import {
  */
 const SEEN_KEY = "aiabw_checkin_seen";
 
-function todayStr(): string {
-  const d = new Date();
+function dateStrOf(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function todayStr(): string {
+  return dateStrOf(new Date());
+}
+
+/** 昨天（本地时区，YYYY-MM-DD）：断签判定与补签成功轮询共用（字典序即日期序） */
+function yestStr(): string {
+  return dateStrOf(new Date(Date.now() - 24 * 60 * 60 * 1000));
 }
 
 type Status = {
@@ -34,6 +44,8 @@ type Status = {
   streak: number;
   nextStreak: number;
   premium: boolean;
+  /** 最近签到日期（YYYY-MM-DD，null=从未签到）：断签判定用 */
+  checkinDate: string | null;
 };
 
 type CheckinResult = {
@@ -57,6 +69,20 @@ export function DailyCheckinModal() {
   const [result, setResult] = useState<CheckinResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  // P0-2 断签补签（XorPay kind=checkin_makeup）：支付弹窗状态 + 到账轮询定时器
+  const [makeupOpen, setMakeupOpen] = useState(false);
+  const [makeupQr, setMakeupQr] = useState<string | null>(null);
+  const [makeupPayUrl, setMakeupPayUrl] = useState<string | null>(null);
+  const [makeupBusy, setMakeupBusy] = useState(false);
+  const [makeupError, setMakeupError] = useState("");
+  const [makeupPaid, setMakeupPaid] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopPoll = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
@@ -82,6 +108,7 @@ export function DailyCheckinModal() {
           streak: data.streak ?? 0,
           nextStreak: data.nextStreak ?? 1,
           premium: !!data.premium,
+          checkinDate: typeof data.checkinDate === "string" ? data.checkinDate : null,
         });
         // 宠物形象：取第一只领养宠物（失败/无宠物 → 通用形象）
         try {
@@ -108,6 +135,73 @@ export function DailyCheckinModal() {
     localStorage.setItem(SEEN_KEY, todayStr());
     setOpen(false);
   }, []);
+
+  // 发起补签：/api/pay/create(kind=checkin_makeup) → XorPay 二维码（与积分充值同链路）
+  const startMakeup = async () => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token || makeupBusy) return;
+    setMakeupBusy(true);
+    setMakeupError("");
+    setMakeupQr(null);
+    setMakeupPayUrl(null);
+    setMakeupOpen(true);
+    try {
+      const res = await fetch("/api/pay/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ kind: "checkin_makeup" }),
+      });
+      const data = await res.json();
+      if (data?.ok && data.qr) {
+        setMakeupQr(data.qr);
+        setMakeupPayUrl(data.payUrl ?? null);
+      } else {
+        setMakeupError(data?.error ?? t("makeupFail"));
+      }
+    } catch {
+      setMakeupError(tc("networkError"));
+    } finally {
+      setMakeupBusy(false);
+    }
+  };
+
+  // 二维码就绪后轮询签到状态（每 2s，最多 90 次 = 3 分钟）：
+  // pay/notify 回填 last_checkin_date=昨天 → checkinDate ≥ 昨天即判定补签成功
+  useEffect(() => {
+    if (!makeupQr) return;
+    let count = 0;
+    pollRef.current = setInterval(async () => {
+      count += 1;
+      try {
+        const token = localStorage.getItem("aiabw_token");
+        const res = await fetch("/api/user/checkin", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data?.ok && typeof data.checkinDate === "string" && data.checkinDate >= yestStr()) {
+          stopPoll();
+          setMakeupOpen(false);
+          setMakeupQr(null);
+          setMakeupPaid(true);
+          // 刷新面板：checkinDate=昨天 → nextStreak=streak+1，进度点恢复连签显示
+          setStatus({
+            checkedToday: false,
+            streak: data.streak ?? 0,
+            nextStreak: data.nextStreak ?? 1,
+            premium: !!data.premium,
+            checkinDate: data.checkinDate,
+          });
+          return;
+        }
+      } catch {
+        /* 单次轮询失败不中断 */
+      }
+      if (count >= 90) stopPoll();
+    }, 2000);
+    return stopPoll;
+  }, [makeupQr, stopPoll, t]);
+
+  useEffect(() => () => stopPoll(), [stopPoll]);
 
   const doCheckin = async () => {
     const token = localStorage.getItem("aiabw_token");
@@ -141,8 +235,12 @@ export function DailyCheckinModal() {
   const item = result?.item ?? null;
   const totalGain = (result?.pointsGain ?? 0) + (result?.bonusPoints ?? 0);
   const petName = pet?.name || t("petGeneric");
+  // 断签判定（P0-2）：有连签记录但 last_checkin_date 早于昨天（补签成功后 makeupPaid 置位即隐藏卡片）
+  const broken =
+    !makeupPaid && status.streak > 0 && !!status.checkinDate && status.checkinDate < yestStr();
 
   return (
+    <>
     <div
       className="fixed inset-0 z-[70] flex items-center justify-center bg-zinc-900/50 p-4 backdrop-blur-sm"
       onClick={close}
@@ -243,6 +341,26 @@ export function DailyCheckinModal() {
           </div>
         ) : (
           <div className="mt-4">
+            {broken && (
+              <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5">
+                <p className="text-sm font-semibold text-rose-600">{t("makeupTitle")}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-rose-500">
+                  {t("makeupDesc", { days: status.streak })}
+                </p>
+                <button
+                  type="button"
+                  onClick={startMakeup}
+                  className="mt-2 w-full rounded-full bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600"
+                >
+                  {t("makeupBtn")}
+                </button>
+              </div>
+            )}
+            {makeupPaid && (
+              <div className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                {t("makeupOk")}
+              </div>
+            )}
             {status.premium && <p className="mb-2 text-[11px] text-amber-600">{t("premiumHint")}</p>}
             {failed && <p className="mb-2 text-xs text-red-500">{t("failed")}</p>}
             <div className="flex gap-2">
@@ -266,5 +384,22 @@ export function DailyCheckinModal() {
         )}
       </div>
     </div>
+    {/* P0-2 断签补签支付层（PaymentModal z-[80] 覆盖主弹窗 z-[70]；fragment 兄弟节点避免点击冒泡误关主弹窗） */}
+    <PaymentModal
+      open={makeupOpen}
+      title={t("makeupPayTitle")}
+      amount={CHECKIN_MAKEUP_PRICE_CNY}
+      description={t("makeupPayDesc")}
+      qr={makeupQr ?? undefined}
+      payUrl={makeupPayUrl}
+      pending={!!makeupQr}
+      busy={makeupBusy}
+      error={makeupError || undefined}
+      onClose={() => {
+        stopPoll();
+        setMakeupOpen(false);
+      }}
+    />
+    </>
   );
 }

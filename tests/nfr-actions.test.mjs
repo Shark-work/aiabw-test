@@ -104,10 +104,10 @@ test("i18n: collection.nfr 新增子命名空间 zh/en 深键对齐 + api.transf
   assert.ok(zh.api?.transferSelf && en.api?.transferSelf, "api.transferSelf 双语存在");
 });
 
-test("smoke: 生产冒烟覆盖新端点（步骤 45-50 + 总数 50）", () => {
+test("smoke: 生产冒烟覆盖新端点（步骤 45-50 + 总数 52）", () => {
   const smoke = read("scripts/smoke-production.mjs");
   assert.ok(smoke.includes('api("/api/pets/collectibles")'), "collectibles 未登录 401 步骤");
   assert.ok(smoke.includes('api("/api/pets/breed"'), "breed 步骤");
   assert.ok(smoke.includes('api("/api/pets/transfer"'), "transfer 步骤");
-  assert.ok(smoke.includes("stepNo === 50"), "总步数断言更新为 50");
+  assert.ok(smoke.includes("stepNo === 52"), "总步数断言更新为 52（2026-10-13 51-52 断签补签用例）");
 });

@@ -447,6 +447,8 @@
     "noPermissionPet": "无权为该宠物发起支付",
     "invalidAmount": "金额不合法",
     "invalidPointsPack": "无效的积分充值档位",
+    "noStreakToMakeup": "暂无连签记录可挽回",
+    "notBroken": "连签未中断，无需补签",
     "orderCreateFailed": "下单失败",
     "payServiceUnavailable": "支付服务暂时不可用，请检查后台日志",
     "missingPaymentConfig": "缺少支付配置",
@@ -880,7 +882,14 @@
     "rarity_rare": "稀有",
     "rarity_legendary": "传说",
     "close": "明天再来~",
-    "failed": "签到失败，请稍后重试"
+    "failed": "签到失败，请稍后重试",
+    "makeupTitle": "💔 连签中断",
+    "makeupDesc": "昨天忘记签到啦！¥1 补签即可挽回 {days} 天连签，今天签到后继续累计",
+    "makeupBtn": "⚡ ¥1 补签挽回",
+    "makeupPayTitle": "断签补签",
+    "makeupPayDesc": "支付成功后自动补签昨天，再点「签到」即可延续连签",
+    "makeupOk": "🎉 补签成功！点击「签到」延续你的连签~",
+    "makeupFail": "补签下单失败，请稍后重试"
   },
   "seo": {
     "petDetailTitle": "{name} - AI 灵宠灵魂档案 | 艾比世界",

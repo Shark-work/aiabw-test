@@ -108,6 +108,6 @@ test("points-recharge(7): smoke 新增 2 项 points 用例 + 总数随 NFR 步�
   const smoke = read("../scripts/smoke-production.mjs");
   assert.match(smoke, /INVALID_POINTS_PACK/);
   assert.match(smoke, /kind: "points", points: 100/);
-  // 2026-10-08 NFR 繁育/转赠 UI 落地后冒烟扩至 50 步（tests/nfr-actions.test.mjs 锁定总数）
-  assert.match(smoke, /stepNo === 50/);
+  // 2026-10-08 NFR 繁育/转赠 UI 落地后冒烟扩至 50 步；2026-10-13 断签补签 51-52 两步 → 52（tests/nfr-actions.test.mjs 锁定总数）
+  assert.match(smoke, /stepNo === 52/);
 });

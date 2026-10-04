@@ -277,6 +277,13 @@ try {
   await pool.query(`DELETE FROM user_collectibles WHERE id = $1`, [tmpId]);
   check("transfer toUsername=本人 → 400 transferSelf（临时实例已清理）",
     selfT.status === 400 && /自己|yourself/i.test(selfT.json.error ?? ""), selfT);
+
+  // ── 51-52) 断签补签（XorPay checkin_makeup）：未登录 401 + 新用户无连签 400（均不触达 XorPay 下单）──
+  const makeupNoAuth = await api("/api/pay/create", { method: "POST", body: { kind: "checkin_makeup" } });
+  check("pay/create kind=checkin_makeup 未登录 → 401", makeupNoAuth.status === 401, makeupNoAuth);
+  const makeupNoStreak = await api("/api/pay/create", { method: "POST", token, body: { kind: "checkin_makeup" } });
+  check("pay/create kind=checkin_makeup 无连签记录 → 400 NO_STREAK_TO_MAKEUP",
+    makeupNoStreak.status === 400 && makeupNoStreak.json.code === "NO_STREAK_TO_MAKEUP", makeupNoStreak);
 } catch (err) {
   failures += 1;
   console.error(`\nsmoke crashed at step ${stepNo + 1}:`, err);
@@ -285,7 +292,7 @@ try {
 }
 
 console.log(`\n=== production smoke: ${stepNo - failures}/${stepNo} passed ===`);
-if (failures === 0 && stepNo === 50) {
+if (failures === 0 && stepNo === 52) {
   console.log("ALL_SMOKE_OK");
   process.exit(0);
 }

@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 
 import { db, ensureDbSchemaOnce } from "@/db/client";
-import { adoptions, cosmetics, blindboxPools } from "@/db/schema";
+import { adoptions, cosmetics, blindboxPools, users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { PREMIUM_PRICE_CNY } from "@/lib/premium";
 import { findPointsPack } from "@/lib/points-recharge";
+import { CHECKIN_MAKEUP_PRICE_CNY, localDateStr, makeupOrderId } from "@/lib/checkin-makeup";
 import {
   XORPAY_AID,
   XORPAY_APP_SECRET,
@@ -35,12 +36,13 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const locale = resolveLocale(req);
     // 商品类型：unlock（多宠解锁，默认）/ cosmetic（宠物装扮）/ premium（高级公民月卡）
-    // / blindbox（盲盒抽奖）/ points（积分充值）
-    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" | "points" =
+    // / blindbox（盲盒抽奖）/ points（积分充值）/ checkin_makeup（断签补签）
+    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" | "points" | "checkin_makeup" =
       body?.kind === "cosmetic" ? "cosmetic"
       : body?.kind === "premium" ? "premium"
       : body?.kind === "blindbox" ? "blindbox"
       : body?.kind === "points" ? "points"
+      : body?.kind === "checkin_makeup" ? "checkin_makeup"
       : "unlock";
     const adoptionId =
       typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
       if (!poolId) {
         return NextResponse.json({ ok: false, error: apiError(locale, "invalidBlindboxPool") }, { status: 400 });
       }
-    } else if (kind !== "premium" && kind !== "points" && !adoptionId) {
+    } else if (kind !== "premium" && kind !== "points" && kind !== "checkin_makeup" && !adoptionId) {
       return NextResponse.json({ ok: false, error: apiError(locale, "missingAdoptionId") }, { status: 400 });
     }
     if (kind === "cosmetic" && !cosmeticId) {
@@ -96,7 +98,32 @@ export async function POST(req: Request) {
     await ensureDbSchemaOnce();
 
     // 校验领养记录存在，且属于当前登录用户（premium 月卡 / blindbox 盲盒 / points 积分充值无需宠物）
-    if (kind !== "premium" && kind !== "blindbox" && kind !== "points") {
+    // —— 断签补签资格校验（鉴权后、XorPay 下单前）：无连签记录 / 连签未中断 → 400，不产生外部调用 ——
+    let makeupDate = "";
+    if (kind === "checkin_makeup") {
+      const [mu] = await db
+        .select({ lastCheckinDate: users.lastCheckinDate, checkinStreak: users.checkinStreak })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+      if ((mu?.checkinStreak ?? 0) <= 0) {
+        return NextResponse.json(
+          { ok: false, code: "NO_STREAK_TO_MAKEUP", error: apiError(locale, "noStreakToMakeup") },
+          { status: 400 },
+        );
+      }
+      // 补签目标 = 昨天（服务端计算；YYYY-MM-DD 字典序即日期序）。last ≥ 昨天 → 连签未断，无需补签
+      const yest = localDateStr(new Date(Date.now() - 24 * 60 * 60 * 1000));
+      if (mu?.lastCheckinDate && mu.lastCheckinDate >= yest) {
+        return NextResponse.json(
+          { ok: false, code: "NOT_BROKEN", error: apiError(locale, "notBroken") },
+          { status: 400 },
+        );
+      }
+      makeupDate = yest;
+    }
+
+    if (kind !== "premium" && kind !== "blindbox" && kind !== "points" && kind !== "checkin_makeup") {
       const [a] = await db
         .select({ id: adoptions.id, userId: adoptions.userId })
         .from(adoptions)
@@ -154,6 +181,12 @@ export async function POST(req: Request) {
       price = pack.priceCny.toFixed(2);
       amount = pack.priceCny;
       order_id = `points-${pack.points}-${user.id}-${nonce}`;
+    } else if (kind === "checkin_makeup") {
+      // 断签补签：资格已在上方校验（断签且有连签记录可挽回），价格/补签日期全取服务端
+      name = `AIABW 断签补签（${makeupDate}）`;
+      price = CHECKIN_MAKEUP_PRICE_CNY.toFixed(2);
+      amount = CHECKIN_MAKEUP_PRICE_CNY;
+      order_id = makeupOrderId(user.id, makeupDate, nonce);
     } else {
       const rawAmount = body?.amount ?? DEFAULT_AMOUNT;
       amount = Number(rawAmount);

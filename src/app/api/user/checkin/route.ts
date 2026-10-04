@@ -84,8 +84,10 @@ export async function GET(req: Request) {
  *  - 连签每满 7 天 → 额外 +100 积分（月卡 ×2）+ 随机心情盲盒道具
  *    （普通 70% / 稀有 25% / 传说 5%；月卡保底稀有）写入 user_items 背包；
  *  - mood：连签天数对应的心情档位（1 天/3 天/≥7 天），前端据此展示宠物表情与台词。
- * TODO(P0-2)：断签花 ¥1 补签 —— 接入 XorPay（/api/pay/create kind=checkin_makeup），
- *  支付回调后回填 last_checkin_date 并修正 streak；当前版本占位未实现。
+ * P0-2 断签补签（已落地）：断签（last_checkin_date < 昨天 且 streak > 0）可 ¥1 补签 ——
+ *  /api/pay/create kind=checkin_makeup → XorPay 扫码 → /api/pay/notify 回填
+ *  last_checkin_date=昨天（幂等、只前进）；本路由连签判定只看 last_checkin_date，
+ *  用户当天再签到即自然 streak+1 延续，无需在此特判补签日。
  */
 export async function POST(req: Request) {
   const locale = resolveLocale(req);

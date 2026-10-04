@@ -447,6 +447,8 @@
     "noPermissionPet": "You are not allowed to pay for this pet",
     "invalidAmount": "Invalid amount",
     "invalidPointsPack": "Invalid points pack",
+    "noStreakToMakeup": "No streak to make up",
+    "notBroken": "Your streak is not broken — no makeup needed",
     "orderCreateFailed": "Order creation failed",
     "payServiceUnavailable": "Payment service is temporarily unavailable, check server logs",
     "missingPaymentConfig": "Missing payment config",
@@ -880,7 +882,14 @@
     "rarity_rare": "Rare",
     "rarity_legendary": "Legendary",
     "close": "See you tomorrow~",
-    "failed": "Check-in failed, please try again"
+    "failed": "Check-in failed, please try again",
+    "makeupTitle": "💔 Streak broken",
+    "makeupDesc": "You missed yesterday! Make it up for ¥1 to save your {days}-day streak — check in today to keep it going",
+    "makeupBtn": "⚡ Make up for ¥1",
+    "makeupPayTitle": "Streak Makeup",
+    "makeupPayDesc": "Yesterday will be filled in automatically after payment — tap Check in to continue your streak",
+    "makeupOk": "🎉 Makeup successful! Tap Check in to continue your streak~",
+    "makeupFail": "Failed to create the makeup order, please try again"
   },
   "seo": {
     "petDetailTitle": "{name} - AI Soul Pet Archive | AIABW",
