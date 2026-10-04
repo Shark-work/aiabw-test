@@ -65,7 +65,7 @@ async function switchTo(page, langLabel, fromPath) {
   assert(zh2en.path === "/en/pets", "目标 URL 正确拼接 /en/pets（非 /zh）");
   assert(zh2en.lang === "en", "<html lang=en> 已更新");
   assert(zh2en.title.includes("AIABW"), "英文 <title> 加载（metaTitle en）");
-  assert(/Animal Encyclopedia|Pets/.test(zh2en.txt) && !zh2en.txt.includes("动物图鉴"), "英文导航渲染且无中文导航残留");
+  assert(/Soul Pet Codex|Soul Pets/.test(zh2en.txt) && !zh2en.txt.includes("灵宠图鉴"), "英文导航渲染且无中文导航残留");
   assert(zh2en.txt.includes("Total Visits") || zh2en.txt.includes("AIABW. All Rights Reserved"), "Footer server 文案已刷新为英文");
 
   // ---- 2) en → zh（/en/pets → /zh/pets）----
@@ -79,7 +79,7 @@ async function switchTo(page, langLabel, fromPath) {
   console.log("  url:", en2zh.path, "| lang:", en2zh.lang);
   assert(en2zh.path === "/zh/pets", "目标 URL 正确拼接 /zh/pets");
   assert(en2zh.lang === "zh", "<html lang=zh> 已更新");
-  assert(en2zh.txt.includes("动物图鉴") && en2zh.txt.includes("我的宠物"), "中文导航渲染");
+  assert(en2zh.txt.includes("灵宠图鉴") && en2zh.txt.includes("我的灵宠"), "中文导航渲染");
   assert(en2zh.txt.includes("本站累计访问") || en2zh.txt.includes("© 2025-2026 艾比世界"), "Footer server 文案已刷新为中文");
 
   // ---- 3) 带 query 切换（/zh/pets?species=X → /en/pets?species=X）----

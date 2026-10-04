@@ -6,6 +6,7 @@ import { resolveLocale } from "@/i18n/api-errors";
 import { renderPetDescription } from "@/lib/pet-dictionary";
 import { groupBySpecies } from "@/lib/species-group";
 import { aibiNameFor } from "@/lib/aibi-names";
+import { soulNameFor } from "@/lib/soul-pet";
 
 export const runtime = "nodejs";
 
@@ -110,12 +111,16 @@ export async function GET(req: Request) {
       defaultDescriptionZh: r.defaultDescriptionZh,
       defaultDescriptionEn: r.defaultDescriptionEn,
     };
+    const speciesName = locale === "en" ? r.nameEn : r.nameZh;
+    // 艾比名（物种在映射白名单时派生；展示门槛：前端按卡稀有度 ≥ epic 判定）
+    const aibiName = aibiNameFor(r.species_id, locale) ?? undefined;
     return {
       id: r.id,
       speciesId: r.species_id,
-      speciesName: locale === "en" ? r.nameEn : r.nameZh,
-      // 艾比名（物种在映射白名单时派生；展示门槛：前端按卡稀有度 ≥ epic 判定）
-      aibiName: aibiNameFor(r.species_id, locale) ?? undefined,
+      speciesName,
+      aibiName,
+      // 灵魂名（灵宠体系）：元素前缀 + 艾比名/原型名，读路径派生，DB 零迁移
+      soulName: soulNameFor(r.traits?.element, aibiName ?? speciesName, locale),
       category: locale === "en" ? (r.categoryEn ?? r.category) : r.category,
       habitat: locale === "en" ? (r.habitatEn ?? r.habitat) : r.habitat,
       imageUrl: r.image_url,
@@ -152,6 +157,12 @@ export async function GET(req: Request) {
         speciesName: c.rep.speciesName,
         // 艾比名（物种在映射白名单时派生；展示门槛：前端按卡稀有度 ≥ epic 判定）
         aibiName: aibiNameFor(c.speciesId, locale) ?? undefined,
+        // 灵魂名（灵宠体系）：rep 实例元素 + 艾比名/原型名（rep 来自上方 pets 数组，aibiName 已派生）
+        soulName: soulNameFor(
+          c.rep.traits?.element,
+          c.rep.aibiName ?? c.rep.speciesName,
+          locale,
+        ),
         category: c.rep.category,
         habitat: c.rep.habitat,
         imageUrl: c.rep.imageUrl,

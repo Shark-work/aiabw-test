@@ -81,11 +81,13 @@ test("D: en home 五 key 与导航 en 值完整正确", () => {
   assert.equal(en.home.heroCta, "Adopt Now");
   assert.equal(en.home.socialProof, "Join {count}+ collectors raising their AI companions");
   assert.equal(en.home.socialProofFallback, "Join thousands of collectors");
-  assert.equal(en.nav.navAdoptMy, "🐾 Adopt / My Pets");
+  // 2026-10-09 灵宠体系升级：「领养/我的宠物」→「我的灵宠 / My Soul Pets」
+  // （不采用「灵魂卡/我的收藏」命名——与既有 navSoulCodex「灵魂卡/收藏」撞名，见 tests/soul-pet.test.mjs #7 撞名锁）
+  assert.equal(en.nav.navAdoptMy, "🐾 My Soul Pets");
   assert.equal(en.nav.navSoulCodex, "✨ Soul Cards / Collection");
   // zh 侧镜像（双语同源同步）
   assert.equal(zh.home.heroCta, "立即领养");
-  assert.equal(zh.nav.navAdoptMy, "🐾 领养/我的宠物");
+  assert.equal(zh.nav.navAdoptMy, "🐾 我的灵宠");
   assert.equal(zh.nav.navSoulCodex, "✨ 灵魂卡/收藏");
 });
 

@@ -1,7 +1,7 @@
 // 核心领养功能 E2E（本地 dev server）：图鉴领养三条路径
 // 1) 免费领养：新用户 claim 图鉴宠物 → 200 + petType=species:* + 专属线程创建
 // 2) 付费拦截：第二只 → 402 PET_LIMIT_REACHED + needPayment + unlockAdoptionId
-// 3) UI 知识弹窗：图鉴页点「获得它」→ 祝贺动画 + 宠物知识百科弹窗（含互动引导）
+// 3) UI 知识弹窗：图鉴页点「唤醒灵魂」→ 祝贺动画 + 宠物知识百科弹窗（含互动引导）
 // 4) 无限领养：模拟支付回调（users.is_unlocked=true）→ 再领养放行
 // Usage: node scripts/verify-claim.cjs http://localhost:3000
 const fs = require("fs");
@@ -94,7 +94,7 @@ async function req(method, apiPath, body, token) {
   console.log("  claim#2 after unlock ->", afterUnlock.status);
   assert(afterUnlock.status === 200 && afterUnlock.json?.ok, "支付解锁后第 2 只领养放行（无限领养）");
 
-  // ---- C) UI：图鉴页点「获得它」→ 祝贺动画 + 知识百科弹窗 ----
+  // ---- C) UI：图鉴页点「唤醒灵魂」→ 祝贺动画 + 知识百科弹窗 ----
   const emailB = `claimui_${ts}@test.aiabw`;
   const regB = await req("POST", "/api/auth/register", { email: emailB, password: "claimpass123" });
   const tokenB = regB.json?.token;
@@ -112,12 +112,12 @@ async function req(method, apiPath, body, token) {
   await pg.evaluate((tk) => localStorage.setItem("aiabw_token", tk), tokenB);
   await pg.goto(BASE + "/zh/pets", { waitUntil: "domcontentloaded", timeout: 40000 });
 
-  // 等待图鉴卡片渲染 + 点击「获得它」按钮（dev 冷编译 catalog 较慢）
+  // 等待图鉴卡片渲染 + 点击「唤醒灵魂」按钮（dev 冷编译 catalog 较慢）
   let getBtnClicked = false;
   for (let i = 0; i < 50; i++) {
     const clicked = await pg.evaluate(() => {
       const btns = [...document.querySelectorAll("button")].filter(
-        (b) => b.innerText.includes("获得它") && !b.disabled,
+        (b) => b.innerText.includes("唤醒灵魂") && !b.disabled,
       );
       if (btns.length === 0) return false;
       btns[0].click();
@@ -126,7 +126,7 @@ async function req(method, apiPath, body, token) {
     if (clicked) { getBtnClicked = true; break; }
     await wait(600);
   }
-  assert(getBtnClicked, "UI 点击「获得它」按钮成功");
+  assert(getBtnClicked, "UI 点击「唤醒灵魂」按钮成功");
 
   // 等待祝贺动画 + 知识弹窗出现
   let sawCelebrate = false;

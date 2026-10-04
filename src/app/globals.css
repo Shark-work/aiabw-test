@@ -455,3 +455,44 @@ body,
   }
 }
 
+
+/* ────────────────────────────────────────────────────────────────
+   灵宠图鉴 · 拥有态视觉（2026-10-09「我的灵宠」体系升级）
+   未拥有：虚线边框 + 磨砂淡化（由页面内联 Tailwind 类承担）；
+   已拥有：琥珀发光边框呼吸 + 斜向流光扫掠（资产高亮暗示）。
+   仅 transform/opacity/box-shadow，走 GPU 合成，不动 layout。
+   ──────────────────────────────────────────────────────────────── */
+@keyframes soul-card-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35), 0 0 14px -2px rgba(251, 191, 36, 0.35); }
+  50% { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.65), 0 0 26px 0 rgba(251, 191, 36, 0.5); }
+}
+@keyframes soul-shine-sweep {
+  0% { transform: translateX(-130%) skewX(-18deg); opacity: 0; }
+  35% { opacity: 0.45; }
+  100% { transform: translateX(240%) skewX(-18deg); opacity: 0; }
+}
+.soul-card-owned {
+  position: relative;
+  overflow: hidden;
+  animation: soul-card-glow 3.2s ease-in-out infinite;
+}
+.soul-card-owned::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent, rgba(255, 236, 180, 0.5), transparent);
+  animation: soul-shine-sweep 3.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .soul-card-owned {
+    animation: none;
+  }
+  .soul-card-owned::after {
+    content: none;
+  }
+}
+

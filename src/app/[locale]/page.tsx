@@ -139,7 +139,7 @@ export default function Home() {
     }
   };
 
-  // 详情弹窗 CTA「获得它」：直接领养用户点击的这只推荐宠（闭环）。
+  // 详情弹窗 CTA「唤醒灵魂」：直接唤醒用户点击的这只推荐宠（闭环）。
   // 单宠限制等拦截统一交给 claimFeatured 处理（游客 → 登录，登录用户 → 支付解锁）。
   const handleGetPet = () => {
     if (!detailPet) return;

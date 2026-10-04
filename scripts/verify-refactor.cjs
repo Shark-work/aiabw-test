@@ -19,7 +19,7 @@ const BASE = process.argv[2] || "http://localhost:3100";
       hasFilters: btns.some((x) => ["全部", "All"].includes(x)),
       hasDesc: document.body.innerText.includes("介绍") || document.body.innerText.includes("这只") || document.body.innerText.includes("default") || document.querySelectorAll(".grid > div").length > 0,
       cardCount: document.querySelectorAll(".grid > div").length,
-      navLabel: Array.from(document.querySelectorAll("header a")).map((a) => a.innerText.trim()).includes("动物图鉴"),
+      navLabel: Array.from(document.querySelectorAll("header a")).map((a) => a.innerText.trim()).includes("我的灵宠"),
     };
   });
   console.log("[catalog]", JSON.stringify(catalog));

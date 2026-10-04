@@ -10,6 +10,7 @@ import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
 import { rarityWeight } from "@/lib/species-group";
 import { aibiNameFor } from "@/lib/aibi-names";
+import { soulNameFor } from "@/lib/soul-pet";
 import { SITE_URL, ogShareFields } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string; id: string }> };
@@ -88,7 +89,8 @@ export default async function PetSpeciesPage({ params }: Props) {
     `SELECT p.traits->>'rarity' AS rarity,
             COUNT(*) AS instances,
             COUNT(*) FILTER (WHERE p.owner_id IS NOT NULL OR p.guest_owner IS NOT NULL) AS owned,
-            (array_agg(p.image_url ORDER BY p.image_url NULLS LAST))[1] AS image_url
+            (array_agg(p.image_url ORDER BY p.image_url NULLS LAST))[1] AS image_url,
+            (array_agg(p.traits->>'element'))[1] AS element
        FROM pets p
       WHERE p.species_id = $1 AND p.status = 'active' AND p.visible = true
       GROUP BY p.traits->>'rarity'`,
@@ -100,8 +102,13 @@ export default async function PetSpeciesPage({ params }: Props) {
       instances: Number(r.instances),
       owned: Number(r.owned) > 0,
       imageUrl: r.image_url ? String(r.image_url) : null,
+      element: r.element ? String(r.element) : null,
     }))
     .sort((a, b) => rarityWeight(b.rarity) - rarityWeight(a.rarity));
+
+  // 灵魂名（灵宠体系，仅页面内展示；title/OG/JSON-LD/sitemap 一律维持原型名 —— SEO 强约束）：
+  // rep 口径 = 最高稀有度版本（variants[0]）的元素 + 艾比名/原型名。
+  const soulName = soulNameFor(variants[0]?.element, aibi ?? name, locale);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
@@ -140,7 +147,13 @@ export default async function PetSpeciesPage({ params }: Props) {
               className="h-24 w-24 shrink-0 rounded-2xl border-2 border-orange-200 bg-orange-50 object-cover"
             />
             <div className="min-w-0">
+              <p className="mb-1 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">
+                {t("soulArchiveLabel")}
+              </p>
               <h1 className="text-xl font-bold text-zinc-900">{name}</h1>
+              <p className="mt-0.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-sm font-bold text-transparent">
+                ✨ {soulName}
+              </p>
               <p className="mt-0.5 text-xs text-zinc-400">
                 {species.nameZh}｜{species.nameEn}
               </p>

@@ -59,7 +59,7 @@ for (const locale of ["en", "zh"]) {
 const enMust = [
   "Adopt Your AI Companion",
   "Adopt Now",
-  "Adopt / My Pets",
+  "My Soul Pets",
   "Soul Cards / Collection",
   "Join",
 ];
@@ -70,7 +70,7 @@ for (const kw of enStale) check(!pages.en.includes(kw), `/en 无旧文案 "${kw}
 check(!pages.en.includes("a {sign} day"), "/en 运势模板无 \"a {sign} day\" 冠词错误");
 
 // ---- 4) /zh 镜像 ----
-const zhMust = ["立即领养", "领养/我的宠物", "灵魂卡/收藏", "收藏中心"];
+const zhMust = ["立即领养", "我的灵宠", "灵魂卡/收藏", "收藏中心"];
 for (const kw of zhMust) check(pages.zh.includes(kw), `/zh 含新文案 "${kw}"`);
 check(!pages.zh.includes("养育你的 AI 生命体"), "/zh 无旧 Hero 文案");
 

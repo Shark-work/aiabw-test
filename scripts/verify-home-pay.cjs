@@ -1,7 +1,7 @@
 // 首页重构 + 支付二维码长按 E2E 验证：
 // 1) 动态推荐宠：/api/pets/featured 随机 3 只，非硬编码 fox/penguin/dog
 // 2) 今日运势悬浮叠加（z 层 + 负边距）
-// 3) 宠物详情半屏弹窗 + 「获得它」CTA
+// 3) 宠物详情半屏弹窗 + 「唤醒灵魂」CTA
 // 4) 支付二维码：<img> 渲染 + 无禁止长按 CSS + 提示文案 + 模拟长按（微信识别）
 // 5) Footer X / Telegram 图标（QQ 已移除）
 const fs = require("fs");
@@ -40,7 +40,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   // 生产冷启动较慢：轮询等待动态推荐宠卡片出现（最多 20s）
   for (let i = 0; i < 40; i++) {
-    const has = await pg.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.innerText.includes("获得它")));
+    const has = await pg.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.innerText.includes("唤醒灵魂")));
     if (has) break;
     await wait(500);
   }
@@ -60,8 +60,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const home = await pg.evaluate(() => {
     const txt = document.body.innerText;
-    // 动态推荐卡片：含「获得它」按钮的卡片数量
-    const getBtns = [...document.querySelectorAll("button")].filter((b) => b.innerText.includes("获得它"));
+    // 动态推荐卡片：含「唤醒灵魂」按钮的卡片数量
+    const getBtns = [...document.querySelectorAll("button")].filter((b) => b.innerText.includes("唤醒灵魂"));
     return {
       hasFortune: txt.includes("今日运势") || txt.includes("幸运"),
       hasHardcodedFox: txt.includes("抱抱狐") || txt.includes("Huggy Fox"),
@@ -71,7 +71,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   });
   console.log("--- home ---", JSON.stringify(home));
   assert(home.hasFortune, "今日运势模块存在");
-  assert(home.getBtnCount >= 1 && home.getBtnCount <= 3, "动态推荐宠卡片渲染（1-3 张，含获得它按钮）");
+  assert(home.getBtnCount >= 1 && home.getBtnCount <= 3, "动态推荐宠卡片渲染（1-3 张，含唤醒灵魂按钮）");
   assert(!home.hasHardcodedFox, "已废弃硬编码 抱抱狐 展示");
 
   // featured API 随机性：两次请求返回不同组合（或至少为随机池数据）
@@ -97,24 +97,24 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // ---- 2) 详情弹窗 + CTA ----
   await pg.evaluate(() => {
-    const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("获得它"));
+    const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("唤醒灵魂"));
     if (b) b.click();
   });
   await wait(700);
   const detail = await pg.evaluate(() => {
     const txt = document.body.innerText;
     return {
-      hasGet: txt.includes("获得它"),
+      hasGet: txt.includes("唤醒灵魂"),
       hasRare: txt.includes("稀缺"),
-      hasAdopted: txt.includes("位主人领养") || txt.includes("owners"),
+      hasAdopted: txt.includes("位主人唤醒") || txt.includes("owners"),
       hasDesc: [...document.querySelectorAll("p")].some((p) => p.innerText.length > 20),
     };
   });
   console.log("--- detail modal ---", JSON.stringify(detail));
-  assert(detail.hasGet && detail.hasAdopted, "详情弹窗：获得它按钮 + 领养热度");
+  assert(detail.hasGet && detail.hasAdopted, "详情弹窗：唤醒灵魂按钮 + 领养热度");
   // 关闭弹窗
   await pg.evaluate(() => {
-    const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("获得它"));
+    const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("唤醒灵魂"));
     if (b) b.click();
   });
   await wait(1500);
@@ -122,7 +122,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await wait(2500);
   // ---- 3) 支付二维码长按（移动端）----
-  // 准备：新用户 + 通过 /api/adopt 创建领养记录（未解锁）→ petLimitReached → 点获得它 → upgrade 弹窗 → QR img
+  // 准备：新用户 + 通过 /api/adopt 创建领养记录（未解锁）→ petLimitReached → 点唤醒灵魂 → upgrade 弹窗 → QR img
   const ts = Date.now().toString().slice(-6);
   const email = `payqr_${ts}@test.aiabw`;
   const reg = await fetch(BASE + "/api/auth/register", {
@@ -170,19 +170,19 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   await mob.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   // 等待动态推荐宠卡片出现（首次加载较慢）
   for (let i = 0; i < 24; i++) {
-    const has = await mob.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.innerText.includes("获得它")));
+    const has = await mob.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.innerText.includes("唤醒灵魂")));
     if (has) break;
     await wait(500);
   }
   // 点动态卡片 → 详情弹窗
   await mob.evaluate(() => {
-    const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("获得它"));
+    const b = [...document.querySelectorAll("button")].find((x) => x.innerText.includes("唤醒灵魂"));
     if (b) b.click();
   });
   await wait(800);
-  // 详情弹窗 → 点弹窗内「获得它」（最后一个匹配 = 弹窗按钮）→ 单宠限制 → upgrade 支付弹窗
+  // 详情弹窗 → 点弹窗内「唤醒灵魂」（最后一个匹配 = 弹窗按钮）→ 单宠限制 → upgrade 支付弹窗
   await mob.evaluate(() => {
-    const btns = [...document.querySelectorAll("button")].filter((x) => x.innerText.includes("获得它"));
+    const btns = [...document.querySelectorAll("button")].filter((x) => x.innerText.includes("唤醒灵魂"));
     btns[btns.length - 1]?.click();
   });
   // 等待支付弹窗二维码 img 出现

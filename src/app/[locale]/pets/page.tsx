@@ -21,6 +21,8 @@ type CatalogPet = {
   speciesName: string;
   /** 艾比名（物种在映射白名单时由 API 派生；展示门槛：卡稀有度 ≥ epic，未达门槛仍显示原型名） */
   aibiName?: string;
+  /** 灵魂名（灵宠体系：元素前缀 + 艾比名/原型名，API 读路径派生，如「水之灵·泡泡」） */
+  soulName?: string;
   category: string;
   habitat?: string | null;
   imageUrl: string;
@@ -33,6 +35,9 @@ type CatalogPet = {
 };
 
 const ELEMENTS = ["fire", "water", "earth", "air"];
+
+/** 灵宠体系升级公告 localStorage 标记（版本化 key，未来体系再升级时 bump 版本号即可复用）。 */
+const UPGRADE_NOTICE_KEY = "aiabw_soul_upgrade_v1";
 
 /** 图鉴收录的精选物种（GEO：JSON-LD ItemList 静态条目，SSR 可靠输出）。 */
 const LD_SPECIES = [
@@ -78,6 +83,8 @@ export default function PetsCatalogPage() {
   const [celebratePet, setCelebratePet] = useState<CatalogPet | null>(null);
   const [knowledgePet, setKnowledgePet] = useState<KnowledgePet | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  // 灵宠体系升级公告（老用户一次性提示：关闭后写入 localStorage，不再弹出）
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [pendingPetId, setPendingPetId] = useState<string | null>(null);
 
@@ -239,6 +246,24 @@ export default function PetsCatalogPage() {
       active ? "bg-orange-500 text-white" : "bg-white text-zinc-600 border border-zinc-200 hover:border-orange-300"
     }`;
 
+  // 升级公告：未读过则展示一次（localStorage 幂等，读取失败按未读处理——宁可多提示一次）
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (!localStorage.getItem(UPGRADE_NOTICE_KEY)) setShowUpgrade(true);
+    } catch {
+      setShowUpgrade(true);
+    }
+  }, []);
+  const dismissUpgrade = () => {
+    try {
+      localStorage.setItem(UPGRADE_NOTICE_KEY, "1");
+    } catch {
+      /* 隐私模式写入失败仅影响本次关闭的持久化 */
+    }
+    setShowUpgrade(false);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
       {/* GEO 结构化数据：图鉴 ItemList（物种条目）+ BreadcrumbList */}
@@ -248,7 +273,7 @@ export default function PetsCatalogPage() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "ItemList",
-            name: locale === "en" ? "AIABW Pet Encyclopedia" : "艾比世界动物图鉴",
+            name: locale === "en" ? "AIABW Soul Pet Codex" : "艾比世界灵宠图鉴",
             description: t("subtitle"),
             url: `${SITE_URL}/${locale}/pets`,
             itemListElement: LD_SPECIES.map((s, i) => ({
@@ -259,8 +284,8 @@ export default function PetsCatalogPage() {
                 name: locale === "en" ? s.en : s.zh,
                 description:
                   locale === "en"
-                    ? `${s.en} virtual pet in AIABW - adopt, chat and fuse to level up.`
-                    : `${s.zh}——艾比世界虚拟宠物，可领养互动，3 合 1 灵力融合升级。`,
+                    ? `${s.en} soul pet in AIABW - awaken its soul, chat and fuse to level up.`
+                    : `${s.zh}——艾比世界灵宠，可唤醒灵魂互动，3 合 1 灵力融合升级。`,
                 category: "Virtual Pet / 虚拟宠物",
                 url: `${SITE_URL}/${locale}/pets?species=${s.id}`,
               },
@@ -279,7 +304,7 @@ export default function PetsCatalogPage() {
               {
                 "@type": "ListItem",
                 position: 2,
-                name: locale === "en" ? "Pet Encyclopedia" : "动物图鉴",
+                name: locale === "en" ? "Soul Pet Codex" : "灵宠图鉴",
                 item: `${SITE_URL}/${locale}/pets`,
               },
             ],
@@ -294,6 +319,26 @@ export default function PetsCatalogPage() {
             <p className="text-xs text-zinc-500">{t("subtitle")}</p>
           </div>
         </div>
+
+        {/* 灵宠体系升级公告（老用户一次性提示，关闭后 localStorage 持久化不再弹出） */}
+        {showUpgrade && (
+          <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
+            <span className="text-xl" aria-hidden>
+              🎉
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-amber-800">{t("upgradeTitle")}</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-700">{t("upgradeBody")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissUpgrade}
+              className="shrink-0 rounded-full bg-amber-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-amber-600"
+            >
+              {t("upgradeDismiss")}
+            </button>
+          </div>
+        )}
 
         {/* 图鉴 / 排行榜 Tab */}
         <div className="mb-3 flex gap-2">
@@ -350,21 +395,32 @@ export default function PetsCatalogPage() {
             return (
               <div
                 key={pet.id}
-                className="relative rounded-2xl border border-zinc-200 bg-white/90 p-4 shadow-sm backdrop-blur"
+                className={`rounded-2xl border p-4 backdrop-blur transition ${
+                  pet.owned
+                    ? "soul-card-owned border-amber-300 bg-white/95 shadow-md shadow-amber-100/70"
+                    : "relative border-dashed border-zinc-300 bg-white/60 shadow-sm"
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <LivingPet
                     src={pet.imageUrl}
                     alt={pet.speciesName}
                     delay={i * 0.3}
-                    className="h-14 w-14 rounded-full border-2 border-orange-200 bg-orange-50 object-cover"
+                    className={`h-14 w-14 rounded-full border-2 object-cover ${
+                      pet.owned
+                        ? "border-amber-200 bg-amber-50"
+                        : "border-zinc-200 bg-orange-50 opacity-75 grayscale-[0.45]"
+                    }`}
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-zinc-900">
-                        {showAibi ? pet.aibiName : pet.speciesName}
+                      <span
+                        className={`font-semibold ${pet.owned ? "text-amber-900" : "text-zinc-900"}`}
+                      >
+                        {pet.soulName ?? (showAibi ? pet.aibiName : pet.speciesName)}
                       </span>
-                      {showAibi && (
+                      {/* 原型小字：灵魂名含角色名（艾比名）时补出原型，避免「火之灵·亚洲象（原型 亚洲象）」冗余 */}
+                      {(pet.soulName ? !!pet.aibiName : showAibi) && (
                         <span className="text-[10px] font-normal text-zinc-400">
                           {t("prototypeLabel", { name: pet.speciesName })}
                         </span>
@@ -408,14 +464,14 @@ export default function PetsCatalogPage() {
                   {t("detail")} →
                 </Link>
 
-                {/* 核心领养 CTA */}
+                {/* 核心唤醒 CTA（已唤醒 = 高亮收藏态，与卡片流光呼应） */}
                 <button
                   type="button"
                   disabled={!!pet.owned || claimingId === pet.id}
                   onClick={() => void handleClaim(pet)}
                   className={`mt-3 w-full rounded-full px-4 py-2 text-sm font-semibold transition ${
                     pet.owned
-                      ? "cursor-not-allowed bg-zinc-100 text-zinc-400"
+                      ? "cursor-not-allowed bg-amber-100 text-amber-700"
                       : "bg-orange-500 text-white shadow hover:bg-orange-600 disabled:opacity-60"
                   }`}
                 >
