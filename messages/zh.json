@@ -412,6 +412,7 @@
     "needLoginHint": "登录或注册后，即可唤醒心仪灵宠的灵魂，开始专属 AI 陪伴~",
     "loginNow": "去登录",
     "registerNow": "去注册",
+    "soulCardMinted": "✨ 灵魂卡已生成 · 全球唯一编号",
     "knowledgeTitle": "📖 宠物知识百科",
     "knowledgeSpecies": "真实物种百科",
     "knowledgeHabitat": "栖息地",
@@ -1204,7 +1205,7 @@
     "simulatedBadge": "模拟链",
     "loading": "加载中…",
     "signInFirst": "请先登录",
-    "signInHint": "登录后即可铸造并查看你的灵魂卡",
+    "signInHint": "登录后查看你的灵魂卡（领养灵宠时自动生成）",
     "loadFailed": "加载失败，请刷新重试",
     "supply": {
       "title": "链上供应",
@@ -1212,17 +1213,8 @@
     },
     "collection": {
       "title": "我的灵魂卡（{count}）",
-      "empty": "还没有灵魂卡 —— 从下方可铸造的宠物开始吧"
-    },
-    "mintable": {
-      "title": "可铸造的宠物（{count}）",
-      "empty": "暂无可铸造的宠物 —— 去领养一只吧"
-    },
-    "mint": {
-      "button": "🪙 铸造灵魂卡",
-      "minting": "铸造中…",
-      "namePlaceholder": "卡名（默认：{species}）",
-      "success": "铸造成功！凭证编号 {cert}"
+      "empty": "还没有灵魂卡 —— 唤醒灵宠时会自动生成它的专属灵魂卡",
+      "goAdopt": "🐾 去唤醒灵宠"
     },
     "burn": {
       "button": "🔥 销毁灵魂卡",
@@ -1272,7 +1264,6 @@
     },
     "expToNext": "距离下一级还需 {exp} 经验",
     "growthMax": "已达最高等级",
-    "mintFailed": "铸造失败，请稍后重试",
     "burnFailed": "销毁失败，请稍后重试"
   },
   "aibi": {

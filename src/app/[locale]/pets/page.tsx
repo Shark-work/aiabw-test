@@ -186,6 +186,10 @@ export default function PetsCatalogPage() {
           threadId: data.threadId ?? null,
           adoptionId: data.adoption?.id ?? null,
           guest: !token && data.guest === true,
+          // 唤醒即铸卡：登录用户领养同步铸造的灵魂卡（游客为空，归并时补铸）
+          soulCard: data.soulCard
+            ? { certificateNo: data.soulCard.certificateNo, name: data.soulCard.name }
+            : null,
         });
         void refreshPetState();
         void load();

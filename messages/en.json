@@ -412,6 +412,7 @@
     "needLoginHint": "Sign in or register to awaken the soul of your favorite pet and start your AI companionship~",
     "loginNow": "Sign in",
     "registerNow": "Register",
+    "soulCardMinted": "✨ Soul Card created · globally unique No.",
     "knowledgeTitle": "📖 Pet Knowledge Encyclopedia",
     "knowledgeSpecies": "Real species encyclopedia",
     "knowledgeHabitat": "Habitat",
@@ -1204,7 +1205,7 @@
     "simulatedBadge": "Simulated Chain",
     "loading": "Loading…",
     "signInFirst": "Please sign in first",
-    "signInHint": "Sign in to mint and view your Soul Cards",
+    "signInHint": "Sign in to view your Soul Cards (created automatically when you adopt a pet)",
     "loadFailed": "Failed to load. Please refresh and retry",
     "supply": {
       "title": "On-chain Supply",
@@ -1212,17 +1213,8 @@
     },
     "collection": {
       "title": "My Soul Cards ({count})",
-      "empty": "No Soul Cards yet — start with a mintable pet below"
-    },
-    "mintable": {
-      "title": "Mintable Pets ({count})",
-      "empty": "No mintable pets right now — go adopt one"
-    },
-    "mint": {
-      "button": "🪙 Mint Soul Card",
-      "minting": "Minting…",
-      "namePlaceholder": "Card name (default: {species})",
-      "success": "Minted! Certificate No. {cert}"
+      "empty": "No Soul Cards yet — awakening a pet automatically creates its Soul Card",
+      "goAdopt": "🐾 Awaken a pet"
     },
     "burn": {
       "button": "🔥 Burn Soul Card",
@@ -1272,7 +1264,6 @@
     },
     "expToNext": "{exp} EXP to next level",
     "growthMax": "Max level reached",
-    "mintFailed": "Mint failed. Please try again later",
     "burnFailed": "Burn failed. Please try again later"
   },
   "aibi": {

@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { pool } from "@/db/client";
+import { ensureDbSchemaOnce, pool } from "@/db/client";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
+import {
+  applyGrowthExp,
+  SOUL_CARD_INTERACT_EXP,
+} from "@/lib/soul-card-config";
+import {
+  findSoulCardByPetId,
+  updateSoulCardGrowth,
+} from "@/server/repositories/soul-card-repository";
 
 export const runtime = "nodejs";
 
@@ -38,9 +46,52 @@ export async function POST(
       return NextResponse.json({ ok: false, error: apiError(locale, "noPermissionPet") }, { status: 403 });
     }
 
+    // —— 灵魂卡成长挂点：每日首次互动 +SOUL_CARD_INTERACT_EXP 经验 ——
+    // 判定：soul_cards.updated_at（仅在成长写回/销毁时刷新）的 UTC 日期 < 今天 →
+    // mint 当天不重复给经验、每天最多一次，天然防刷；成长失败不影响互动本身。
+    let growth: {
+      level: number;
+      exp: number;
+      stage: string;
+      leveledUp: boolean;
+      expAwarded: number;
+    } | null = null;
+    try {
+      await ensureDbSchemaOnce();
+      const card = await findSoulCardByPetId(id);
+      if (card && card.status === "active") {
+        const lastGrowthDay = card.updatedAt.toISOString().slice(0, 10);
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastGrowthDay < today) {
+          const next = applyGrowthExp(
+            card.growthLevel,
+            card.growthExp,
+            SOUL_CARD_INTERACT_EXP,
+          );
+          await updateSoulCardGrowth(card.id, {
+            growthLevel: next.level,
+            growthExp: next.exp,
+            growthStage: next.stage,
+          });
+          growth = { ...next, expAwarded: SOUL_CARD_INTERACT_EXP };
+        } else {
+          growth = {
+            level: card.growthLevel,
+            exp: card.growthExp,
+            stage: card.growthStage,
+            leveledUp: false,
+            expAwarded: 0,
+          };
+        }
+      }
+    } catch (err) {
+      console.error("[pets/interact] soul card growth failed:", err);
+    }
+
     return NextResponse.json({
       ok: true,
       lastInteractionTime: rows[0].last_interaction_time,
+      growth,
       message: locale === "en" ? "You fed & cuddled your pet ❤️" : "你喂饱并抱了抱它 ❤️",
     });
   } catch (err) {

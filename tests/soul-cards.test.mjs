@@ -268,11 +268,12 @@ test("service: soul-card-service exports & error codes & tx orchestration", () =
     "burnSoulCard",
     "getSoulCardDetail",
     "listMySoulCards",
-    "listMintablePets",
     "getChainStatus",
   ]) {
     assert.ok(src.includes(`export async function ${fn}`), `exports ${fn}`);
   }
+  // 唤醒即铸卡（2026-10-14）：领养自动铸造，「可铸造宠物」概念移除
+  assert.ok(!src.includes("listMintablePets"), "no listMintablePets export");
   for (const code of [
     "PET_NOT_FOUND",
     "PET_NOT_OWNED",
@@ -292,11 +293,10 @@ test("service: soul-card-service exports & error codes & tx orchestration", () =
   assert.ok(src.includes("certificateNoForTokenId"), "cert no derived from tokenId");
 });
 
-// === 12) Controller 层：5 个路由文件 + 错误码 HTTP 映射 ===
+// === 12) Controller 层：4 个路由文件 + 错误码 HTTP 映射（手动 mint 路由已随「唤醒即铸卡」删除） ===
 test("controllers: thin routes exist; error mapper covers all codes", () => {
   for (const route of [
     "src/app/api/soul-cards/route.ts",
-    "src/app/api/soul-cards/mint/route.ts",
     "src/app/api/soul-cards/[id]/route.ts",
     "src/app/api/soul-cards/[id]/burn/route.ts",
     "src/app/api/chain/status/route.ts",
@@ -305,8 +305,9 @@ test("controllers: thin routes exist; error mapper covers all codes", () => {
     const src = read(route);
     assert.ok(src.includes('export const runtime = "nodejs"'), `${route} nodejs runtime`);
   }
-  // 铸造/销毁需鉴权，详情与链状态公开读
-  assert.ok(read("src/app/api/soul-cards/mint/route.ts").includes("getUserFromRequest"));
+  // 唤醒即铸卡：手动铸造路由不复存在（领养自动铸造，唯一铸卡入口）
+  assert.ok(!exists("src/app/api/soul-cards/mint/route.ts"), "manual mint route removed");
+  // 销毁需鉴权，详情与链状态公开读
   assert.ok(read("src/app/api/soul-cards/[id]/burn/route.ts").includes("getUserFromRequest"));
   assert.ok(!read("src/app/api/chain/status/route.ts").includes("getUserFromRequest"),
     "chain status is public");
@@ -330,11 +331,13 @@ test("i18n: zh/en soulCards section + api error keys + nav label", () => {
     const s = dict.soulCards;
     assert.ok(s, `${loc} has soulCards section`);
     for (const ns of [
-      "supply", "collection", "mintable", "mint", "burn",
+      "supply", "collection", "burn",
       "detail", "attrs", "certificate", "status", "txType", "stages",
     ]) {
       assert.ok(s[ns], `${loc} soulCards.${ns}`);
     }
+    // 唤醒即铸卡：手动铸造文案命名空间移除
+    assert.ok(!s.mint && !s.mintable, `${loc} soulCards has no mint/mintable ns`);
     assert.equal(dict.nav.soulCards ? 1 : 0, 1, `${loc} nav.soulCards`);
     for (const key of [
       "soulCardPetNotFound", "soulCardPetNotYours", "soulCardPetInactive",
@@ -359,12 +362,16 @@ test("frontend: soul-card components + page + header nav wiring", () => {
     "soul-card-growth.tsx",
     "soul-card-attributes.tsx",
     "soul-card-certificate.tsx",
-    "mint-soul-card-button.tsx",
     "soul-card-detail-modal.tsx",
     "soul-cards-client.tsx",
   ]) {
     assert.ok(exists(`src/components/soul-card/${comp}`), `component ${comp}`);
   }
+  // 唤醒即铸卡：手动铸造按钮组件移除
+  assert.ok(
+    !exists("src/components/soul-card/mint-soul-card-button.tsx"),
+    "mint button component removed",
+  );
   assert.ok(exists("src/app/[locale]/soul-cards/page.tsx"), "page exists");
   const header = read("src/components/layout/SiteHeader.tsx");
   assert.ok(header.includes('href: "/soul-cards"'), "header registers /soul-cards");
@@ -588,9 +595,10 @@ test("phase2 wiring: config + factory + advisory lock + metadata route + deploy 
     "metadata builder exported for tokenURI route",
   );
 
-  // evm 模式需等待出块：mint/burn 路由放宽函数执行时限
+  // evm 模式需等待出块：铸卡（随领养/归并触发）与销毁路由放宽函数执行时限
   for (const r of [
-    "src/app/api/soul-cards/mint/route.ts",
+    "src/app/api/pets/claim/route.ts",
+    "src/app/api/auth/migrate/route.ts",
     "src/app/api/soul-cards/[id]/burn/route.ts",
   ]) {
     assert.ok(read(r).includes("maxDuration = 60"), `${r} sets maxDuration=60`);

@@ -93,6 +93,13 @@ export type GrowthStage = (typeof GROWTH_STAGES)[number];
 
 export const GROWTH_LEVEL_MAX = 99;
 
+/**
+ * 每日首次互动（喂食/抚摸）奖励的灵魂卡经验值。
+ * 挂点：/api/pets/[id]/interact（以 soul_cards.updated_at 的 UTC 日期判定「每日首次」，
+ * mint 当天不重复给经验，天然防刷）。
+ */
+export const SOUL_CARD_INTERACT_EXP = 25;
+
 /** 按等级推导成长阶段（取 minLevel <= level 的最后一个阶段）。 */
 export function stageForLevel(level: number): GrowthStage {
   let stage: GrowthStage = GROWTH_STAGES[0];

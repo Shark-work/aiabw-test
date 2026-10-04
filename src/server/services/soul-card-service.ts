@@ -252,11 +252,6 @@ export async function listMySoulCards(userId: string) {
   return soulCardRepo.listSoulCardsByOwner(userId);
 }
 
-/** 当前用户可铸造的宠物（active + 已归属 + 无卡）。 */
-export async function listMintablePets(userId: string) {
-  return soulCardRepo.listMintablePetsByOwner(userId);
-}
-
 /** 链状态公开概览：provider 信息 + 供应计数 + 最近链上动态。 */
 export async function getChainStatus() {
   const provider = getChainProvider();

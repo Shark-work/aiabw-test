@@ -2,28 +2,22 @@
 
 /**
  * 灵魂卡图鉴页容器（客户端）：
- *  - 挂载时读 localStorage aiabw_token → Bearer 拉取 /api/soul-cards（我的卡 + 可铸造宠物）
+ *  - 挂载时读 localStorage aiabw_token → Bearer 拉取 /api/soul-cards（我的卡）
  *    与 /api/chain/status（公开链状态，无需登录）；
  *  - 登录门槛同 explore-v2：仅确认无 token / 401 时展示登录引导（cookie 无令牌，不能 SSR 鉴权）；
- *  - 卡片点击 → 拉详情（含账本）开弹窗；铸造/销毁成功后就地刷新。
+ *  - 卡片点击 → 拉详情（含账本）开弹窗；销毁成功后就地刷新。
+ * 唤醒即铸卡（2026-10-14）：领养时自动铸造，移除手动铸造入口与「可铸造宠物」区块。
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { MintSoulCardButton } from "./mint-soul-card-button";
+import { Link } from "@/i18n/navigation";
 import { SoulCardDetailModal } from "./soul-card-detail-modal";
 import { SoulCardView } from "./soul-card-view";
-import {
-  ELEMENT_META,
-  RARITY_META,
-  normalizeElement,
-  normalizeRarity,
-} from "@/lib/soul-card-config";
 import type {
   ChainStatusDto,
   LedgerEntryDto,
-  MintablePetDto,
   SoulCardDto,
 } from "./soul-card-types";
 
@@ -37,11 +31,9 @@ type DetailState = {
 export function SoulCardsClient() {
   const t = useTranslations("soulCards");
   const locale = useLocale();
-  const isEn = locale === "en";
 
   const [state, setState] = useState<LoadState>("loading");
   const [cards, setCards] = useState<SoulCardDto[]>([]);
-  const [mintable, setMintable] = useState<MintablePetDto[]>([]);
   const [chain, setChain] = useState<ChainStatusDto | null>(null);
   const [detail, setDetail] = useState<DetailState>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -76,14 +68,12 @@ export function SoulCardsClient() {
       const data = (await res.json()) as {
         ok: boolean;
         cards?: SoulCardDto[];
-        mintablePets?: MintablePetDto[];
       };
       if (!res.ok || !data.ok) {
         setState("error");
         return;
       }
       setCards(data.cards ?? []);
-      setMintable(data.mintablePets ?? []);
       setChain(await chainPromise);
       setState("ready");
     } catch {
@@ -109,11 +99,6 @@ export function SoulCardsClient() {
     } catch {
       /* 详情打开失败静默，列表仍可用 */
     }
-  }
-
-  function handleMinted(card: SoulCardDto) {
-    setNotice(t("mint.success", { cert: card.certificateNo }));
-    void loadAll();
   }
 
   function handleBurned(card: SoulCardDto) {
@@ -203,6 +188,12 @@ export function SoulCardsClient() {
             <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
               {t("collection.empty")}
             </p>
+            <Link
+              href="/pets"
+              className="mt-3 inline-block rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-90"
+            >
+              {t("collection.goAdopt")}
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -217,59 +208,6 @@ export function SoulCardsClient() {
           </div>
         )}
       </section>
-
-      {/* 可铸造宠物 */}
-      {state === "ready" ? (
-        <section>
-          <h2 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-            {t("mintable.title", { count: mintable.length })}
-          </h2>
-          {mintable.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-zinc-300 py-6 text-center text-xs text-zinc-400 dark:border-zinc-700">
-              {t("mintable.empty")}
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {mintable.map((pet) => {
-                const rarityMeta = RARITY_META[normalizeRarity(pet.rarity)];
-                const elementMeta = ELEMENT_META[normalizeElement(pet.element)];
-                return (
-                  <div
-                    key={pet.petId}
-                    className="rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900"
-                  >
-                    <div className="relative aspect-square overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={pet.imageUrl}
-                        alt={isEn ? pet.speciesNameEn : pet.speciesNameZh}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                      <span
-                        className={`absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${rarityMeta.badgeClass}`}
-                      >
-                        {rarityMeta.emoji}
-                      </span>
-                      <span className="absolute right-1.5 top-1.5 rounded-full bg-black/45 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                        {elementMeta.emoji}
-                      </span>
-                    </div>
-                    <p className="mt-2 truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                      {isEn ? pet.speciesNameEn : pet.speciesNameZh}
-                    </p>
-                    <MintSoulCardButton
-                      pet={pet}
-                      locale={locale}
-                      onMinted={handleMinted}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      ) : null}
 
       {/* 详情弹窗 */}
       {detail ? (

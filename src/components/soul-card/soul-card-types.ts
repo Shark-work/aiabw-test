@@ -31,18 +31,6 @@ export type SoulCardDto = {
   speciesNameEn: string;
 };
 
-export type MintablePetDto = {
-  petId: string;
-  speciesId: string;
-  speciesNameZh: string;
-  speciesNameEn: string;
-  imageUrl: string;
-  rarity: string;
-  element: string;
-  personality: string | null;
-  habitat: string | null;
-};
-
 export type LedgerEntryDto = {
   id: string;
   txHash: string;

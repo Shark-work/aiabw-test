@@ -13,8 +13,12 @@ import { SPECIES_PET_TYPE_PREFIX } from "@/lib/species-prompt";
 import { aibiNameFor } from "@/lib/aibi-names";
 import { mintCollectible } from "@/lib/nfr";
 import { releaseInviteReward } from "@/lib/referral-reward";
+import { findSoulCardByPetId } from "@/server/repositories/soul-card-repository";
+import { mintSoulCard, SoulCardError } from "@/server/services/soul-card-service";
 
 export const runtime = "nodejs";
+// 唤醒即铸卡：evm 链层需等待出块确认（约 15-30s），放宽函数执行上限
+export const maxDuration = 60;
 
 /**
  * POST /api/pets/claim   — 图鉴领养（核心领养功能）
@@ -179,6 +183,45 @@ export async function POST(req: Request) {
 
       await client.query("COMMIT");
 
+      // —— 唤醒即铸卡：领养成功同步铸造灵魂卡（一宠一卡，pet_id UNIQUE 幂等）——
+      // 容错：铸卡失败（发行硬顶耗尽/链层异常）不阻断已 COMMIT 的领养，响应 soulCard=null；
+      // SOUL_CARD_EXISTS（异常数据态）回查已有卡返回，保证前端总能展示编号。
+      // 游客领养无账号资产归属，暂不铸卡（登录归并时由 /api/auth/migrate 补铸）。
+      type SoulCardBrief = {
+        id: string;
+        tokenId: number;
+        certificateNo: string;
+        name: string;
+        rarity: string;
+        element: string;
+        growthStage: string;
+        growthLevel: number;
+      };
+      const toBrief = (c: SoulCardBrief): SoulCardBrief => ({
+        id: c.id,
+        tokenId: c.tokenId,
+        certificateNo: c.certificateNo,
+        name: c.name,
+        rarity: c.rarity,
+        element: c.element,
+        growthStage: c.growthStage,
+        growthLevel: c.growthLevel,
+      });
+      let soulCard: SoulCardBrief | null = null;
+      if (user) {
+        try {
+          soulCard = toBrief(await mintSoulCard({ userId: user.id, petId: pet.id }));
+        } catch (err) {
+          if (err instanceof SoulCardError && err.code === "SOUL_CARD_EXISTS") {
+            soulCard = toBrief(
+              (await findSoulCardByPetId(pet.id).catch(() => null)) as SoulCardBrief,
+            );
+          } else {
+            console.error("[pets/claim] soul card mint failed:", err);
+          }
+        }
+      }
+
       // 裂变活跃验证：被邀请人完成首次领养 → 释放冻结的邀请奖励（后台异步，失败不影响领养）
       if (user) {
         void releaseInviteReward(user.id).catch(() => {});
@@ -190,6 +233,7 @@ export async function POST(req: Request) {
         guest: !user,
         adoption: { id: ad.rows[0].id, petType, petName },
         threadId,
+        soulCard,
         nfr: minted
           ? {
               id: minted.id,

@@ -21,6 +21,8 @@ export type KnowledgePet = {
   adoptionId?: string | null;
   /** 游客领养（anonymousId 设备暂存）：展示「登录云同步」CTA 而非直接进聊天 */
   guest?: boolean;
+  /** 唤醒即铸卡：领养同步铸造的灵魂卡（游客未登录时为空——登录归并时补铸） */
+  soulCard?: { certificateNo: string; name: string } | null;
 };
 
 /**
@@ -78,6 +80,21 @@ export function PetKnowledgeModal({
             </div>
           </div>
         </div>
+
+        {/* 唤醒即铸卡：灵魂卡编号展示（登录用户领养同步铸造） */}
+        {pet.soulCard ? (
+          <section className="mt-3 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-3 py-2.5 dark:border-amber-900/40 dark:from-amber-950/30 dark:to-orange-950/30">
+            <span className="text-xl">✨</span>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-300">
+                {t("soulCardMinted")}
+              </p>
+              <p className="truncate font-mono text-[11px] font-semibold tracking-wide text-amber-600 dark:text-amber-400">
+                {pet.soulCard.certificateNo} · {pet.soulCard.name}
+              </p>
+            </div>
+          </section>
+        ) : null}
 
         {/* 真实物种百科 */}
         <section className="mt-4 rounded-xl border border-zinc-100 bg-orange-50/50 p-3">

@@ -6,7 +6,7 @@
  * 所有写操作支持传入事务 tx（drizzle transaction），保证 mint/burn 的原子性。
  */
 
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { petDictionary, pets, soulCards } from "@/db/schema";
@@ -24,19 +24,6 @@ export type SoulCardWithPet = SoulCardRow & {
   speciesId: string;
   speciesNameZh: string;
   speciesNameEn: string;
-};
-
-/** 可铸造宠物（active、已归属、尚无灵魂卡）。 */
-export type MintablePet = {
-  petId: string;
-  speciesId: string;
-  speciesNameZh: string;
-  speciesNameEn: string;
-  imageUrl: string;
-  rarity: string;
-  element: string;
-  personality: string | null;
-  habitat: string | null;
 };
 
 const CARD_WITH_PET_SELECT = {
@@ -139,38 +126,6 @@ export async function findPetWithSpecies(petId: string) {
     .where(eq(pets.id, petId))
     .limit(1);
   return rows[0] ?? null;
-}
-
-/**
- * 当前用户名下「可铸造灵魂卡」的宠物：
- * status='active' 且 owner_id=当前用户 且 尚不存在 soul_cards 行。
- * （游客占位 guest_owner 的宠物不在此列——必须先登录归并。）
- */
-export async function listMintablePetsByOwner(
-  ownerId: string,
-): Promise<MintablePet[]> {
-  const rows = await (db as DbOrTx)
-    .select({
-      petId: pets.id,
-      speciesId: pets.speciesId,
-      speciesNameZh: petDictionary.nameZh,
-      speciesNameEn: petDictionary.nameEn,
-      imageUrl: pets.imageUrl,
-      rarity: sql<string>`coalesce(${pets.traits}->>'rarity', 'common')`,
-      element: sql<string>`coalesce(${pets.traits}->>'element', 'earth')`,
-      personality: sql<string | null>`${pets.traits}->>'personality'`,
-      habitat: petDictionary.habitat,
-    })
-    .from(pets)
-    .innerJoin(petDictionary, eq(petDictionary.id, pets.speciesId))
-    .leftJoin(soulCards, eq(soulCards.petId, pets.id))
-    .where(
-      sql`${pets.ownerId} = ${ownerId}::uuid
-          AND ${pets.status} = 'active'
-          AND ${soulCards.id} IS NULL`,
-    )
-    .orderBy(desc(pets.createdAt));
-  return rows as MintablePet[];
 }
 
 /** 插入灵魂卡行（事务内调用）。 */

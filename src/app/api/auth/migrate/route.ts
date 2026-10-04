@@ -5,8 +5,11 @@ import { db, ensureDbSchemaOnce, pool } from "@/db/client";
 import { adoptions, threads } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
+import { mintSoulCard, SoulCardError } from "@/server/services/soul-card-service";
 
 export const runtime = "nodejs";
+// 归并补铸灵魂卡：evm 链层需等待出块确认，放宽函数执行上限
+export const maxDuration = 60;
 
 /**
  * POST /api/auth/migrate
@@ -56,9 +59,24 @@ export async function POST(req: Request) {
               guest_owner = NULL,
               adopted_at = COALESCE(adopted_at, now()),
               last_interaction_time = COALESCE(last_interaction_time, now())
-        WHERE guest_owner = $2 AND owner_id IS NULL`,
+        WHERE guest_owner = $2 AND owner_id IS NULL
+        RETURNING id`,
       [user.id, anonymousId],
     );
+
+    // 唤醒即铸卡：归并到位的游客宠物逐只补铸灵魂卡（游客领养时未铸）。
+    // best-effort：单只失败（含 SOUL_CARD_EXISTS 幂等）不阻塞整体归并。
+    let soulCardsMinted = 0;
+    for (const row of petResult.rows as { id: string }[]) {
+      try {
+        await mintSoulCard({ userId: user.id, petId: row.id });
+        soulCardsMinted += 1;
+      } catch (err) {
+        if (!(err instanceof SoulCardError && err.code === "SOUL_CARD_EXISTS")) {
+          console.error("[auth/migrate] soul card mint failed:", err);
+        }
+      }
+    }
 
     return NextResponse.json({
       ok: true,
@@ -66,6 +84,7 @@ export async function POST(req: Request) {
         adoptions: adoptionResult.rowCount ?? 0,
         threads: threadResult.rowCount ?? 0,
         pets: petResult.rowCount ?? 0,
+        soulCards: soulCardsMinted,
       },
     });
   } catch (err) {
