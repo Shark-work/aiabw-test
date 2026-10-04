@@ -53,6 +53,23 @@ test("config: resolvePriceId 注入 env 解析（空白→null，值去空格）
   assert.equal(resolvePriceId("item", env), null);
 });
 
+test("config: Price ID 前缀守卫 — 非 price_ 前缀按未配置返回 null（prod_ 误配防回归）", () => {
+  // 2026-10-04 生产事故：STRIPE_PRICE_ID_* 误配 Product ID（prod_ 前缀）→ Stripe API
+  // "No such price" → 下单 500。守卫后误配退化为 503 优雅降级。
+  for (const [type, name] of Object.entries(STRIPE_PRICE_ENV)) {
+    assert.equal(resolvePriceId(type, { [name]: "prod_VNSl9oyj2Fnxxb" }), null,
+      `${name}=prod_* must be rejected`);
+    assert.equal(resolvePriceId(type, { [name]: "price_1UMhpp5ffWQgbVCaL0mgG3CD" }),
+      "price_1UMhpp5ffWQgbVCaL0mgG3CD", `${name}=price_* must pass`);
+  }
+  // example 文件占位值同样锁 price_ 前缀（防文档误导复犯）
+  const ex = read(".env.production.example");
+  for (const name of Object.values(STRIPE_PRICE_ENV)) {
+    const m = ex.match(new RegExp(`^${name}=(\\S+)`, "m"));
+    assert.ok(m && m[1].startsWith("price_"), `${name} in .env.production.example must be price_*`);
+  }
+});
+
 test("config: 积分兑换比 / webhook 路径 / 密钥读取器形态", () => {
   assert.ok(Number.isInteger(STRIPE_POINTS_PER_UNIT) && STRIPE_POINTS_PER_UNIT >= 100);
   assert.equal(STRIPE_WEBHOOK_PATH, "/api/stripe/webhook");

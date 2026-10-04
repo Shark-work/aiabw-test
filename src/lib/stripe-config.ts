@@ -49,12 +49,18 @@ export const stripeSecretKey = (): string | null => trimOrNull(process.env.STRIP
 /** 服务端专用：Webhook 签名密钥；未配置返回 null（webhook 据此返回 500 让 Stripe 重试）。 */
 export const stripeWebhookSecret = (): string | null => trimOrNull(process.env.STRIPE_WEBHOOK_SECRET);
 
-/** 按商品类型解析 Price ID；未配置返回 null（路由降级 503 PAYMENT_NOT_CONFIGURED）。 */
+/**
+ * 按商品类型解析 Price ID；未配置返回 null（路由降级 503 PAYMENT_NOT_CONFIGURED）。
+ * 前缀守卫：仅接受 price_ 前缀——2026-10-04 生产事故：三个 Price ID 被误配为
+ * Product ID（prod_ 前缀），Stripe API 抛 "No such price" → 下单 500。
+ * 非 price_ 值按未配置处理，使误配退化为优雅降级 503 而非内部错误。
+ */
 export function resolvePriceId(
   type: StripeProductType,
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
-  return trimOrNull(env[STRIPE_PRICE_ENV[type]]);
+  const v = trimOrNull(env[STRIPE_PRICE_ENV[type]]);
+  return v && v.startsWith("price_") ? v : null;
 }
 
 /**
