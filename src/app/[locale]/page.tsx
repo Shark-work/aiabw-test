@@ -118,7 +118,7 @@ export default function Home() {
         // 单宠限制：游客 → 登录（登录后自动迁移本设备已有宠物）；
         // 登录用户 → 0.01 元解锁无限领养，支付成功后自动完成这次领养
         if (!token) {
-          router.push("/login?redirect=/my-pets");
+          router.push("/login?redirect=/pets/my");
           return;
         }
         setPetState((prev) => ({

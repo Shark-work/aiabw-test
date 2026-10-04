@@ -931,8 +931,10 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "checkin_streak" integer DEFAULT 0 NOT NULL`,
   // 高级公民月卡到期时间（NULL=非会员；到期后自动降级为普通用户）
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "premium_until" timestamp`,
-  // 探险商城：金币余额（新用户默认 200）
-  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "coins" integer DEFAULT 200 NOT NULL`,
+  // 探险商城：金币余额（新用户默认 0；2026-10-09 死表清理：原默认 200 无获取渠道，误导新用户）
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "coins" integer DEFAULT 0 NOT NULL`,
+  // 存量库列默认值纠偏（ADD COLUMN IF NOT EXISTS 不会更新已存在列的 DEFAULT，幂等重设）
+  `ALTER TABLE "users" ALTER COLUMN "coins" SET DEFAULT 0`,
   // 裂变奖励状态机：pending=冻结等待活跃验证 / credited=已发放 / expired=超时作废
   `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'credited' NOT NULL`,
   `ALTER TABLE "invite_rewards" ADD COLUMN IF NOT EXISTS "claimed_at" timestamp`,
@@ -1151,7 +1153,9 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     FK→threads(id) ON DELETE SET NULL，drizzle/0029）+ supports_chat 种子恢复 true
 //     （聊天能力已上线：POST /api/threads 建线程、/api/chat petType=aibi:<tokenId> 人设分支、
 //     背包/详情页聊天入口），能力开关有了真实消费路径
-const SCHEMA_VERSION = 13;
+// v14: 探险商城死表清理 —— users.coins 默认值 200→0（原默认 200 无任何获取渠道，
+//     新用户误以为是可再生的免费货币；存量用户余额不受影响，仅列默认值变更）
+const SCHEMA_VERSION = 14;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

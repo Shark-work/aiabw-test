@@ -58,3 +58,12 @@
 - 视觉：图鉴卡片未拥有=虚线边框+磨砂淡化（border-dashed + grayscale），已拥有=琥珀高亮+流光扫掠（globals.css soul-card-owned，prefers-reduced-motion 降级）。
 - 兼容：全站 URL 零变更（/pets /pets/my /my-pets /pets/[id] 原位）；老用户升级公告一次性 banner（localStorage `aiabw_soul_upgrade_v1` 幂等）。
 - 契约测试：tests/soul-pet.test.mjs（13 项）；locale-routes.test.mjs navAdoptMy 断言同步。
+
+## 六、第三批执行记录（2026-10-09 · /my-pets 与 /pets/my 双页合并）
+
+- 背景：backlog P2（2026-10-06 功能融合度诊断 #5）。/my-pets（聊天伙伴：心情/记忆/背包/装扮/邀请）与 /pets/my（收藏资产：持有管理/融合/兑换/放生）数据源同为 adoptions、职责割裂，用户需在两个「我的宠物」间来回；互跳条（myPets.evolveBanner ↔ petsCatalog.crossBanner）只缓解未治本。
+- 方案：以 /pets/my 为统一入口，单页双 Tab —— 💞 伙伴（companion-panel.tsx，原 /my-pets 整体迁入）/ 🎒 收藏（collection-panel.tsx，原 /pets/my 整体迁入）；面板懒挂载 + hidden 状态保留（切换不重新请求）；未登录跳转上移至 Tab 壳。
+- URL：/my-pets → 308 永久重定向至 /pets/my（与 /explore → /explore-v2 同模式，兼容旧书签/外链/收录）；深链 ?tab=collection 直达收藏，?rarity=（图鉴稀有度筛选历史入口）自动切收藏 Tab。
+- 引用统一：SiteHeader moreItems、sitemap（只列终态 URL）、points/handbooks/marketplace 页 Link、首页登录回跳 redirect 全部指向 /pets/my。
+- i18n：新增 myPets.tabCompanion/tabCollection（双语）；删除互跳条四键（myPets.evolveBanner/evolveGo、petsCatalog.crossBanner/crossGo）。
+- 契约测试：tests/my-pets-merge.test.mjs（6 项）；soul-pet.test.mjs #10 URL 锁修订（四路由原位 → /pets /pets/my /pets/[id] 原位 + /my-pets 308 保留）；aibi-names.test.mjs displayName 断言改指 companion-panel。

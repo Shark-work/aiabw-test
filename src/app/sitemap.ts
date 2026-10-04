@@ -21,7 +21,7 @@ const ROUTES: { path: string; priority: number; changeFrequency: MetadataRoute.S
   { path: "/pets", priority: 0.9, changeFrequency: "daily" },
   { path: "/blindbox", priority: 0.8, changeFrequency: "daily" },
   { path: "/news", priority: 0.3, changeFrequency: "weekly" }, // 2026-09-30 旧新闻系统降级（保留页面）
-  { path: "/my-pets", priority: 0.7, changeFrequency: "daily" },
+  { path: "/pets/my", priority: 0.7, changeFrequency: "daily" }, // 2026-10-09 双页合并：/my-pets 已 308 至此，sitemap 只列终态 URL
   { path: "/bag", priority: 0.7, changeFrequency: "weekly" },
   { path: "/explore-v2", priority: 0.7, changeFrequency: "weekly" },
   { path: "/workshop", priority: 0.6, changeFrequency: "weekly" },

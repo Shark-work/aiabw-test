@@ -32,12 +32,6 @@
   4. 入口：POST /api/threads（zod + 幂等 + 并发守护，不产生孤儿线程）；背包卡片与 /aibi/[tokenId] 详情页 AibiChatButton（有线程直跳 /chat?thread=，无线程「创建聊天」）；/api/bag/aibis 与 token 详情携带 threadId（后者仅持有者下放——threadId 即窥视钥匙）。
 - **supports_chat 种子已恢复 true**（全物种，随 v12 同步生产）；契约测试 tests/aibi-chat-e2e.test.mjs（16 项）。
 
-## P2 · /my-pets 与 /pets/my 双页合并（2026-10-06 登记，功能融合度诊断 #5）
-
-- **现状**：/my-pets（聊天宠物：心情/记忆/排序搜索）与 /pets/my（宠物图鉴：持有管理/融合/兑换商店）数据源同为 adoptions，职责割裂，用户需在两个"我的宠物"间来回。2026-10-06 已互加跳转条缓解（myPets.evolveBanner ↔ petsCatalog.crossBanner），未治本。
-- **合并方向**：以 /pets/my 为主框架并入聊天/心情/记忆能力（或反向），保留双 URL 308 兼容；需梳理 PetDetailModal 与 my-pets 客户端的状态重叠。
-- **预估**：2–3 天。合并后撤掉互跳条。
-
 ## P2 · 积分/金币双货币统一叙事（2026-10-06 登记，功能融合度诊断 #6）
 
 - **现状**：单一 users.points 贯穿全部业务线（points_log 13 种 reason），但 UI 存在"积分/金币"两套话术混用，schema 注释（"仅用于 UGC 宠物与抽奖"）已过时。
@@ -50,6 +44,13 @@
 - **B2** transfer（转赠）：✅ 已落地（2026-10-08，审计任务 2）——实际路由 `POST /api/pets/transfer`（首铸 24h / 再转赠 7 天冷却，一阶段免费），入口 = 收藏中心 NFR Tab 卡片「转赠」按钮（选个体 → 接收方昵称 toUsername → 二次确认；邮箱隐私不对外故不用 email 标识）；同期新增 `GET /api/pets/collectibles` 个体实例端点与 transferSelf 自赠护栏。
 - **B3** `POST /api/referral`（邀请返利）：路由存在，入口与奖励规则待产品确认。
 - 用户决策（2026-09-30）：三项整体暂缓，**待产品侧确认优先级**后单独排期；期间不自动删除、不改动现有行为。
+
+## P3 · 灵魂名进聊天线（2026-10-09 登记，观察期 1-2 周）
+
+- **背景**：2026-10-09「我的灵宠」体系升级将 `soulName`（元素前缀灵魂名，src/lib/soul-pet.ts）落地图鉴/详情页（读路径派生，DB 零迁移）；聊天线未动（`/api/pets` displayName 与聊天人设注入维持原型名）。
+- **决策点**：观察 1-2 周数据（图鉴灵魂名展示后的用户行为/反馈/客服疑问）后决定是否扩展到聊天场景。
+- **若推进的触点**：`/api/pets` 的 `displayName` 派生链（aibi-names.ts 内聚门槛）+ `/api/chat` 人设 prompt 注入；需评估对记忆连续性/人设一致性的影响（聊天记录中的名字变更会造成认知断层）。
+- **暂缓理由**：聊天是高频核心路径，命名变更影响面大，先用图鉴低频场景验证用户接受度。
 
 ---
 

@@ -266,7 +266,7 @@ export default function MarketplacePage() {
               </button>
             )}
             <Link
-              href="/my-pets"
+              href="/pets/my"
               className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-orange-600"
             >
               {tc("myPets")}

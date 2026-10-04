@@ -132,9 +132,10 @@ test("contract: 图鉴卡按门槛显示艾比名 + 原型副标", () => {
   assert.ok(src.includes("rarityWeight(pet.traits.rarity) >= AIBI_RARITY_MIN_WEIGHT"));
 });
 
-test("contract: my-pets 经 displayName 内聚门槛自动生效（无独立分支被旁路）", () => {
-  const myPets = read("src/app/[locale]/my-pets/page.tsx");
-  assert.ok(myPets.includes("pet.displayName || pet.petName"), "my-pets 消费 displayName");
+test("contract: 伙伴面板经 displayName 内聚门槛自动生效（无独立分支被旁路）", () => {
+  // 2026-10-09 双页合并：原 /my-pets 页面迁入 companion-panel.tsx（/pets/my 伙伴 Tab 承载）
+  const companion = read("src/components/pets/companion-panel.tsx");
+  assert.ok(companion.includes("pet.displayName || pet.petName"), "伙伴面板消费 displayName");
 });
 
 test("contract: 详情页页面内艾比名副标题（仅页面内）", () => {

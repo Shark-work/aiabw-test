@@ -178,18 +178,27 @@ test("css: 已拥有卡片流光关键帧 + prefers-reduced-motion 降级", () =
   assert.ok(!/@keyframes soul[^{]*\{[^}]*(?:width|height|top|left|margin|padding):/.test(css), "关键帧不动 layout 属性");
 });
 
-// ---- 10) URL 不变锁 ----
-test("routes: URL 零变更（/pets /pets/my /my-pets /pets/[id] 原位，无重定向迁移）", () => {
+// ---- 10) URL 锁（2026-10-09 双页合并修订）----
+// 原锁「四路由原位零迁移」针对灵宠体系升级（保 SEO）；2026-10-09 双页合并（backlog P2）
+// 经用户批准将 /my-pets 308 → /pets/my，本锁相应修订为：
+// /pets /pets/my /pets/[id] 原位不变 + /my-pets 以 308 重定向页形式保留（URL 兼容）。
+test("routes: /pets /pets/my /pets/[id] 原位 + /my-pets 308 → /pets/my（双页合并修订）", () => {
   for (const rel of [
     "src/app/[locale]/pets/page.tsx",
     "src/app/[locale]/pets/my/page.tsx",
-    "src/app/[locale]/my-pets/page.tsx",
     "src/app/[locale]/pets/[id]/page.tsx",
   ]) {
     assert.ok(existsSync(join(ROOT, rel)), `${rel} 原位保留`);
   }
+  // /my-pets 不删除、不 404：以 308 永久重定向页保留（与 /explore → /explore-v2 同模式）
+  const myPetsRedirect = read("src/app/[locale]/my-pets/page.tsx");
+  assert.ok(myPetsRedirect.includes("permanentRedirect"), "/my-pets 必须是 308 重定向页");
+  assert.ok(myPetsRedirect.includes("/pets/my"), "/my-pets 重定向目标必须是 /pets/my");
+  assert.ok(!myPetsRedirect.includes("use client"), "/my-pets 不再承载客户端页面逻辑");
   const sitemap = read("src/app/sitemap.ts");
   assert.ok(sitemap.includes("/pets/${String(s.id)}"), "sitemap 详情页 URL 形态不变");
+  assert.ok(sitemap.includes("/pets/my") && !sitemap.includes('"/my-pets"'), "sitemap 只列终态 URL /pets/my");
   const header = read("src/components/layout/SiteHeader.tsx");
   assert.ok(header.includes('href: "/pets"'), "导航主入口仍指向 /pets（URL 不变）");
+  assert.ok(header.includes('href: "/pets/my"'), "导航我的灵宠指向合并后 /pets/my");
 });

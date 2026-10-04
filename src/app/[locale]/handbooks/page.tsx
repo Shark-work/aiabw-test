@@ -121,7 +121,7 @@ export default function HandbooksPage() {
               {generating ? trans("generating") : trans("generate")}
             </button>
             <Link
-              href="/my-pets"
+              href="/pets/my"
               className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
             >
               {trans("myPets")}
