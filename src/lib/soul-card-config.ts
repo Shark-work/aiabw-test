@@ -81,6 +81,40 @@ export const ELEMENT_META: Record<
   air: { emoji: "🌪️", labelZh: "风", labelEn: "Air" },
 };
 
+/**
+ * 灵魂箴言池（P2 社交传播）：分享图 / 分享文案抽取一句箴言，
+ * 按证书编号稳定伪随机（同一张卡永远同一句，保证多次分享观感一致）。
+ */
+export const SOUL_QUOTES_ZH = [
+  "我在沉睡中听见了你的心跳。",
+  "每一次相遇，都是灵魂的重逢。",
+  "你给我的名字，是我最珍贵的宝物。",
+  "世界很大，我想替你去看看。",
+  "今天的风，带着远方的味道。",
+  "你回来的时候，我就在这里。",
+  "我们一起走过的路，都会发光。",
+  "即使沉睡，我也在慢慢长大。",
+] as const;
+
+export const SOUL_QUOTES_EN = [
+  "I heard your heartbeat while I slept.",
+  "Every encounter is a reunion of souls.",
+  "The name you gave me is my treasure.",
+  "The world is wide — let me see it for you.",
+  "Today's wind carries the scent of faraway lands.",
+  "When you come back, I'll be right here.",
+  "The roads we walk together will glow.",
+  "Even in slumber, I am slowly growing.",
+] as const;
+
+/** 按证书编号稳定取箴言（hash = 字符码累加取模；locale 非 zh 走英文池）。 */
+export function soulQuoteFor(certificateNo: string, locale: string): string {
+  const pool = locale === "zh" ? SOUL_QUOTES_ZH : SOUL_QUOTES_EN;
+  let hash = 0;
+  for (const ch of String(certificateNo)) hash = (hash + ch.charCodeAt(0)) % pool.length;
+  return pool[hash];
+}
+
 /** 成长阶段（按等级区间推导；minLevel 为进入该阶段的最低等级）。 */
 export const GROWTH_STAGES = [
   { id: "seed", minLevel: 1, emoji: "🌰", labelZh: "种子", labelEn: "Seed" },

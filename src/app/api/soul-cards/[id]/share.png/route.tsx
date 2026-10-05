@@ -6,7 +6,9 @@ import { loadCjkFont } from "@/lib/og-share-image";
 import { SITE_URL } from "@/lib/site";
 import {
   normalizeRarity,
+  soulQuoteFor,
   stageForLevel,
+  type GrowthStageId,
   type SoulCardRarity,
 } from "@/lib/soul-card-config";
 
@@ -30,6 +32,14 @@ const RARITY_GRADIENT: Record<SoulCardRarity, [string, string]> = {
   rare: ["#38bdf8", "#818cf8"],
   epic: ["#8b5cf6", "#e879f9"],
   legendary: ["#f59e0b", "#fb7185"],
+};
+
+/** 成长阶段徽章色（P2 社交传播；satori 无 emoji 字体 → 纯 CSS 圆点徽章）。 */
+const STAGE_BADGE: Record<GrowthStageId, string> = {
+  seed: "#a1a1aa",
+  sprout: "#34d399",
+  bloom: "#f472b6",
+  radiant: "#f59e0b",
 };
 
 export async function GET(
@@ -65,6 +75,9 @@ export async function GET(
     const stageLabel = !fontData || isEn ? stage.labelEn : stage.labelZh;
     const fontFamily = fontData ? "CJK" : undefined;
     const fontWeight = fontData ? 400 : 700;
+    // 灵魂箴言（P2）：按证书编号稳定抽取；CJK 字体不可达时降级英文箴言
+    const quote = soulQuoteFor(String(card.certificateNo), !fontData || isEn ? "en" : "zh");
+    const siteHost = new URL(SITE_URL).host;
     const imgUrl = card.petImageUrl
       ? new URL(String(card.petImageUrl), SITE_URL).toString()
       : null;
@@ -129,16 +142,42 @@ export async function GET(
             >
               {String(card.name)}
             </div>
+            {/* 成长阶段徽章（四档色圆点 + 阶段名 + 等级） */}
             <div
               style={{
                 display: "flex",
+                alignItems: "center",
                 marginTop: 14,
                 fontSize: 26,
                 fontFamily,
                 color: "#52525b",
               }}
             >
+              <div
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9999,
+                  backgroundColor: STAGE_BADGE[stage.id],
+                  marginRight: 10,
+                }}
+              />
               {`${stageLabel} · Lv.${Number(card.growthLevel)}`}
+            </div>
+            {/* 灵魂箴言（稳定伪随机一句） */}
+            <div
+              style={{
+                display: "flex",
+                marginTop: 18,
+                fontSize: 24,
+                fontFamily,
+                color: "#71717a",
+                maxWidth: 460,
+                textAlign: "center",
+                lineHeight: 1.5,
+              }}
+            >
+              {isEn ? `"${quote}"` : `「${quote}」`}
             </div>
             {/* 全球唯一编号（底部锚定） */}
             <div
@@ -156,6 +195,7 @@ export async function GET(
               {String(card.certificateNo)}
             </div>
           </div>
+          {/* 域名水印（站点 URL 派生，不再硬编码） */}
           <div
             style={{
               display: "flex",
@@ -165,7 +205,7 @@ export async function GET(
               color: "rgba(255,255,255,0.92)",
             }}
           >
-            aiabw.com
+            {siteHost}
           </div>
         </div>
       ),

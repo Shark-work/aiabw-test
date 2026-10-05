@@ -110,8 +110,9 @@ test("soul-card-story: stage-gated content + share button + modal wiring", () =>
   assert.ok(s.includes('t("story.exploreSummary"'), "bloom explore summary");
   assert.ok(s.includes('t("story.statsHappiness"'), "radiant full stats incl. happiness");
   assert.ok(s.includes('t("story.rareMark")'), "radiant rare mark");
+  // P2 社交传播：分享按钮由 <a target=_blank> 升级为系统分享/下载（详见 soul-card-share.test）
   assert.ok(
-    s.includes("href={`/api/soul-cards/${card.id}/share.png`}"),
+    s.includes('const pngUrl = `/api/soul-cards/${card.id}/share.png`'),
     "share button → share.png",
   );
   const m = read("src/components/soul-card/soul-card-detail-modal.tsx");

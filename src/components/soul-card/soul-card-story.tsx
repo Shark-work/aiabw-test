@@ -45,8 +45,48 @@ export function SoulCardStory({
 }) {
   const t = useTranslations("soulCards");
   const [story, setStory] = useState<StoryDto | null>(null);
+  const [sharing, setSharing] = useState(false);
   const stage = stageForLevel(card.growthLevel);
   const isEn = locale === "en";
+
+  /**
+   * 分享卡（P2 社交传播）：拉取 share.png → navigator.share（移动端系统分享，
+   * 预填文案带编号/阶段/公开页链接）→ 降级为下载图片 → 再降级为新标签打开。
+   */
+  async function shareCard() {
+    if (sharing) return;
+    setSharing(true);
+    const pngUrl = `/api/soul-cards/${card.id}/share.png`;
+    const publicUrl = `${window.location.origin}/${locale}/soul-cards/${card.id}/public`;
+    const text = t("share.text", {
+      no: card.certificateNo,
+      stage: isEn ? stage.labelEn : stage.labelZh,
+      url: publicUrl,
+    });
+    try {
+      const res = await fetch(pngUrl);
+      if (!res.ok) throw new Error(String(res.status));
+      const blob = await res.blob();
+      const file = new File([blob], `soul-card-${card.certificateNo}.png`, {
+        type: "image/png",
+      });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text, title: card.name });
+        return;
+      }
+      // 桌面降级：下载图片
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      // 拉取/分享失败：退回新标签打开（P1 原行为）
+      window.open(pngUrl, "_blank", "noreferrer");
+    } finally {
+      setSharing(false);
+    }
+  }
 
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
@@ -143,16 +183,16 @@ export function SoulCardStory({
         <p className="text-[11px] text-zinc-300 dark:text-zinc-600">…</p>
       ) : null}
 
-      {/* 分享卡（服务端渲染卡面图；所有阶段可用） */}
-      <a
-        href={`/api/soul-cards/${card.id}/share.png`}
-        target="_blank"
-        rel="noreferrer"
+      {/* 分享卡（P2：系统分享/下载 share.png；所有阶段可用） */}
+      <button
+        type="button"
+        onClick={() => void shareCard()}
+        disabled={sharing}
         title={t("share.hint")}
-        className="mt-2.5 block rounded-full border border-violet-300 py-1.5 text-center text-xs font-semibold text-violet-600 transition hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-950/40"
+        className="mt-2.5 block w-full rounded-full border border-violet-300 py-1.5 text-center text-xs font-semibold text-violet-600 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-950/40"
       >
-        {t("share.button")}
-      </a>
+        {sharing ? t("share.sharing") : t("share.button")}
+      </button>
     </section>
   );
 }

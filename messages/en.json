@@ -1334,7 +1334,14 @@
     },
     "share": {
       "button": "🖼️ Share card",
-      "hint": "Generate a card image to share on social media"
+      "sharing": "Generating…",
+      "hint": "Generate a card image to share on social media",
+      "text": "I awakened {no} — now growing at the {stage} stage. Awaken your own soul pet → {url}"
+    },
+    "public": {
+      "badge": "Soul Card · Public Preview",
+      "cta": "🌰 Awaken mine",
+      "hint": "Awaken your own soul pet and claim a globally unique ID"
     },
     "burnFailed": "Burn failed. Please try again later"
   },
