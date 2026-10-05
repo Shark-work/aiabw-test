@@ -34,6 +34,8 @@ export const users = pgTable('users', {
   showInLeaderboard: boolean('show_in_leaderboard').notNull().default(true),
   /** 新手引导「唤醒仪式」完成标记（P1 故事外显）：完成后不再进入引导、不展示沉睡 banner */
   onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
+  /** 隐私设置：是否公开明信片墙（P2 社交传播，默认 false 不公开；开启后 /postcard-wall/[userId] 与汇总分享图可公开访问） */
+  postcardWallPublic: boolean('postcard_wall_public').notNull().default(false),
 });
 
 /**

@@ -45,7 +45,7 @@ export function ProfileClient() {
   const t = useTranslations("aibi.profilePage");
   const locale = useLocale();
   const isEn = locale === "en";
-  const [me, setMe] = useState<{ username: string; points: number } | null>(null);
+  const [me, setMe] = useState<{ id: string; username: string; points: number } | null>(null);
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [summary, setSummary] = useState<ProfileSummary | null>(null);
   const [page, setPage] = useState(1);
@@ -65,7 +65,11 @@ export function ProfileClient() {
         });
         const meData = await meRes.json();
         if (meData?.ok && meData.user) {
-          setMe({ username: meData.user.username ?? "", points: meData.user.points ?? 0 });
+          setMe({
+            id: String(meData.user.id ?? ""),
+            username: meData.user.username ?? "",
+            points: meData.user.points ?? 0,
+          });
         }
         const data = await aibiFetch<ProfileSummary>(`/api/aibi/profile?page=${p}&pageSize=10`, {
           locale,
@@ -140,6 +144,19 @@ export function ProfileClient() {
           </div>
         </section>
       </div>
+
+      {/* 明信片墙公开页入口（P2 社交传播）：跳转本人 /postcard-wall/[userId]（需在设置中开启公开开关） */}
+      {me?.id ? (
+        <Link
+          href={`/postcard-wall/${me.id}`}
+          className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-gradient-to-r from-rose-50 to-violet-50 px-4 py-3 text-sm shadow-sm transition hover:shadow-md dark:border-rose-900/50 dark:from-rose-950/40 dark:to-violet-950/30"
+        >
+          <span className="font-semibold text-rose-600 dark:text-rose-300">
+            {t("postcardWallEntry")}
+          </span>
+          <span className="shrink-0 text-xs text-zinc-400">{t("postcardWallEntryHint")}</span>
+        </Link>
+      ) : null}
 
       {/* 铸造 / 销毁记录（分页） */}
       {(

@@ -854,6 +854,8 @@
     "privacyTitle": "隐私设置",
     "leaderboardLabel": "参与排行榜",
     "leaderboardDesc": "关闭后，你和你的宠物将不会出现在任何公开榜单中（数据保留，仅隐藏展示）。",
+    "wallPublicLabel": "公开我的明信片墙",
+    "wallPublicDesc": "开启后，任何人可通过链接查看你的明信片收集进度（不含邮箱等隐私信息）；关闭后公开页立即不可访问。",
     "supportTitle": "反馈与帮助",
     "supportDesc": "遇到问题或有建议？客服 QQ：1206309834，或前往联系我们页面查看更多渠道。",
     "supportAction": "联系我们"
@@ -1118,7 +1120,14 @@
       "claimFailed": "领取失败，请稍后再试",
       "storyTitle": "明信片故事",
       "rare": "稀有",
-      "epic": "史诗"
+      "epic": "史诗",
+      "publicBadge": "公开明信片墙",
+      "publicTitle": "{name} 的明信片墙",
+      "totalLine": "共收集 {n} 张明信片",
+      "completeBadge": "🏆 图鉴完成",
+      "shareWall": "🖼️ 分享我的明信片墙",
+      "sharing": "生成中…",
+      "shareWallText": "来看看我的明信片墙，已收集 {n} 张明信片 → {url}"
     }
   },
   "achievements": {
@@ -1437,6 +1446,8 @@
       "burnHistory": "销毁记录",
       "emptyMint": "暂无发行记录",
       "emptyBurn": "暂无销毁记录",
+      "postcardWallEntry": "💌 我的明信片墙",
+      "postcardWallEntryHint": "公开展示需在设置中开启 →",
       "prev": "上一页",
       "next": "下一页",
       "page": "{page}/{pages}"

@@ -854,6 +854,8 @@
     "privacyTitle": "Privacy",
     "leaderboardLabel": "Join leaderboards",
     "leaderboardDesc": "When off, you and your pets are hidden from all public leaderboards (data kept, display only).",
+    "wallPublicLabel": "Make my postcard wall public",
+    "wallPublicDesc": "When on, anyone with the link can view your postcard collection progress (no private info like email). Turning it off instantly blocks the public page.",
     "supportTitle": "Feedback & Help",
     "supportDesc": "Questions or suggestions? Customer Service QQ: 1206309834, or visit the Contact page for more channels.",
     "supportAction": "Contact us"
@@ -1118,7 +1120,14 @@
       "claimFailed": "Claim failed, please try again",
       "storyTitle": "Postcard Story",
       "rare": "Rare",
-      "epic": "Epic"
+      "epic": "Epic",
+      "publicBadge": "Public Postcard Wall",
+      "publicTitle": "{name}'s Postcard Wall",
+      "totalLine": "{n} postcards collected",
+      "completeBadge": "🏆 Set Complete",
+      "shareWall": "🖼️ Share my postcard wall",
+      "sharing": "Generating…",
+      "shareWallText": "Check out my postcard wall — {n} postcards collected → {url}"
     }
   },
   "achievements": {
@@ -1437,6 +1446,8 @@
       "burnHistory": "Burn History",
       "emptyMint": "No issue records yet.",
       "emptyBurn": "No burn records yet.",
+      "postcardWallEntry": "💌 My Postcard Wall",
+      "postcardWallEntryHint": "Enable public access in Settings →",
       "prev": "Prev",
       "next": "Next",
       "page": "{page}/{pages}"

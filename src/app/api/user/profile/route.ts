@@ -23,7 +23,11 @@ export async function GET(req: Request) {
   try {
     await ensureDbSchemaOnce();
     const [row] = await db
-      .select({ username: users.username, showInLeaderboard: users.showInLeaderboard })
+      .select({
+        username: users.username,
+        showInLeaderboard: users.showInLeaderboard,
+        postcardWallPublic: users.postcardWallPublic,
+      })
       .from(users)
       .where(eq(users.id, user.id))
       .limit(1);
@@ -33,6 +37,7 @@ export async function GET(req: Request) {
         id: user.id,
         username: row?.username ?? "",
         showInLeaderboard: row?.showInLeaderboard ?? true,
+        postcardWallPublic: row?.postcardWallPublic ?? false,
       },
     });
   } catch (err) {
@@ -57,7 +62,11 @@ export async function PATCH(req: Request) {
     await ensureDbSchemaOnce();
     const body = await req.json().catch(() => ({}));
 
-    const updates: { username?: string; showInLeaderboard?: boolean } = {};
+    const updates: {
+      username?: string;
+      showInLeaderboard?: boolean;
+      postcardWallPublic?: boolean;
+    } = {};
     if (body && Object.prototype.hasOwnProperty.call(body, "username")) {
       const nameCheck = validateUsername(body.username);
       if (!nameCheck.ok) {
@@ -72,17 +81,34 @@ export async function PATCH(req: Request) {
       }
       updates.showInLeaderboard = body.showInLeaderboard;
     }
-    if (updates.username === undefined && updates.showInLeaderboard === undefined) {
+    // P2 社交传播：明信片墙公开开关（默认 false；开启后公开页/分享图可匿名访问）
+    if (body && Object.prototype.hasOwnProperty.call(body, "postcardWallPublic")) {
+      if (typeof body.postcardWallPublic !== "boolean") {
+        return NextResponse.json({ ok: false, error: apiError(locale, "invalidPrivacySetting") }, { status: 400 });
+      }
+      updates.postcardWallPublic = body.postcardWallPublic;
+    }
+    if (
+      updates.username === undefined &&
+      updates.showInLeaderboard === undefined &&
+      updates.postcardWallPublic === undefined
+    ) {
       return NextResponse.json({ ok: false, error: apiError(locale, "profileNothingToUpdate") }, { status: 400 });
     }
 
-    let row: { username: string | null; showInLeaderboard: boolean | null } | undefined;
+    let row:
+      | { username: string | null; showInLeaderboard: boolean | null; postcardWallPublic: boolean | null }
+      | undefined;
     try {
       [row] = await db
         .update(users)
         .set(updates)
         .where(eq(users.id, user.id))
-        .returning({ username: users.username, showInLeaderboard: users.showInLeaderboard });
+        .returning({
+          username: users.username,
+          showInLeaderboard: users.showInLeaderboard,
+          postcardWallPublic: users.postcardWallPublic,
+        });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       if (/users_username_key/i.test(msg)) {
@@ -97,6 +123,7 @@ export async function PATCH(req: Request) {
         id: user.id,
         username: row?.username ?? updates.username ?? "",
         showInLeaderboard: row?.showInLeaderboard ?? updates.showInLeaderboard ?? true,
+        postcardWallPublic: row?.postcardWallPublic ?? updates.postcardWallPublic ?? false,
       },
     });
   } catch (err) {

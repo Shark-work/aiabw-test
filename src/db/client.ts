@@ -994,6 +994,8 @@ const SCHEMA_ALTERS: string[] = [
 
   // ===== P1 故事外显（drizzle/0031）：新手引导「唤醒仪式」完成标记 =====
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_completed" boolean DEFAULT false NOT NULL`,
+  // ===== P2 社交传播（drizzle/0032）：明信片墙公开页隐私开关 =====
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "postcard_wall_public" boolean DEFAULT false NOT NULL`,
 ];
 
 /**
@@ -1168,7 +1170,9 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     is_active=false 不对外售卖，仅供裂变奖励发放）
 // v16: P1 故事外显 —— users.onboarding_completed（新手引导「唤醒仪式」完成标记，
 //     drizzle/0031；未完成且无灵宠的用户首页展示沉睡 banner 引导继续）
-const SCHEMA_VERSION = 16;
+// v17: P2 社交传播 —— users.postcard_wall_public（明信片墙公开页隐私开关，
+//     drizzle/0032；默认 false，开启后公开页/汇总分享图可匿名访问）
+const SCHEMA_VERSION = 17;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

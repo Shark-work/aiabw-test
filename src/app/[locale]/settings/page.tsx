@@ -6,7 +6,12 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { CONTACT_INFO, QQ_SERVICE_URL } from "@/lib/config";
 
-type Profile = { id: string; username: string; showInLeaderboard: boolean };
+type Profile = {
+  id: string;
+  username: string;
+  showInLeaderboard: boolean;
+  postcardWallPublic: boolean;
+};
 
 /**
  * 账号设置页（/settings）：
@@ -19,6 +24,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [username, setUsername] = useState("");
   const [showInLeaderboard, setShowInLeaderboard] = useState(true);
+  const [wallPublic, setWallPublic] = useState(false);
   const [loading, setLoading] = useState(true);
   const [needLogin, setNeedLogin] = useState(false);
   const [nameMsg, setNameMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -40,6 +46,7 @@ export default function SettingsPage() {
           setProfile(d.user as Profile);
           setUsername(d.user.username ?? "");
           setShowInLeaderboard(d.user.showInLeaderboard !== false);
+          setWallPublic(d.user.postcardWallPublic === true);
         } else {
           localStorage.removeItem("aiabw_token");
           setNeedLogin(true);
@@ -91,6 +98,25 @@ export default function SettingsPage() {
       setPrivacyMsg({ ok: true, text: t("saved") });
     } catch (err) {
       setShowInLeaderboard(prev);
+      setPrivacyMsg({ ok: false, text: err instanceof Error ? err.message : t("saveFailed") });
+    } finally {
+      setSavingPrivacy(false);
+    }
+  };
+
+  // P2 社交传播：明信片墙公开开关（默认关；开启后 /postcard-wall/[userId] 可匿名访问）
+  const toggleWallPublic = async (next: boolean) => {
+    setSavingPrivacy(true);
+    setPrivacyMsg(null);
+    const prev = wallPublic;
+    setWallPublic(next); // 乐观更新，失败回滚
+    try {
+      const u = await patch({ postcardWallPublic: next });
+      setProfile(u);
+      setWallPublic(u.postcardWallPublic === true);
+      setPrivacyMsg({ ok: true, text: t("saved") });
+    } catch (err) {
+      setWallPublic(prev);
       setPrivacyMsg({ ok: false, text: err instanceof Error ? err.message : t("saveFailed") });
     } finally {
       setSavingPrivacy(false);
@@ -165,6 +191,29 @@ export default function SettingsPage() {
                 <span
                   className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
                     showInLeaderboard ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+            {/* 明信片墙公开开关（P2 社交传播） */}
+            <div className="mt-3 flex items-start justify-between gap-3 border-t border-zinc-100 pt-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-zinc-700">{t("wallPublicLabel")}</div>
+                <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{t("wallPublicDesc")}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={wallPublic}
+                disabled={savingPrivacy}
+                onClick={() => void toggleWallPublic(!wallPublic)}
+                className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                  wallPublic ? "bg-orange-500" : "bg-zinc-300"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span
+                  className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${
+                    wallPublic ? "left-[22px]" : "left-0.5"
                   }`}
                 />
               </button>

@@ -37,7 +37,8 @@ test("onboarding: users.onboarding_completed wired (drizzle/0031 + SCHEMA_ALTERS
   );
 
   const client = read("src/db/client.ts");
-  assert.ok(client.includes("const SCHEMA_VERSION = 16"), "SCHEMA_VERSION bumped to 16");
+  // 版本号随后续迭代递增（P2 已至 v17）→ 锁「v16 已引入」而非当前版本值
+  assert.match(client, /const SCHEMA_VERSION = (1[6-9]|[2-9]\d)/, "SCHEMA_VERSION >= 16");
   assert.ok(client.includes("v16: P1 故事外显"), "v16 changelog comment");
   assert.ok(
     client.includes(
