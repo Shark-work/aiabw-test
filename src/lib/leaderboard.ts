@@ -36,3 +36,32 @@ export function startOfWeek(now: Date = new Date()): Date {
 
 /** 排行榜默认展示数量 */
 export const LEADERBOARD_LIMIT = 20;
+
+// ===== 产品升级 Phase 5：多维榜单 + 付费推荐位 =====
+
+/** 榜单分类：人气（战力）/ 收藏 / 探索 / 创作 */
+export const LEADERBOARD_CATEGORIES = ["popularity", "collection", "exploration", "creation"] as const;
+export type LeaderboardCategory = (typeof LEADERBOARD_CATEGORIES)[number];
+
+/** 统计周期：日 / 周 / 月 / 总 */
+export const LEADERBOARD_PERIODS = ["day", "week", "month", "all"] as const;
+export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
+
+/** 周期窗口起点（本地时区）；all 返回 null 表示不限时间。 */
+export function periodStart(period: LeaderboardPeriod, now: Date = new Date()): Date | null {
+  if (period === "all") return null;
+  if (period === "week") return startOfWeek(now);
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  if (period === "month") d.setDate(1);
+  return d; // day = 今日 00:00
+}
+
+/** 付费推荐位：本期唯一可推广对象 = 数字藏品实例（user_collectibles.id） */
+export const PROMOTE_CONTENT_TYPE = "collectible";
+/** 可选推广时长（天） */
+export const PROMOTE_DAYS = [1, 3, 7] as const;
+/** 推广定价（积分）：1 天 100 / 3 天 250 / 7 天 500 */
+export const PROMOTE_PRICING: Record<number, number> = { 1: 100, 3: 250, 7: 500 };
+/** 排行榜顶部推荐位坑位数 */
+export const PROMOTED_SLOT_LIMIT = 3;

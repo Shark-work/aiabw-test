@@ -607,7 +607,8 @@
     "soulCardBurned": "This Soul Card has been burned",
     "soulCardLoadFailed": "Failed to load Soul Cards. Please try again later",
     "soulCardMintFailed": "Failed to create the Soul Card. Please try again later",
-    "soulCardBurnFailed": "Burn failed. Please try again later"
+    "soulCardBurnFailed": "Burn failed. Please try again later",
+    "promoteInvalidRequest": "Invalid promotion request"
   },
   "nav": {
     "home": "Home",
@@ -646,7 +647,8 @@
     "navMore": "More",
     "becomeCreator": "✨ Become a creator",
     "creatorOk": "🎉 Congratulations! You are now a creator and can publish UGC pets.",
-    "creatorFailed": "Application failed"
+    "creatorFailed": "Application failed",
+    "navLeaderboard": "🏆 Rank"
   },
   "collection": {
     "title": "Collection",
@@ -667,7 +669,8 @@
       "unlimited": "Unlimited",
       "actions": {
         "breed": "Crystallize",
-        "transfer": "Gift"
+        "transfer": "Gift",
+        "promote": "Promote"
       },
       "breed": {
         "title": "Resonance Pair",
@@ -834,7 +837,28 @@
     "owner": "owner {name}",
     "generation": "Gen {gen}",
     "power": "Power",
-    "minted": "New this week"
+    "minted": "New this week",
+    "catPopularity": "Popularity",
+    "catCollection": "Collectors",
+    "catExploration": "Explorers",
+    "catCreation": "Creators",
+    "periodDay": "Daily",
+    "periodWeek": "Weekly",
+    "periodMonth": "Monthly",
+    "periodAll": "All-time",
+    "unitCollection": "new collectibles",
+    "unitExploration": "explorations",
+    "unitCreation": "creations",
+    "myRankBanner": "My rank: #{rank}",
+    "promotedTitle": "Promoted",
+    "promotedBadge": "Ad",
+    "promoteCta": "Promote my collectible",
+    "share": "Share",
+    "shared": "Link copied",
+    "empty": "No entries yet",
+    "endsAt": "Until {time}",
+    "shareTextPet": "#{rank}! {owner}'s \"{name}\" is on the pet leaderboard",
+    "shareTextUser": "#{rank}! {name} is on the leaderboard"
   },
   "settings": {
     "title": "Account Settings",
@@ -1720,5 +1744,24 @@
     "firstTitle": "First Top-Up Bonus",
     "firstSubtitle": "Your first pack credits ×{multiplier} points — one-time only",
     "firstNote": "Bonus credits automatically after payment"
+  },
+  "promote": {
+    "title": "Promote Collectible",
+    "subtitle": "Buy a promoted slot to feature your collectible at the top of the leaderboard",
+    "selectPet": "Choose a collectible to promote",
+    "noPets": "You have no collectibles to promote yet — check the Collection Center",
+    "promoting": "Promoted",
+    "daysLabel": "Duration",
+    "days": "{n} day(s)",
+    "cost": "{cost} pts",
+    "confirm": "Promote",
+    "confirming": "Promoting…",
+    "success": "🎉 Promoted! Visible until {end}",
+    "insufficient": "Not enough points — please recharge",
+    "alreadyPromoted": "This collectible is already being promoted",
+    "failed": "Promotion failed, please try again",
+    "loadFailed": "Failed to load, please try again",
+    "signInRequired": "Please sign in first",
+    "note": "During the promotion your collectible appears in the top slots of the leaderboard ({slots} slots)"
   }
 }

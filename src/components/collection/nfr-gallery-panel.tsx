@@ -195,6 +195,14 @@ export function NfrGalleryPanel() {
                       >
                         🎁 {t("actions.transfer")}
                       </button>
+                      {/* Phase 5：付费推荐位入口（跳排行榜页自动开推广弹窗，预选第一只持有实例） */}
+                      <Link
+                        href={`/leaderboard?promote=${myInstances[0].id}`}
+                        data-testid="nfr-promote-link"
+                        className="flex-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-center text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                      >
+                        📣 {t("actions.promote")}
+                      </Link>
                     </div>
                   ) : null}
                 </div>

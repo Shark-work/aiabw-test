@@ -126,6 +126,7 @@ export function SiteHeader() {
     { href: "/packs", label: t("navPackShop") }, // 概念收敛：卡包停售，页面保留（存量说明）
     { href: "/bag", label: t("navBagFusion") }, // 概念收敛：融合停用，背包查看/互动保留
     { href: "/workshop", label: t("workshop") },
+    { href: "/leaderboard", label: t("navLeaderboard") }, // Phase 5：多维排行榜独立页
     { href: "/marketplace", label: t("market") },
     { href: "/handbooks", label: t("journals") },
     { href: "/points", label: t("points") },

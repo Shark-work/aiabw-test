@@ -607,7 +607,8 @@
     "soulCardBurned": "这张灵魂卡已被销毁",
     "soulCardLoadFailed": "灵魂卡数据加载失败，请稍后重试",
     "soulCardMintFailed": "灵魂卡生成失败，请稍后重试",
-    "soulCardBurnFailed": "销毁失败，请稍后重试"
+    "soulCardBurnFailed": "销毁失败，请稍后重试",
+    "promoteInvalidRequest": "推广参数无效"
   },
   "nav": {
     "home": "首页",
@@ -646,7 +647,8 @@
     "navMore": "更多",
     "becomeCreator": "✨ 成为创作者",
     "creatorOk": "🎉 恭喜！你现在是创作者了，可以去发布 UGC 宠物。",
-    "creatorFailed": "申请失败"
+    "creatorFailed": "申请失败",
+    "navLeaderboard": "🏆 排行"
   },
   "collection": {
     "title": "收藏中心",
@@ -667,7 +669,8 @@
       "unlimited": "不限量",
       "actions": {
         "breed": "结晶",
-        "transfer": "转赠"
+        "transfer": "转赠",
+        "promote": "推广"
       },
       "breed": {
         "title": "结晶共鸣",
@@ -834,7 +837,28 @@
     "owner": "主人 {name}",
     "generation": "第 {gen} 代",
     "power": "战力",
-    "minted": "本周新藏品"
+    "minted": "本周新藏品",
+    "catPopularity": "人气榜",
+    "catCollection": "收藏家",
+    "catExploration": "探险家",
+    "catCreation": "创作者",
+    "periodDay": "日榜",
+    "periodWeek": "周榜",
+    "periodMonth": "月榜",
+    "periodAll": "总榜",
+    "unitCollection": "新藏品",
+    "unitExploration": "次探索",
+    "unitCreation": "件作品",
+    "myRankBanner": "我的排名：第 {rank} 名",
+    "promotedTitle": "推荐位",
+    "promotedBadge": "推广",
+    "promoteCta": "推广我的藏品",
+    "share": "分享",
+    "shared": "链接已复制",
+    "empty": "暂无上榜数据",
+    "endsAt": "展示至 {time}",
+    "shareTextPet": "第 {rank} 名！{owner} 的「{name}」登上宠物排行榜",
+    "shareTextUser": "第 {rank} 名！{name} 登上排行榜"
   },
   "settings": {
     "title": "账号设置",
@@ -1720,5 +1744,24 @@
     "firstTitle": "首充特惠 · 双倍积分",
     "firstSubtitle": "首次充值任意档位，积分 ×{multiplier} 到账，仅限一次",
     "firstNote": "双倍奖励支付成功后自动入账"
+  },
+  "promote": {
+    "title": "推广藏品",
+    "subtitle": "购买推荐位，让你的藏品登上排行榜顶部，获得全站曝光",
+    "selectPet": "选择要推广的藏品",
+    "noPets": "你还没有可推广的藏品，去收藏中心看看",
+    "promoting": "推广中",
+    "daysLabel": "推广时长",
+    "days": "{n} 天",
+    "cost": "{cost} 积分",
+    "confirm": "确认推广",
+    "confirming": "推广中…",
+    "success": "🎉 推广成功！展示至 {end}",
+    "insufficient": "积分不足，请先充值",
+    "alreadyPromoted": "该藏品已在推广中，到期后可再次推广",
+    "failed": "推广失败，请稍后重试",
+    "loadFailed": "加载失败，请稍后重试",
+    "signInRequired": "请先登录",
+    "note": "推广期间藏品将展示在排行榜顶部推荐位（前 {slots} 个坑位）"
   }
 }

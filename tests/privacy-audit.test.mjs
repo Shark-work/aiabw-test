@@ -92,7 +92,10 @@ test("leaderboard: no email/phone/ip/created_at, opt-out honored on both boards"
   const src = read("src/app/api/leaderboard/route.ts");
   assert.ok(!/ownerEmail/.test(src), "DTO 不得含 ownerEmail");
   assert.ok(!/u\.email/.test(src), "SQL 不得查询 email");
-  assert.ok(!/phone|ip_address|created_at/.test(src), "DTO 不得含手机号/IP/注册时间");
+  // created_at 红线精确化（2026-10-15 Phase 5）：禁止「作为输出列/字段」泄露（created_at AS 别名、DTO createdAt）；
+  // 多维榜 period 窗口过滤（>= $n 比较）不输出该列，属合法用途。
+  assert.ok(!/phone|ip_address/.test(src), "DTO 不得含手机号/IP");
+  assert.ok(!/created_at\s+AS|createdAt/i.test(src), "注册/创建时间不得作为输出字段");
   const optOuts = src.match(/show_in_leaderboard = true/g) ?? [];
   assert.ok(optOuts.length >= 2, `积分榜+繁育榜都要过滤 opt-out，命中 ${optOuts.length} 处`);
   assert.match(src, /toPublicOwner/, "经公开投影输出");
