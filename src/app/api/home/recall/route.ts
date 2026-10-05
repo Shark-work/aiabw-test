@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       pool.query(
         `SELECT pet_name AS "petName", happiness
            FROM adoptions
-          WHERE user_id = $1::uuid
+          WHERE user_id = $1::text
           ORDER BY happiness ASC
           LIMIT 1`,
         [user.id],

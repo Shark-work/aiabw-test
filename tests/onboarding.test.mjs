@@ -63,8 +63,8 @@ test("onboarding api: GET returns completed/hasPet/candidate with claim-compatib
   assert.ok(c.includes("{ status: 401 }"), "unauthenticated 401");
   assert.ok(c.includes("u.onboarding_completed"), "reads completed flag");
   assert.ok(
-    c.includes("EXISTS(SELECT 1 FROM adoptions a WHERE a.user_id = u.id)"),
-    "hasPet via adoptions EXISTS",
+    c.includes("EXISTS(SELECT 1 FROM adoptions a WHERE a.user_id = u.id::text)"),
+    "hasPet via adoptions EXISTS（u.id::text cast：adoptions.user_id 为 text 列，混合类型库必须显式 cast，对齐 admin/users 惯例）",
   );
   // candidate 可领养口径与 /api/pets/claim 一致（visible + 无 owner/guest_owner）
   assert.ok(c.includes("p.visible = true"), "candidate visible only");

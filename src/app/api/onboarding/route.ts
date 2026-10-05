@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     await ensureDbSchemaOnce();
     const { rows: stateRows } = await pool.query(
       `SELECT u.onboarding_completed AS "completed",
-              EXISTS(SELECT 1 FROM adoptions a WHERE a.user_id = u.id) AS "hasPet"
+              EXISTS(SELECT 1 FROM adoptions a WHERE a.user_id = u.id::text) AS "hasPet"
          FROM users u
         WHERE u.id = $1`,
       [user.id],
