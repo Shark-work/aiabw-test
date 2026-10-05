@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 
 import { ExploreV2Panel } from "@/components/exploration-v2/explore-v2-panel";
+import { SeasonalEventBanner } from "@/components/exploration-v2/seasonal-event-banner";
 
 /**
  * /[locale]/explore-v2
@@ -22,7 +23,9 @@ export default async function ExploreV2Page({
   setRequestLocale(locale);
 
   return (
-    <main className="mx-auto max-w-md px-4 py-6">
+    <main className="mx-auto max-w-md space-y-4 px-4 py-6">
+      {/* P2 社交传播：季节活动 banner（仅进行中活动渲染，无活动静默） */}
+      <SeasonalEventBanner />
       <ExploreV2Panel />
     </main>
   );

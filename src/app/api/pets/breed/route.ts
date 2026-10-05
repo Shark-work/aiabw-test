@@ -11,6 +11,7 @@ import {
 } from "@/lib/genetics";
 import { mintCollectible } from "@/lib/nfr";
 import { postBreedShare } from "@/lib/social-poster";
+import { trackSeasonalProgress } from "@/server/queries/seasonal-queries";
 import { findSoulCardByPetId } from "@/server/repositories/soul-card-repository";
 import { mintSoulCard, SoulCardError } from "@/server/services/soul-card-service";
 
@@ -239,6 +240,13 @@ export async function POST(req: Request) {
         } else {
           console.error("[pets/breed] soul card mint failed:", err);
         }
+      }
+
+      // 季节活动进度（P2 骨架：仅进行中活动累计结晶次数；失败不阻断结晶主流程）
+      try {
+        await trackSeasonalProgress(user.id, { bondCrystals: 1 });
+      } catch (seasonErr) {
+        console.error("[pets/breed] seasonal track failed:", seasonErr);
       }
 
       // 社交炫耀：结晶出传说/史诗级灵宠 → 异步非阻塞发帖。

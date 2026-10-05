@@ -541,6 +541,7 @@
     "postcardSetIncomplete": "还没有集齐这个系列的明信片",
     "postcardSetClaimed": "这个系列的图鉴奖励已经领取过了",
     "postcardSetClaimFailed": "领取失败，请稍后再试",
+    "seasonalEventFailed": "活动信息加载失败，请稍后再试",
     "pushNotConfigured": "推送服务尚未配置",
     "pushSubscribeFailed": "订阅推送失败，请稍后再试",
     "invalidBreedSet": "请选择恰好 2 只灵宠进行结晶",
@@ -1129,6 +1130,13 @@
       "sharing": "生成中…",
       "shareWallText": "来看看我的明信片墙，已收集 {n} 张明信片 → {url}"
     }
+  },
+  "seasonal": {
+    "until": "进行中 · {date} 结束",
+    "progress": "我的进度：探索 {e} 次 · 结晶 {c} 次",
+    "claimed": "✓ 已领取",
+    "rewardPoints": "🎁 +{n} 积分",
+    "rewardVipDays": "👑 VIP {n} 天"
   },
   "achievements": {
     "title": "探索徽章",

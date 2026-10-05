@@ -27,7 +27,8 @@ test("schema: postcard_wall_public default false + 0032 idempotent + SCHEMA_VERS
   assert.match(schema, /postcardWallPublic: boolean\('postcard_wall_public'\)\.notNull\(\)\.default\(false\)/);
   const client = read("src/db/client.ts");
   assert.match(client, /ADD COLUMN IF NOT EXISTS "postcard_wall_public" boolean DEFAULT false NOT NULL/);
-  assert.match(client, /SCHEMA_VERSION = 17;/);
+  // 版本号随后续迭代递增（改动三已至 v18）→ 锁「v17 已引入」而非当前版本值
+  assert.match(client, /const SCHEMA_VERSION = (1[7-9]|[2-9]\d)/, "SCHEMA_VERSION >= 17");
   const sql = read("drizzle/0032_postcard_wall_public.sql");
   assert.match(sql, /ADD COLUMN IF NOT EXISTS "postcard_wall_public"/);
 });

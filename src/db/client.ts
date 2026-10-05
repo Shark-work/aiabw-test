@@ -996,6 +996,43 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboarding_completed" boolean DEFAULT false NOT NULL`,
   // ===== P2 社交传播（drizzle/0032）：明信片墙公开页隐私开关 =====
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "postcard_wall_public" boolean DEFAULT false NOT NULL`,
+
+  // ===== P2 社交传播（drizzle/0033）：季节活动骨架 =====
+  `CREATE TABLE IF NOT EXISTS "seasonal_events" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "slug" text NOT NULL,
+    "name" jsonb NOT NULL,
+    "description" jsonb NOT NULL,
+    "start_at" timestamp NOT NULL,
+    "end_at" timestamp NOT NULL,
+    "is_active" boolean DEFAULT false NOT NULL,
+    "rewards" jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "seasonal_events_slug_unique" UNIQUE ("slug")
+  )`,
+  `CREATE TABLE IF NOT EXISTS "user_seasonal_progress" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "event_id" uuid NOT NULL REFERENCES "seasonal_events"("id"),
+    "exploration_count" integer DEFAULT 0 NOT NULL,
+    "bond_crystals" integer DEFAULT 0 NOT NULL,
+    "claimed" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL,
+    CONSTRAINT "user_seasonal_progress_user_event_unique" UNIQUE ("user_id", "event_id")
+  )`,
+  // 占位活动（is_active=false 不外露；运营改配置开启，无需发版）
+  `INSERT INTO "seasonal_events" ("slug", "name", "description", "start_at", "end_at", "is_active", "rewards")
+   VALUES (
+     'placeholder',
+     '{"zh":"占位活动","en":"Placeholder Event"}'::jsonb,
+     '{"zh":"季节活动框架占位：后续运营活动时通过配置开启。","en":"Seasonal event framework placeholder. Future campaigns are enabled via config."}'::jsonb,
+     now(),
+     now() + interval '365 days',
+     false,
+     '{"points":100}'::jsonb
+   )
+   ON CONFLICT ("slug") DO NOTHING`,
 ];
 
 /**
@@ -1172,7 +1209,10 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     drizzle/0031；未完成且无灵宠的用户首页展示沉睡 banner 引导继续）
 // v17: P2 社交传播 —— users.postcard_wall_public（明信片墙公开页隐私开关，
 //     drizzle/0032；默认 false，开启后公开页/汇总分享图可匿名访问）
-const SCHEMA_VERSION = 17;
+// v18: P2 社交传播 —— seasonal_events + user_seasonal_progress（季节活动骨架，
+//     drizzle/0033；占位活动 slug='placeholder' is_active=false 不外露，
+//     进度由探索完成 / 羁绊结晶节点 UPSERT 累计，活动结束后行保留不再产出奖励）
+const SCHEMA_VERSION = 18;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

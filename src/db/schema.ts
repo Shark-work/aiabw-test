@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, jsonb, uuid, integer, bigint, boolean, real, doublePrecision, numeric, unique, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import type { SeasonalI18nText, SeasonalRewards } from '../lib/seasonal-config';
 
 /** 账号：注册用户 */
 export const users = pgTable('users', {
@@ -940,4 +941,39 @@ export const aibiItems = pgTable('aibi_items', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+/**
+ * 季节活动配置（P2 社交传播 · drizzle/0033）：运营活动骨架。
+ * name/description 多语言 JSONB（{ zh, en }）；rewards JSONB 定义活动奖励
+ * （积分 / VIP 天数 / 限定藏品，见 seasonal-config.ts SeasonalRewards）。
+ * 默认仅一条占位活动（slug='placeholder', is_active=false），后续运营改配置开启。
+ */
+export const seasonalEvents = pgTable('seasonal_events', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  slug: text('slug').notNull().unique(),
+  name: jsonb('name').$type<SeasonalI18nText>().notNull(),
+  description: jsonb('description').$type<SeasonalI18nText>().notNull(),
+  startAt: timestamp('start_at').notNull(),
+  endAt: timestamp('end_at').notNull(),
+  isActive: boolean('is_active').notNull().default(false),
+  rewards: jsonb('rewards').$type<SeasonalRewards>().notNull().default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * 用户季节活动进度：活动期间探索次数 / 羁绊结晶次数 / 是否已领奖。
+ * UNIQUE(user_id, event_id)；活动结束后行保留可查（参与记录），不再产出奖励。
+ */
+export const userSeasonalProgress = pgTable('user_seasonal_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references((): AnyPgColumn => users.id),
+  eventId: uuid('event_id').notNull().references((): AnyPgColumn => seasonalEvents.id),
+  explorationCount: integer('exploration_count').notNull().default(0),
+  bondCrystals: integer('bond_crystals').notNull().default(0),
+  claimed: boolean('claimed').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [
+  unique('user_seasonal_progress_user_event_unique').on(t.userId, t.eventId),
+]);
 

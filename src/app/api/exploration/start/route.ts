@@ -23,6 +23,7 @@ import { getActiveSubscription } from "@/lib/subscription-config";
 import { isPremium } from "@/lib/premium";
 import { syncAchievements } from "@/lib/achievements-service";
 import type { NewlyUnlockedBadge } from "@/lib/achievements-config";
+import { trackSeasonalProgress } from "@/server/queries/seasonal-queries";
 
 export const runtime = "nodejs";
 
@@ -178,6 +179,13 @@ export async function POST(req: Request) {
       newlyUnlocked = (await syncAchievements(user.id)).newlyUnlocked;
     } catch (achvErr) {
       console.error("[/api/exploration/start] achievements sync failed:", achvErr);
+    }
+
+    // 6.5) 季节活动进度（P2 骨架：仅进行中活动累计探索次数；失败不阻断主流程）
+    try {
+      await trackSeasonalProgress(user.id, { exploration: 1 });
+    } catch (seasonErr) {
+      console.error("[/api/exploration/start] seasonal track failed:", seasonErr);
     }
 
     // 7) 返回
