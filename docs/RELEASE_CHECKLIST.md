@@ -91,14 +91,16 @@
 
 ## 附录 · 冒烟测试痕迹清理（可选）
 
-```sql
--- smoke-full.mjs / smoke-production.mjs 产生的测试用户（级联清理其灵宠/探索/签到）
-DELETE FROM users
- WHERE email LIKE 'full-smoke-%@test.dev'
-    OR email LIKE 'prod-smoke-%@test.dev';
--- adoptions / soul_cards / exploration_records / achievements 等
--- 均有 user_id 外键 ON DELETE 行为；若无级联，按 user_id 逐表清理后再删 users。
+```powershell
+# smoke-full.mjs / smoke-production.mjs 产生的测试用户及全部关联数据
+node scripts/cleanup-smoke-users.mjs            # dry-run：先确认范围（仅统计）
+node scripts/cleanup-smoke-users.mjs --execute  # 事务性清理 + 前后对比（CLEANUP_OK）
 ```
+
+> ⚠️ 不要用单条 `DELETE FROM users WHERE email LIKE ...`：生产库 FK 无 CASCADE，
+> 会被 achievements/adoptions/points_log 等 19+ 子表挡住。脚本自动发现关联表
+> （FK ∪ user 语义列 ∪ 入向 FK BFS），pets 实例释放回池而非删除。
+> 执行记录存档：docs/cleanup-smoke-execution-*.md（2026-10-05 清理 51 用户 / 907 行）。
 
 ---
 
