@@ -113,6 +113,23 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 | V1 数据（0016） | V2 落点（0020） | 映射结论 |
 | --- | --- | --- |
+
+
+---
+
+## Phase 7 · 前端页面全面改造（✅ 2026-10-16，4 批次）
+
+| 批次 | 内容 | 提交 |
+| --- | --- | --- |
+| 1 · 首页（7.1） | slogan 对齐四维度 / 探索·商城次级 CTA / 灵魂卡轮播（新 API /api/soul-cards/featured，60s 缓存，稀有度权重）/ 社区活跃数据条（新 API /api/home/stats，单 SQL 4 指标） | `40db094` |
+| 2 · 灵魂卡页（7.4） | 3D 翻转卡背（稳定箴言，burned/reduced-motion 豁免）/ 收藏进度面板（稀有度分布+元素点亮）/ 社区热门 tab（featured 扩展卡面全字段，owner/链哈希不返回）/ 卡片对比（≤2 张，高者高亮） | `a03ae8e` |
+| 3 · 装扮商城（7.6） | 限时特惠横幅（三态复用首充/充值事件总线，不虚构折扣）/ 宠物穿戴预览 / 我的收藏 tab / 推荐搭配（最低价 skin×effect）/ 获取方式说明 | `67bf00d` |
+| 4 · 明信片分享（7.8） | 分享图模板选择（?template=classic/night/blossom，localStorage 记忆）/ 分享奖励（每日首次 +5，points_log.ref 唯一幂等防刷，事务化） | `37fb2f2` |
+
+- 既有覆盖声明：7.1-2 热门宠物=featured 区块；7.7 积分入口=Phase 4；7.8-2/4/5=P2 社交传播批次；全局 UI 加载/错误=common 命名空间既有模式。
+- 零 schema 变更（SCHEMA_VERSION 维持 19）；4 批次契约测试 32 项（home/soul-cards/shop/postcard-share phase7），全量回归 683/683 + tsc 0 错误。
+- 下一 Phase：Phase 8 · AI 集成优化与成本控制（响应缓存/降级/审核/限流）。
+
 | `adoptions.exploration_steps`（按宠物累计步数，每消息 +10） | `exploration_records`（按用户每次一行） | ❌ V1 无 `exploration_count` 字段；换算口径：完成地图数 = Σsteps ÷ 100（每图 100 步） |
 | `user_postcards`（每完成一张地图生成一张） | 探索次数计数 | ✅ V1「探索次数」≈ `COUNT(user_postcards)`，与上一条交叉校验取 max |
 | `map_events` 事件触发（应用层即时抽取，不落库） | `exploration_records.event_id`（evt-001~040） | ❌ 不可迁移：V1 触发无用户维度持久化、无稳定事件 ID；奇遇类徽章 V1 用户从 0 开始 |
