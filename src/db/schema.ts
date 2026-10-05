@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, jsonb, uuid, integer, bigint, boolean, real, doublePrecision, numeric, unique, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, jsonb, uuid, integer, bigint, boolean, real, doublePrecision, numeric, unique, primaryKey, date, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import type { SeasonalI18nText, SeasonalRewards } from '../lib/seasonal-config';
 
 /** 账号：注册用户 */
@@ -262,6 +262,14 @@ export const pets = pgTable('pets', {
   evolutionId: text('evolution_id'),
   /** P1 零摩擦领养：游客（anonymousId）占有的占位列；登录后归并到 owner_id 并清空。 */
   guestOwner: text('guest_owner'),
+  /** 宠物本体养成等级（产品升级 Phase 1；领养关系级等级沿用 adoptions.level，两者口径独立）。 */
+  level: integer('level').notNull().default(1),
+  /** 宠物本体养成经验值。 */
+  exp: integer('exp').notNull().default(0),
+  /** 上次喂食时间（NULL=从未喂食；与 last_interaction_time「任意互动」语义区分）。 */
+  lastFeedTime: timestamp('last_feed_time'),
+  /** 进化阶段（0=初始；与 status/evolutionId「消耗链」区分，stage 表达阶段等级）。 */
+  evolutionStage: integer('evolution_stage').notNull().default(0),
 });
 
 /**
@@ -975,5 +983,57 @@ export const userSeasonalProgress = pgTable('user_seasonal_progress', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [
   unique('user_seasonal_progress_user_event_unique').on(t.userId, t.eventId),
+]);
+
+
+// ============================================================================
+// 产品升级 Phase 1 变现基建（drizzle/0034_monetization.sql，2026-10-05）
+// promoted_content 推荐曝光位 / first_purchase 首充记录 / pity_counter 保底计数。
+// ============================================================================
+
+/**
+ * 推荐曝光位：排行榜/列表的付费推荐内容。
+ * content_type ∈ soul_card / pet / ugc_pet …；查询时 JOIN 生效窗口（start_time~end_time）
+ * 并按 priority 降序；views 累计曝光；到期（end_time < now()）自动不再命中。
+ */
+export const promotedContent = pgTable('promoted_content', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  /** 内容类型（soul_card / pet / ugc_pet …） */
+  contentType: text('content_type').notNull(),
+  contentId: uuid('content_id').notNull(),
+  promoterId: uuid('promoter_id').references((): AnyPgColumn => users.id),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time').notNull(),
+  priority: integer('priority').notNull().default(0),
+  views: integer('views').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * 首充记录：user_id 主键天然一人一行。
+ * 首充支付成功后写入（package_type / points_received / bonus_points），
+ * is_claimed 标记首充赠品是否已发放；UNIQUE 即幂等，重复回调安全。
+ */
+export const firstPurchase = pgTable('first_purchase', {
+  userId: uuid('user_id').primaryKey().references((): AnyPgColumn => users.id),
+  purchasedAt: timestamp('purchased_at').defaultNow().notNull(),
+  packageType: text('package_type').notNull(),
+  pointsReceived: integer('points_received').notNull(),
+  bonusPoints: integer('bonus_points').notNull().default(0),
+  isClaimed: boolean('is_claimed').notNull().default(false),
+});
+
+/**
+ * 盲盒/卡包保底计数：复合主键 (user_id, pool_id)。
+ * 每抽 +1；抽到稀有即清零；达保底阈值强制出货并清零；last_reset 预留每日重置口径。
+ */
+export const pityCounter = pgTable('pity_counter', {
+  userId: uuid('user_id').notNull().references((): AnyPgColumn => users.id),
+  poolId: text('pool_id').notNull(),
+  pullCount: integer('pull_count').notNull().default(0),
+  lastReset: date('last_reset', { mode: 'string' }),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.poolId] }),
 ]);
 

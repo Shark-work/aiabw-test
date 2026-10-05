@@ -46,13 +46,15 @@ try {
   console.log("[migrate-prod] running version gate (v6 → v9 full sync if needed)…");
   await ensureDbSchemaOnce();
 
-  // 1) 版本闸门落点
+  // 1) 版本闸门落点（动态：与 src/db/client.ts 的 SCHEMA_VERSION 对齐，随版本迭代自动升级）
+  const clientSrc = fs.readFileSync(new URL("../src/db/client.ts", import.meta.url), "utf8");
+  const expected = Number(clientSrc.match(/const SCHEMA_VERSION = (\d+);/)?.[1] ?? 0);
   const v = await pool.query(`SELECT "version" FROM "_schema_meta" WHERE "id" = 1`);
   const version = Number(v.rows[0]?.version ?? -999);
-  if (version >= 9) {
-    console.log(`[migrate-prod] ✅ _schema_meta version = ${version}（已同步到 v9）`);
+  if (expected > 0 && version >= expected) {
+    console.log(`[migrate-prod] ✅ _schema_meta version = ${version}（已同步到 v${expected}）`);
   } else {
-    check("_schema_meta version >= 9", false, `actual=${version}（同步未完成，查看上方 [db] 日志）`);
+    check(`_schema_meta version >= ${expected}`, false, `actual=${version}（-1=死锁，按 ops-rules 诊断三连排查后重跑本脚本）`);
   }
 
   // 2) v7 核心表（8）+ v8 目录表（5）
@@ -86,6 +88,20 @@ try {
   check("aibi_items 种子 = 5", (await count("aibi_items")) === 5, `actual=${await count("aibi_items")}`);
   check("aibi_rarities 种子 ≥ 5", (await count("aibi_rarities")) >= 5, `actual=${await count("aibi_rarities")}`);
   check("aibi_habitats 种子 ≥ 5", (await count("aibi_habitats")) >= 5, `actual=${await count("aibi_habitats")}`);
+
+  // 5) v19 变现基建（drizzle/0034）：3 新表 + pets 养成 4 列
+  const t19 = await pool.query(
+    `SELECT tablename FROM pg_tables WHERE tablename IN ('promoted_content','first_purchase','pity_counter')`,
+  );
+  check("v19 新表 ×3（promoted_content/first_purchase/pity_counter）", t19.rows.length === 3, `actual=${t19.rows.length}/3`);
+  const petCols = await pool.query(
+    `SELECT column_name FROM information_schema.columns WHERE table_name='pets'`,
+  );
+  const hasPetCol = (c) => petCols.rows.some((r) => r.column_name === c);
+  check(
+    "pets 养成列 level/exp/last_feed_time/evolution_stage（v19）",
+    ["level", "exp", "last_feed_time", "evolution_stage"].every(hasPetCol),
+  );
 } catch (e) {
   ok = false;
   console.error("[migrate-prod] crashed:", e);
@@ -93,5 +109,5 @@ try {
   await pool.end().catch(() => {});
 }
 
-console.log(ok ? "[migrate-prod] OK — production DB synced to version 9" : "[migrate-prod] FAILED");
+console.log(ok ? "[migrate-prod] OK — production DB schema synced（版本以 _schema_meta 落点日志为准）" : "[migrate-prod] FAILED");
 process.exit(ok ? 0 : 1);

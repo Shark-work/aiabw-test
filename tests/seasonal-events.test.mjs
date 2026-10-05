@@ -39,7 +39,8 @@ test("schema: two tables + unique + placeholder inactive + SCHEMA_VERSION 18", (
   assert.match(sql, /ON CONFLICT \("slug"\) DO NOTHING/, "seed idempotent");
   assert.match(sql, /false,\s*\n\s*'\{"points":100\}'::jsonb/, "placeholder inactive");
   const client = read("src/db/client.ts");
-  assert.match(client, /SCHEMA_VERSION = 18;/);
+  // 版本号随后续迭代递增（产品升级 Phase 1 已至 v19）→ 锁「v18 已引入」而非当前版本值
+  assert.match(client, /const SCHEMA_VERSION = (1[8-9]|[2-9]\d);/, "SCHEMA_VERSION >= 18");
   assert.ok(client.includes("'placeholder'"), "client seed");
 });
 

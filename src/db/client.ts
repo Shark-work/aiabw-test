@@ -1033,6 +1033,45 @@ const SCHEMA_ALTERS: string[] = [
      '{"points":100}'::jsonb
    )
    ON CONFLICT ("slug") DO NOTHING`,
+
+  // ===== 产品升级 Phase 1 变现基建（drizzle/0034）=====
+  // promoted_content：排行榜/列表「付费推荐位」；查询时 JOIN 生效窗口并按 priority 排序，到期自动失效
+  `CREATE TABLE IF NOT EXISTS "promoted_content" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "content_type" text NOT NULL,
+    "content_id" uuid NOT NULL,
+    "promoter_id" uuid REFERENCES "users"("id"),
+    "start_time" timestamp NOT NULL,
+    "end_time" timestamp NOT NULL,
+    "priority" integer DEFAULT 0 NOT NULL,
+    "views" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS "idx_promoted_content_type_time" ON "promoted_content" ("content_type", "start_time", "end_time")`,
+  `CREATE INDEX IF NOT EXISTS "idx_promoted_content_promoter" ON "promoted_content" ("promoter_id")`,
+  // first_purchase：首充状态追踪（user_id 主键=天然一人一行）；支付成功后写记录 + 双倍积分 + 限定赠品
+  `CREATE TABLE IF NOT EXISTS "first_purchase" (
+    "user_id" uuid PRIMARY KEY REFERENCES "users"("id"),
+    "purchased_at" timestamp DEFAULT now() NOT NULL,
+    "package_type" text NOT NULL,
+    "points_received" integer NOT NULL,
+    "bonus_points" integer DEFAULT 0 NOT NULL,
+    "is_claimed" boolean DEFAULT false NOT NULL
+  )`,
+  // pity_counter：盲盒/卡包保底计数（复合主键 user_id+pool_id；抽到稀有即清零，达阈值强制出货）
+  `CREATE TABLE IF NOT EXISTS "pity_counter" (
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "pool_id" text NOT NULL,
+    "pull_count" integer DEFAULT 0 NOT NULL,
+    "last_reset" date DEFAULT CURRENT_DATE,
+    PRIMARY KEY ("user_id", "pool_id")
+  )`,
+  // pets 养成字段（与 adoptions.level 区分：本列为宠物本体养成，领养关系级沿用 adoptions.level）
+  `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "level" integer DEFAULT 1 NOT NULL`,
+  `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "exp" integer DEFAULT 0 NOT NULL`,
+  `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "last_feed_time" timestamp`,
+  `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "evolution_stage" integer DEFAULT 0 NOT NULL`,
 ];
 
 /**
@@ -1212,7 +1251,12 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // v18: P2 社交传播 —— seasonal_events + user_seasonal_progress（季节活动骨架，
 //     drizzle/0033；占位活动 slug='placeholder' is_active=false 不外露，
 //     进度由探索完成 / 羁绊结晶节点 UPSERT 累计，活动结束后行保留不再产出奖励）
-const SCHEMA_VERSION = 18;
+// v19: 产品升级 Phase 1 变现基建 —— promoted_content（推荐曝光位，+2 索引）/
+//     first_purchase（首充记录，user_id 主键天然幂等）/ pity_counter（盲盒保底，复合主键
+//     user_id+pool_id）3 新表（drizzle/0034）；pets 养成字段 level/exp/last_feed_time/
+//     evolution_stage 幂等补列（与 adoptions.level 口径独立）。points_log.reason 为 text
+//     无约束，新值域 first_purchase_bonus/pity_reward/promotion_purchase/style_unlock 无需 DDL
+const SCHEMA_VERSION = 19;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,
