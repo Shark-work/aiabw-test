@@ -73,7 +73,7 @@ test("C: RecentBornMarquee 渲染前按 id 去重（双语共用组件）", () =
 
 // ---- D) /en 路径同步更新（2026-10-06 核实：五 key + 导航 en 值均已存在且正确）----
 test("D: en home 五 key 与导航 en 值完整正确", () => {
-  assert.equal(en.home.title, "Adopt Your AI Companion · Collect · Chat · Grow");
+  assert.equal(en.home.title, "Adopt Your AI Companion · Raise · Explore · Collect · Rank");
   assert.equal(
     en.home.subtitle,
     "Raise a unique AI pet, explore together, and collect scarce digital Soul Cards.",

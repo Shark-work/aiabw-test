@@ -15,6 +15,8 @@ import { getRarityMeta } from "@/lib/pet-status";
 import { getAnonymousId } from "@/lib/anon-id";
 import { OnboardingBanner } from "@/components/onboarding/onboarding-banner";
 import { RecallBanner } from "@/components/home/recall-banner";
+import { SoulCardCarousel } from "@/components/home/soul-card-carousel";
+import { CommunityStats } from "@/components/home/community-stats";
 
 export default function Home() {
   const router = useRouter();
@@ -174,14 +176,28 @@ export default function Home() {
             {t("title")}
           </p>
           <p className="mt-2 text-sm text-zinc-500">{t("subtitle")}</p>
-          {/* 行动 CTA：副标题下方、社交证明上方，指向 /pets 领养入口
-              （项目无 primary 色变量 → 沿用站点主按钮橙色系；t 已绑定 home 命名空间） */}
-          <Link
-            href="/pets"
-            className="mt-4 inline-flex items-center justify-center rounded-full bg-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
-          >
-            {t("heroCta")}
-          </Link>
+          {/* 行动 CTA 组：主 CTA 领养（/pets）+ Phase 7 新增次级入口（探索 /explore-v2、装扮商城 /shop），
+              副标题下方、社交证明上方（项目无 primary 色变量 → 沿用站点主按钮橙色系；次级用描边区分层级） */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/pets"
+              className="inline-flex items-center justify-center rounded-full bg-orange-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-orange-600"
+            >
+              {t("heroCta")}
+            </Link>
+            <Link
+              href="/explore-v2"
+              className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/80 px-5 py-2.5 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-400 hover:bg-orange-50"
+            >
+              {t("heroCtaExplore")}
+            </Link>
+            <Link
+              href="/shop"
+              className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/80 px-5 py-2.5 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-400 hover:bg-orange-50"
+            >
+              {t("heroCtaShop")}
+            </Link>
+          </div>
           <SocialProof className="mt-4 text-xs text-zinc-400" />
         </div>
       {/* 艾比世界（Phase 7 · 8.1）：平台介绍/总供应量/最新铸造/热门稀有/卡包·图鉴·背包入口 */}
@@ -197,6 +213,9 @@ export default function Home() {
 
         {/* 实时动态：刚刚诞生的伙伴（横向滚动跑马灯，紧贴盲盒下方营造「很多人正在玩」氛围） */}
         <RecentBornMarquee />
+
+        {/* Phase 7 · 7.1-3：社区灵魂卡轮播（稀有卡展出激发收藏欲，点击进公开凭证页拉新） */}
+        <SoulCardCarousel />
 
         {/* Bottom：热门宠物展示（Grid 4 列，稀有度角标激发收集欲） */}
         <div className="space-y-3 border-t border-zinc-200/70 pt-6">
@@ -264,6 +283,9 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* Phase 7 · 7.1-6：社区活跃数据（今日新生/今日探索/在册灵魂卡/收藏家，失败静默） */}
+        <CommunityStats />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <p className="text-xs text-zinc-400">{t("adoptHint")}</p>
