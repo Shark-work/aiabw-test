@@ -542,6 +542,7 @@
     "postcardSetClaimed": "这个系列的图鉴奖励已经领取过了",
     "postcardSetClaimFailed": "领取失败，请稍后再试",
     "seasonalEventFailed": "活动信息加载失败，请稍后再试",
+    "recallFailed": "提醒加载失败，请稍后再试",
     "pushNotConfigured": "推送服务尚未配置",
     "pushSubscribeFailed": "订阅推送失败，请稍后再试",
     "invalidBreedSet": "请选择恰好 2 只灵宠进行结晶",
@@ -1137,6 +1138,12 @@
     "claimed": "✓ 已领取",
     "rewardPoints": "🎁 +{n} 积分",
     "rewardVipDays": "👑 VIP {n} 天"
+  },
+  "recall": {
+    "missYou": "你的灵宠想你了，回来看看吧",
+    "feed": "{name} 饿了，该去喂养它了",
+    "reward": "你有 {n} 个系列图鉴奖励待领取",
+    "cta": "去看看 →"
   },
   "achievements": {
     "title": "探索徽章",
