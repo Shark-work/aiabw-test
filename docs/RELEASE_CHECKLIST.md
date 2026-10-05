@@ -48,8 +48,9 @@
 
 | # | 步骤 | 通过标准 |
 | --- | --- | --- |
+| 3.0 | **版本指纹确认**（防在旧部署上误跑）：`curl -sL https://www.aiabw.com/zh` grep 本次 release 的新文案（如「灵魂养成与数字凭证」）+ `curl -s -o NUL -w %{http_code} https://www.aiabw.com/api/<新路由>` | 新文案在 HTML 中；新路由返回 **401/200（≠404）**。不满足 = 目标 commit 未上线，**等 Vercel 部署完成再跑**（2026-10-15 实例：旧部署上冒烟 8/23 误报 15 失败，新部署完成后 23/23 自愈，零代码修复） |
 | 3.1 | `node scripts/smoke-full.mjs`（默认打 https://www.aiabw.com） | **23/23 全绿**，输出 `ALL_SMOKE_FULL_OK`，退出码 0 |
-| 3.2 | 失败处置 | 按失败组定位：P2 组全挂而 P0/P1 绿 → 大概率为迁移未完成（回阶段 2）；杂散失败 → ROLLBACK_GUIDE §一 |
+| 3.2 | 失败处置 | 按失败组定位：P2 组全挂而 P0/P1 绿 → 大概率为迁移未完成（回阶段 2）；**整批新路由 404** → 先回 3.0 确认部署版本；杂散失败 → ROLLBACK_GUIDE §一 |
 | 3.3 | （可选·深度）`$env:DATABASE_URL=...; node scripts/smoke-production.mjs` | 52/52，基础交易链路无回归（含 SQL 充值，留流水痕迹） |
 
 ## 阶段 4 · 人工验证（浏览器实操，逐项打勾）
