@@ -14,6 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { getRarityMeta } from "@/lib/pet-status";
+import { notifyPointsInsufficient } from "@/lib/points-entry";
 import {
   formatRemaining,
   shortHash,
@@ -98,6 +99,10 @@ export function NfrBreedModal({
       if (!res.ok || !data.ok) {
         setError(typeof data.error === "string" ? data.error : `HTTP ${res.status}`);
         setErrorStatus(res.status);
+        if (res.status === 402) {
+          // 积分不足（Phase 4）：全局充值引导弹窗（保留本弹窗内充值链接作双入口）
+          notifyPointsInsufficient({ needed: BREED_COST_POINTS });
+        }
         return;
       }
       setChild(data.nfr ?? null);

@@ -20,3 +20,12 @@ export const POINTS_PACKS: readonly PointsPack[] = [
 export function findPointsPack(points: number): PointsPack | undefined {
   return POINTS_PACKS.find((p) => p.points === points);
 }
+
+/**
+ * 首充双倍（产品升级 Phase 4）：首次积分充值额外赠送等额积分
+ * （bonus = pack.points × (multiplier − 1) = pack.points）。
+ * 发放见 pay/notify points 段（first_purchase 表 user_id 主键一人一次 +
+ * points_log reason='first_purchase_bonus' ref 唯一兜底）；状态查询见
+ * GET /api/user/first-purchase/status。前端展示倍率以此常量为准。
+ */
+export const FIRST_PURCHASE_BONUS_MULTIPLIER = 2;

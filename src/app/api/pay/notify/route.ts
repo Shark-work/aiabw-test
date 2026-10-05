@@ -211,6 +211,39 @@ export async function POST(req: Request) {
       } else {
         console.log("[pay/notify] points no-op (duplicate callback or user missing)", { orderId: order_id });
       }
+
+      // —— 首充双倍（产品升级 Phase 4）：本单确已入账（paid）且从未首充 → 等额 bonus 入账 ——
+      // 设计要点：
+      //  1) 不依赖主 CTE 的 rowCount —— 若首回调在主入账后、bonus 前崩溃，重试回调时
+      //     主 CTE 因 ref 冲突 no-op，此处 paid 子查询仍命中本单 → bonus 幂等补发；
+      //  2) first_purchase user_id 主键 ON CONFLICT DO NOTHING —— 一人终身一次首充；
+      //  3) points_log ref='first-purchase:<order_id>' 唯一索引兜底 —— 并发/重放不多发；
+      //  4) bonus 金额 = pack.points（服务端档位表裁定，双倍见 FIRST_PURCHASE_BONUS_MULTIPLIER）。
+      const bonusRes = await pool.query(
+        `WITH paid AS (
+           SELECT 1 FROM points_log WHERE ref = $3 AND reason = 'recharge'
+         ), fp AS (
+           INSERT INTO first_purchase (user_id, package_type, points_received, bonus_points)
+           SELECT $1::uuid, $2, $4, $4 FROM paid
+           ON CONFLICT (user_id) DO NOTHING
+           RETURNING user_id
+         ), bonus AS (
+           INSERT INTO points_log (user_id, amount, reason, ref)
+           SELECT $1::uuid, $4, 'first_purchase_bonus', $5 FROM fp
+           ON CONFLICT (ref) DO NOTHING
+           RETURNING 1
+         )
+         UPDATE users SET points = points + $4
+          WHERE id = $1::uuid AND EXISTS (SELECT 1 FROM bonus)`,
+        [userId, `points-${pack.points}`, order_id, pack.points, `first-purchase:${order_id}`],
+      );
+      if ((bonusRes.rowCount ?? 0) > 0) {
+        console.log("[pay/notify] first-purchase bonus credited", {
+          userId,
+          bonus: pack.points,
+          orderId: order_id,
+        });
+      }
     }
   } else if (makeupMatch) {
     // —— 断签补签：回填 last_checkin_date = 下单时固化的昨天 ——

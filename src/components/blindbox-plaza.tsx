@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { LivingPet } from "@/components/LivingPet";
 import { PaymentModal } from "@/components/payment-modal";
 import { getRarityMeta } from "@/lib/pet-status";
+import { notifyPointsInsufficient } from "@/lib/points-entry";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
 
 type BlindboxPool = {
@@ -183,6 +184,10 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
         }
       } else {
         setPay(null);
+        if (res.status === 402) {
+          // 积分不足（Phase 4）：全局充值引导弹窗（未首充 → 首充双倍版）
+          notifyPointsInsufficient({ needed: pool.pricePoints });
+        }
         setResult({ ok: false, error: data?.error ?? t("drawFailed") });
       }
     } catch {

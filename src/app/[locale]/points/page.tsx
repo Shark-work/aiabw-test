@@ -6,7 +6,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { LivingPet } from "@/components/LivingPet";
 import { PointsRechargeModal } from "@/components/points-recharge-modal";
-import { POINTS_PACKS, type PointsPack } from "@/lib/points-recharge";
+import { notifyPointsInsufficient } from "@/lib/points-entry";
+import {
+  FIRST_PURCHASE_BONUS_MULTIPLIER,
+  POINTS_PACKS,
+  type PointsPack,
+} from "@/lib/points-recharge";
 
 type Log = { id: string; amount: number; reason: string; createdAt: string };
 
@@ -14,6 +19,7 @@ export default function PointsPage() {
   const locale = useLocale();
   const t = useTranslations("points");
   const tc = useTranslations("common");
+  const te = useTranslations("pointsEntry");
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -24,17 +30,26 @@ export default function PointsPage() {
   const [redeemMsg, setRedeemMsg] = useState("");
   // 积分充值（XorPay 码支付）：选中的档位，null = 弹窗关闭
   const [rechargePack, setRechargePack] = useState<PointsPack | null>(null);
+  // 首充双倍（Phase 4）：未首充 → 档位卡显示 ×2 到账 + 「首充×2」角标
+  const [isFirstPurchase, setIsFirstPurchase] = useState(false);
 
   const REDEEM_PRICE = 500;
 
-  // 拉取当前积分（兑换进度条）
+  // 拉取当前积分（兑换进度条）+ 首充状态（档位 ×2 标签）
   useEffect(() => {
     const token = localStorage.getItem("aiabw_token");
     if (!token) return;
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+    const headers = { Authorization: `Bearer ${token}` };
+    fetch("/api/auth/me", { headers })
       .then((r) => r.json())
       .then((d) => {
         if (d?.ok && d.user) setPoints(d.user.points ?? 0);
+      })
+      .catch(() => {});
+    fetch("/api/user/first-purchase/status", { headers })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.ok) setIsFirstPurchase(!!d.isFirstPurchase);
       })
       .catch(() => {});
   }, []);
@@ -62,6 +77,10 @@ export default function PointsPage() {
         void load();
       } else {
         setRedeemMsg(data?.error ?? t("redeemFail"));
+        if (res.status === 400 && points < REDEEM_PRICE) {
+          // 积分不足（Phase 4）：全局充值引导弹窗（未首充 → 首充双倍版）
+          notifyPointsInsufficient({ needed: REDEEM_PRICE });
+        }
       }
     } catch {
       setRedeemMsg(t("redeemFail"));
@@ -138,9 +157,22 @@ export default function PointsPage() {
                 key={p.points}
                 type="button"
                 onClick={() => setRechargePack(p)}
-                className="rounded-xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white px-2 py-3 text-center transition hover:border-amber-400 hover:shadow"
+                className="relative rounded-xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white px-2 py-3 text-center transition hover:border-amber-400 hover:shadow"
               >
-                <div className="text-base font-extrabold text-amber-600">{p.points}</div>
+                {isFirstPurchase && (
+                  <span
+                    data-testid="points-pack-first-badge"
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-rose-500 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"
+                  >
+                    {te("firstBadge")}
+                  </span>
+                )}
+                <div className="text-base font-extrabold text-amber-600">
+                  {isFirstPurchase ? p.points * FIRST_PURCHASE_BONUS_MULTIPLIER : p.points}
+                </div>
+                {isFirstPurchase && (
+                  <div className="text-[10px] text-zinc-400 line-through">{p.points}</div>
+                )}
                 <div className="text-[11px] text-zinc-400">{t("packPointsLabel")}</div>
                 <div className="mt-1 text-sm font-semibold text-zinc-700">¥{p.priceCny}</div>
               </button>

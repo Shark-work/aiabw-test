@@ -1708,5 +1708,17 @@
       "desc": "暂时没有等待唤醒的灵宠，去图鉴看看吧",
       "cta": "返回首页"
     }
+  },
+  "pointsEntry": {
+    "firstBadge": "首充×2",
+    "insufficientTitle": "积分不足",
+    "insufficientBody": "积分不够啦，充值后立即继续～",
+    "insufficientNeeded": "本次操作需要 {needed} 积分",
+    "later": "再看看",
+    "packUnit": "积分",
+    "recommended": "推荐",
+    "firstTitle": "首充特惠 · 双倍积分",
+    "firstSubtitle": "首次充值任意档位，积分 ×{multiplier} 到账，仅限一次",
+    "firstNote": "双倍奖励支付成功后自动入账"
   }
 }

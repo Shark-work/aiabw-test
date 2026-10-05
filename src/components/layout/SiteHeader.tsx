@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { PointsBalance } from "@/components/PointsBalance";
+import { PointsRechargeHost } from "@/components/points-recharge-host";
 import { useTheme } from "@/components/theme-provider";
 
 type Me = { username: string; points: number; isCreator: boolean };
@@ -74,6 +76,11 @@ export function SiteHeader() {
     setMe(null);
     window.location.href = `/${locale}`;
   };
+
+  // 充值到账回写（Phase 4）：PointsRechargeHost 全局弹窗扫码入账后实时刷新积分徽章
+  const handlePointsChanged = useCallback((p: number) => {
+    setMe((prev) => (prev ? { ...prev, points: p } : prev));
+  }, []);
 
   // 创作者申请（2026-10-08 自首页账号条迁入「更多」）：仅登录且未成为创作者时可见
   const handleApplyCreator = async () => {
@@ -250,12 +257,7 @@ export function SiteHeader() {
         <div className="hidden shrink-0 items-center gap-2 md:flex">
           {me ? (
             <>
-              <Link
-                href="/points"
-                className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-200"
-              >
-                ⭐ {me.points}
-              </Link>
+              <PointsBalance points={me.points} />
               <span className="max-w-[140px] truncate text-xs text-zinc-500" title={me.username}>
                 {me.username}
               </span>
@@ -419,13 +421,11 @@ export function SiteHeader() {
             <div className="mt-3 flex items-center gap-2 border-t border-zinc-100 pt-3">
               {me ? (
                 <>
-                  <Link
-                    href="/points"
+                  <PointsBalance
+                    points={me.points}
                     onClick={() => setOpen(false)}
-                    className="flex-1 rounded-full bg-amber-100 px-3 py-2 text-center text-xs font-semibold text-amber-700"
-                  >
-                    ⭐ {me.points}
-                  </Link>
+                    className="flex-1 py-2 text-center"
+                  />
                   <Link
                     href="/settings"
                     onClick={() => setOpen(false)}
@@ -477,6 +477,9 @@ export function SiteHeader() {
           </nav>
         </>
       )}
+
+      {/* 全局「积分不足」充值引导宿主（Phase 4）：事件总线弹窗，到账回写积分徽章 */}
+      {me ? <PointsRechargeHost onPointsChanged={handlePointsChanged} /> : null}
     </header>
   );
 }

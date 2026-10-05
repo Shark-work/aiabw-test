@@ -1708,5 +1708,17 @@
       "desc": "No soul pets are waiting to be awakened right now. Visit the codex!",
       "cta": "Back to home"
     }
+  },
+  "pointsEntry": {
+    "firstBadge": "1st ×2",
+    "insufficientTitle": "Not Enough Points",
+    "insufficientBody": "Top up to continue right away~",
+    "insufficientNeeded": "This action needs {needed} points",
+    "later": "Later",
+    "packUnit": "points",
+    "recommended": "Best Pick",
+    "firstTitle": "First Top-Up Bonus",
+    "firstSubtitle": "Your first pack credits ×{multiplier} points — one-time only",
+    "firstNote": "Bonus credits automatically after payment"
   }
 }
