@@ -2,7 +2,7 @@
   "common": {
     "appName": "AIABW",
     "metaTitle": "AIABW - Adopt & Raise Your AI Virtual Pet",
-    "metaDescription": "AIABW is an AI companion-raising and digital collectibles platform: raise unique AI beings, chat and grow together, awaken Soul Pets to receive Soul Cards, draw blind boxes — every collectible carries a unique scarcity proof and verifiable supply.",
+    "metaDescription": "AIABW is an AI soul-raising and digital credentials platform: raise unique AI beings, chat and grow together, awaken Soul Pets to receive Soul Cards, draw blind boxes — every collectible carries a unique scarcity proof and verifiable supply.",
     "signIn": "Sign in",
     "register": "Register",
     "logout": "Sign out",
@@ -642,7 +642,7 @@
     "navAdoptMy": "🐾 My Soul Pets",
     "navPackShop": "🎴 Card Packs",
     "navBagFusion": "🎒 Bag / Fusion",
-    "navSoulCodex": "✨ Soul Cards / Collection",
+    "navSoulCodex": "✨ Collection",
     "navBlindbox": "🎁 Blind Box Plaza",
     "navMore": "More",
     "becomeCreator": "✨ Become a creator",
@@ -1371,13 +1371,13 @@
   },
   "aibi": {
     "spotlight": {
-      "title": "Aibi World · AI Companions & Collectibles",
+      "title": "Aibi World · AI Soul Raising & Digital Credentials",
       "subtitle": "Live supply · newest arrivals · rare showcase",
       "supplyNow": "Circulating",
       "latestMinted": "Newest Aibis",
       "rareShowcase": "Rare Highlights",
       "entryPacks": "Pack Store",
-      "entryPacksDesc": "Open packs for new aibis",
+      "entryPacksDesc": "Open packs for new soul pets",
       "entryCodex": "Aibi Codex",
       "entryCodexDesc": "Browse all species",
       "entryBag": "My Bag",

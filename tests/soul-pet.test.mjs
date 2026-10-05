@@ -130,11 +130,12 @@ test("detail page: SEO 强约束 —— title/OG/JSON-LD 维持原型名，soulN
 });
 
 // ---- 7) 导航撞名锁 ----
-test("nav: 「我的灵宠」与「灵魂卡/收藏」不撞名（产品决策锁）", () => {
+test("nav: 「我的灵宠」与「收藏」不撞名（产品决策锁）", () => {
   assert.equal(zh.nav.navAdoptMy, "🐾 我的灵宠");
   assert.equal(en.nav.navAdoptMy, "🐾 My Soul Pets");
-  assert.notEqual(zh.nav.navAdoptMy, zh.nav.navSoulCodex, "zh 主入口不与灵魂卡/收藏撞名");
-  assert.notEqual(en.nav.navAdoptMy, en.nav.navSoulCodex, "en 主入口不与灵魂卡/收藏撞名");
+  // 2026-10-15 内容 review：navSoulCodex 收敛为「✨ 收藏 / Collection」（P0 双 Tab 口径）
+  assert.notEqual(zh.nav.navAdoptMy, zh.nav.navSoulCodex, "zh 主入口不与收藏中心撞名");
+  assert.notEqual(en.nav.navAdoptMy, en.nav.navSoulCodex, "en 主入口不与收藏中心撞名");
   assert.ok(!zh.nav.navAdoptMy.includes("灵魂卡"), "zh 主入口不含「灵魂卡」（= soul_cards 凭证专名）");
   assert.ok(!en.nav.navAdoptMy.includes("Soul Card"), "en 主入口不含「Soul Card」");
 });

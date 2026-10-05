@@ -10,7 +10,7 @@ import { ImageResponse } from "next/og";
  */
 
 export const OG_SIZE = { width: 1200, height: 630 };
-export const OG_ALT = "艾比世界 · AI 角色养成与数字收藏平台";
+export const OG_ALT = "艾比世界 · AI 灵魂养成与数字凭证平台";
 export const OG_CONTENT_TYPE = "image/png";
 
 const FONT_URLS = [
@@ -44,8 +44,8 @@ export async function renderOgShareImage(): Promise<ImageResponse> {
   const fontFamily = fontData ? "CJK" : undefined;
   const fontWeight = fontData ? 400 : 700;
   const title = fontData
-    ? "艾比世界 · AI 角色养成与数字收藏平台"
-    : "AIABW · AI Companion Raising & Digital Collectibles";
+    ? "艾比世界 · AI 灵魂养成与数字凭证平台"
+    : "AIABW · AI Soul Raising & Digital Credentials";
 
   return new ImageResponse(
     (

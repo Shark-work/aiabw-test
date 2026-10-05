@@ -67,3 +67,13 @@
 - 引用统一：SiteHeader moreItems、sitemap（只列终态 URL）、points/handbooks/marketplace 页 Link、首页登录回跳 redirect 全部指向 /pets/my。
 - i18n：新增 myPets.tabCompanion/tabCollection（双语）；删除互跳条四键（myPets.evolveBanner/evolveGo、petsCatalog.crossBanner/crossGo）。
 - 契约测试：tests/my-pets-merge.test.mjs（6 项）；soul-pet.test.mjs #10 URL 锁修订（四路由原位 → /pets /pets/my /pets/[id] 原位 + /my-pets 308 保留）；aibi-names.test.mjs displayName 断言改指 companion-panel。
+## 七、第四批执行记录（2026-10-15 · 内容 review 收敛）
+
+- 背景：上线前内容 review，与 P0 概念收敛（2026-10-14，/soul-cards 双 Tab 收藏中心）口径对齐。
+- 导航：`nav.navSoulCodex` 灵魂卡/收藏→收藏（Soul Cards / Collection→Collection）——收藏中心页内已是「灵魂卡/藏品」双 Tab，导航标签不再重复「灵魂卡」；「我的灵宠」撞名锁不受影响（tests/soul-pet.test.mjs #7 断言同步）。
+- 导航结构确认：`/packs`（卡包商店，停售）与 `/bag`（背包/融合，融合停用）已在 SiteHeader `moreItems`「更多」下拉（P0 已降级），一级导航维持 4 项：我的灵宠 → 收藏 → 盲盒广场 → 探索。
+- 首页 spotlight：`aibi.spotlight.entryPacksDesc` 开包获得新艾比→开包获得新灵宠（Open packs for new aibis→soul pets）。
+- 页面 title/SEO/OG：`aibi.spotlight.title` + `common.metaDescription` + `OG_ALT`/`OG_SHARE_ALT`（og-share-image.tsx / site.ts）「AI 角色养成与数字收藏（平台）」→「AI 灵魂养成与数字凭证（平台）」（en：companion-raising & digital collectibles→soul-raising & digital credentials）。
+- 残留词扫描确认：mint/链上/NFT/合约/钱包地址 在用户-facing 文案（messages/*.json 值）零残留——zh 已统一「发行/登记地址/记录指纹」，en 已统一 "Issued"；命中处均为 contracts/ 合约工程、docs/ 技术文档、代码注释与运维清单（非用户-facing，保留）。
+- 契约测试：locale-routes.test.mjs navSoulCodex 断言同步；verify-locale-sync.mjs zhMust「灵魂卡/收藏」→「数字凭证」（新 title 词）。
+

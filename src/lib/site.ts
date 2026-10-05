@@ -42,7 +42,7 @@ export function stripLocalePrefix(rawPathname: string): string {
 }
 
 /** 全站 OG/Twitter 分享图 alt（1200×630，由 [locale]/opengraph-image 约定路由渲染）。 */
-export const OG_SHARE_ALT = "艾比世界 · AI 角色养成与数字收藏平台";
+export const OG_SHARE_ALT = "艾比世界 · AI 灵魂养成与数字凭证平台";
 
 /**
  * 页面级 openGraph 公共字段（siteName/locale/images）。

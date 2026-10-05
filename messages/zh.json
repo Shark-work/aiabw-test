@@ -2,7 +2,7 @@
   "common": {
     "appName": "艾比世界",
     "metaTitle": "艾比世界 AIABW - AI 虚拟宠物领养与养成",
-    "metaDescription": "AIABW 是 AI 角色养成与数字收藏平台：养育独一无二的 AI 生命体，聊天互动、唤醒灵宠自动获得灵魂卡、抽盲盒收集，每张收藏均带唯一稀缺凭证与真实发行量。",
+    "metaDescription": "AIABW 是 AI 灵魂养成与数字凭证平台：养育独一无二的 AI 生命体，聊天互动、唤醒灵宠自动获得灵魂卡、抽盲盒收集，每张收藏均带唯一稀缺凭证与真实发行量。",
     "signIn": "登录",
     "register": "注册",
     "logout": "退出",
@@ -642,7 +642,7 @@
     "navAdoptMy": "🐾 我的灵宠",
     "navPackShop": "🎴 卡包商店",
     "navBagFusion": "🎒 背包/融合",
-    "navSoulCodex": "✨ 灵魂卡/收藏",
+    "navSoulCodex": "✨ 收藏",
     "navBlindbox": "🎁 盲盒广场",
     "navMore": "更多",
     "becomeCreator": "✨ 成为创作者",
@@ -1371,13 +1371,13 @@
   },
   "aibi": {
     "spotlight": {
-      "title": "艾比世界 · AI 角色养成与数字收藏",
+      "title": "艾比世界 · AI 灵魂养成与数字凭证",
       "subtitle": "实时供应 · 最新诞生 · 稀有橱窗",
       "supplyNow": "当前流通",
       "latestMinted": "最新诞生",
       "rareShowcase": "热门稀有",
       "entryPacks": "卡包商店",
-      "entryPacksDesc": "开包获得新艾比",
+      "entryPacksDesc": "开包获得新灵宠",
       "entryCodex": "艾比图鉴",
       "entryCodexDesc": "浏览全部物种",
       "entryBag": "我的背包",
