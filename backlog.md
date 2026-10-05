@@ -3,6 +3,14 @@
 > 健康检查已评估但暂不执行的事项，供后续会话拾取。完成后删除对应条目。
 > 创建于 2026-09-30（批 A/B/C 已上线，以下均为暂缓项）。
 
+## P2 · Phase 6 变现暂缓项（2026-10-07 评估）
+
+- **VIP 到期提醒 cron（指令 5 未完成半）**：`premium_until` 到期前 3 天/当天提醒。阻塞点：站内 notifications 表不存在，唯一推送渠道是 recall 专用 webpush；需先建通知通道（新表 = SCHEMA_VERSION bump + 生产迁移）。实现参考 `.github/workflows/handbook-cron.yml` 的 cron 模式。
+- **写真风格包 style_pack（¥12）**：实施计划 8.1.1 有定价，但本 codebase 无写真/照片生成系统，无处发放，待写真功能上线后回补。
+- **vip_yearly / promo_24h 前端购买入口**：API + notify 履约已完整（kind=vip_yearly ¥148/365 天、kind=promo_24h ¥6/24h），仅缺 UI 挂接点（subscribe 页年卡档位 / PromoteModal 现金 Tab）。
+- **聊天包前端入口**：kind=chat_pack ¥9.9/50 句 API 已完整（notify 当日已用额度回充），建议在 quota-ui 额度不足硬阻断处挂「买 50 句续聊」按钮。
+- **breed_accel 前端入口**：API 已完整（¥5 清 breed_cooldown_until），建议挂 bond-panel 冷却提示旁「⚡ 立即加速」。
+
 ## ~~P2 · 手账生成兜底 cron 未调度~~ ✅ 已解决（2026-09-30）
 
 - 方案落地：新增 GitHub Actions 工作流 `.github/workflows/handbook-cron.yml`，每天 UTC 04:30 调用 `GET /api/cron/process-handbooks` 兜底（复用 CRON_SECRET 鉴权约定，与 agent-daily.yml 同模式）。

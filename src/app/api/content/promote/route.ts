@@ -22,16 +22,19 @@ export async function GET(req: Request) {
     if (!user) {
       return NextResponse.json({ ok: false, error: apiError(locale, "signInFirst") }, { status: 401 });
     }
+    // Phase 6：EXISTS 升级为 LATERAL 取生效推广 id/到期时间（前端「提前下架」入口数据源）
     const { rows } = await pool.query(
       `SELECT uc.id, uc.generation, uc.hash_id AS "hashId",
               dc.name_zh AS "nameZh", dc.name_en AS "nameEn", dc.rarity, dc.element,
               dc.base_image_url AS "imageUrl",
-              EXISTS(
-                SELECT 1 FROM promoted_content pc
-                 WHERE pc.content_type = $2 AND pc.content_id = uc.id AND pc.end_time > now()
-              ) AS "promoting"
+              pr.id AS "promotionId", pr.end_time AS "promotionEndTime"
          FROM user_collectibles uc
          JOIN digital_collectibles dc ON dc.id = uc.collectible_id
+         LEFT JOIN LATERAL (
+           SELECT pc.id, pc.end_time FROM promoted_content pc
+            WHERE pc.content_type = $2 AND pc.content_id = uc.id AND pc.end_time > now()
+            ORDER BY pc.end_time DESC LIMIT 1
+         ) pr ON true
         WHERE uc.owner_id = $1::uuid AND uc.status = 'active'
         ORDER BY uc.minted_at DESC
         LIMIT 50`,
@@ -47,7 +50,8 @@ export async function GET(req: Request) {
         generation: Number(r.generation ?? 1),
         hashId: String(r.hashId),
         imageUrl: String(r.imageUrl ?? ""),
-        promoting: Boolean(r.promoting),
+        promoting: r.promotionId != null,
+        promotionEndTime: r.promotionEndTime ? new Date(String(r.promotionEndTime)).toISOString() : null,
       })),
       pricing: PROMOTE_DAYS.map((d) => ({ days: d, cost: PROMOTE_PRICING[d] })),
     });
@@ -160,6 +164,50 @@ export async function POST(req: Request) {
     }
   } catch (err) {
     console.error("[content/promote] failed:", redactSensitive(err instanceof Error ? err.message : String(err)));
+    return NextResponse.json({ ok: false, error: "promote_failed" }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/content/promote — 提前下架我的推广（Phase 6 · 实施计划 8.5「下架API」）
+ * 请求体：{ contentId }
+ *  - 归属校验（只能下架自己的推广；promoter_id 条件双保险）；
+ *  - end_time 置为 now()（立即失效，行保留供统计，与「到期自动下架」同口径）；
+ *  - 已消耗积分/现金不退（购买的是已生效时段的坑位占用，注释留痕防歧义）；
+ *  - 幂等：无生效推广 → ended=0（重复下架/已自然到期安全）。
+ */
+export async function DELETE(req: Request) {
+  const locale = resolveLocale(req);
+  try {
+    await ensureDbSchemaOnce();
+    const user = await getUserFromRequest(req);
+    if (!user) {
+      return NextResponse.json({ ok: false, error: apiError(locale, "signInFirst") }, { status: 401 });
+    }
+    const body = (await req.json().catch(() => null)) as { contentId?: string } | null;
+    const contentId = typeof body?.contentId === "string" ? body.contentId.trim() : "";
+    if (!contentId) {
+      return NextResponse.json({ ok: false, error: apiError(locale, "promoteInvalidRequest") }, { status: 400 });
+    }
+    const own = await pool.query(
+      `SELECT owner_id FROM user_collectibles WHERE id = $1::uuid LIMIT 1`,
+      [contentId],
+    );
+    if (own.rows.length === 0) {
+      return NextResponse.json({ ok: false, error: apiError(locale, "collectibleNotFound") }, { status: 404 });
+    }
+    if (String(own.rows[0].owner_id) !== user.id) {
+      return NextResponse.json({ ok: false, error: apiError(locale, "noPermissionPet") }, { status: 403 });
+    }
+    const { rowCount } = await pool.query(
+      `UPDATE promoted_content SET end_time = now(), updated_at = now()
+        WHERE content_type = $1 AND content_id = $2::uuid AND promoter_id = $3::uuid
+          AND end_time > now()`,
+      [PROMOTE_CONTENT_TYPE, contentId, user.id],
+    );
+    return NextResponse.json({ ok: true, contentId, ended: rowCount ?? 0 });
+  } catch (err) {
+    console.error("[content/promote] delete failed:", redactSensitive(err instanceof Error ? err.message : String(err)));
     return NextResponse.json({ ok: false, error: "promote_failed" }, { status: 500 });
   }
 }

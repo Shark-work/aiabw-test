@@ -52,9 +52,11 @@ test("checkin-makeup(2): pay/create kind=checkin_makeup 服务端定价 + 资格
   // 分支契约：订单号由 lib 构建（固化补签日期），价格取服务端常量
   assert.match(src, /order_id = makeupOrderId\(user\.id, makeupDate, nonce\)/);
   assert.match(src, /price = CHECKIN_MAKEUP_PRICE_CNY\.toFixed\(2\)/);
-  // 无需宠物：adoptionId 必需校验与归属校验均排除 checkin_makeup
-  assert.match(src, /kind !== "premium" && kind !== "points" && kind !== "checkin_makeup" && !adoptionId/);
-  assert.match(src, /kind !== "premium" && kind !== "blindbox" && kind !== "points" && kind !== "checkin_makeup"\) \{/);
+  // 无需宠物：adoptionId 必需校验与归属校验均不覆盖 checkin_makeup
+  // （Phase 6 重构为正向列举：仅 unlock/cosmetic 需要宠物维度，其余 kind 天然豁免——行为等价）
+  assert.match(src, /kind === "unlock" \|\| kind === "cosmetic"\) \{\s*if \(!adoptionId\)/);
+  assert.match(src, /仅 unlock \/ cosmetic 需要领养记录归属校验/);
+  assert.match(src, /if \(kind === "unlock" \|\| kind === "cosmetic"\) \{\s*const \[a\] = await db/);
 });
 
 test("checkin-makeup(3): pay/notify 幂等履约（只前进 UPDATE + granted/no-op 日志）", () => {

@@ -5,6 +5,7 @@
 //    传说级社交触发（事务外）。
 import { weightedPick, randomDna } from "@/lib/blindbox";
 import { mintCollectible } from "@/lib/nfr";
+import { PITY_THRESHOLD, isPityResetRarity, pickPityRarity } from "@/lib/pity";
 
 type Queryable = {
   query: (
@@ -25,6 +26,8 @@ export type BlindboxDrawResult = {
   collectibleId: string;
   mintedId: string;
   lockedUntil: Date;
+  /** 保底状态（Phase 6）：本抽是否触发保底 + 抽后计数/距保底剩余 */
+  pity: { triggered: boolean; pullCount: number; remaining: number };
 };
 
 export type BlindboxDrawArgs = {
@@ -65,8 +68,19 @@ export async function executeBlindboxDraw(
     throw err;
   }
 
-  // 2) 加权随机抽稀有度
-  const rarity = weightedPick((poolRow.probabilities ?? {}) as Record<string, number>);
+  // 2) 保底计数（Phase 6）：同一事务行锁读取（无行=0）。
+  //    本抽为第 PITY_THRESHOLD 抽（pullCount+1 达阈值）→ 强制稀有度 = 池内保底档。
+  const { rows: pityRows } = await client.query(
+    `SELECT pull_count AS "pullCount" FROM pity_counter
+      WHERE user_id = $1::uuid AND pool_id = $2 FOR UPDATE`,
+    [userId, poolId],
+  );
+  const prevPullCount = Number(pityRows[0]?.pullCount ?? 0);
+  const probabilities = (poolRow.probabilities ?? {}) as Record<string, number>;
+  const pityTriggered = prevPullCount + 1 >= PITY_THRESHOLD;
+
+  // 3) 抽稀有度：保底触发 → 池内保底档强制出货；否则加权随机
+  const rarity = pityTriggered ? pickPityRarity(probabilities) : weightedPick(probabilities);
   const isLegendary = rarity === "legendary";
 
   // 3) 物种白名单随机（空 = 全部字典物种）
@@ -110,13 +124,28 @@ export async function executeBlindboxDraw(
     adoptionId: null,
   });
 
-  // 5) 写抽奖流水（同一事务；order_id 唯一约束兜底幂等）
+  // 6) 写抽奖流水（同一事务；order_id 唯一约束兜底幂等）
   await client.query(
     `INSERT INTO blindbox_logs
        (user_id, pool_id, result_collectible_id, result_hash_id, is_legendary, pay_method, cost, order_id)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [userId, poolId, minted.collectibleId, minted.hashId, isLegendary, payMethod, cost, orderId ?? null],
   );
+
+  // 7) 保底计数更新（Phase 6）：出稀有（史诗/传说，含保底出货）→ 清零；否则 +1。
+  //    UPSERT 原子自增，配合步骤 2) 的 FOR UPDATE 行锁，并发同池抽取串行正确。
+  const reset = isPityResetRarity(rarity);
+  const nextPullCount = reset ? 0 : prevPullCount + 1;
+  await client.query(
+    `INSERT INTO pity_counter (user_id, pool_id, pull_count)
+     VALUES ($1::uuid, $2, $3)
+     ON CONFLICT (user_id, pool_id)
+     DO UPDATE SET pull_count = EXCLUDED.pull_count`,
+    [userId, poolId, nextPullCount],
+  );
+  if (pityTriggered) {
+    console.log("[blindbox] pity triggered", { userId, poolId, rarity, prevPullCount });
+  }
 
   return {
     rarity,
@@ -130,5 +159,10 @@ export async function executeBlindboxDraw(
     collectibleId: minted.collectibleId,
     mintedId: minted.id,
     lockedUntil: minted.lockedUntil,
+    pity: {
+      triggered: pityTriggered,
+      pullCount: nextPullCount,
+      remaining: Math.max(0, PITY_THRESHOLD - nextPullCount),
+    },
   };
 }

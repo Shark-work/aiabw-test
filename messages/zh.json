@@ -608,7 +608,9 @@
     "soulCardLoadFailed": "灵魂卡数据加载失败，请稍后重试",
     "soulCardMintFailed": "灵魂卡生成失败，请稍后重试",
     "soulCardBurnFailed": "销毁失败，请稍后重试",
-    "promoteInvalidRequest": "推广参数无效"
+    "promoteInvalidRequest": "推广参数无效",
+    "promoteAlreadyActive": "该藏品已在推广中，到期后可再次推广",
+    "accelNotNeeded": "该藏品当前不在结晶冷却中，无需加速"
   },
   "nav": {
     "home": "首页",
@@ -913,6 +915,9 @@
     "hotTag": "✨ 高爆率",
     "needLogin": "请先登录后再抽盲盒",
     "dailyClaimed": "明日再来",
+    "pityLabel": "保底进度",
+    "pityRemaining": "再抽 {n} 次必出{rarity}",
+    "pityTriggered": "保底触发！本次必出稀有",
     "payNeed": "积分不足，可扫码支付 ¥{price} 直接开箱",
     "payQrHint": "扫码支付，到账后自动开箱，请耐心等待",
     "payOpenCashier": "打开收银台",
@@ -1762,6 +1767,11 @@
     "failed": "推广失败，请稍后重试",
     "loadFailed": "加载失败，请稍后重试",
     "signInRequired": "请先登录",
-    "note": "推广期间藏品将展示在排行榜顶部推荐位（前 {slots} 个坑位）"
+    "note": "推广期间藏品将展示在排行榜顶部推荐位（前 {slots} 个坑位）",
+    "until": "至 {end}",
+    "endEarly": "提前下架（不退积分）",
+    "endConfirm": "确定提前下架该推广？已消耗积分不退还",
+    "endDone": "已提前下架",
+    "endFailed": "下架失败，请稍后重试"
   }
 }

@@ -608,7 +608,9 @@
     "soulCardLoadFailed": "Failed to load Soul Cards. Please try again later",
     "soulCardMintFailed": "Failed to create the Soul Card. Please try again later",
     "soulCardBurnFailed": "Burn failed. Please try again later",
-    "promoteInvalidRequest": "Invalid promotion request"
+    "promoteInvalidRequest": "Invalid promotion request",
+    "promoteAlreadyActive": "Already promoted; promote again after it expires",
+    "accelNotNeeded": "Not in crystal cooldown - no acceleration needed"
   },
   "nav": {
     "home": "Home",
@@ -913,6 +915,9 @@
     "hotTag": "✨ High Odds",
     "needLogin": "Please sign in before drawing",
     "dailyClaimed": "Claimed - tomorrow",
+    "pityLabel": "Pity progress",
+    "pityRemaining": "{n} pulls to guaranteed {rarity}",
+    "pityTriggered": "Pity triggered! Guaranteed rare drop",
     "payNeed": "Not enough points - scan to pay ¥{price} and draw now",
     "payQrHint": "Scan to pay; the box opens automatically after payment",
     "payOpenCashier": "Open Cashier",
@@ -1762,6 +1767,11 @@
     "failed": "Promotion failed, please try again",
     "loadFailed": "Failed to load, please try again",
     "signInRequired": "Please sign in first",
-    "note": "During the promotion your collectible appears in the top slots of the leaderboard ({slots} slots)"
+    "note": "During the promotion your collectible appears in the top slots of the leaderboard ({slots} slots)",
+    "until": "until {end}",
+    "endEarly": "End early (no refund)",
+    "endConfirm": "End this promotion early? Spent points are not refunded",
+    "endDone": "Promotion ended",
+    "endFailed": "Failed to end, please try again"
   }
 }

@@ -39,7 +39,17 @@ type DrawResult = {
     hashId: string;
     lockedUntil?: string | null;
   };
+  /** Phase 6 保底状态（积分通道 draw 响应直接携带，用于进度条即时刷新） */
+  pity?: { triggered: boolean; pullCount: number; remaining: number };
   error?: string;
+};
+
+/** 保底进度（GET /api/blindbox/pity 全量结构）。 */
+type PityInfo = {
+  pullCount: number;
+  remaining: number;
+  threshold: number;
+  guaranteedRarity: string;
 };
 
 /** 爆率 → 中文标签（公示用）。 */
@@ -84,7 +94,39 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
   const [result, setResult] = useState<DrawResult | null>(null);
   const [showOdds, setShowOdds] = useState(false);
   const [pay, setPay] = useState<PayState | null>(null);
+  const [pity, setPity] = useState<PityInfo | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Phase 6 保底进度条：登录用户挂载即查；未登录/失败静默不渲染
+  useEffect(() => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    fetch(`/api/blindbox/pity?poolId=${encodeURIComponent(pool.id)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok) {
+          setPity({
+            pullCount: Number(d.pullCount ?? 0),
+            remaining: Number(d.remaining ?? 0),
+            threshold: Number(d.threshold ?? 50),
+            guaranteedRarity: String(d.guaranteedRarity ?? "epic"),
+          });
+        }
+      })
+      .catch(() => {});
+  }, [pool.id]);
+
+  /** draw 响应 pity 即时刷新进度（保留 threshold/guaranteedRarity） */
+  const applyDrawPity = (p?: DrawResult["pity"]) => {
+    if (!p) return;
+    setPity((prev) =>
+      prev
+        ? { ...prev, pullCount: p.pullCount, remaining: p.remaining }
+        : { pullCount: p.pullCount, remaining: p.remaining, threshold: 50, guaranteedRarity: "epic" },
+    );
+  };
 
   const stopPolling = useCallback(() => {
     if (timerRef.current !== null) {
@@ -96,6 +138,7 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
 
   const startOpen = (data: DrawResult) => {
     setPay(null);
+    applyDrawPity(data.pity);
     setOpening(true);
     setTimeout(() => {
       setOpening(false);
@@ -239,6 +282,26 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
           </span>
           <span className="text-zinc-400">/ ¥{Math.max(pool.priceCny, 1).toFixed(2)}</span>
         </div>
+        {/* Phase 6 保底进度条（登录用户可见；稀有度标签语言跟随） */}
+        {pity && (
+          <div className="mt-2" data-testid="pity-progress">
+            <div className="flex items-center justify-between text-[10px] text-zinc-500">
+              <span>🛡️ {t("pityLabel")}</span>
+              <span className="font-medium text-violet-500">
+                {t("pityRemaining", {
+                  n: pity.remaining,
+                  rarity: (locale === "en" ? RARITY_EN : RARITY_ZH)[pity.guaranteedRarity] ?? pity.guaranteedRarity,
+                })}
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-zinc-200/70">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500 transition-all duration-500"
+                style={{ width: `${Math.min(100, (pity.pullCount / Math.max(1, pity.threshold)) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
         <div className="mt-3 flex gap-2">
           <button
             type="button"
@@ -350,6 +413,15 @@ function BlindBoxCard({ pool }: { pool: BlindboxPool }) {
             >
               {result.isLegendary ? t("legendaryTitle") : t("normalTitle")}
             </div>
+            {/* Phase 6 保底触发标记 */}
+            {result.pity?.triggered && (
+              <div
+                data-testid="pity-triggered-badge"
+                className="mt-1 inline-block rounded-full bg-violet-100 px-3 py-0.5 text-xs font-bold text-violet-600"
+              >
+                🛡️ {t("pityTriggered")}
+              </div>
+            )}
             {result.nfr ? (
               <>
                 <div className="mt-3 flex items-center justify-center gap-3">

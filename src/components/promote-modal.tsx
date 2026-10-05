@@ -16,6 +16,8 @@ type Target = {
   hashId: string;
   imageUrl: string;
   promoting: boolean;
+  /** Phase 6：生效推广的到期时间（提前下架入口展示用；非推广中为 null） */
+  promotionEndTime: string | null;
 };
 type Pricing = { days: number; cost: number };
 
@@ -93,6 +95,34 @@ export function PromoteModal({
 
   const cost = pricing.find((p) => p.days === days)?.cost ?? 0;
   const selectedTarget = targets.find((x) => x.id === selected);
+
+  /** Phase 6 提前下架：确认后 DELETE，结束生效推广（不退积分，接口幂等） */
+  const endPromotion = async (contentId: string) => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    if (!window.confirm(t("endConfirm"))) return;
+    try {
+      const res = await fetch("/api/content/promote", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ contentId }),
+      });
+      const d = await res.json().catch(() => null);
+      if (d?.ok) {
+        setMsg(t("endDone"));
+        setMsgKind("ok");
+        if (selected === contentId) setSelected("");
+        await load();
+        onPromoted(); // 通知父组件刷新榜单推荐位
+      } else {
+        setMsg(d?.error ?? t("endFailed"));
+        setMsgKind("err");
+      }
+    } catch {
+      setMsg(t("endFailed"));
+      setMsgKind("err");
+    }
+  };
 
   const submit = async () => {
     const token = localStorage.getItem("aiabw_token");
@@ -197,8 +227,18 @@ export function PromoteModal({
                       {meta.emoji} ×{pet.generation}
                     </p>
                     {pet.promoting && (
-                      <span className="absolute right-1 top-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-600">
-                        {t("promoting")}
+                      <span
+                        role="button"
+                        tabIndex={-1}
+                        data-testid={`promote-end-${pet.id}`}
+                        title={t("endEarly")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void endPromotion(pet.id);
+                        }}
+                        className="absolute right-1 top-1 cursor-pointer rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-600 transition hover:bg-red-100 hover:text-red-600"
+                      >
+                        {t("promoting")} · ⏹
                       </span>
                     )}
                   </button>

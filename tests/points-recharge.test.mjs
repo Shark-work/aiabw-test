@@ -48,8 +48,8 @@ test("points-recharge(2): pay/create kind=points 服务端定价 + 非法档位 
     "档位校验必须先于鉴权");
   assert.ok(src.indexOf("INVALID_POINTS_PACK") < src.indexOf("createXorpayOrder({"),
     "档位校验必须先于 XorPay 下单");
-  // points 不需要宠物归属校验
-  assert.match(src, /kind !== "premium" && kind !== "blindbox" && kind !== "points"/);
+  // points 不需要宠物归属校验（Phase 6 重构为正向列举：仅 unlock/cosmetic 有归属校验，行为等价）
+  assert.match(src, /仅 unlock \/ cosmetic 需要领养记录归属校验/);
 });
 
 test("points-recharge(3): pay/notify 幂等履约（ref 唯一约束 + 原子入账）", () => {

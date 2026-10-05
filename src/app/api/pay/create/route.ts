@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 
-import { db, ensureDbSchemaOnce } from "@/db/client";
+import { db, ensureDbSchemaOnce, pool } from "@/db/client";
 import { adoptions, cosmetics, blindboxPools, users } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { PREMIUM_PRICE_CNY } from "@/lib/premium";
 import { findPointsPack } from "@/lib/points-recharge";
+import { PROMOTE_CONTENT_TYPE } from "@/lib/leaderboard";
+import {
+  BREED_ACCEL_PRICE_CNY,
+  CHAT_PACK_MESSAGES,
+  CHAT_PACK_PRICE_CNY,
+  PROMO_CASH_PRICE_CNY,
+  VIP_YEARLY_DAYS,
+  VIP_YEARLY_PRICE_CNY,
+} from "@/lib/monetization-products";
 import { CHECKIN_MAKEUP_PRICE_CNY, localDateStr, makeupOrderId } from "@/lib/checkin-makeup";
 import {
   XORPAY_AID,
@@ -37,12 +46,18 @@ export async function POST(req: Request) {
     const locale = resolveLocale(req);
     // 商品类型：unlock（多宠解锁，默认）/ cosmetic（宠物装扮）/ premium（高级公民月卡）
     // / blindbox（盲盒抽奖）/ points（积分充值）/ checkin_makeup（断签补签）
-    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" | "points" | "checkin_makeup" =
+    // Phase 6 新增：vip_yearly（年卡）/ breed_accel（结晶加速）/ chat_pack（聊天包）/ promo_24h（现金曝光）
+    const kind: "unlock" | "cosmetic" | "premium" | "blindbox" | "points" | "checkin_makeup"
+      | "vip_yearly" | "breed_accel" | "chat_pack" | "promo_24h" =
       body?.kind === "cosmetic" ? "cosmetic"
       : body?.kind === "premium" ? "premium"
       : body?.kind === "blindbox" ? "blindbox"
       : body?.kind === "points" ? "points"
       : body?.kind === "checkin_makeup" ? "checkin_makeup"
+      : body?.kind === "vip_yearly" ? "vip_yearly"
+      : body?.kind === "breed_accel" ? "breed_accel"
+      : body?.kind === "chat_pack" ? "chat_pack"
+      : body?.kind === "promo_24h" ? "promo_24h"
       : "unlock";
     const adoptionId =
       typeof body?.adoptionId === "string" ? body.adoptionId.trim() : "";
@@ -50,14 +65,29 @@ export async function POST(req: Request) {
       typeof body?.cosmeticId === "string" ? body.cosmeticId.trim() : "";
     const poolId =
       typeof body?.poolId === "string" ? body.poolId.trim() : "";
+    // Phase 6：breed_accel 目标藏品 / promo_24h 推广目标（均为 user_collectibles.id）
+    const collectibleId =
+      typeof body?.collectibleId === "string" ? body.collectibleId.trim() : "";
+    const contentId =
+      typeof body?.contentId === "string" ? body.contentId.trim() : "";
 
     // unlock / cosmetic 需要宠物；premium / points 无需；blindbox 需要奖池
     if (kind === "blindbox") {
       if (!poolId) {
         return NextResponse.json({ ok: false, error: apiError(locale, "invalidBlindboxPool") }, { status: 400 });
       }
-    } else if (kind !== "premium" && kind !== "points" && kind !== "checkin_makeup" && !adoptionId) {
-      return NextResponse.json({ ok: false, error: apiError(locale, "missingAdoptionId") }, { status: 400 });
+    } else if (kind === "breed_accel") {
+      if (!collectibleId) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "collectibleNotFound") }, { status: 400 });
+      }
+    } else if (kind === "promo_24h") {
+      if (!contentId) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "promoteInvalidRequest") }, { status: 400 });
+      }
+    } else if (kind === "unlock" || kind === "cosmetic") {
+      if (!adoptionId) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "missingAdoptionId") }, { status: 400 });
+      }
     }
     if (kind === "cosmetic" && !cosmeticId) {
       return NextResponse.json({ ok: false, error: apiError(locale, "invalidCosmetic") }, { status: 400 });
@@ -123,7 +153,56 @@ export async function POST(req: Request) {
       makeupDate = yest;
     }
 
-    if (kind !== "premium" && kind !== "blindbox" && kind !== "points" && kind !== "checkin_makeup") {
+    // —— Phase 6：breed_accel 目标藏品校验（归属 + 必须在结晶冷却中，否则无需加速）——
+    if (kind === "breed_accel") {
+      const { rows: accelRows } = await pool.query(
+        `SELECT owner_id, breed_cooldown_until AS "cd" FROM user_collectibles WHERE id = $1::uuid LIMIT 1`,
+        [collectibleId],
+      );
+      if (accelRows.length === 0) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "collectibleNotFound") }, { status: 404 });
+      }
+      if (String(accelRows[0].owner_id) !== user.id) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "noPermissionPet") }, { status: 403 });
+      }
+      if (new Date(String(accelRows[0].cd)).getTime() <= Date.now()) {
+        return NextResponse.json(
+          { ok: false, code: "NOT_IN_COOLDOWN", error: apiError(locale, "accelNotNeeded") },
+          { status: 400 },
+        );
+      }
+    }
+
+    // —— Phase 6：promo_24h 推广目标校验（归属 + active + 无生效中推广，防现金/积分双通道撞车）——
+    if (kind === "promo_24h") {
+      const { rows: promoRows } = await pool.query(
+        `SELECT uc.owner_id, uc.status,
+                EXISTS(
+                  SELECT 1 FROM promoted_content pc
+                   WHERE pc.content_type = $2 AND pc.content_id = uc.id AND pc.end_time > now()
+                ) AS "promoting"
+           FROM user_collectibles uc WHERE uc.id = $1::uuid LIMIT 1`,
+        [contentId, PROMOTE_CONTENT_TYPE],
+      );
+      if (promoRows.length === 0) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "collectibleNotFound") }, { status: 404 });
+      }
+      if (String(promoRows[0].owner_id) !== user.id) {
+        return NextResponse.json({ ok: false, error: apiError(locale, "noPermissionPet") }, { status: 403 });
+      }
+      if (String(promoRows[0].status) !== "active") {
+        return NextResponse.json({ ok: false, error: apiError(locale, "collectibleInactive") }, { status: 400 });
+      }
+      if (promoRows[0].promoting === true) {
+        return NextResponse.json(
+          { ok: false, code: "ALREADY_PROMOTED", error: apiError(locale, "promoteAlreadyActive") },
+          { status: 409 },
+        );
+      }
+    }
+
+    // 仅 unlock / cosmetic 需要领养记录归属校验（其余 kind 无宠物维度）
+    if (kind === "unlock" || kind === "cosmetic") {
       const [a] = await db
         .select({ id: adoptions.id, userId: adoptions.userId })
         .from(adoptions)
@@ -187,6 +266,30 @@ export async function POST(req: Request) {
       price = CHECKIN_MAKEUP_PRICE_CNY.toFixed(2);
       amount = CHECKIN_MAKEUP_PRICE_CNY;
       order_id = makeupOrderId(user.id, makeupDate, nonce);
+    } else if (kind === "vip_yearly") {
+      // Phase 6 高级公民年卡：价格/天数取服务端常量；notify 按 premium-yearly- 前缀顺延 365 天
+      name = `AIABW 高级公民年卡（${VIP_YEARLY_DAYS} 天）`;
+      price = VIP_YEARLY_PRICE_CNY.toFixed(2);
+      amount = VIP_YEARLY_PRICE_CNY;
+      order_id = `premium-yearly-${user.id}-${nonce}`;
+    } else if (kind === "breed_accel") {
+      // Phase 6 结晶加速：归属/冷却已在上方校验；notify 清 breed_cooldown_until
+      name = "AIABW 结晶加速（1 次）";
+      price = BREED_ACCEL_PRICE_CNY.toFixed(2);
+      amount = BREED_ACCEL_PRICE_CNY;
+      order_id = `breedaccel-${collectibleId}-${user.id}-${nonce}`;
+    } else if (kind === "chat_pack") {
+      // Phase 6 聊天包：notify 当日已用额度回充 CHAT_PACK_MESSAGES 句（等价当日额度 +50）
+      name = `AIABW 聊天包（${CHAT_PACK_MESSAGES} 句）`;
+      price = CHAT_PACK_PRICE_CNY.toFixed(2);
+      amount = CHAT_PACK_PRICE_CNY;
+      order_id = `chatpack-${CHAT_PACK_MESSAGES}-${user.id}-${nonce}`;
+    } else if (kind === "promo_24h") {
+      // Phase 6 推荐曝光现金通道：归属/防重已在上方校验；notify 写 promoted_content 24h
+      name = "AIABW 推荐曝光（24 小时）";
+      price = PROMO_CASH_PRICE_CNY.toFixed(2);
+      amount = PROMO_CASH_PRICE_CNY;
+      order_id = `promo24-${contentId}-${user.id}-${nonce}`;
     } else {
       const rawAmount = body?.amount ?? DEFAULT_AMOUNT;
       amount = Number(rawAmount);

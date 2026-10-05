@@ -236,6 +236,8 @@ export async function POST(req: Request) {
         isLegendary,
         rarity,
         poolId,
+        // Phase 6 保底状态（前端进度条即时刷新，无需再查 pity API）
+        pity: result.pity,
         nfr: {
           id: result.mintedId,
           hashId: result.hashId,

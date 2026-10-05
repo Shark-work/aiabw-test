@@ -6,6 +6,9 @@ import { executeBlindboxDraw } from "@/lib/blindbox-draw";
 import { findPointsPack } from "@/lib/points-recharge";
 import { MAKEUP_ORDER_RE } from "@/lib/checkin-makeup";
 import { postBreedShare } from "@/lib/social-poster";
+import { todayString } from "@/lib/chat-quota-config";
+import { PROMOTE_CONTENT_TYPE } from "@/lib/leaderboard";
+import { PROMO_CASH_HOURS, VIP_YEARLY_DAYS } from "@/lib/monetization-products";
 
 export const runtime = "nodejs";
 
@@ -16,9 +19,16 @@ export const runtime = "nodejs";
  * 回调验签拼接顺序（官方规范）：aoid + order_id + pay_price + pay_time + app_secret
  *
  * 1. 验签（不匹配返回非 success，XorPay 将按重试策略重发）；
- * 2. 从 order_id 解析 adoptionId（下单时格式 unlock-<adoptionId>）；
- * 3. 幂等置位 adoptions.is_unlocked + users.is_unlocked（重复回调安全）；
+ * 2. 从 order_id 解析订单类型与业务参数（各 kind 前缀见下方正则）；
+ * 3. 按类型幂等发货（重复回调安全：唯一约束 / ON CONFLICT / 条件更新）；
  * 4. 返回 "success"（HTTP 200，正文含 success 即停止重试）。
+ *
+ * 事件覆盖说明（Phase 6 · 实施计划 8.1.2）：
+ *  - payment.success：XorPay 个人码唯一推送的事件（支付成功回调），本路由全量分发；
+ *  - payment.failed：XorPay 无失败回调 —— 未支付订单不下发二维码即自然过期，
+ *    无资金/库存副作用，无需处理；
+ *  - payment.refunded：XorPay 无退款回调渠道 —— 退款走人工核对后，经
+ *    /api/admin/users/[id]/points 手动扣分与状态回收，points_log 留痕对账。
  */
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -79,6 +89,23 @@ export async function POST(req: Request) {
   );
   // checkin-makeup-<userId>-<yyyy-mm-dd>-<nonce>  断签补签（补签日期下单时固化进订单号）
   const makeupMatch = order_id.match(MAKEUP_ORDER_RE);
+  // —— Phase 6 新商品（订单号格式见 src/lib/monetization-products.ts）——
+  // premium-yearly-<userId>-<nonce>  高级公民年卡
+  const premiumYearlyMatch = order_id.match(
+    /^premium-yearly-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  // breedaccel-<collectibleId>-<userId>-<nonce>  结晶加速
+  const breedAccelMatch = order_id.match(
+    /^breedaccel-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  // chatpack-<messages>-<userId>-<nonce>  聊天包（messages 为下单时固化的句数）
+  const chatPackMatch = order_id.match(
+    /^chatpack-(\d+)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
+  // promo24-<contentId>-<userId>-<nonce>  推荐曝光 24h 现金通道
+  const promo24Match = order_id.match(
+    /^promo24-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  );
   const adoptionId = adoptionMatch ? adoptionMatch[1] : "";
 
   // 首次访问自动建表（幂等）
@@ -260,6 +287,102 @@ export async function POST(req: Request) {
       console.log("[pay/notify] checkin makeup granted", { userId: muUserId, makeupDate: muDate, orderId: order_id });
     } else {
       console.log("[pay/notify] checkin makeup no-op (duplicate callback or already checked later)", { orderId: order_id });
+    }
+  } else if (premiumYearlyMatch) {
+    // —— Phase 6 高级公民年卡：premium_until 顺延 365 天（续费累计，GREATEST 不缩短现有权益）——
+    // 幂等：points_log ref=<order_id> 唯一索引兜底，重复回调 / 重放不多顺延。
+    const userId = premiumYearlyMatch[1];
+    const { rowCount } = await pool.query(
+      `WITH ins AS (
+         INSERT INTO points_log (user_id, amount, reason, ref)
+         VALUES ($1::uuid, 0, 'vip_yearly', $2)
+         ON CONFLICT (ref) DO NOTHING
+         RETURNING 1
+       )
+       UPDATE users
+          SET premium_until = GREATEST(COALESCE(premium_until, now()), now()) + make_interval(days => $3)
+        WHERE id = $1::uuid AND EXISTS (SELECT 1 FROM ins)`,
+      [userId, order_id, VIP_YEARLY_DAYS],
+    );
+    if ((rowCount ?? 0) > 0) {
+      console.log("[pay/notify] vip yearly granted", { userId, days: VIP_YEARLY_DAYS, orderId: order_id });
+    } else {
+      console.log("[pay/notify] vip yearly no-op (duplicate callback)", { orderId: order_id });
+    }
+  } else if (breedAccelMatch) {
+    // —— Phase 6 结晶加速：清除目标藏品 breed_cooldown_until ——
+    // 幂等关键：必须先记账再发货（CTE 顺序）——若先清冷却再重复回调，会把用户
+    // 加速后新产生的冷却误清。points_log ref 唯一索引保证一单一效。
+    const collectibleId = breedAccelMatch[1];
+    const userId = breedAccelMatch[2];
+    const { rowCount } = await pool.query(
+      `WITH ins AS (
+         INSERT INTO points_log (user_id, amount, reason, ref)
+         VALUES ($2::uuid, 0, 'breed_accel', $1)
+         ON CONFLICT (ref) DO NOTHING
+         RETURNING 1
+       )
+       UPDATE user_collectibles SET breed_cooldown_until = now()
+        WHERE id = $3::uuid AND owner_id = $2::uuid AND EXISTS (SELECT 1 FROM ins)`,
+      [order_id, userId, collectibleId],
+    );
+    if ((rowCount ?? 0) > 0) {
+      console.log("[pay/notify] breed accel applied", { userId, collectibleId, orderId: order_id });
+    } else {
+      console.log("[pay/notify] breed accel no-op (duplicate callback or target missing)", { orderId: order_id });
+    }
+  } else if (chatPackMatch) {
+    // —— Phase 6 聊天包：当日已用额度回充 N 句（等价当日限额 +N）——
+    // 口径：chat_quotas 记「已用句数」，回充 = message_count -N（GREATEST 防负）；
+    // 当日无行（免费额度未动用）→ 插入 0 行（无害，额度本就充足）。
+    // 幂等：points_log ref 唯一索引兜底，重复回调不多充。日期与 /api/chat 同源（todayString UTC）。
+    const messages = Number(chatPackMatch[1]);
+    const userId = chatPackMatch[2];
+    const today = todayString();
+    const { rowCount } = await pool.query(
+      `WITH ins AS (
+         INSERT INTO points_log (user_id, amount, reason, ref)
+         VALUES ($1::uuid, 0, 'chat_pack', $2)
+         ON CONFLICT (ref) DO NOTHING
+         RETURNING 1
+       )
+       INSERT INTO chat_quotas (id, user_id, date, message_count, last_message_at)
+       SELECT $3, $1::uuid, $4, 0, now() WHERE EXISTS (SELECT 1 FROM ins)
+       ON CONFLICT (user_id, date)
+       DO UPDATE SET message_count = GREATEST(0, chat_quotas.message_count - $5)`,
+      [userId, order_id, `quota-${userId}-${today}`, today, messages],
+    );
+    if ((rowCount ?? 0) > 0) {
+      console.log("[pay/notify] chat pack credited", { userId, messages, date: today, orderId: order_id });
+    } else {
+      console.log("[pay/notify] chat pack no-op (duplicate callback)", { orderId: order_id });
+    }
+  } else if (promo24Match) {
+    // —— Phase 6 推荐曝光现金通道：写 promoted_content（24h，priority=1 与积分 1 天档一致）——
+    // 幂等：points_log ref 唯一索引兜底。NOT EXISTS 防并发撞车：支付完成后若该藏品
+    // 已有生效推广（如等待支付期间又买了积分版）→ 不再插入，points_log 留痕人工对账。
+    const contentId = promo24Match[1];
+    const userId = promo24Match[2];
+    const { rowCount } = await pool.query(
+      `WITH ins AS (
+         INSERT INTO points_log (user_id, amount, reason, ref)
+         VALUES ($1::uuid, 0, 'promotion_purchase', $2)
+         ON CONFLICT (ref) DO NOTHING
+         RETURNING 1
+       )
+       INSERT INTO promoted_content (content_type, content_id, promoter_id, start_time, end_time, priority)
+       SELECT $3, $4::uuid, $1::uuid, now(), now() + make_interval(hours => $5), 1
+        WHERE EXISTS (SELECT 1 FROM ins)
+          AND NOT EXISTS (
+            SELECT 1 FROM promoted_content pc
+             WHERE pc.content_type = $3 AND pc.content_id = $4::uuid AND pc.end_time > now()
+          )`,
+      [userId, order_id, PROMOTE_CONTENT_TYPE, contentId, PROMO_CASH_HOURS],
+    );
+    if ((rowCount ?? 0) > 0) {
+      console.log("[pay/notify] promo24 activated", { userId, contentId, hours: PROMO_CASH_HOURS, orderId: order_id });
+    } else {
+      console.log("[pay/notify] promo24 no-op (duplicate callback or active promotion exists)", { orderId: order_id });
     }
   } else if (adoptionId) {
     // 解锁该宠物（畅聊解锁）

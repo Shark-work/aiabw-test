@@ -141,7 +141,8 @@ test("promote POST: 事务闭环 + 推广记录（priority=days + make_interval�
 
 test("promote GET targets + promoted GET（公共 / mine=1）", () => {
   const promote = read("../src/app/api/content/promote/route.ts");
-  assert.match(promote, /EXISTS\([\s\S]{0,150}promoted_content pc[\s\S]{0,120}pc\.content_id = uc\.id AND pc\.end_time > now\(\)/);
+  // Phase 6：EXISTS 升级为 LEFT JOIN LATERAL（取生效推广 id/到期时间供提前下架），窗口过滤条件不变
+  assert.match(promote, /LEFT JOIN LATERAL \([\s\S]{0,150}promoted_content pc[\s\S]{0,200}pc\.content_id = uc\.id AND pc\.end_time > now\(\)/);
   assert.match(promote, /pricing: PROMOTE_DAYS\.map/);
   const promoted = read("../src/app/api/content/promoted/route.ts");
   assert.match(promoted, /searchParams\.get\("mine"\) === "1"/);
