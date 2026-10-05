@@ -1610,14 +1610,15 @@
   },
   "onboarding": {
     "metaTitle": "Awakening Ritual · Aibi World",
-    "stepOf": "Step {step} of 3",
+    "stepOf": "Step {step} of 5",
     "loading": "Loading…",
     "loadFailed": "Failed to load. Please refresh.",
     "meet": {
       "title": "Encounter",
-      "desc": "A sleeping soul is waiting to be awakened",
+      "desc": "Three sleeping souls are waiting to be awakened",
       "hint": "In Aibi World, every soul pet has a one-of-a-kind soul.",
-      "cta": "Begin the ritual"
+      "pickHint": "Tap a card and choose the one destined for you",
+      "cta": "✨ Awaken it"
     },
     "awaken": {
       "title": "Awaken",
@@ -1635,6 +1636,17 @@
       "certPendingHint": "The soul credential is being generated. Check the Collection Center later for its ID.",
       "cta": "Continue"
     },
+    "naming": {
+      "title": "Naming",
+      "nameLabel": "Give it a name",
+      "namePlaceholder": "Enter a name (1-24 chars)",
+      "nameInvalid": "Name must be 1-24 characters",
+      "aiCta": "✨ AI name ideas",
+      "aiWorking": "AI is thinking…",
+      "aiFailed": "AI dozed off — here are some ideas instead",
+      "suggestionHint": "Tap a name to fill it in",
+      "cta": "Continue"
+    },
     "journey": {
       "title": "Set Off",
       "nameLabel": "Give it a name",
@@ -1642,8 +1654,23 @@
       "nameInvalid": "Name must be 1-24 characters",
       "choiceHint": "What would you like to do with {name} first?",
       "chatCta": "💬 First chat",
+      "chatDesc": "Say your first words — try these openers",
+      "topic1": "“Who are you?”",
+      "topic2": "“What shall we play today?”",
       "exploreCta": "🗺️ First exploration",
+      "exploreDesc": "Head out and find your own adventure",
+      "rewardsTitle": "Possible rewards",
+      "rewardPoints": "🪙 Points",
+      "rewardItem": "🎁 Random item",
+      "rewardPostcard": "💌 Limited postcard",
       "later": "Maybe later"
+    },
+    "reward": {
+      "title": "🎉 Ritual complete!",
+      "desc": "Your journey with {name} officially begins",
+      "pointsLabel": "+{points} points credited",
+      "noReward": "Reward already claimed earlier",
+      "cta": "Begin the journey"
     },
     "banner": {
       "text": "🌰 Your soul pet is still sleeping",

@@ -496,3 +496,44 @@ body,
   }
 }
 
+
+/* ============ 新手引导「唤醒仪式」五步流（Phase 2） ============ */
+/* 候选灵宠卡片依次入场（配合 animationDelay 阶梯） */
+@keyframes ob-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 完成奖励卡片弹出（积分到账强调） */
+@keyframes ob-reward-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 选中卡片的柔光呼吸 */
+@keyframes ob-card-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 24px 4px rgba(139, 92, 246, 0.35);
+  }
+}
+

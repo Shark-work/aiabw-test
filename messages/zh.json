@@ -1610,14 +1610,15 @@
   },
   "onboarding": {
     "metaTitle": "唤醒仪式 · 艾比世界",
-    "stepOf": "第 {step} 步 · 共 3 步",
+    "stepOf": "第 {step} 步 · 共 5 步",
     "loading": "加载中…",
     "loadFailed": "加载失败，请刷新重试",
     "meet": {
       "title": "遇 见",
-      "desc": "一段沉睡的灵魂正在等待唤醒",
+      "desc": "三段沉睡的灵魂正在等待唤醒",
       "hint": "在艾比世界，每一只灵宠都有独一无二的灵魂。",
-      "cta": "开始唤醒仪式"
+      "pickHint": "点击卡片，选择与你最有缘的那一只",
+      "cta": "✨ 唤醒它"
     },
     "awaken": {
       "title": "唤 醒",
@@ -1635,6 +1636,17 @@
       "certPendingHint": "灵魂凭证正在生成，稍后可在收藏中心查看编号",
       "cta": "继续"
     },
+    "naming": {
+      "title": "起 名",
+      "nameLabel": "给它起个名字吧",
+      "namePlaceholder": "输入名字（1-24 字）",
+      "nameInvalid": "名字需要 1-24 个字符",
+      "aiCta": "✨ AI 建议名",
+      "aiWorking": "AI 起名中…",
+      "aiFailed": "AI 打了个盹，先送你几个灵感",
+      "suggestionHint": "点击名字直接填入",
+      "cta": "继续"
+    },
     "journey": {
       "title": "启 程",
       "nameLabel": "给它起个名字吧",
@@ -1642,8 +1654,23 @@
       "nameInvalid": "名字需要 1-24 个字符",
       "choiceHint": "接下来，想和 {name} 一起做什么？",
       "chatCta": "💬 第一次对话",
+      "chatDesc": "和它说第一句话，试试这些开场",
+      "topic1": "“你是谁呀？”",
+      "topic2": "“今天想玩什么？”",
       "exploreCta": "🗺️ 第一次探索",
+      "exploreDesc": "出门寻找属于你的奇遇",
+      "rewardsTitle": "可能获得",
+      "rewardPoints": "🪙 积分",
+      "rewardItem": "🎁 随机道具",
+      "rewardPostcard": "💌 限定明信片",
       "later": "稍后再说"
+    },
+    "reward": {
+      "title": "🎉 引导完成！",
+      "desc": "你和 {name} 的旅程正式开启",
+      "pointsLabel": "+{points} 积分已到账",
+      "noReward": "奖励已在此前领取",
+      "cta": "开启旅程"
     },
     "banner": {
       "text": "🌰 你的灵宠还在沉睡",
