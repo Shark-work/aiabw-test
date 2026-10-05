@@ -15,25 +15,23 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 const config = await import("../src/lib/config.ts");
 
 // === 1) 常量与派生链接 ========================================================
-test("contact: CONTACT_INFO exact values", () => {
+test("contact: CONTACT_INFO exact values (site identity only, no personal accounts)", () => {
   const c = config.CONTACT_INFO;
   assert.equal(c.qqGroup, "1005445619");
   assert.equal(
     c.qqGroupJoinUrl,
     "https://qm.qq.com/cgi-bin/qm/qr?k=Hf0R51LVoGSeLQN3X8kc-BLzZuAx8YAT&jump_from=webapi&authKey=z2houMdX3NE9PijBT5Cek6RUhJVJnOngHw+R+QCvWF64RD0MZtSjaz9UQsd+z2uN"
   );
-  assert.equal(c.customerServiceQQ, "1206309834");
-  assert.equal(c.customerServiceEmail, "1206309834@qq.com");
   assert.equal(c.xHandle, "@Aiabw_com");
   assert.equal(c.xUrl, "https://x.com/Aiabw_com");
   assert.equal(c.email, "aiabw@outlook.com");
+  // 合规：不暴露站长个人账号（个人 QQ / 个人邮箱），售后统一走站点渠道
+  assert.ok(!("customerServiceQQ" in c), "不得保留个人客服 QQ 字段");
+  assert.ok(!("customerServiceEmail" in c), "不得保留个人客服邮箱字段");
 });
 
 test("contact: derived URLs follow spec formats", () => {
-  assert.equal(
-    config.QQ_SERVICE_URL,
-    "tencent://message/?uin=1206309834&Site=&Menu=yes"
-  );
+  assert.ok(!("QQ_SERVICE_URL" in config), "不得保留 tencent:// 个人 QQ 唤起链接");
   assert.equal(config.EMAIL_URL, "mailto:aiabw@outlook.com");
   // QQ 群加群链接必须为腾讯官方 qm.qq.com 域名
   assert.ok(
@@ -66,6 +64,30 @@ test("contact: legacy support@aiabw.com fully removed from src/ and messages/", 
   assert.deepEqual(offenders, [], `旧邮箱残留: ${offenders.join(", ")}`);
 });
 
+test("contact: personal QQ / personal email fully removed from src/ and messages/", () => {
+  const roots = ["src", "messages"].map((r) =>
+    fileURLToPath(new URL(`../${r}`, import.meta.url))
+  );
+  const offenders = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) {
+        if (name === "node_modules" || name === ".next") continue;
+        walk(p);
+      } else if (/\.(ts|tsx|json|mjs|cjs)$/.test(name)) {
+        const text = readFileSync(p, "utf8");
+        // 个人 QQ 号 / QQ 邮箱 / tencent:// 唤起协议 / 客服 QQ 相关 i18n key 一律清零
+        for (const needle of ["1206309834", "tencent://", "socialQqService", "qqService"]) {
+          if (text.includes(needle)) offenders.push(`${p} (${needle})`);
+        }
+      }
+    }
+  };
+  for (const r of roots) walk(r);
+  assert.deepEqual(offenders, [], `站长个人账号残留: ${offenders.join(", ")}`);
+});
+
 test("contact: no leftover 'search group ID to join' plain text anywhere", () => {
   const roots = ["src", "messages"].map((r) =>
     fileURLToPath(new URL(`../${r}`, import.meta.url))
@@ -88,54 +110,58 @@ test("contact: no leftover 'search group ID to join' plain text anywhere", () =>
 });
 
 // === 3) 展示层接线 ============================================================
-test("contact: footer renders all 4 channels from CONTACT_INFO", () => {
+test("contact: footer renders all 3 channels from CONTACT_INFO", () => {
   const s = read("src/components/layout/Footer.tsx");
-  assert.match(s, /CONTACT_INFO,\s*EMAIL_URL,\s*QQ_SERVICE_URL/);
+  assert.match(s, /CONTACT_INFO,\s*EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
   assert.match(s, /socialQqGroup/);
-  assert.match(s, /socialQqService/);
   assert.match(s, /socialX/);
   assert.match(s, /socialEmail/);
   assert.match(s, /QQIcon/);
   assert.match(s, /MailIcon/);
   assert.ok(!s.includes("TelegramIcon"), "页脚不再展示 Telegram");
+  assert.ok(!s.includes("QQ_SERVICE_URL"), "页脚不再展示个人客服 QQ");
+  assert.ok(!s.includes("socialQqService"), "页脚不再引用 socialQqService");
 });
 
-test("contact: floating support panel renders all 4 channels", () => {
+test("contact: floating support panel renders all 3 channels", () => {
   const s = read("src/components/layout/FloatingSupport.tsx");
-  assert.match(s, /QQ_SERVICE_URL/);
   assert.match(s, /EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.xUrl/);
   assert.match(s, /socialQqGroupHint/);
   assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
   assert.match(s, /socialQqGroupJoin/);
   assert.ok(!s.includes("SOCIAL.telegram"), "悬浮面板不再展示 Telegram");
+  assert.ok(!s.includes("QQ_SERVICE_URL"), "悬浮面板不再展示个人客服 QQ");
+  assert.ok(!s.includes("socialQqService"), "悬浮面板不再引用 socialQqService");
 });
 
-test("contact: SupportContact module renders all 4 channels", () => {
+test("contact: SupportContact module renders all 3 channels", () => {
   const s = read("src/components/layout/SupportContact.tsx");
-  assert.match(s, /QQ_SERVICE_URL/);
   assert.match(s, /EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.xUrl/);
   assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
   assert.match(s, /socialQqGroup/);
   assert.ok(!s.includes("TelegramIcon"), "法律页模块不再展示 Telegram");
+  assert.ok(!s.includes("QQ_SERVICE_URL"), "法律页模块不再展示个人客服 QQ");
+  assert.ok(!s.includes("socialQqService"), "法律页模块不再引用 socialQqService");
 });
 
 
-test("contact: /contact page is a 4-card grid with work hours", () => {
+test("contact: /contact page is a 3-card grid with work hours", () => {
   const s = read("src/app/[locale]/contact/page.tsx");
   assert.match(s, /getTranslations\("contact"\)/);
-  for (const k of ["qqGroupTitle", "qqServiceTitle", "xTitle", "emailTitle", "workHours", "backHome"]) {
+  for (const k of ["qqGroupTitle", "xTitle", "emailTitle", "workHours", "backHome"]) {
     assert.ok(s.includes(`t("${k}")`), `/contact 缺少 ${k}`);
   }
-  assert.match(s, /QQ_SERVICE_URL/);
   assert.match(s, /EMAIL_URL/);
   assert.match(s, /CONTACT_INFO\.xUrl/);
   assert.match(s, /CONTACT_INFO\.qqGroupJoinUrl/);
   assert.ok(!s.includes("href: null"), "QQ群卡片已改为可点击加群链接");
-  assert.match(s, /sm:grid-cols-2/, "四宫格双列布局");
+  assert.match(s, /sm:grid-cols-2/, "双列布局");
   assert.match(s, /QQIcon|MailIcon|XIcon/);
+  assert.ok(!s.includes("QQ_SERVICE_URL"), "/contact 不再展示个人客服 QQ");
+  assert.ok(!s.includes("qqService"), "/contact 不再引用 qqService 卡片");
 });
 
 test("contact: FAQ page mounts SupportContact module", () => {
@@ -146,10 +172,10 @@ test("contact: FAQ page mounts SupportContact module", () => {
 
 test("contact: subscribe page FAQ has customer-service entry", () => {
   const s = read("src/components/subscription/subscribe-client.tsx");
-  assert.match(s, /QQ_SERVICE_URL/);
-  assert.match(s, /CONTACT_INFO\.customerServiceQQ/);
   assert.match(s, /t\("faqSupport"\)/);
   assert.match(s, /href="\/contact"/);
+  assert.ok(!s.includes("QQ_SERVICE_URL"), "订阅页不再展示个人客服 QQ");
+  assert.ok(!s.includes("customerServiceQQ"), "订阅页不再引用 customerServiceQQ");
 });
 
 test("contact: login/register pages have need-help entry", () => {
@@ -165,8 +191,9 @@ test("contact: settings page has feedback & help section", () => {
   assert.match(s, /t\("supportTitle"\)/);
   assert.match(s, /t\("supportDesc"\)/);
   assert.match(s, /t\("supportAction"\)/);
-  assert.match(s, /QQ_SERVICE_URL/);
   assert.match(s, /href="\/contact"/);
+  assert.ok(!s.includes("QQ_SERVICE_URL"), "设置页不再展示个人客服 QQ");
+  assert.ok(!s.includes("CONTACT_INFO"), "设置页不再直接引用 CONTACT_INFO");
 });
 
 test("contact: site header nav includes /contact entry", () => {
@@ -190,20 +217,23 @@ test("contact i18n: new support/login/register/settings/subscription/nav keys in
   const zh = JSON.parse(read("messages/zh.json"));
   const en = JSON.parse(read("messages/en.json"));
   for (const j of [zh, en]) {
-    for (const k of ["socialQqGroup", "socialQqGroupHint", "socialQqGroupJoin", "socialQqService", "socialEmail"]) {
+    for (const k of ["socialQqGroup", "socialQqGroupHint", "socialQqGroupJoin", "socialEmail"]) {
       assert.ok(j.support[k], `support.${k} 缺失`);
     }
+    assert.ok(!("socialQqService" in j.support), "support.socialQqService 必须已删除");
+    assert.ok(!JSON.stringify(j).includes("1206309834"), "i18n 不得含个人 QQ 号");
+    assert.ok(!JSON.stringify(j).includes("@qq.com"), "i18n 不得含个人 QQ 邮箱");
     assert.ok(j.login.needHelp, "login.needHelp 缺失");
     assert.ok(j.register.needHelp, "register.needHelp 缺失");
     for (const k of ["supportTitle", "supportDesc", "supportAction"]) {
       assert.ok(j.settings[k], `settings.${k} 缺失`);
     }
+    assert.ok(j.settings.supportDesc.includes("aiabw@outlook.com"), "settings.supportDesc 应引导至官方邮箱");
     assert.ok(j.subscription.faqSupport, "subscription.faqSupport 缺失");
     assert.ok(j.nav.contact, "nav.contact 缺失");
   }
-  // 中文环境展示 QQ 群号与客服号
+  // 中文环境展示 QQ 群号（社区入口保留）
   assert.ok(zh.support.socialQqGroup.includes("1005445619"));
-  assert.ok(zh.support.socialQqService.includes("1206309834"));
   assert.ok(zh.support.socialEmail.includes("aiabw@outlook.com"));
   // 加群行动文案已替换"搜索群号加入"，群号保留为辅助说明
   assert.equal(zh.contact.qqGroupAction, "一键加群");
@@ -221,8 +251,10 @@ test("contact i18n: legal pages use new email, not legacy one", () => {
     for (const k of ["termsBody", "privacyBody", "goodsBody"]) {
       assert.ok(!j.legal[k].includes("support@aiabw.com"), `legal.${k} 仍含旧邮箱`);
       assert.ok(j.legal[k].includes("aiabw@outlook.com"), `legal.${k} 未替换为新邮箱`);
+      assert.ok(!j.legal[k].includes("@qq.com"), `legal.${k} 不得含个人 QQ 邮箱`);
     }
     assert.ok(!j.pages.contactBody.includes("support@aiabw.com"));
+    assert.ok(!j.pages.contactBody.includes("@qq.com"), "pages.contactBody 不得含个人 QQ 邮箱");
     assert.ok(j.pages.contactBody.includes("aiabw@outlook.com"));
   }
 });

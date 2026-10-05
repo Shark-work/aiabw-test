@@ -27,6 +27,9 @@ export const SOCIAL = {
 /**
  * 全站统一联系方式（客服渠道单一事实源）。
  * 页脚 / 悬浮客服 / 法律页 / 联系页 / 订阅页等全部引用此处，改号只改这一处。
+ *
+ * 合规约定：不展示任何站长个人账号（个人 QQ / 个人邮箱等），
+ * 售后与咨询统一走站点身份渠道 —— QQ 群（玩家社区）/ X 官号 / 官方邮箱。
  */
 export const CONTACT_INFO = {
   /** QQ 交流群群号（辅助展示；加入统一走 qqGroupJoinUrl 一键加群） */
@@ -34,19 +37,12 @@ export const CONTACT_INFO = {
   /** QQ 群在线加群链接（腾讯官方 qm.qq.com 一键加群页） */
   qqGroupJoinUrl:
     "https://qm.qq.com/cgi-bin/qm/qr?k=Hf0R51LVoGSeLQN3X8kc-BLzZuAx8YAT&jump_from=webapi&authKey=z2houMdX3NE9PijBT5Cek6RUhJVJnOngHw+R+QCvWF64RD0MZtSjaz9UQsd+z2uN",
-  /** 客服 QQ（一对一咨询） */
-  customerServiceQQ: "1206309834",
-  /** 客服 QQ 对应邮箱 */
-  customerServiceEmail: "1206309834@qq.com",
   /** X（推特）官方账号 */
   xHandle: "@Aiabw_com",
   xUrl: "https://x.com/Aiabw_com",
-  /** 官方邮箱（商务合作/正式反馈） */
+  /** 官方邮箱（商务合作/正式反馈/售后支持唯一入口） */
   email: "aiabw@outlook.com",
 } as const;
-
-/** 客服 QQ 一键唤起会话（tencent:// 协议，PC/手机 QQ 均支持） */
-export const QQ_SERVICE_URL = `tencent://message/?uin=${CONTACT_INFO.customerServiceQQ}&Site=&Menu=yes`;
 
 /** 官方邮箱 mailto 链接 */
 export const EMAIL_URL = `mailto:${CONTACT_INFO.email}`;

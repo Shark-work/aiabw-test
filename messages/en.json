@@ -802,7 +802,6 @@
     "socialQqGroup": "QQ Group: 1005445619",
     "socialQqGroupHint": "Click to join the group",
     "socialQqGroupJoin": "Join Group",
-    "socialQqService": "Customer Service QQ: 1206309834",
     "socialX": "X (Twitter)",
     "socialTelegram": "Telegram",
     "socialEmail": "Email: aiabw@outlook.com"
@@ -813,9 +812,6 @@
     "qqGroupTitle": "QQ Group",
     "qqGroupDesc": "Join the community and hang out with other players (Group ID: 1005445619)",
     "qqGroupAction": "Join Group",
-    "qqServiceTitle": "Customer Service QQ",
-    "qqServiceDesc": "One-on-one help for quick answers",
-    "qqServiceAction": "1206309834",
     "xTitle": "X (Twitter)",
     "xDesc": "Follow official news and update announcements",
     "xAction": "@Aiabw_com",
@@ -859,7 +855,7 @@
     "wallPublicLabel": "Make my postcard wall public",
     "wallPublicDesc": "When on, anyone with the link can view your postcard collection progress (no private info like email). Turning it off instantly blocks the public page.",
     "supportTitle": "Feedback & Help",
-    "supportDesc": "Questions or suggestions? Customer Service QQ: 1206309834, or visit the Contact page for more channels.",
+    "supportDesc": "Questions or suggestions? Email aiabw@outlook.com, or visit the Contact page for more channels.",
     "supportAction": "Contact us"
   },
   "cosmetics": {

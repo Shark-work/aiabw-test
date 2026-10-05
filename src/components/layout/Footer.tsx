@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { MailIcon, QQIcon, XIcon } from "@/components/social-icons";
 import { VisitCounter } from "@/components/visit-counter";
 import { FooterCollapsible } from "@/components/layout/FooterCollapsible";
-import { CONTACT_INFO, EMAIL_URL, QQ_SERVICE_URL } from "@/lib/config";
+import { CONTACT_INFO, EMAIL_URL } from "@/lib/config";
 
 /** 全局页脚：默认折叠仅显示主版权行（+展开按钮）；展开后显示辅助导航 / 联系方式 / 法律条款 / 访问计数。 */
 export async function Footer() {
@@ -44,7 +44,7 @@ export async function Footer() {
           {t("virtualGoods")}
         </Link>
       </nav>
-      {/* 全站统一客服渠道（QQ群 / 客服QQ / X / 邮箱，来源 src/lib/config.ts CONTACT_INFO） */}
+      {/* 全站统一客服渠道（QQ群 / X / 邮箱，来源 src/lib/config.ts CONTACT_INFO） */}
       <address className="mb-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4 text-xs not-italic text-zinc-500">
         {/* QQ 群：一键加群（跳转腾讯官方加群页，群号保留展示） */}
         <a
@@ -56,16 +56,6 @@ export async function Footer() {
         >
           <QQIcon className="h-4 w-4 text-[#12B7F5]" />
           {ts("socialQqGroup")}
-        </a>
-        <span aria-hidden className="text-zinc-200">
-          |
-        </span>
-        <a
-          href={QQ_SERVICE_URL}
-          className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
-        >
-          <QQIcon className="h-4 w-4 text-[#12B7F5]" />
-          {ts("socialQqService")}
         </a>
         <span aria-hidden className="text-zinc-200">
           |

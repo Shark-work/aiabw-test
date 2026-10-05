@@ -802,7 +802,6 @@
     "socialQqGroup": "QQ群：1005445619",
     "socialQqGroupHint": "点击一键加群",
     "socialQqGroupJoin": "加入群聊",
-    "socialQqService": "客服QQ：1206309834",
     "socialX": "X (Twitter)",
     "socialTelegram": "Telegram",
     "socialEmail": "邮箱：aiabw@outlook.com"
@@ -813,9 +812,6 @@
     "qqGroupTitle": "QQ群",
     "qqGroupDesc": "加群交流，和玩家们一起玩耍（群号 1005445619）",
     "qqGroupAction": "一键加群",
-    "qqServiceTitle": "客服QQ",
-    "qqServiceDesc": "一对一咨询，问题快速解决",
-    "qqServiceAction": "1206309834",
     "xTitle": "X（推特）",
     "xDesc": "关注官方动态与更新公告",
     "xAction": "@Aiabw_com",
@@ -859,7 +855,7 @@
     "wallPublicLabel": "公开我的明信片墙",
     "wallPublicDesc": "开启后，任何人可通过链接查看你的明信片收集进度（不含邮箱等隐私信息）；关闭后公开页立即不可访问。",
     "supportTitle": "反馈与帮助",
-    "supportDesc": "遇到问题或有建议？客服 QQ：1206309834，或前往联系我们页面查看更多渠道。",
+    "supportDesc": "遇到问题或有建议？发送邮件至 aiabw@outlook.com，或前往联系我们页面查看更多渠道。",
     "supportAction": "联系我们"
   },
   "cosmetics": {

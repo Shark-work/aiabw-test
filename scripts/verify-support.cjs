@@ -38,7 +38,7 @@ const BASE = process.argv[2] || "http://localhost:3100";
       hasPanel: t.includes("意见反馈与客服联系") || t.includes("Feedback & Support"),
       hasX: t.includes("X (Twitter)"),
       hasTelegram: t.includes("Telegram"),
-      hasQQ: t.includes("1005445619") || t.includes("1206309834@qq.com"),
+      hasQQ: t.includes("1005445619"),
     };
   });
   console.log("[panel]", JSON.stringify(panel));

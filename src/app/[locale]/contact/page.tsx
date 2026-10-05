@@ -2,10 +2,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { MailIcon, QQIcon, XIcon } from "@/components/social-icons";
-import { CONTACT_INFO, EMAIL_URL, QQ_SERVICE_URL } from "@/lib/config";
+import { CONTACT_INFO, EMAIL_URL } from "@/lib/config";
 
 /**
- * 联系我们（/contact）：四宫格卡片展示全站统一客服渠道。
+ * 联系我们（/contact）：卡片式展示全站统一客服渠道（QQ群 / X / 邮箱）。
  * 号码/账号全部来自 src/lib/config.ts CONTACT_INFO（单一事实源）。
  */
 export default async function ContactPage({
@@ -25,14 +25,6 @@ export default async function ContactPage({
       desc: t("qqGroupDesc"),
       actionText: t("qqGroupAction"),
       href: CONTACT_INFO.qqGroupJoinUrl, // 一键加群（腾讯官方加群页）
-    },
-    {
-      key: "qqService",
-      icon: <QQIcon className="h-7 w-7 text-[#12B7F5]" />,
-      title: t("qqServiceTitle"),
-      desc: t("qqServiceDesc"),
-      actionText: t("qqServiceAction"),
-      href: QQ_SERVICE_URL,
     },
     {
       key: "x",
@@ -59,7 +51,7 @@ export default async function ContactPage({
         <p className="mt-2 text-sm text-zinc-500">{t("subtitle")}</p>
       </header>
 
-      {/* 四宫格：QQ群 / 客服QQ / X / 邮箱 */}
+      {/* 客服渠道卡片：QQ群 / X / 邮箱 */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {cards.map((c) => {
           const inner = (

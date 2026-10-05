@@ -242,7 +242,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     return {
       hasX: t.includes("X (Twitter)"),
       hasTelegram: t.includes("Telegram"),
-      hasQQ: t.includes("1005445619") || t.includes("1206309834@qq.com"),
+      hasQQ: t.includes("1005445619"),
     };
   });
   console.log("--- footer social ---", JSON.stringify(foot));
