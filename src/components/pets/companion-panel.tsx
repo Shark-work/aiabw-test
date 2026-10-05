@@ -705,10 +705,11 @@ export function CompanionPanel() {
         </div>
       )}
 
-      {/* 装扮商城（购买皮肤/特效 + 高级公民月卡） */}
+      {/* 装扮商城（购买皮肤/特效 + 高级公民月卡；petImageUrl 供 7.6-2 穿戴预览） */}
       <CosmeticsShopModal
         open={shopOpen}
         adoptionId={selectedPet?.id ?? null}
+        petImageUrl={selectedPet?.avatar ?? null}
         onClose={() => setShopOpen(false)}
       />
     </div>

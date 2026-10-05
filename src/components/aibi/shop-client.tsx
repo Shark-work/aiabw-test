@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
+import { LimitedOfferBanner } from "@/components/limited-offer-banner";
 import { AibiErrorBanner } from "./aibi-error-banner";
 import { aibiFetch, AibiClientError, readAibiToken } from "@/lib/aibi-client";
 import { aibiItemEmoji } from "@/lib/aibi-visual";
@@ -104,6 +105,9 @@ export function ShopClient() {
           </p>
         ) : null}
       </header>
+
+      {/* Phase 7 · 7.6-1 限时特惠横幅（首充双倍 / 积分特惠，复用充值事件总线） */}
+      <LimitedOfferBanner />
 
       {error ? <AibiErrorBanner code={error.code} message={error.message} onClose={() => setError(null)} /> : null}
       {notice ? (

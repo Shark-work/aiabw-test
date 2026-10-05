@@ -903,7 +903,27 @@
     "orderFailed": "Order failed",
     "scanHint": "Scan to pay",
     "processing": "Processing…",
-    "empty": "No cosmetics available"
+    "empty": "No cosmetics available",
+    "ownedEmpty": "No owned cosmetics yet — pick one to try",
+    "previewTitle": "Try-on preview · {name}",
+    "previewOwned": "Owned · showing on your pet",
+    "previewLocked": "Unlock for ¥{price} — your pet wears it instantly",
+    "recommendTip": "Recommended combo: {skin} × {effect}",
+    "recommendGo": "View",
+    "tabAll": "All ({count})",
+    "tabOwned": "Owned ({count})",
+    "howtoBuy": "Payment: WeChat / Alipay QR scan, instant delivery",
+    "howtoBlindbox": "Check-in blind box: open after 7-day streak for a chance at cosmetic items",
+    "howtoFirst": "First purchase bonus: first recharge doubles points (once only)"
+  },
+  "offerBanner": {
+    "firstTitle": "🎁 First Purchase ×2 · Once Only",
+    "firstSubtitle": "Your first recharge doubles points — don't miss it",
+    "guestTitle": "🎁 First Purchase ×2 · New User Special",
+    "guestSubtitle": "Sign in and your first recharge doubles points",
+    "normalTitle": "⚡ Points Refill · Top-up Deals",
+    "normalSubtitle": "Multiple points packs, instant credit",
+    "cta": "Top up"
   },
   "blindbox": {
     "title": "Blind Box Plaza",

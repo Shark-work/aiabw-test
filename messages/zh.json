@@ -903,7 +903,27 @@
     "orderFailed": "下单失败",
     "scanHint": "请扫码支付",
     "processing": "处理中…",
-    "empty": "暂无可售装扮"
+    "empty": "暂无可售装扮",
+    "ownedEmpty": "还没有已购装扮，挑一件试试吧",
+    "previewTitle": "穿戴预览 · {name}",
+    "previewOwned": "已拥有 · 宠物展示中",
+    "previewLocked": "¥{price} 解锁后宠物即刻穿戴",
+    "recommendTip": "推荐搭配：{skin} × {effect}",
+    "recommendGo": "去看看",
+    "tabAll": "全部（{count}）",
+    "tabOwned": "已拥有（{count}）",
+    "howtoBuy": "购买方式：微信 / 支付宝扫码，即时到账",
+    "howtoBlindbox": "签到盲盒：连续签到 7 天开箱，概率得装扮道具",
+    "howtoFirst": "首充福利：首笔充值积分翻倍（仅限一次）"
+  },
+  "offerBanner": {
+    "firstTitle": "🎁 首充双倍 · 仅限一次",
+    "firstSubtitle": "首笔充值积分翻倍，错过不再",
+    "guestTitle": "🎁 首充双倍 · 新用户专享",
+    "guestSubtitle": "登录后首笔充值积分翻倍",
+    "normalTitle": "⚡ 积分补给 · 充值特惠",
+    "normalSubtitle": "多档积分包，充值立享",
+    "cta": "去充值"
   },
   "blindbox": {
     "title": "盲盒广场",
