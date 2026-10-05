@@ -477,6 +477,7 @@
     "playerPlaceholder": "A player",
     "signInFirst": "Please sign in first",
     "notSignedIn": "Not signed in",
+    "shareRewardFailed": "Failed to grant share reward, please retry later",
     "achievementsFailed": "Failed to load achievements, please try again later.",
     "sessionExpired": "Not signed in or session expired",
     "petLimit": "You already have 1 companion! Unlock the Multi-Pet Collection to adopt new friends and chat without limits.",
@@ -1180,6 +1181,13 @@
       "totalLine": "{n} postcards collected",
       "completeBadge": "🏆 Set Complete",
       "shareWall": "🖼️ Share my postcard wall",
+      "templatePick": "Pick a share image template",
+      "template": {
+        "classic": "Classic Violet",
+        "night": "Starry Night",
+        "blossom": "Sakura Pink"
+      },
+      "shareReward": "🎉 First share of the day +{points} points",
       "sharing": "Generating…",
       "shareWallText": "Check out my postcard wall — {n} postcards collected → {url}"
     },

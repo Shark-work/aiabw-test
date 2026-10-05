@@ -25,6 +25,34 @@ const SET_COLORS: Record<string, string> = {
   bird: "#38bdf8",
 };
 
+/**
+ * 分享图模板（Phase 7 · 7.8-1 模板选择）：3 套视觉主题，?template= 参数选择，
+ * 非法/缺省回退 classic。纯 query 参数零 schema（模板不落库）。
+ */
+const SHARE_TEMPLATES: Record<
+  string,
+  { bg: string; title: string; sub: string; card: string }
+> = {
+  classic: {
+    bg: "linear-gradient(150deg, #7c3aed 0%, #db2777 100%)",
+    title: "#ffffff",
+    sub: "rgba(255,255,255,0.85)",
+    card: "rgba(255,255,255,0.94)",
+  },
+  night: {
+    bg: "linear-gradient(150deg, #0f172a 0%, #1e3a8a 100%)",
+    title: "#e0f2fe",
+    sub: "rgba(224,242,254,0.8)",
+    card: "rgba(255,255,255,0.92)",
+  },
+  blossom: {
+    bg: "linear-gradient(150deg, #fda4af 0%, #f9a8d4 100%)",
+    title: "#ffffff",
+    sub: "rgba(255,255,255,0.9)",
+    card: "rgba(255,255,255,0.95)",
+  },
+};
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ userId: string }> },
@@ -43,6 +71,9 @@ export async function GET(
     const siteHost = new URL(SITE_URL).host;
     const byCategory = new Map(wall.collections.map((c) => [c.category, c]));
     const completeCount = wall.collections.filter((c) => c.complete).length;
+    // 7.8-1 模板选择：?template=classic|night|blossom（非法回退 classic）
+    const templateParam = new URL(req.url).searchParams.get("template") ?? "";
+    const tpl = SHARE_TEMPLATES[templateParam] ?? SHARE_TEMPLATES.classic;
 
     return new ImageResponse(
       (
@@ -52,7 +83,7 @@ export async function GET(
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            backgroundImage: "linear-gradient(150deg, #7c3aed 0%, #db2777 100%)",
+            backgroundImage: tpl.bg,
             padding: 56,
           }}
         >
@@ -64,7 +95,7 @@ export async function GET(
               fontSize: 44,
               fontWeight,
               fontFamily,
-              color: "#ffffff",
+              color: tpl.title,
             }}
           >
             {isEn
@@ -77,7 +108,7 @@ export async function GET(
               marginTop: 10,
               fontSize: 24,
               fontFamily,
-              color: "rgba(255,255,255,0.85)",
+              color: tpl.sub,
             }}
           >
             {isEn
@@ -93,7 +124,7 @@ export async function GET(
               flexDirection: "column",
               gap: 18,
               marginTop: 36,
-              backgroundColor: "rgba(255,255,255,0.94)",
+              backgroundColor: tpl.card,
               borderRadius: 28,
               padding: "32px 40px",
               flex: 1,

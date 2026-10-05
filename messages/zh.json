@@ -477,6 +477,7 @@
     "playerPlaceholder": "某位玩家",
     "signInFirst": "请先登录",
     "notSignedIn": "未登录",
+    "shareRewardFailed": "分享奖励发放失败，请稍后重试",
     "achievementsFailed": "成就加载失败，请稍后重试",
     "sessionExpired": "未登录或登录已过期",
     "petLimit": "你已经有了 1 只艾比伙伴啦！解锁「多宠图鉴」，即可再领养新伙伴，还能无限畅聊~",
@@ -1180,6 +1181,13 @@
       "totalLine": "共收集 {n} 张明信片",
       "completeBadge": "🏆 图鉴完成",
       "shareWall": "🖼️ 分享我的明信片墙",
+      "templatePick": "选择分享图模板",
+      "template": {
+        "classic": "经典紫",
+        "night": "星空夜",
+        "blossom": "樱花粉"
+      },
+      "shareReward": "🎉 每日首次分享 +{points} 积分",
       "sharing": "生成中…",
       "shareWallText": "来看看我的明信片墙，已收集 {n} 张明信片 → {url}"
     },
