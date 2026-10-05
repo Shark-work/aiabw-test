@@ -535,7 +535,6 @@
     "petUnavailable": "This pet has already been adopted by another owner - check out the others!",
     "claimFailed": "Adoption failed, please try again later",
     "petNameInvalid": "Name must be 1-24 characters",
-    "adoptionNotFound": "Adoption record not found",
     "onboardingFailed": "Something went wrong, please try again",
     "postcardSetInvalid": "Unknown postcard series",
     "postcardSetIncomplete": "You haven't collected all postcards of this series yet",
@@ -1126,6 +1125,34 @@
       "shareWall": "🖼️ Share my postcard wall",
       "sharing": "Generating…",
       "shareWallText": "Check out my postcard wall — {n} postcards collected → {url}"
+    },
+    "rewards": {
+      "reportTitle": "🎒 Exploration Loot",
+      "points": "+{n} pts",
+      "basePart": "base +{n}",
+      "streakPart": "streak +{n}",
+      "milestonePart": "milestone +{n}",
+      "fragmentLine": "Soul Fragment ×{n}",
+      "streakLine": "🔥 {n}-day exploration streak",
+      "milestoneLine": "🎉 Exploration #{n} reached! Bonus granted"
+    },
+    "streak": {
+      "label": "Streak",
+      "days": "{n} days",
+      "bonus": "Streak bonus +{n}/run",
+      "nextHint": "Come back tomorrow to keep it"
+    },
+    "history": {
+      "statsLine": "{total} runs · {steps} steps · {distance} km · ✨ {rare} rare",
+      "filters": {
+        "all": "All",
+        "postcard": "Postcards",
+        "gift": "Gifts",
+        "knowledge": "Knowledge",
+        "encounter": "Encounters",
+        "rest": "Rest",
+        "rare": "✨ Rare"
+      }
     }
   },
   "seasonal": {

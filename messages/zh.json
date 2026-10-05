@@ -472,7 +472,7 @@
     "achievementsFailed": "成就加载失败，请稍后重试",
     "sessionExpired": "未登录或登录已过期",
     "petLimit": "你已经有了 1 只艾比伙伴啦！解锁「多宠图鉴」，即可再领养新伙伴，还能无限畅聊~",
-    "adoptionNotFound": "未找到该领养记录",
+    "adoptionNotFound": "没有找到这条领养记录",
     "noPermissionPet": "无权为该宠物发起支付",
     "invalidAmount": "金额不合法",
     "invalidPointsPack": "无效的积分充值档位",
@@ -535,7 +535,6 @@
     "petUnavailable": "这只宠物已经被其他主人领养啦，去图鉴看看别的吧~",
     "claimFailed": "领养失败，请稍后再试",
     "petNameInvalid": "名字需要 1-24 个字符",
-    "adoptionNotFound": "没有找到这条领养记录",
     "onboardingFailed": "操作失败，请稍后再试",
     "postcardSetInvalid": "没有这个明信片系列",
     "postcardSetIncomplete": "还没有集齐这个系列的明信片",
@@ -1126,6 +1125,34 @@
       "shareWall": "🖼️ 分享我的明信片墙",
       "sharing": "生成中…",
       "shareWallText": "来看看我的明信片墙，已收集 {n} 张明信片 → {url}"
+    },
+    "rewards": {
+      "reportTitle": "🎒 探索收获",
+      "points": "+{n} 积分",
+      "basePart": "基础 +{n}",
+      "streakPart": "连探 +{n}",
+      "milestonePart": "里程碑 +{n}",
+      "fragmentLine": "灵魂碎片 ×{n}",
+      "streakLine": "🔥 连续探索 {n} 天",
+      "milestoneLine": "🎉 第 {n} 次探索达成！额外奖励已到账"
+    },
+    "streak": {
+      "label": "连续探索",
+      "days": "{n} 天",
+      "bonus": "连探加成 +{n}/次",
+      "nextHint": "明天再来可续上"
+    },
+    "history": {
+      "statsLine": "累计 {total} 次 · {steps} 步 · {distance} km · ✨ {rare} 次",
+      "filters": {
+        "all": "全部",
+        "postcard": "明信片",
+        "gift": "礼物",
+        "knowledge": "知识",
+        "encounter": "奇遇",
+        "rest": "休息",
+        "rare": "✨ 稀有"
+      }
     }
   },
   "seasonal": {

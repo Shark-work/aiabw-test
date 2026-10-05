@@ -15,6 +15,7 @@ import {
   badgeNameMessageKey,
   type NewlyUnlockedBadge,
 } from "@/lib/achievements-config";
+import type { ExplorationRewardsPayload } from "@/lib/exploration-rewards";
 
 export type ExploreResultModalData = {
   emoji: string | null;
@@ -31,6 +32,8 @@ export type ExploreResultModalData = {
   } | null;
   /** 本次探索新解锁的徽章（成就系统，roadmap 任务二；null/undefined = 无） */
   newlyUnlocked?: NewlyUnlockedBadge[] | null;
+  /** 本次探索结算奖励（Phase 3 探索报告卡；null/undefined = 发放失败降级，不展示） */
+  rewards?: ExplorationRewardsPayload | null;
 };
 
 type Props = {
@@ -112,6 +115,89 @@ export function ExploreResultModal({ result, onClose, onViewKnowledge }: Props) 
               </span>
             </div>
           </div>
+
+          {/* Phase 3 · 探索报告卡：积分（含分解）/ 道具 / 碎片 / 连探 / 里程碑，逐项弹入 */}
+          {result.rewards && (
+            <div
+              className="mb-4 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 px-3 py-2.5"
+              data-testid="explore-result-rewards"
+            >
+              <p className="mb-1.5 text-center text-xs font-bold text-amber-900">
+                {t("rewards.reportTitle")}
+              </p>
+              <ul className="flex flex-col items-center gap-1">
+                {/* 积分行（基础/连探/里程碑分解） */}
+                <li
+                  className="flex flex-wrap items-center justify-center gap-1 text-sm font-bold text-amber-700"
+                  style={{ animation: "ex-reward-in 0.35s ease both" }}
+                  data-testid="explore-reward-points"
+                >
+                  🪙 {t("rewards.points", { n: result.rewards.points })}
+                  <span className="text-[10px] font-normal text-amber-600">
+                    {[
+                      t("rewards.basePart", { n: result.rewards.basePoints }),
+                      result.rewards.streakBonus > 0
+                        ? t("rewards.streakPart", { n: result.rewards.streakBonus })
+                        : null,
+                      result.rewards.milestonePoints > 0
+                        ? t("rewards.milestonePart", { n: result.rewards.milestonePoints })
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </li>
+                {/* 道具行（逐项延迟弹入） */}
+                {result.rewards.items.map((item, i) => (
+                  <li
+                    key={`${item.key}-${i}`}
+                    className="flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-zinc-700 shadow-sm"
+                    style={{ animation: `ex-reward-in 0.35s ease ${(i + 1) * 120}ms both` }}
+                    data-testid="explore-reward-item"
+                  >
+                    <span className="text-base">{item.emoji}</span>
+                    {item.name}
+                  </li>
+                ))}
+                {/* 灵魂碎片行 */}
+                {result.rewards.fragments > 0 && (
+                  <li
+                    className="flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700"
+                    style={{
+                      animation: `ex-reward-in 0.35s ease ${(result.rewards.items.length + 1) * 120}ms both`,
+                    }}
+                    data-testid="explore-reward-fragments"
+                  >
+                    🧩 {t("rewards.fragmentLine", { n: result.rewards.fragments })}
+                  </li>
+                )}
+                {/* 连探行 */}
+                {result.rewards.streak > 1 && (
+                  <li
+                    className="text-[11px] font-semibold text-orange-700"
+                    style={{
+                      animation: `ex-reward-in 0.35s ease ${(result.rewards.items.length + 2) * 120}ms both`,
+                    }}
+                    data-testid="explore-reward-streak"
+                  >
+                    {t("rewards.streakLine", { n: result.rewards.streak })}
+                  </li>
+                )}
+                {/* 里程碑行 */}
+                {result.rewards.milestone && (
+                  <li
+                    className="text-[11px] font-bold text-rose-600"
+                    style={{
+                      animation: `ex-reward-in 0.35s ease ${(result.rewards.items.length + 3) * 120}ms both`,
+                    }}
+                    data-testid="explore-reward-milestone"
+                  >
+                    {t("rewards.milestoneLine", { n: result.rewards.milestone })}
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
 
           {result.newlyUnlocked && result.newlyUnlocked.length > 0 && (
             <div

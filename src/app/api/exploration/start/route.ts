@@ -24,6 +24,13 @@ import { isPremium } from "@/lib/premium";
 import { syncAchievements } from "@/lib/achievements-service";
 import type { NewlyUnlockedBadge } from "@/lib/achievements-config";
 import { trackSeasonalProgress } from "@/server/queries/seasonal-queries";
+import {
+  computeRewards,
+  computeStreak,
+  EXPLORATION_REWARD_CONFIG,
+  type ExplorationRewardsPayload,
+} from "@/lib/exploration-rewards";
+import { itemDisplayName } from "@/lib/checkin-items";
 
 export const runtime = "nodejs";
 
@@ -173,6 +180,93 @@ export async function POST(req: Request) {
       ],
     );
 
+    // 5.5) Phase 3 奖励结算：streak / 累计次数由 exploration_records 实时推导，
+    //      事务化发放（points_log.ref = 'explore:'+recordId 唯一索引幂等，重放撞
+    //      UNIQUE 整体回滚，绝不重复发奖）；失败降级 rewards=null 不阻断主流程。
+    let rewardsPayload: ExplorationRewardsPayload | null = null;
+    try {
+      const dayRows = (await pool.query(
+        `SELECT DISTINCT to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS d
+           FROM exploration_records
+          WHERE user_id = $1
+          ORDER BY d DESC
+          LIMIT 90`,
+        [user.id],
+      )) as { rows: Array<{ d: string }> };
+      const totalRes = (await pool.query(
+        `SELECT count(*)::int AS count FROM exploration_records WHERE user_id = $1`,
+        [user.id],
+      )) as { rows: Array<{ count: number }> };
+      const streak = computeStreak(
+        dayRows.rows.map((r) => r.d),
+        today,
+      );
+      const totalCount = totalRes.rows[0]?.count ?? 0;
+      const rewards = computeRewards({
+        rarity: picked.rarity,
+        isVip,
+        streak,
+        totalCount,
+      });
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        if (rewards.points > 0) {
+          await client.query(
+            "UPDATE users SET points = points + $2 WHERE id = $1",
+            [user.id, rewards.points],
+          );
+          await client.query(
+            `INSERT INTO points_log (user_id, amount, reason, ref)
+             VALUES ($1, $2, $3, $4)`,
+            [
+              user.id,
+              rewards.points,
+              EXPLORATION_REWARD_CONFIG.POINTS_REASON,
+              `explore:${recordId}`,
+            ],
+          );
+        }
+        for (const item of rewards.items) {
+          await client.query(
+            `INSERT INTO user_items (user_id, item_key, rarity, source)
+             VALUES ($1, $2, $3, $4)`,
+            [user.id, item.key, item.rarity, EXPLORATION_REWARD_CONFIG.REWARD_SOURCE],
+          );
+        }
+        for (let i = 0; i < rewards.fragments; i++) {
+          await client.query(
+            `INSERT INTO user_items (user_id, item_key, rarity, source)
+             VALUES ($1, $2, $3, $4)`,
+            [
+              user.id,
+              EXPLORATION_REWARD_CONFIG.FRAGMENT_ITEM_KEY,
+              picked.rarity,
+              EXPLORATION_REWARD_CONFIG.REWARD_SOURCE,
+            ],
+          );
+        }
+        await client.query("COMMIT");
+        rewardsPayload = {
+          ...rewards,
+          items: rewards.items.map((it) => ({
+            key: it.key,
+            name: itemDisplayName(it, locale),
+            emoji: it.emoji,
+            rarity: it.rarity,
+          })),
+        };
+      } catch (txErr) {
+        await client.query("ROLLBACK");
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } catch (rewardErr) {
+      console.error("[/api/exploration/start] rewards grant failed:", rewardErr);
+    }
+
     // 6) 成就评估（roadmap 任务二：探索完成节点；失败不阻断探索主流程）
     let newlyUnlocked: NewlyUnlockedBadge[] = [];
     try {
@@ -200,6 +294,7 @@ export async function POST(req: Request) {
       maxCount,
       isVip,
       newlyUnlocked,
+      rewards: rewardsPayload,
     };
     return NextResponse.json(body);
   } catch (err) {

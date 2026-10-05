@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 import { Sparkles, Lock, Compass } from "lucide-react";
 
 import type { BadgeId } from "@/lib/achievements-config";
+import type { ExplorationRewardsPayload } from "@/lib/exploration-rewards";
 
 export type ExploreResultPayload = {
   eventId: string;
@@ -43,6 +44,8 @@ export type ExploreResultPayload = {
   isVip: boolean;
   /** 本次探索新解锁的徽章（成就系统，roadmap 任务二） */
   newlyUnlocked?: { id: BadgeId; emoji: string; rewardPoints: number }[] | null;
+  /** 本次探索结算奖励（Phase 3；null = 发放失败降级，不展示奖励区） */
+  rewards?: ExplorationRewardsPayload | null;
 };
 
 export type ExploreButtonProps = {
@@ -95,7 +98,7 @@ export function ExploreButton({
         },
       });
       const data = (await res.json().catch(() => null)) as
-        | { ok: true; event: { id: string; type: string; title: string; description: string; emoji: string | null; rarity: "common" | "rare" | "epic"; isRare: boolean; knowledge: ExploreResultPayload["knowledge"] }; steps: number; distance: number; todayCount: number; maxCount: number; isVip: boolean; newlyUnlocked?: { id: BadgeId; emoji: string; rewardPoints: number }[] | null }
+        | { ok: true; event: { id: string; type: string; title: string; description: string; emoji: string | null; rarity: "common" | "rare" | "epic"; isRare: boolean; knowledge: ExploreResultPayload["knowledge"] }; steps: number; distance: number; todayCount: number; maxCount: number; isVip: boolean; newlyUnlocked?: { id: BadgeId; emoji: string; rewardPoints: number }[] | null; rewards?: ExplorationRewardsPayload | null }
         | { ok: false; code: string; error: string; todayCount: number; maxCount: number; isVip: boolean }
         | null;
       if (!data) { setError(t("networkError")); return; }
@@ -128,6 +131,7 @@ export function ExploreButton({
         maxCount: data.maxCount,
         isVip: data.isVip,
         newlyUnlocked: data.newlyUnlocked ?? null,
+        rewards: data.rewards ?? null,
       });
     } catch (e) {
       console.error("ExploreButton fetch failed:", e);

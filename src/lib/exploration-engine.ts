@@ -98,6 +98,8 @@ export type ExplorationStartResponse = {
   isVip: boolean;
   /** 本次探索后新解锁的徽章（成就系统，roadmap 任务二；无新解锁则为 []） */
   newlyUnlocked?: import("./achievements-config").NewlyUnlockedBadge[];
+  /** 本次探索结算奖励（产品升级 Phase 3；发放失败降级为 null，前端不展示奖励区） */
+  rewards?: import("./exploration-rewards").ExplorationRewardsPayload | null;
 };
 
 export type ExplorationStartError = {

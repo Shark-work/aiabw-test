@@ -537,3 +537,16 @@ body,
   }
 }
 
+/* ============ 探索 v2 · 奖励报告卡（Phase 3） ============ */
+/* 收获逐项入场（配合 animationDelay 阶梯，纯 CSS 无 JS 动画开销） */
+@keyframes ex-reward-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+

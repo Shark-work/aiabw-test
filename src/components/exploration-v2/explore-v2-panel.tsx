@@ -27,9 +27,30 @@ import {
 } from "@/components/exploration-v2/explore-result-modal";
 import { PostcardWall } from "@/components/exploration-v2/postcard-wall";
 import { AchievementPanel } from "@/components/achievements/achievement-panel";
+import { EXPLORATION_REWARD_CONFIG } from "@/lib/exploration-rewards";
 
-type Quota = { todayCount: number; maxCount: number; isVip: boolean };
+type Quota = { todayCount: number; maxCount: number; isVip: boolean; streak: number };
 type AuthState = "loading" | "guest" | "authed";
+/** Phase 3 · 历史统计（全量口径，GET /api/exploration/history 返回） */
+type HistoryStats = {
+  total: number;
+  rareCount: number;
+  totalSteps: number;
+  totalDistance: number;
+};
+/** Phase 3 · 历史筛选（type=事件类型 / rare=只看稀有） */
+type HistoryFilter = { type?: string; rare?: boolean };
+
+/** 历史筛选 chips 定义（key 对应 i18n explorationV2.history.filters.<key>） */
+const HISTORY_FILTERS: ReadonlyArray<{ key: string; type?: string; rare?: boolean }> = [
+  { key: "all" },
+  { key: "postcard", type: "postcard" },
+  { key: "gift", type: "gift" },
+  { key: "knowledge", type: "knowledge" },
+  { key: "encounter", type: "encounter" },
+  { key: "rest", type: "rest" },
+  { key: "rare", rare: true },
+];
 
 /** 每次请求动态读取 localStorage 中的登录 token（与 chat-panel 的 transport 同款模式）。 */
 function bearerHeaders(): HeadersInit {
@@ -47,6 +68,10 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
   const [records, setRecords] = useState<TimelineRecord[]>([]);
   const [result, setResult] = useState<ExploreResultModalData | null>(null);
   const [knowledge, setKnowledge] = useState<KnowledgeCardData | null>(null);
+  // Phase 3：连续探索天数（连探进度条）/ 历史统计 / 历史筛选
+  const [streak, setStreak] = useState(0);
+  const [stats, setStats] = useState<HistoryStats | null>(null);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>({});
   // 成就面板刷新信号：每次探索完成 +1 → AchievementPanel 重新拉取进度
   const [achvRefreshKey, setAchvRefreshKey] = useState(0);
 
@@ -78,20 +103,27 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
         return;
       }
       const q = (await qRes.json().catch(() => null)) as
-        | { ok: true; todayCount: number; maxCount: number; isVip: boolean }
+        | { ok: true; todayCount: number; maxCount: number; isVip: boolean; streak?: number }
         | { ok: false }
         | null;
       if (q && "ok" in q && q.ok) {
-        setQuota({ todayCount: q.todayCount, maxCount: q.maxCount, isVip: q.isVip });
+        setQuota({
+          todayCount: q.todayCount,
+          maxCount: q.maxCount,
+          isVip: q.isVip,
+          streak: q.streak ?? 0,
+        });
+        setStreak(q.streak ?? 0);
       } else {
         setQuotaFailed(true);
       }
       const h = (await hRes.json().catch(() => null)) as
-        | { ok: true; records: TimelineRecord[] }
+        | { ok: true; records: TimelineRecord[]; stats?: HistoryStats }
         | { ok: false }
         | null;
       if (h && "ok" in h && h.ok && Array.isArray(h.records)) {
         setRecords(h.records);
+        if (h.stats) setStats(h.stats);
       }
       setAuthState("authed");
     } catch (err) {
@@ -105,27 +137,44 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
     void bootstrap();
   }, [bootstrap]);
 
-  const loadHistory = useCallback(async () => {
-    try {
-      const res = await fetch("/api/exploration/history?limit=50", {
-        headers: bearerHeaders(),
-        cache: "no-store",
-      });
-      if (res.status === 401) {
-        onAuthExpired();
-        return;
+  // Phase 3：加载历史（带筛选参数 + 全量统计）
+  const loadHistory = useCallback(
+    async (filter: HistoryFilter = {}) => {
+      try {
+        const params = new URLSearchParams({ limit: "50" });
+        if (filter.type) params.set("type", filter.type);
+        if (filter.rare) params.set("rare", "1");
+        const res = await fetch(`/api/exploration/history?${params.toString()}`, {
+          headers: bearerHeaders(),
+          cache: "no-store",
+        });
+        if (res.status === 401) {
+          onAuthExpired();
+          return;
+        }
+        const data = (await res.json().catch(() => null)) as
+          | { ok: true; records: TimelineRecord[]; stats?: HistoryStats }
+          | { ok: false }
+          | null;
+        if (data && "ok" in data && data.ok && Array.isArray(data.records)) {
+          setRecords(data.records);
+          if (data.stats) setStats(data.stats);
+        }
+      } catch (err) {
+        console.error("[ExploreV2Panel] loadHistory failed:", err);
       }
-      const data = (await res.json().catch(() => null)) as
-        | { ok: true; records: TimelineRecord[] }
-        | { ok: false }
-        | null;
-      if (data && "ok" in data && data.ok && Array.isArray(data.records)) {
-        setRecords(data.records);
-      }
-    } catch (err) {
-      console.error("[ExploreV2Panel] loadHistory failed:", err);
-    }
-  }, [onAuthExpired]);
+    },
+    [onAuthExpired],
+  );
+
+  // 切换历史筛选：更新状态并按新条件重拉
+  const applyHistoryFilter = useCallback(
+    (f: HistoryFilter) => {
+      setHistoryFilter(f);
+      void loadHistory(f);
+    },
+    [loadHistory],
+  );
 
   const loadKnowledge = useCallback(async (id: string) => {
     try {
@@ -177,7 +226,10 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
             }
           : null,
         newlyUnlocked: payload.newlyUnlocked ?? null,
+        rewards: payload.rewards ?? null,
       });
+      // Phase 3：探索完成后连探天数即时刷新（进度条联动）
+      if (payload.rewards?.streak) setStreak(payload.rewards.streak);
     },
     [],
   );
@@ -244,6 +296,34 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
         </button>
       ) : null}
 
+      {/* Phase 3 · 连续探索进度条（7 天一轮视觉目标；加成 min(streak-1, 5) 与后端同口径） */}
+      <div
+        className="rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-3 py-2"
+        data-testid="explore-streak-bar"
+      >
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-orange-800">
+            🔥 {t("streak.label")} · {t("streak.days", { n: streak })}
+          </span>
+          {streak > 1 ? (
+            <span className="text-orange-600" data-testid="explore-streak-bonus">
+              {t("streak.bonus", {
+                n: Math.min(streak - 1, EXPLORATION_REWARD_CONFIG.STREAK_BONUS_CAP),
+              })}
+            </span>
+          ) : (
+            <span className="text-[10px] text-orange-500">{t("streak.nextHint")}</span>
+          )}
+        </div>
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-orange-100">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-500"
+            style={{ width: `${(Math.min(streak, 7) / 7) * 100}%` }}
+            data-testid="explore-streak-progress"
+          />
+        </div>
+      </div>
+
       {/* P1 故事外显：明信片墙（探索产出外显 + 系列集齐图鉴奖励） */}
       <PostcardWall refreshKey={achvRefreshKey} />
 
@@ -251,13 +331,47 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
         <h3 className="mb-2 text-sm font-semibold text-zinc-700">
           🐾 {t("timelineTitle")}
         </h3>
+        {/* Phase 3 · 全量统计条 + 筛选 chips */}
+        {stats && stats.total > 0 && (
+          <p className="mb-2 text-[11px] text-zinc-500" data-testid="explore-history-stats">
+            {t("history.statsLine", {
+              total: stats.total,
+              steps: stats.totalSteps,
+              distance: stats.totalDistance,
+              rare: stats.rareCount,
+            })}
+          </p>
+        )}
+        <div className="mb-2 flex flex-wrap gap-1.5" data-testid="explore-history-filters">
+          {HISTORY_FILTERS.map((f) => {
+            const active =
+              (historyFilter.type ?? "") === (f.type ?? "") &&
+              !!historyFilter.rare === !!f.rare;
+            return (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => applyHistoryFilter(f)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  active
+                    ? "bg-orange-500 text-white shadow-sm"
+                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                }`}
+                data-testid={`explore-filter-${f.key}`}
+                aria-pressed={active}
+              >
+                {t(`history.filters.${f.key}`)}
+              </button>
+            );
+          })}
+        </div>
         <PetTimeline
           records={records}
           onViewKnowledge={(id) => void loadKnowledge(id)}
         />
         <button
           type="button"
-          onClick={() => void loadHistory()}
+          onClick={() => void loadHistory(historyFilter)}
           className="mt-2 w-full rounded-lg border border-zinc-200 bg-white py-1.5 text-xs text-zinc-600 transition hover:bg-zinc-50"
           data-testid="refresh-history"
         >
