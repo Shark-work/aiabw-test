@@ -1338,6 +1338,35 @@
     "loading": "Loading…",
     "signInFirst": "Please sign in first",
     "signInHint": "Sign in to view your Soul Cards (created automatically when you adopt a pet)",
+    "flipHint": "Tap for details →",
+    "tabs": {
+      "mine": "My Collection ({count})",
+      "hot": "🔥 Community Hot"
+    },
+    "hot": {
+      "empty": "Community showcase coming soon"
+    },
+    "progress": {
+      "total": "{count} collected",
+      "burnedNote": "(incl. {count} burned)",
+      "maxLevel": "Max Lv.{level}",
+      "elementsDone": "Elements {count}/{total}"
+    },
+    "compare": {
+      "enter": "⚖️ Compare",
+      "exit": "Exit compare",
+      "selected": "{count}/2 selected",
+      "start": "Compare now",
+      "title": "⚖️ Soul Card Compare",
+      "close": "Close",
+      "rowRarity": "Rarity",
+      "rowElement": "Element",
+      "rowLevel": "Level",
+      "rowStage": "Stage",
+      "rowSpecies": "Species",
+      "rowCert": "Certificate",
+      "rowMinted": "Born date"
+    },
     "loadFailed": "Failed to load. Please refresh and retry",
     "supply": {
       "title": "Total Supply",

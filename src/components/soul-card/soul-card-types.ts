@@ -31,6 +31,20 @@ export type SoulCardDto = {
   speciesNameEn: string;
 };
 
+/**
+ * 社区热门卡（Phase 7 · 7.4-3）：GET /api/soul-cards/featured 的返回行，
+ * 与 SoulCardDto 同构但服务端不返回归属/链上敏感字段（ownerId/mintTx/burnTx/status/burnedAt）。
+ */
+export type FeaturedSoulCardDto = Omit<
+  SoulCardDto,
+  "ownerId" | "mintTx" | "burnTx" | "status" | "burnedAt"
+>;
+
+/** 热门卡 → SoulCardDto（补占位字段；featured 口径仅 active 卡）。 */
+export function featuredToDto(c: FeaturedSoulCardDto): SoulCardDto {
+  return { ...c, ownerId: "", mintTx: null, burnTx: null, status: "active", burnedAt: null };
+}
+
 /** 历史艾比凭证（只读，/api/soul-cards/[id] 仅对卡主本人附带）。 */
 export type LegacyTokenDto = {
   aibiTokenId: string;

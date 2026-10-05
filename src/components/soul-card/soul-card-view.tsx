@@ -19,6 +19,7 @@ import {
   RARITY_META,
   normalizeElement,
   normalizeRarity,
+  soulQuoteFor,
   stageForLevel,
   type GrowthStageId,
 } from "@/lib/soul-card-config";
@@ -71,14 +72,17 @@ export function SoulCardView({
   const fx = STAGE_FX[stage.id] ?? STAGE_FX.seed;
   const isEn = locale === "en";
   const burned = card.status === "burned";
+  // Phase 7 · 7.4-1：卡背内容（hover 3D 翻转展示；按证书编号稳定取箴言，与分享图同口径）
+  const quote = soulQuoteFor(card.certificateNo, isEn ? "en" : "zh");
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group w-full rounded-2xl bg-gradient-to-br p-[3px] text-left shadow-sm transition hover:shadow-md ${rarityMeta.frameClass} ${burned ? "" : fx.glow}`}
+      className={`scv-flip group w-full rounded-2xl bg-gradient-to-br p-[3px] text-left shadow-sm transition hover:shadow-md ${rarityMeta.frameClass} ${burned ? "" : fx.glow}`}
     >
-      <div className="relative overflow-hidden rounded-[13px] bg-white dark:bg-zinc-900">
+      <div className={`scv-flip-inner${burned ? " scv-noflip" : ""}`}>
+      <div className="scv-face relative overflow-hidden rounded-[13px] bg-white dark:bg-zinc-900">
         {/* 立绘 */}
         <div className="relative aspect-square w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -147,6 +151,62 @@ export function SoulCardView({
           </div>
         </div>
       </div>
+
+      {/* 卡背（Phase 7 · 7.4-1：桌面 hover 3D 翻转；burned 不翻转保持庄重；
+          移动端无 hover 不触发，正面信息本就完整，无功能损失） */}
+      {!burned ? (
+        <div className="scv-face scv-back absolute inset-0 flex flex-col overflow-hidden rounded-[13px] bg-white dark:bg-zinc-900">
+          {/* 顶部稀有度渐变条 */}
+          <span className={`h-1.5 w-full shrink-0 bg-gradient-to-r ${rarityMeta.frameClass}`} />
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 p-3 text-center">
+            <span className="text-2xl" aria-hidden>
+              {rarityMeta.emoji}
+            </span>
+            <p className="text-[11px] italic leading-relaxed text-zinc-600 dark:text-zinc-300">
+              「{quote}」
+            </p>
+            <p className="text-[11px] text-zinc-400">
+              {stage.emoji} Lv.{card.growthLevel} · {elementMeta.emoji}{" "}
+              {isEn ? elementMeta.labelEn : elementMeta.labelZh}
+            </p>
+          </div>
+          <div className="shrink-0 space-y-1 p-3 pt-0 text-center">
+            <p className="font-mono text-[10px] text-zinc-400">{card.certificateNo}</p>
+            {onClick ? (
+              <p className="text-[10px] font-medium text-orange-500">{t("flipHint")}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+      </div>
+      <style jsx>{`
+        .scv-flip {
+          perspective: 1000px;
+        }
+        .scv-flip-inner {
+          position: relative;
+          transform-style: preserve-3d;
+          transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.3, 1);
+        }
+        .scv-flip:hover .scv-flip-inner:not(.scv-noflip) {
+          transform: rotateY(180deg);
+        }
+        .scv-face {
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+        }
+        .scv-back {
+          transform: rotateY(180deg);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .scv-flip-inner {
+            transition: none;
+          }
+          .scv-flip:hover .scv-flip-inner {
+            transform: none;
+          }
+        }
+      `}</style>
     </button>
   );
 }

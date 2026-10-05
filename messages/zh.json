@@ -1338,6 +1338,35 @@
     "loading": "加载中…",
     "signInFirst": "请先登录",
     "signInHint": "登录后查看你的灵魂卡（领养灵宠时自动生成）",
+    "flipHint": "点击查看详情 →",
+    "tabs": {
+      "mine": "我的收藏（{count}）",
+      "hot": "🔥 社区热门"
+    },
+    "hot": {
+      "empty": "社区灵魂卡展出筹备中，敬请期待"
+    },
+    "progress": {
+      "total": "收藏 {count} 张",
+      "burnedNote": "（含已销毁 {count}）",
+      "maxLevel": "最高 Lv.{level}",
+      "elementsDone": "元素收集 {count}/{total}"
+    },
+    "compare": {
+      "enter": "⚖️ 对比",
+      "exit": "退出对比",
+      "selected": "已选 {count}/2",
+      "start": "开始对比",
+      "title": "⚖️ 灵魂卡对比",
+      "close": "关闭",
+      "rowRarity": "稀有度",
+      "rowElement": "元素",
+      "rowLevel": "成长等级",
+      "rowStage": "成长阶段",
+      "rowSpecies": "物种",
+      "rowCert": "凭证编号",
+      "rowMinted": "诞生时间"
+    },
     "loadFailed": "加载失败，请刷新重试",
     "supply": {
       "title": "发行总量",

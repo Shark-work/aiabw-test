@@ -13,16 +13,21 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
+import { CollectionProgress } from "./collection-progress";
+import { SoulCardCompareModal } from "./soul-card-compare-modal";
 import { SoulCardDetailModal } from "./soul-card-detail-modal";
 import { SoulCardView } from "./soul-card-view";
+import { featuredToDto } from "./soul-card-types";
 import type {
   ChainStatusDto,
+  FeaturedSoulCardDto,
   LedgerEntryDto,
   LegacyTokenDto,
   SoulCardDto,
 } from "./soul-card-types";
 
 type LoadState = "loading" | "signedOut" | "ready" | "error";
+type TabId = "mine" | "hot";
 
 type DetailState = {
   card: SoulCardDto;
@@ -40,6 +45,14 @@ export function SoulCardsClient() {
   const [chain, setChain] = useState<ChainStatusDto | null>(null);
   const [detail, setDetail] = useState<DetailState>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Phase 7 · 7.4-3：社区热门 tab（公开数据，未登录也可看）
+  const [tab, setTab] = useState<TabId>("mine");
+  const [hotCards, setHotCards] = useState<SoulCardDto[]>([]);
+  const [hotLoaded, setHotLoaded] = useState(false);
+  // Phase 7 · 7.4-5：卡片对比模式（仅我的收藏 tab，最多选 2 张）
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     const token =
@@ -87,6 +100,44 @@ export function SoulCardsClient() {
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
+
+  // 社区热门 tab：首次切入时拉取（公开接口，无需登录；featured 口径仅 active 卡）
+  useEffect(() => {
+    if (tab !== "hot" || hotLoaded) return;
+    let alive = true;
+    fetch("/api/soul-cards/featured")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        if (d?.ok && Array.isArray(d.cards)) {
+          setHotCards((d.cards as FeaturedSoulCardDto[]).map(featuredToDto));
+        }
+      })
+      .catch(() => {})
+      .finally(() => alive && setHotLoaded(true));
+    return () => {
+      alive = false;
+    };
+  }, [tab, hotLoaded]);
+
+  /** 对比模式：点选/取消卡片（最多 2 张，选满第 3 张时替换最早选择）。 */
+  function toggleCompare(cardId: string) {
+    setCompareIds((prev) => {
+      if (prev.includes(cardId)) return prev.filter((id) => id !== cardId);
+      return prev.length >= 2 ? [prev[1], cardId] : [...prev, cardId];
+    });
+  }
+
+  function exitCompare() {
+    setCompareMode(false);
+    setCompareIds([]);
+    setCompareOpen(false);
+  }
+
+  const comparePair =
+    compareIds.length === 2
+      ? (compareIds.map((id) => cards.find((c) => c.id === id)).filter(Boolean) as SoulCardDto[])
+      : null;
 
   async function openDetail(cardId: string) {
     try {
@@ -179,11 +230,77 @@ export function SoulCardsClient() {
         </p>
       ) : null}
 
-      {/* 我的灵魂卡 */}
+      {/* Phase 7 · 7.4-3：tab 切换（我的收藏 / 社区热门；未登录也可看热门） */}
+      <div className="flex gap-2" role="tablist">
+        {(["mine", "hot"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              tab === id
+                ? "bg-orange-500 text-white shadow-sm"
+                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+            }`}
+          >
+            {id === "mine" ? t("tabs.mine", { count: cards.length }) : t("tabs.hot")}
+          </button>
+        ))}
+      </div>
+
+      {tab === "hot" ? (
+        /* 社区热门（featured 公开口径：稀有度优先 Top10；点击进公开凭证页） */
+        <section>
+          {!hotLoaded ? (
+            <p className="py-8 text-center text-xs text-zinc-400">{t("loading")}</p>
+          ) : hotCards.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-300 py-10 text-center dark:border-zinc-700">
+              <p className="text-3xl">🃏</p>
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">{t("hot.empty")}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {hotCards.map((card) => (
+                <SoulCardView
+                  key={card.id}
+                  card={card}
+                  locale={locale}
+                  onClick={() =>
+                    window.open(`/${locale}/soul-cards/${card.id}/public`, "_blank")
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : (
+      /* 我的灵魂卡 */
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-2 flex items-center justify-between gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           {t("collection.title", { count: cards.length })}
+          {/* Phase 7 · 7.4-5：对比模式开关（≥2 张卡可用） */}
+          {state === "ready" && cards.length >= 2 ? (
+            <button
+              type="button"
+              onClick={() => (compareMode ? exitCompare() : setCompareMode(true))}
+              className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                compareMode
+                  ? "bg-violet-500 text-white shadow-sm"
+                  : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400"
+              }`}
+            >
+              {compareMode ? t("compare.exit") : t("compare.enter")}
+            </button>
+          ) : null}
         </h2>
+        {/* Phase 7 · 7.4-2：收藏进度统计面板（有卡时展示） */}
+        {state === "ready" && cards.length > 0 ? (
+          <div className="mb-3">
+            <CollectionProgress cards={cards} locale={locale} />
+          </div>
+        ) : null}
         {state === "loading" ? (
           <p className="py-8 text-center text-xs text-zinc-400">{t("loading")}</p>
         ) : state === "signedOut" ? (
@@ -210,17 +327,66 @@ export function SoulCardsClient() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {cards.map((card) => (
-              <SoulCardView
-                key={card.id}
-                card={card}
-                locale={locale}
-                onClick={() => void openDetail(card.id)}
-              />
-            ))}
+            {cards.map((card) => {
+              const selected = compareIds.includes(card.id);
+              return (
+                <div key={card.id} className="relative">
+                  <SoulCardView
+                    card={card}
+                    locale={locale}
+                    onClick={() =>
+                      compareMode ? toggleCompare(card.id) : void openDetail(card.id)
+                    }
+                  />
+                  {/* 对比模式：选中角标（纯视觉 pointer-events-none，点击走卡面 button） */}
+                  {compareMode ? (
+                    <span
+                      className={`pointer-events-none absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold shadow-sm ${
+                        selected
+                          ? "border-violet-500 bg-violet-500 text-white"
+                          : "border-white bg-black/25 text-transparent"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                  ) : null}
+                  {compareMode && selected ? (
+                    <span className="pointer-events-none absolute inset-0 rounded-2xl ring-2 ring-violet-500" />
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
+      )}
+
+      {/* Phase 7 · 7.4-5：对比浮条（选满 2 张可开启对照弹窗） */}
+      {compareMode && tab === "mine" ? (
+        <div className="fixed bottom-5 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-full border border-violet-200 bg-white/95 px-4 py-2 shadow-lg backdrop-blur dark:border-violet-800 dark:bg-zinc-900/95">
+          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
+            {t("compare.selected", { count: compareIds.length })}
+          </span>
+          <button
+            type="button"
+            disabled={compareIds.length < 2}
+            onClick={() => setCompareOpen(true)}
+            className="rounded-full bg-violet-500 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t("compare.start")}
+          </button>
+        </div>
+      ) : null}
+
+      {/* 对比弹窗 */}
+      {compareOpen && comparePair ? (
+        <SoulCardCompareModal
+          a={comparePair[0]}
+          b={comparePair[1]}
+          locale={locale}
+          onClose={() => setCompareOpen(false)}
+        />
+      ) : null}
 
       {/* 详情弹窗 */}
       {detail ? (

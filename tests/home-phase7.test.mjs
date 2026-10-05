@@ -23,8 +23,8 @@ const read = (rel) => readFileSync(new URL(rel, import.meta.url), "utf8");
 test("phase7(A1): featured API——公开只读 + active 过滤 + 稀有度权重排序 + LIMIT 10", () => {
   const src = read("../src/app/api/soul-cards/featured/route.ts");
   assert.ok(!src.includes("getUserFromRequest"), "公开接口无鉴权（卡片本身有公开页机制）");
-  assert.match(src, /WHERE status = 'active'/, "仅流通中卡片");
-  assert.match(src, /ORDER BY CASE rarity[\s\S]*?WHEN 'legendary' THEN 4[\s\S]*?END DESC,\s*minted_at DESC/, "稀有度权重 DESC + 铸造时间 DESC");
+  assert.match(src, /WHERE sc\.status = 'active'/, "仅流通中卡片");
+  assert.match(src, /ORDER BY CASE sc\.rarity[\s\S]*?WHEN 'legendary' THEN 4[\s\S]*?END DESC,\s*sc\.minted_at DESC/, "稀有度权重 DESC + 铸造时间 DESC");
   assert.match(src, /LIMIT 10/, "Top 10");
 });
 
@@ -33,11 +33,13 @@ test("phase7(A2): featured API——60s 内存缓存 + 失败空列表降级 + �
   assert.match(src, /const CACHE_TTL_MS = 60_000;/, "60s TTL（与 /api/news、/api/visits 同模式）");
   assert.match(src, /now < cache\.expiresAt/, "缓存命中短路");
   assert.match(src, /catch \(err\)[\s\S]*?ok: true, cards: \[\]/, "失败降级空列表（前端静默）");
-  // 字段白名单：SELECT 仅 6 个展示字段，绝不返回 owner_id / pet_id
+  // 字段白名单（批次 2 扩展为卡面全量字段）：绝不返回归属/链上哈希敏感字段
   const selectBlock = src.match(/SELECT[\s\S]*?FROM soul_cards/)?.[0] ?? "";
-  assert.ok(!/owner_id|pet_id|ai_personality|mint_tx/.test(selectBlock), "SELECT 不含敏感字段");
+  assert.ok(!/owner_id|mint_tx|burn_tx/.test(selectBlock), "SELECT 不含归属/链上哈希敏感字段");
   assert.match(selectBlock, /certificate_no/, "含凭证编号");
   assert.match(selectBlock, /growth_level/, "含成长等级");
+  assert.match(src, /JOIN pets p ON p\.id = sc\.pet_id/, "JOIN pets 补立绘（社区热门 tab 复用）");
+  assert.match(src, /JOIN pet_dictionary pd ON pd\.id = p\.species_id/, "JOIN 物种字典补双语名");
 });
 
 // ───────────── B) GET /api/home/stats ─────────────
