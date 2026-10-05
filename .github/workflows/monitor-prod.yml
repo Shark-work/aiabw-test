@@ -1,0 +1,50 @@
+name: monitor-prod
+
+# 阶段 5 · 发布后 24h 生产监控：每小时运行 scripts/monitor-prod.mjs
+# （_schema_meta=18 / DB 连接数与磁盘 / HTTP 合成探测 5xx / Vercel Runtime Logs 5xx）。
+# 任一检查告警（退出码 1）→ 自动开 Issue「🚨 生产监控告警」（已开不重复，防刷屏）。
+# 24h 观察期结束后可删除本文件或禁用 schedule（保留 workflow_dispatch 手动触发）。
+on:
+  schedule:
+    - cron: "23 * * * *" # 每小时第 23 分（错开整点拥塞；GHA cron 允许排队延迟）
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v5
+
+      - name: run prod monitor
+        id: monitor
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set +e
+          node scripts/monitor-prod.mjs 2>&1 | tee monitor-prod-report.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: open alert issue on failure
+        if: steps.monitor.outputs.exit_code == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --search "生产监控告警 in:title" --state open --limit 1 --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue comment --repo "$GITHUB_REPOSITORY" "$EXISTING" --body "$(cat monitor-prod-report.txt)"
+            echo "已存在告警 Issue #$EXISTING，追加评论而非新开（防刷屏）"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "🚨 生产监控告警" --body "$(cat monitor-prod-report.txt)"
+            echo "已创建 Issue：🚨 生产监控告警"
+          fi
+          exit 1

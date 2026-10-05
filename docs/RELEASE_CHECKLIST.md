@@ -55,6 +55,8 @@
 
 ## 阶段 4 · 人工验证（浏览器实操，逐项打勾）
 
+> 自动化等价验证：`node scripts/manual-verify-prod.mjs`（12 项探针：匿名 4 项 + 临时账号全流程 8 项，含 SQL 构造断签验证补签链路），2026-10-05 生产执行 12/12 全绿。下表 UI 细节项（分享图视觉、弹窗文案）仍建议浏览器抽查。
+
 ### P0 概念收敛
 - [ ] 新注册账号走唤醒仪式三步（候选 → 唤醒 → 命名），完成后灵魂卡自动出现在收藏中心，**全程无「铸造/mint/链上」字样**
 - [ ] `/soul-cards` 双 Tab（我的灵宠 / 世界藏品）切换正常，`?tab=aibi` 旧链接兜底落「我的灵宠」
@@ -88,6 +90,8 @@
 | 数据库 | Neon Console → Monitoring | 连接数/计算时长突增 → `scripts/check-resources.js` 量化 |
 | 迁移残留 | `SELECT * FROM "_schema_meta"` | version ≠ 18 或 -1 → 立即处置 |
 | 冒烟痕迹 | — | 可保留观察或按附录清理 |
+
+> 自动化监控：`scripts/monitor-prod.mjs`（_schema_meta=18 / DB 连接数与磁盘 / HTTP 合成探测 5xx / Vercel Logs 5xx），由 `.github/workflows/monitor-prod.yml` 每小时执行、告警自动开 Issue（已开不重复）；Windows 本机 schtasks 备选见脚本头注释。24h 观察期结束后禁用 schedule。
 
 ## 附录 · 冒烟测试痕迹清理（可选）
 
