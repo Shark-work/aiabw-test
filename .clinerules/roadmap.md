@@ -162,6 +162,9 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 | DNS | ✅ `aiabw.com` A → 216.198.79.1 / 64.29.17.1（Vercel Anycast），apex 308→www |
 | 环境变量（附录 D 核对） | ✅ 本地 .env/.env.local 齐全（DATABASE_URL/DEEPSEEK/BAILIAN/XORPAY_AID+SECRET/STRIPE/CHAIN/BLOB）；生产经运行时行为验证（登录 401 活性/支付 503 降级/webhook 验签）；附录 D 命名差异已确认：JWT_SECRET→实际 AUTH_SECRET、XORPAY_API_KEY→实际 XORPAY_AID+XORPAY_SECRET |
 
+**上线后 hotfix（2026-10-16）**：
+- `a1ca87a` 排行榜分类切换竞态白屏修复：collection（CountItem）→ popularity 切换时 setCategory 同步重渲先于 useEffect，旧 items 在 isPetBoard 分支渲染一帧 → `pet.power` undefined 调 toLocaleString 抛错（renderTopCard）。修复=tab onClick 同步清 items/myRank + 全部数值渲染点 `?? 0` 兜底；契约测试 +3 + E2E 脚本 `scripts/verify-leaderboard-tabs.cjs`（tab 切换不崩）；旧代码本地/生产双向复现崩溃、新代码双向通过。顺带修复 social-poster 测试断言漂移（fddca12「羁绊结晶」文案未同步：#传说宠物→#传说灵宠）。
+
 **遗留（非阻塞）**：
 - Vercel 残留失效 `OPENAI_API_KEY`（ark）——backlog P3，用户决定暂不处理（DEEPSEEK 主链路挡住，失效才会静默 fallback）。
 - 限流 429 未在生产实际触发（避免污染），逻辑由契约测试锁定。
