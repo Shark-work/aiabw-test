@@ -35,26 +35,35 @@ const TARGET_LABEL: Record<string, string> = {
   news: "资讯",
 };
 
-/** 🛡️ 内容审核：用户举报队列（pending 先报先审）+ 确认违规 / 驳回处置。 */
+type AiStats = {
+  cache: { entries: number; hits: number; hitRate: number; expired: number };
+  concurrency: { inFlight: number; max: number };
+};
+
+/** 🛡️ 内容审核：用户举报队列（pending 先报先审）+ 确认违规 / 驳回处置 + AI 成本监控条。 */
 export default function AdminModerationPage() {
   const { toast, toastsNode } = useToast();
   const [reports, setReports] = useState<AdminReport[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("pending");
+  const [aiStats, setAiStats] = useState<AiStats | null>(null);
 
   const load = useCallback(async () => {
     const token = localStorage.getItem("aiabw_token");
+    const headers = { Authorization: `Bearer ${token}` };
     const qs = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE), status });
-    const d = await fetch(`/api/admin/reports?${qs}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => r.json());
+    const [d, stats] = await Promise.all([
+      fetch(`/api/admin/reports?${qs}`, { headers }).then((r) => r.json()),
+      fetch("/api/admin/ai-stats", { headers }).then((r) => r.json()).catch(() => null),
+    ]);
     if (d?.ok) {
       setReports(d.reports);
       setTotal(d.total);
     } else {
       toast.error(d?.error ?? "加载失败");
     }
+    if (stats?.ok) setAiStats(stats as AiStats);
   }, [page, status, toast]);
 
   useEffect(() => {
@@ -86,6 +95,24 @@ export default function AdminModerationPage() {
       <p className="mt-0.5 text-xs text-zinc-400">
         用户举报队列 · 待处理按时间正序（先报先审）· 处置写审计（操作人 + 时间）
       </p>
+
+      {/* AI 成本监控条（Phase 8：缓存命中率 + 在途并发；数据源 /api/admin/ai-stats） */}
+      {aiStats && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[11px] text-zinc-500">
+          <span className="font-semibold text-zinc-700">🤖 AI 成本</span>
+          <span>
+            缓存命中率{" "}
+            <b className={aiStats.cache.hitRate >= 0.3 ? "text-green-600" : "text-amber-600"}>
+              {(aiStats.cache.hitRate * 100).toFixed(1)}%
+            </b>
+          </span>
+          <span>缓存条目 {aiStats.cache.entries}（命中 {aiStats.cache.hits} 次）</span>
+          <span>待过期清理 {aiStats.cache.expired}</span>
+          <span>
+            在途并发 {aiStats.concurrency.inFlight}/{aiStats.concurrency.max}（本实例）
+          </span>
+        </div>
+      )}
 
       <div className="mt-4 flex items-center gap-2">
         <select

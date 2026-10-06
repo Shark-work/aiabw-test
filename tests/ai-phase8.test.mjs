@@ -286,6 +286,10 @@ test("phase8-8B: /admin/moderation 页 + admin-shell 菜单挂载 + mojibake 已
   assert.ok(c.includes("/api/admin/reports?"), "loads report queue");
   assert.ok(c.includes('action === "resolve" ? "已确认违规" : "已驳回举报"'), "resolve/dismiss actions");
   assert.ok(c.includes("先报先审"), "pending FIFO copy");
+  // AI 成本监控条（计划 9.2 缓存命中率监控可视化）
+  assert.ok(c.includes('fetch("/api/admin/ai-stats"'), "ai-stats fetched");
+  assert.ok(c.includes("缓存命中率"), "hit rate displayed");
+  assert.ok(c.includes("在途并发"), "live concurrency displayed");
 
   const shell = read("src/components/admin/admin-shell.tsx");
   assert.ok(shell.includes('{ href: "/admin/moderation", label: "🛡️ 内容审核" }'), "nav item mounted");
