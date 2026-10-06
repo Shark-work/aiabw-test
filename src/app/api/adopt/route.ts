@@ -6,6 +6,7 @@ import { users, adoptions, threads, messages as messagesTable } from "@/db/schem
 import { defaults as petDefaults, getPet } from "@/lib/pet-config";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
+import { moderateText } from "@/lib/content-moderation";
 import { timer } from "@/lib/perf";
 import {
   buildPetLimitBody,
@@ -60,6 +61,13 @@ export async function POST(req: Request) {
     }
     if (typeof body?.petName === "string" && body.petName.trim()) {
       petName = body.petName.trim();
+    }
+    // Phase 8 · 内容审核：宠物名命中敏感词 → 400（公开展示场景，先审后入库）
+    if (petName && !moderateText(petName).ok) {
+      return NextResponse.json(
+        { ok: false, error: apiError(locale, "inappropriateContent"), code: "CONTENT_MODERATED" },
+        { status: 400 },
+      );
     }
     if (typeof body?.anonymousId === "string" && body.anonymousId.trim()) {
       anonymousId = body.anonymousId.trim();

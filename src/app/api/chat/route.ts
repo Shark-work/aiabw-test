@@ -28,11 +28,20 @@ import {
   todayString,
 } from "@/lib/chat-quota-config";
 import { getHardLimitMessage, getSoftWarnMessage } from "@/lib/quota-messages";
+import { moderateText } from "@/lib/content-moderation";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
 /** 免费畅聊条数：达到该条数后需要赞助解锁。 */
 const FREE_MESSAGE_LIMIT = 10;
+
+/** 提取 UIMessage 纯文本（text parts 拼接；tool/image 等其他 parts 忽略）。 */
+function uiMessageText(m: UIMessage): string {
+  return (m.parts ?? [])
+    .map((p) => (p.type === "text" ? (p as { type: "text"; text: string }).text : ""))
+    .join("");
+}
 
 export async function POST(req: Request) {
   // 顶层防护：前置阶段（鉴权 / 建表 / Neon 查询 / 模型配置）任何一步抛错，
@@ -80,6 +89,21 @@ async function handlePost(req: Request) {
     return NextResponse.json(
       { ok: false, error: apiError(locale, "noPermissionPet"), code: "OWNERSHIP_REQUIRED" },
       { status: 403 },
+    );
+  }
+
+  // Phase 8 · 成本控制：聊天限流（20 次/分钟/用户；每日 quota 是主约束，本规则防秒级刷爆）
+  const rl = checkRateLimit(`chat:${user.id}`, RATE_LIMITS.chat);
+  if (rl.limited) return rateLimitResponse(req, rl.retryAfterSec);
+
+  // Phase 8 · 内容审核：最后一条用户消息命中敏感词 → 400（不进入 LLM、不占每日配额）
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+  const mod = moderateText(lastUserMsg ? uiMessageText(lastUserMsg) : "");
+  if (!mod.ok) {
+    console.warn("[chat] moderated:", user.id, mod.hits.join(","));
+    return NextResponse.json(
+      { ok: false, error: apiError(locale, "inappropriateContent"), code: "CONTENT_MODERATED" },
+      { status: 400 },
     );
   }
 

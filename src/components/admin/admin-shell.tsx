@@ -5,19 +5,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const MENU = [
-  { href: "/admin/dashboard", label: "馃搳 鏁版嵁鐪嬫澘" },
-  { href: "/admin/pets", label: "馃惥 瀹犵墿绠＄悊" },
-  { href: "/admin/users", label: "馃懃 鐢ㄦ埛绠＄悊" },
-  { href: "/admin/news", label: "馃摪 鍐呭/鏂伴椈" },
-  { href: "/admin/economy", label: "馃挵 绉垎/鍟嗗煄" },
-  { href: "/admin/settings", label: "鈿欙笍 绯荤粺璁剧疆" },
+  { href: "/admin/dashboard", label: "📊 数据看板" },
+  { href: "/admin/pets", label: "🐾 宠物管理" },
+  { href: "/admin/users", label: "👥 用户管理" },
+  { href: "/admin/news", label: "📰 内容/新闻" },
+  { href: "/admin/moderation", label: "🛡️ 内容审核" },
+  { href: "/admin/economy", label: "💰 积分/商城" },
+  { href: "/admin/settings", label: "⚙️ 系统设置" },
 ];
 
 /**
- * 绔欓暱鍚庡彴澶栧３锛圓dminGuard + 宸︿晶杈规爮甯冨眬锛夛細
- *  - 璁块棶 /admin/* 蹇呴』鐧诲綍涓?role === 'admin'锛屽惁鍒欓噸瀹氬悜鍒扮櫥褰曢〉锛? *  - 宸︿晶杈规爮 + 鍙充晶鍐呭鍖猴紝鏋佺畝楂樹俊鎭瘑搴︺€? */
+ * 站长后台外壳（AdminGuard + 左侧边栏布局）：
+ *  - 访问 /admin/* 必须登录且 role === 'admin'，否则重定向到登录页；
+ *  - 左侧边栏 + 右侧内容区，极简高信息密度。
+ */
 export function AdminShell({ children }: { children: ReactNode }) {
-  
   const pathname = usePathname();
   const [authed, setAuthed] = useState<boolean | null>(null);
 
@@ -50,17 +52,18 @@ export function AdminShell({ children }: { children: ReactNode }) {
   if (authed === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-100 text-sm text-zinc-400">
-        鏍￠獙绠＄悊鍛樿韩浠解€?      </div>
+        校验管理员身份…
+      </div>
     );
   }
   if (!authed) return null;
 
   return (
     <div className="flex min-h-screen bg-zinc-100 text-zinc-800">
-      {/* 宸︿晶杈规爮 */}
+      {/* 左侧边栏 */}
       <aside className="sticky top-0 h-screen w-52 shrink-0 border-r border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-4 py-4 text-sm font-bold text-zinc-900">
-          馃洜锔?绔欓暱鍚庡彴
+          🛡️ 站长后台
           <span className="ml-1 text-[10px] font-normal text-zinc-400">AIABW Admin</span>
         </div>
         <nav className="flex flex-col gap-0.5 p-2">
@@ -89,7 +92,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* 鍙充晶鍐呭鍖?*/}
+      {/* 右侧内容区 */}
       <main className="min-w-0 flex-1 p-6">{children}</main>
     </div>
   );

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getUserFromRequest } from "@/lib/auth";
 import { generateCached } from "@/lib/llm-fallback";
+import { filterClean } from "@/lib/content-moderation";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
@@ -85,7 +86,8 @@ export async function POST(req: Request) {
       temperature: 0.9,
       maxOutputTokens: 80,
     });
-    const names = parseNames(text ?? "");
+    // Phase 8 输出审核：AI 生成名过敏感词过滤；过滤后不足 3 个 → 走预设池兜底
+    const names = filterClean(parseNames(text ?? ""), (s) => s);
     if (names.length >= 3) {
       return NextResponse.json({ ok: true, names, source: "ai" });
     }

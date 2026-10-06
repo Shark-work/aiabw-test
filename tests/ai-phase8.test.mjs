@@ -152,3 +152,159 @@ test("phase8-8A: 聊天 /api/chat 不接入响应缓存（千人千面 + SSE 语
   assert.ok(!c.includes("generateCached"), "no cached entry in chat");
   assert.ok(/model:\s*getModel\(\)/.test(c), "chat still uses getModel() single point");
 });
+
+// ============================================================================
+// 批次 8B：敏感词内容审核 + 用户举报 + admin 审核面板 + API 限流
+// ============================================================================
+
+// ───────────── 10) content-moderation 运行时行为（零依赖纯函数，直接 import） ─────────────
+test("phase8-8B: moderateText 命中/绕过变体/放行 + 情绪词刻意不收", async () => {
+  const { moderateText, filterClean, SENSITIVE_WORDS } = await import(
+    "../src/lib/content-moderation.ts"
+  );
+  // 命中：直接包含
+  assert.equal(moderateText("来赌博网站看看").ok, false, "direct hit");
+  assert.deepEqual(moderateText("来赌博网站看看").hits, ["赌博"]);
+  // 命中：空白/零宽拆词变体（归一化后仍命中）
+  assert.equal(moderateText("赌 博 网 站").ok, false, "whitespace-split variant");
+  assert.equal(moderateText("赌​博").ok, false, "zero-width variant");
+  // 放行：正常宠物对话 / 情绪倾诉（刻意不收自杀/自残类词——陪伴产品应回应而非 400）
+  assert.equal(moderateText("今天心情不好，陪陪我").ok, true, "emotional venting allowed");
+  assert.equal(moderateText("我的小猫真可爱").ok, true, "normal text passes");
+  assert.equal(moderateText("").ok, true, "empty passes");
+  // 词表原则：不含情绪词（误伤成本 > 漏放成本）
+  assert.ok(!SENSITIVE_WORDS.includes("自杀") && !SENSITIVE_WORDS.includes("自残"), "no emotional words in list");
+  // filterClean：多候选过滤
+  assert.deepEqual(filterClean(["雪球", "赌博王", "豆豆"], (s) => s), ["雪球", "豆豆"], "filters dirty candidates");
+});
+
+test("phase8-8B: content-moderation 词表结构 + news 口径复用", () => {
+  const m = read("src/lib/content-moderation.ts");
+  assert.ok(m.includes("export const SENSITIVE_WORDS"), "word list exported");
+  assert.ok(m.includes("export function moderateText("), "moderateText exported");
+  assert.ok(m.includes("export function filterClean<"), "filterClean exported");
+  assert.ok(m.includes("INVISIBLE_RE"), "zero-width normalization");
+  assert.ok(m.includes("String.fromCharCode(0x200b)"), "invisible chars via fromCharCode (源码无隐形字符)");
+  // news 采集层既有词表仍在（两处并存：采集层 news.ts isBlockedContent 为抓取过滤，moderation 为 UGC 审核）
+  assert.ok(read("src/lib/news.ts").includes("isBlockedContent"), "news collection filter preserved");
+});
+
+// ───────────── 11) rate-limit 固定窗口 ─────────────
+test("phase8-8B: rate-limit 预设规则 + 固定窗口 + 429 响应", () => {
+  const r = read("src/lib/rate-limit.ts");
+  assert.ok(r.includes("export const RATE_LIMITS"), "presets exported");
+  assert.ok(r.includes("chat: { limit: 20, windowSec: 60 }"), "chat 20/min");
+  assert.ok(r.includes("exploration: { limit: 12, windowSec: 60 }"), "exploration 12/min");
+  assert.ok(r.includes("reports: { limit: 10, windowSec: 3600 }"), "reports 10/hour");
+  assert.ok(r.includes("ugcPublish: { limit: 20, windowSec: 3600 }"), "ugc publish 20/hour");
+  assert.ok(r.includes("export function checkRateLimit("), "fixed-window counter");
+  assert.ok(r.includes("{ status: 429, headers: { \"Retry-After\""), "429 + Retry-After header");
+  assert.ok(r.includes('apiError(resolveLocale(req), "rateLimited")'), "i18n error message");
+  assert.ok(r.includes("code: \"RATE_LIMITED\""), "structured code");
+});
+
+// ───────────── 12) chat 接入：限流 + 审核（且先于 LLM/quota） ─────────────
+test("phase8-8B: chat 限流 + 敏感词 400，位于 LLM 调用之前", () => {
+  const c = read("src/app/api/chat/route.ts");
+  assert.ok(c.includes('import { moderateText } from "@/lib/content-moderation"'), "moderation imported");
+  assert.ok(c.includes('checkRateLimit(`chat:${user.id}`, RATE_LIMITS.chat)'), "chat rate limit wired");
+  assert.ok(c.includes("uiMessageText(lastUserMsg)"), "last user message extracted");
+  assert.ok(c.includes('code: "CONTENT_MODERATED"'), "moderated code");
+  assert.ok(c.includes('apiError(locale, "inappropriateContent")'), "i18n moderated error");
+  // 顺序红线：限流+审核必须先于 LLM streamText 与 quota 递增（省成本 + 不占配额）
+  const iRL = c.indexOf("checkRateLimit(`chat:");
+  const iMod = c.indexOf("uiMessageText(lastUserMsg)");
+  const iStream = c.indexOf("streamText(");
+  assert.ok(iRL > -1 && iStream > -1 && iRL < iStream, "rate limit before streamText");
+  assert.ok(iMod > -1 && iMod < iStream, "moderation before streamText");
+});
+
+// ───────────── 13) exploration/creator/adopt/name-suggestions 接入 ─────────────
+test("phase8-8B: exploration/start 限流 + creator 限流审核 + adopt 审核 + 起名输出过滤", () => {
+  const ex = read("src/app/api/exploration/start/route.ts");
+  assert.ok(ex.includes("checkRateLimit(`explore:${user.id}`, RATE_LIMITS.exploration)"), "exploration rate limit");
+  assert.ok(ex.indexOf("checkRateLimit(`explore:") < ex.indexOf("pickWeightedEvent("), "limit before event roll");
+
+  const pub = read("src/app/api/creator/publish/route.ts");
+  assert.ok(pub.includes("checkRateLimit(`ugc:${user.id}`, RATE_LIMITS.ugcPublish)"), "ugc publish rate limit");
+  assert.ok(pub.includes("moderateText(name)") && pub.includes("moderateText(systemPrompt)"), "name+prompt moderated");
+  assert.ok(pub.indexOf("moderateText(name)") < pub.indexOf(".insert(ugcPets)"), "moderation before insert");
+
+  const adopt = read("src/app/api/adopt/route.ts");
+  assert.ok(adopt.includes("moderateText(petName)"), "pet name moderated");
+  assert.ok(adopt.includes('code: "CONTENT_MODERATED"'), "adopt moderated code");
+
+  const ns = read("src/app/api/onboarding/name-suggestions/route.ts");
+  assert.ok(ns.includes("filterClean(parseNames(text ?? \"\"), (s) => s)"), "AI names filtered");
+  assert.ok(
+    ns.indexOf("filterClean(parseNames") < ns.indexOf('ok: true, names, source: "ai"'),
+    "filter before ai response",
+  );
+});
+
+// ───────────── 14) POST /api/reports 用户举报 ─────────────
+test("phase8-8B: POST /api/reports 枚举校验 + 幂等 + 限流 + 401", () => {
+  const p = "src/app/api/reports/route.ts";
+  assert.ok(exists(p), "route exists");
+  const r = read(p);
+  assert.ok(r.includes("getUserFromRequest(req)"), "auth");
+  assert.ok(r.includes("{ status: 401 }"), "unauthenticated 401");
+  assert.ok(r.includes('new Set(["chat", "pet_name", "ugc_pet", "postcard", "news"])'), "target type enum");
+  assert.ok(r.includes('new Set(["spam", "nsfw", "abuse", "illegal", "other"])'), "reason enum");
+  assert.ok(r.includes("checkRateLimit(`reports:${user.id}`, RATE_LIMITS.reports)"), "report rate limit");
+  assert.ok(
+    r.includes('ON CONFLICT ("reporter_id", "target_type", "target_id") DO NOTHING'),
+    "idempotent insert (uq index)",
+  );
+  assert.ok(r.includes("alreadyReported"), "duplicate flag returned");
+  assert.ok(r.includes('apiError(locale, "invalidReport")'), "400 invalid report");
+  assert.ok(r.includes('apiError(locale, "reportFailed")'), "500 fallback");
+});
+
+// ───────────── 15) admin 审核 API ─────────────
+test("phase8-8B: admin reports 列表（pending 先报先审）+ 处置（仅 pending + 审计）", () => {
+  const g = read("src/app/api/admin/reports/route.ts");
+  assert.ok(g.includes("requireAdmin(req)"), "GET admin guard");
+  assert.ok(g.includes('LEFT JOIN "users" u ON u.id = r.reporter_id'), "reporter email joined");
+  assert.ok(g.includes("WHEN r.status = 'pending' THEN 0 ELSE 1 END"), "pending first");
+  assert.ok(g.includes("LIMIT ${pageSize} OFFSET"), "pagination");
+
+  const p = read("src/app/api/admin/reports/[id]/route.ts");
+  assert.ok(p.includes("requireAdmin(req)"), "PATCH admin guard");
+  assert.ok(p.includes('action === "resolve" ? "resolved"'), "resolve→resolved");
+  assert.ok(p.includes('action === "dismiss" ? "dismissed"'), "dismiss→dismissed");
+  assert.ok(p.includes("WHERE id = $3 AND status = 'pending'"), "only pending resolvable");
+  assert.ok(p.includes("resolved_by = $2::uuid"), "audit: operator recorded");
+  assert.ok(p.includes("{ status: 409 }"), "409 on repeat resolve");
+});
+
+// ───────────── 16) admin/moderation 页 + nav 挂载（顺带修复 admin-shell mojibake） ─────────────
+test("phase8-8B: /admin/moderation 页 + admin-shell 菜单挂载 + mojibake 已修复", () => {
+  const pg = "src/app/admin/moderation/page.tsx";
+  assert.ok(exists(pg), "page exists");
+  const c = read(pg);
+  assert.ok(c.includes("/api/admin/reports?"), "loads report queue");
+  assert.ok(c.includes('action === "resolve" ? "已确认违规" : "已驳回举报"'), "resolve/dismiss actions");
+  assert.ok(c.includes("先报先审"), "pending FIFO copy");
+
+  const shell = read("src/components/admin/admin-shell.tsx");
+  assert.ok(shell.includes('{ href: "/admin/moderation", label: "🛡️ 内容审核" }'), "nav item mounted");
+  // mojibake 修复回归：菜单/注释不得再含固化乱码字符
+  assert.ok(!/馃|鈿|鏁版|瀹犵墿绠|绯荤粺璁/.test(shell), "no mojibake residue in admin shell");
+  assert.ok(shell.includes("📊 数据看板"), "dashboard label restored");
+});
+
+// ───────────── 17) i18n：4 个新 api key 双语 parity ─────────────
+test("phase8-8B: i18n api 新 key 双语 parity（rateLimited/inappropriateContent/invalidReport/reportFailed）", () => {
+  const zh = JSON.parse(read("messages/zh.json"));
+  const en = JSON.parse(read("messages/en.json"));
+  for (const key of ["rateLimited", "inappropriateContent", "invalidReport", "reportFailed"]) {
+    assert.ok(zh.api[key], `zh api.${key} exists`);
+    assert.ok(en.api[key], `en api.${key} exists`);
+    assert.ok(typeof zh.api[key] === "string" && zh.api[key].length > 3, `zh ${key} non-trivial`);
+    assert.ok(typeof en.api[key] === "string" && en.api[key].length > 3, `en ${key} non-trivial`);
+  }
+  // 修复键后 api 命名空间 key 集合双语一致（防漏译）
+  assert.deepEqual(Object.keys(en.api).sort(), Object.keys(zh.api).sort(), "api key set parity");
+});
+

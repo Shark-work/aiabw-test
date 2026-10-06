@@ -6,6 +6,8 @@ import { users, ugcPets } from "@/db/schema";
 import { getUserFromRequest } from "@/lib/auth";
 import { isBlobUrl } from "@/lib/blob-url";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
+import { moderateText } from "@/lib/content-moderation";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -39,6 +41,10 @@ export async function POST(req: Request) {
       );
     }
 
+    // Phase 8 · 成本控制：发布限流（20 次/小时/创作者）
+    const rl = checkRateLimit(`ugc:${user.id}`, RATE_LIMITS.ugcPublish);
+    if (rl.limited) return rateLimitResponse(req, rl.retryAfterSec);
+
     const body = await req.json().catch(() => ({}));
     const name = typeof body?.name === "string" ? body.name.trim() : "";
     const imageUrl = typeof body?.imageUrl === "string" ? body.imageUrl.trim() : "";
@@ -49,6 +55,17 @@ export async function POST(req: Request) {
     if (!name || !imageUrl || !systemPrompt) {
       return NextResponse.json(
         { ok: false, error: "name / imageUrl / systemPrompt must not be empty" },
+        { status: 400 },
+      );
+    }
+
+    // Phase 8 · 内容审核：名称/人设命中敏感词 → 400（UGC 公开展示，先审后入库）
+    const modName = moderateText(name);
+    const modPrompt = moderateText(systemPrompt);
+    if (!modName.ok || !modPrompt.ok) {
+      console.warn("[creator/publish] moderated:", user.id, [...modName.hits, ...modPrompt.hits].join(","));
+      return NextResponse.json(
+        { ok: false, error: apiError(resolveLocale(req), "inappropriateContent"), code: "CONTENT_MODERATED" },
         { status: 400 },
       );
     }

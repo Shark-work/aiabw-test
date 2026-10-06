@@ -31,6 +31,7 @@ import {
   type ExplorationRewardsPayload,
 } from "@/lib/exploration-rewards";
 import { itemDisplayName } from "@/lib/checkin-items";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
       { status: 401 },
     );
   }
+
+  // Phase 8 · 成本控制：探索限流（12 次/分钟/用户，防脚本刷步数；日配额仍是主约束）
+  const rl = checkRateLimit(`explore:${user.id}`, RATE_LIMITS.exploration);
+  if (rl.limited) return rateLimitResponse(req, rl.retryAfterSec);
 
   try {
     await ensureDbSchemaOnce();
