@@ -144,6 +144,30 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 - 契约测试 ai-phase8.test.mjs 19 项（8A 9 项 + 8B 10 项，含 moderateText 运行时单测）；全量回归 702/702 + tsc 0；旧断言演进 8 文件（SCHEMA_VERSION 19→20 / 0035 豁免）。
 - 后续可选（未做，非阻塞）：memory/handbook/social-poster 三处 getModel 直调可迁移 generateThrottled；moderation 词表可叠加阿里云内容安全 API（接口不变）；限流可换 Redis 实现多实例精确配额（接口不变）。
 
+---
+
+## Phase 9 · 测试、部署与上线（✅ 2026-10-16）
+
+**上线窗口**：本地 15+1 commit 一次性推送（Phase 4~8 + 构建修复），生产从 Phase 3 直升 Phase 8。
+
+| 步骤 | 结果 |
+| --- | --- |
+| 全量测试 | ✅ 702/702 + tsc 0 + 本地 `npm run build` 204/204 静态页 |
+| 生产迁移（预跑） | ✅ `db-migrate-prod.mjs`：`_schema_meta.version=20`，13 项校验全过；**先于部署完成**（DDL 纯增量旧版 v19 兼容），新实例冷启动走快速路径，规避 v12 式超时死锁 |
+| 首次部署 | ❌ 失败——ESLint `no-unused-vars` 2 处阻断构建（轮询 16 分钟 /api/reports 持续 404 定位） |
+| 阻断修复 `cbc2e21` | `promote-modal.tsx` 历史编辑事故：`submit()` 的 `finally` 块吞掉整个组件 JSX（return 落入 finally、文件末尾孤儿 `setSubmitting(false)`），**「确认推广」按钮从未渲染**（功能缺陷）+ ESLint unused；`leaderboard-v2.tsx` 未用 `tc` 钩子。修复后本地 build 通过再推 |
+| 二次部署 | ✅ `/api/reports` 404→401 确认新版上线 |
+| 生产冒烟 | ✅ `smoke-production.mjs` **35/35**（8 页面/注册登录/卡包/道具/融合/销毁/支付降级/webhook/繁育/转赠/补签） |
+| 关键功能活性 | ✅ 首页·排行榜·探索页·`/admin/moderation` 均 200；reports/ai-stats/admin-reports/chat 新端点 401 鉴权正常；leaderboard API 200 |
+| DNS | ✅ `aiabw.com` A → 216.198.79.1 / 64.29.17.1（Vercel Anycast），apex 308→www |
+| 环境变量（附录 D 核对） | ✅ 本地 .env/.env.local 齐全（DATABASE_URL/DEEPSEEK/BAILIAN/XORPAY_AID+SECRET/STRIPE/CHAIN/BLOB）；生产经运行时行为验证（登录 401 活性/支付 503 降级/webhook 验签）；附录 D 命名差异已确认：JWT_SECRET→实际 AUTH_SECRET、XORPAY_API_KEY→实际 XORPAY_AID+XORPAY_SECRET |
+
+**遗留（非阻塞）**：
+- Vercel 残留失效 `OPENAI_API_KEY`（ark）——backlog P3，用户决定暂不处理（DEEPSEEK 主链路挡住，失效才会静默 fallback）。
+- 限流 429 未在生产实际触发（避免污染），逻辑由契约测试锁定。
+- 聊天真实 AI 对话未在生产深验（省 token），活性 401 + 本地回归覆盖。
+- smoke 测试用户（prod-smoke-*@test.dev）经 `cleanup-smoke-users.mjs` 清理。
+
 | `adoptions.exploration_steps`（按宠物累计步数，每消息 +10） | `exploration_records`（按用户每次一行） | ❌ V1 无 `exploration_count` 字段；换算口径：完成地图数 = Σsteps ÷ 100（每图 100 步） |
 | `user_postcards`（每完成一张地图生成一张） | 探索次数计数 | ✅ V1「探索次数」≈ `COUNT(user_postcards)`，与上一条交叉校验取 max |
 | `map_events` 事件触发（应用层即时抽取，不落库） | `exploration_records.event_id`（evt-001~040） | ❌ 不可迁移：V1 触发无用户维度持久化、无稳定事件 ID；奇遇类徽章 V1 用户从 0 开始 |
