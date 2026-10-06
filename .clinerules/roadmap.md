@@ -130,6 +130,20 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 - 零 schema 变更（SCHEMA_VERSION 维持 19）；4 批次契约测试 32 项（home/soul-cards/shop/postcard-share phase7），全量回归 683/683 + tsc 0 错误。
 - 下一 Phase：Phase 8 · AI 集成优化与成本控制（响应缓存/降级/审核/限流）。
 
+---
+
+## Phase 8 · AI 集成优化与成本控制（✅ 2026-10-16，2 批次）
+
+| 批次 | 内容 | 提交 |
+| --- | --- | --- |
+| 8A · 缓存+降级 | ai_response_cache/content_reports 两表（drizzle/0035，SCHEMA_VERSION 20）/ ai-cache.ts（DB 缓存层：sha256 归一化 key、hits 命中计数、惰性过期、全链路容错）/ llm-fallback.ts（AI_MAX_CONCURRENCY=6 并发槽 AiBusyError + generateWithFallback 跨 provider 顺序重试 AggregateError + generateCached/generateThrottled 两入口）/ get-model.ts getModelCandidates+buildChatModel（getModel() 不变）/ 接入 name-suggestions（TTL 7d）+ agent-psychology / GET /api/admin/ai-stats | `67668c3` |
+| 8B · 审核+举报+限流 | content-moderation.ts（高置信词表+零宽归一化+filterClean；刻意不收情绪词）/ rate-limit.ts（chat 20/min、explore 12/min、reports 10/h、ugc 20/h；429+Retry-After+i18n）/ 接入 chat（限流+审核先于 streamText/配额）、exploration/start、creator/publish、adopt、name-suggestions 输出 / POST /api/reports（uq 幂等）/ admin reports GET+PATCH（pending 先报先审、仅 pending 可处置、resolved_by 审计、409）+ /admin/moderation 面板（+AI 成本监控条 `07f22ee`）/ 顺带修复 admin-shell.tsx 历史 mojibake | `fe8c79d` |
+
+- 红线：聊天流式链路不缓存（千人千面 system prompt + SSE 重试语义）；词表只收高置信违规词（误伤成本>漏放成本，情绪倾诉由宠物温柔回应）。
+- ⚠️ **部署警示**：SCHEMA_VERSION 19→20，推送上线后必须手动跑 `scripts/db-migrate-prod.mjs`（ops-rules 红线），确认 `_schema_meta.version=20` 再跑 smoke。
+- 契约测试 ai-phase8.test.mjs 19 项（8A 9 项 + 8B 10 项，含 moderateText 运行时单测）；全量回归 702/702 + tsc 0；旧断言演进 8 文件（SCHEMA_VERSION 19→20 / 0035 豁免）。
+- 后续可选（未做，非阻塞）：memory/handbook/social-poster 三处 getModel 直调可迁移 generateThrottled；moderation 词表可叠加阿里云内容安全 API（接口不变）；限流可换 Redis 实现多实例精确配额（接口不变）。
+
 | `adoptions.exploration_steps`（按宠物累计步数，每消息 +10） | `exploration_records`（按用户每次一行） | ❌ V1 无 `exploration_count` 字段；换算口径：完成地图数 = Σsteps ÷ 100（每图 100 步） |
 | `user_postcards`（每完成一张地图生成一张） | 探索次数计数 | ✅ V1「探索次数」≈ `COUNT(user_postcards)`，与上一条交叉校验取 max |
 | `map_events` 事件触发（应用层即时抽取，不落库） | `exploration_records.event_id`（evt-001~040） | ❌ 不可迁移：V1 触发无用户维度持久化、无稳定事件 ID；奇遇类徽章 V1 用户从 0 开始 |
