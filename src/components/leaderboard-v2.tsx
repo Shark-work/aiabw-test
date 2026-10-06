@@ -176,7 +176,7 @@ export function LeaderboardV2() {
             <p className="w-full truncate text-[10px] text-zinc-500">
               {t("owner", { name: pet.ownerName })} · {t("generation", { gen: pet.generation })}
             </p>
-            <p className="mt-1 text-base font-extrabold text-orange-600">{pet.power.toLocaleString()}</p>
+            <p className="mt-1 text-base font-extrabold text-orange-600">{(pet.power ?? 0).toLocaleString()}</p>
             <p className="text-[10px] text-zinc-400">{t("power")}</p>
           </>
         ) : (
@@ -185,7 +185,7 @@ export function LeaderboardV2() {
               {item.ownerName.slice(0, 1)}
             </span>
             <p className="mt-1.5 w-full truncate text-sm font-bold text-zinc-800">{item.ownerName}</p>
-            <p className="mt-1 text-base font-extrabold text-violet-600">{(item as CountItem).count}</p>
+            <p className="mt-1 text-base font-extrabold text-violet-600">{((item as CountItem).count ?? 0).toLocaleString()}</p>
             <p className="text-[10px] text-zinc-400">{t(UNIT_KEY[category as Exclude<LeaderboardCategory, "popularity">])}</p>
           </>
         )}
@@ -234,7 +234,16 @@ export function LeaderboardV2() {
             type="button"
             data-testid={`cat-tab-${c}`}
             className={chip(category === c)}
-            onClick={() => setCategory(c)}
+            onClick={() => {
+              if (c === category) return;
+              // 竞态修复（2026-10-16 生产白屏）：setCategory 触发同步重渲时 useEffect 尚未执行，
+              // 旧 items 结构（CountItem）会在新分类（popularity）分支下渲染一帧，
+              // pet.power 为 undefined → 调用其 toLocaleString 抛 TypeError 白屏。
+              // 必须在切换分类的同步路径上清空旧结构数据。
+              setItems([]);
+              setMyRank(null);
+              setCategory(c);
+            }}
           >
             {t(CATEGORY_LABEL_KEY[c])}
           </button>
@@ -250,7 +259,13 @@ export function LeaderboardV2() {
               type="button"
               data-testid={`period-tab-${p}`}
               className={`${chip(period === p)} !bg-opacity-90`}
-              onClick={() => setPeriod(p)}
+              onClick={() => {
+                if (p === period) return;
+                // 同 category 竞态防护：清空旧周期数据，避免 loading 生效前渲染过期计数
+                setItems([]);
+                setMyRank(null);
+                setPeriod(p);
+              }}
             >
               {t(PERIOD_LABEL_KEY[p])}
             </button>
@@ -298,7 +313,7 @@ export function LeaderboardV2() {
             🎖️ {t("myRankBanner", { rank: myRank.rank })}
           </span>
           <span className="text-sm font-extrabold text-violet-600">
-            {myRank.value.toLocaleString()}
+            {(myRank.value ?? 0).toLocaleString()}
             {myRank.name ? <span className="ml-1 text-[10px] font-normal text-violet-400">({myRank.name})</span> : null}
           </span>
         </div>
@@ -361,7 +376,7 @@ export function LeaderboardV2() {
                         </div>
                       </div>
                       <div className="shrink-0 text-right">
-                        <div className="text-sm font-bold text-orange-600">{item.power.toLocaleString()}</div>
+                        <div className="text-sm font-bold text-orange-600">{(item.power ?? 0).toLocaleString()}</div>
                         <div className="text-[10px] text-zinc-400">{t("power")}</div>
                       </div>
                     </>
@@ -372,7 +387,7 @@ export function LeaderboardV2() {
                       </span>
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-zinc-800">{item.ownerName}</span>
                       <div className="shrink-0 text-right">
-                        <div className="text-sm font-bold text-violet-600">{item.count}</div>
+                        <div className="text-sm font-bold text-violet-600">{(item.count ?? 0).toLocaleString()}</div>
                         <div className="text-[10px] text-zinc-400">
                           {t(UNIT_KEY[category as Exclude<LeaderboardCategory, "popularity">])}
                         </div>

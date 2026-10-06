@@ -24,7 +24,8 @@ test("social: fallback text includes rarity & hashtags", () => {
   assert.ok(text.includes("传说"), "传说级文案");
   assert.ok(text.includes("金毛寻回犬"), "含物种名");
   assert.ok(text.includes("#艾比世界"), "主话题标签");
-  assert.ok(text.includes("#传说宠物"), "稀有度话题标签");
+  assert.ok(text.includes("#传说灵宠"), "稀有度话题标签");
+  assert.ok(text.includes("#羁绊结晶"), "羁绊结晶标签");
   assert.ok(text.includes("第 3 代"), "含代数");
 
   const epic = buildFallbackShareText({ ...meta, rarity: "epic" });

@@ -269,3 +269,56 @@ test("schema 红线：无新迁移 + SCHEMA_VERSION 无 Phase 5 变更（20 由 
   assert.match(client, /CREATE TABLE IF NOT EXISTS "promoted_content"/);
 });
 
+// === 7) 空数据/字段缺失防护（2026-10-16 生产白屏事故修复锁定） ===
+// 事故：collection（CountItem，无 power）切 popularity 分类时，setCategory 同步重渲先于 useEffect，
+// 旧 items 在 isPetBoard 分支渲染一帧 → undefined.toLocaleString() TypeError 白屏。
+test("竞态防护：分类/周期切换的同步 onClick 路径必须先清空 items+myRank 再 setState", () => {
+  const src = read("../src/components/leaderboard-v2.tsx");
+  // 分类 tab：setItems([]) → setMyRank(null) → setCategory(c) 顺序
+  const catHandler = src.match(/data-testid=\{`cat-tab-\$\{c\}`\}[\s\S]*?onClick=\{\(\) => \{([\s\S]*?)\}\}/);
+  assert.ok(catHandler, "cat tab handler exists");
+  const h = catHandler[1];
+  assert.ok(h.includes("setItems([])"), "cat switch clears items");
+  assert.ok(h.includes("setMyRank(null)"), "cat switch clears myRank");
+  assert.ok(
+    h.indexOf("setItems([])") < h.indexOf("setCategory(c)"),
+    "clear items BEFORE setCategory (sync path)",
+  );
+  // 周期 tab 同防护
+  const periodHandler = src.match(/data-testid=\{`period-tab-\$\{p\}`\}[\s\S]*?onClick=\{\(\) => \{([\s\S]*?)\}\}/);
+  assert.ok(periodHandler, "period tab handler exists");
+  assert.ok(periodHandler[1].includes("setItems([])"), "period switch clears items");
+  assert.ok(periodHandler[1].indexOf("setItems([])") < periodHandler[1].indexOf("setPeriod(p)"), "clear before setPeriod");
+});
+
+test("空值保护：排行榜组件所有数值渲染点带 ?? 0 兜底（pet.power/myRank.value/item.power/count）", () => {
+  const src = read("../src/components/leaderboard-v2.tsx");
+  // 不允许裸调用：identifier.toLocaleString( 前面必须有 ?? 0)
+  const bare = src.match(/(?<!\?\? 0\)\()\b\w+(?:\.\w+)*\.toLocaleString\(\)/g) ?? [];
+  assert.deepEqual(bare, [], `存在未兜底的 toLocaleString 调用：${bare.join(", ")}`);
+  // 四个数值渲染点显式断言
+  assert.ok(src.includes("(pet.power ?? 0).toLocaleString()"), "top card power guarded");
+  assert.ok(src.includes("(myRank.value ?? 0).toLocaleString()"), "myRank value guarded");
+  assert.ok(src.includes("(item.power ?? 0).toLocaleString()"), "row power guarded");
+  assert.ok(src.includes("((item as CountItem).count ?? 0).toLocaleString()"), "top card count guarded");
+  assert.ok(src.includes("(item.count ?? 0).toLocaleString()"), "row count guarded");
+});
+
+test("空数据安全：items/myRank/promoted 响应字段缺失时客户端状态兜底为空", () => {
+  const src = read("../src/components/leaderboard-v2.tsx");
+  assert.ok(src.includes("setItems(d.items ?? [])"), "items fallback []");
+  assert.ok(src.includes("setPromoted(d.promoted ?? [])"), "promoted fallback []");
+  assert.ok(src.includes("setMyRank(d.myRank ?? null)"), "myRank fallback null");
+  // myRank 横幅渲染有条件保护（null 不渲染）
+  assert.ok(src.includes("{myRank && ("), "myRank banner conditional");
+  // 空列表走 empty 文案分支而非渲染卡片
+  assert.ok(src.includes("items.length === 0"), "empty branch exists");
+  // API 端：计数榜 myCount 与 power 计算恒为 number（petPower ?? 10 稀有度兜底）
+  const lib = read("../src/lib/leaderboard.ts");
+  assert.ok(lib.includes('RARITY_POWER[rarity ?? ""] ?? 10'), "petPower rarity fallback");
+  const route = read("../src/app/api/leaderboard/route.ts");
+  assert.ok(route.includes("Number(mine.rows[0]?.cnt ?? 0)"), "myCount fallback 0");
+  // API 端 JOIN 均为 INNER（清理用户后无悬空引用行混入榜单）
+  assert.ok(!/LEFT JOIN/i.test(route), "no LEFT JOIN in leaderboard route");
+});
+
