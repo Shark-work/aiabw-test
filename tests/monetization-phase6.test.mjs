@@ -238,10 +238,10 @@ test("phase6(E1): i18n 双语对齐——blindbox.pity* / api 新 key / promote.
 // ───────────── E2) 零 schema 变更红线 ─────────────
 test("phase6(E2): 零 schema 变更——SCHEMA_VERSION 维持 19，pity_counter 为 v19 既有表", () => {
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 19;/, "SCHEMA_VERSION 维持 19（本 Phase 零 schema 变更）");
+  assert.match(client, /const SCHEMA_VERSION = 20;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
   const migrations = readdirSync(new URL("../drizzle", import.meta.url));
-  assert.ok(!migrations.some((f) => /^003[5-9]|^00[4-9]\d/.test(f)),
-    "无 0035+ 新迁移文件（全部复用 v19 既有表）");
+  assert.ok(!migrations.some((f) => /^003[6-9]|^00[4-9]\d/.test(f)),
+    "无 0036+ 新迁移文件（0035 属 Phase 8；本 Phase 全部复用 v19 既有表）");
   const schema = read("../src/db/schema.ts");
   assert.match(schema, /export const pityCounter = pgTable\('pity_counter'/, "pity_counter drizzle 定义既有");
 });

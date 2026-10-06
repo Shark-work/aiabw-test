@@ -253,14 +253,14 @@ test("i18n: 占位符 zh/en 一致（{rank}/{n}/{cost}/{slots}/{end}/{time}/{nam
 });
 
 // === 6) 零 schema 变更红线 ===
-test("schema 红线：无新迁移 + SCHEMA_VERSION 维持 19 + 源码无 DDL", () => {
+test("schema 红线：无新迁移 + SCHEMA_VERSION 无 Phase 5 变更（20 由 Phase 8 提升）+ 源码无 DDL", () => {
   const migrations = readdirSync(new URL("../drizzle", import.meta.url)).filter((f) => f.endsWith(".sql"));
   assert.ok(
-    !migrations.some((f) => /003[5-9]|leaderboard|promote/.test(f)),
-    `不得出现 Phase 5 新迁移：${migrations.filter((f) => /003[5-9]|leaderboard|promote/.test(f)).join(",")}`,
+    !migrations.some((f) => /003[6-9]|leaderboard|promote/.test(f)),
+    `不得出现 Phase 5 新迁移（0035 属 Phase 8）：${migrations.filter((f) => /003[6-9]|leaderboard|promote/.test(f)).join(",")}`,
   );
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 19;/);
+  assert.match(client, /const SCHEMA_VERSION = 20;/);
   for (const f of ["../src/app/api/content/promote/route.ts", "../src/app/api/content/promoted/route.ts", "../src/app/api/leaderboard/route.ts", "../src/lib/promotions.ts"]) {
     assert.ok(!/CREATE TABLE|ALTER TABLE/.test(read(f)), `${f} 不得含 DDL`);
   }

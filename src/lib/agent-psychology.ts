@@ -7,9 +7,7 @@
  *
  * LLM 调用失败时降级为模板兜底文案（保证工作流不中断）。
  */
-import { generateText } from "ai";
-
-import { getModel } from "./get-model";
+import { generateThrottled } from "./llm-fallback";
 
 export type SocialPlatform = "x" | "xhs";
 
@@ -98,8 +96,9 @@ export async function generateSocialCopy(
   const maxChars = MAX_CHARS[platform] ?? 1000;
   const ctx: PsychologyContext = { platform, updates: updates || "", memories: memories || "" };
   try {
-    const { text } = await generateText({
-      model: getModel(),
+    // Phase 8 降级策略：高峰并发占满（AiBusyError）/ 主 provider 故障自动切换备用
+    // （generateThrottled = 并发限速 + 跨 provider 重试；不缓存——updates/memories 高随机）。
+    const { text } = await generateThrottled({
       system: buildPlatformPrompt(platform, ctx),
       prompt: `请结合上面的更新与框架，生成一条不超过 ${maxChars} 字符的 ${platform === "xhs" ? "小红书" : "X"} 帖子。`,
       temperature: 0.9,

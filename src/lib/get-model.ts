@@ -60,3 +60,53 @@ export function getModel(modelName?: string) {
   //    而不是硬失败。Verified via tmp-repro2-chat.mjs R-E.
   return client.chat(name);
 }
+
+/**
+ * Phase 8 · LLM 降级：返回**所有已配置**（API Key 存在）的提供商候选，按优先级排序。
+ * getModel() 仍只返回首个（静态选择，行为不变）；本函数供 llm-fallback 在运行时
+ * 主模型失败（401/超时/5xx）时依次切换到备用 provider——选择期回退 → 运行期回退。
+ */
+export interface ModelCandidate {
+  id: string;
+  apiKey: string;
+  baseURL?: string;
+  defaultModel: string;
+}
+
+export function getModelCandidates(): ModelCandidate[] {
+  const list: ModelCandidate[] = [];
+  if (process.env.DEEPSEEK_API_KEY) {
+    list.push({
+      id: 'deepseek',
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
+      defaultModel: process.env.DEEPSEEK_MODEL ?? 'deepseek-chat',
+    });
+  }
+  if (process.env.OPENAI_API_KEY) {
+    list.push({
+      id: 'openai',
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: process.env.OPENAI_BASE_URL || undefined,
+      defaultModel: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+    });
+  }
+  if (process.env.BAILIAN_API_KEY) {
+    list.push({
+      id: 'bailian',
+      apiKey: process.env.BAILIAN_API_KEY,
+      baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      defaultModel: process.env.BAILIAN_MODEL ?? 'qwen-turbo',
+    });
+  }
+  return list;
+}
+
+/** 用指定候选构建 chat 模型（与 getModel() 同口径 client.chat，理由见上注释）。 */
+export function buildChatModel(candidate: ModelCandidate, modelName?: string) {
+  const client = createOpenAI({
+    apiKey: candidate.apiKey,
+    baseURL: candidate.baseURL,
+  });
+  return client.chat(modelName ?? candidate.defaultModel);
+}

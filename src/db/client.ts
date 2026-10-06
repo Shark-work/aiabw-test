@@ -1072,6 +1072,30 @@ const SCHEMA_ALTERS: string[] = [
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "exp" integer DEFAULT 0 NOT NULL`,
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "last_feed_time" timestamp`,
   `ALTER TABLE "pets" ADD COLUMN IF NOT EXISTS "evolution_stage" integer DEFAULT 0 NOT NULL`,
+
+  // ===== Phase 8 AI 集成优化与成本控制（drizzle/0035）=====
+  // ai_response_cache：AI 响应缓存（scope+prompt 哈希主键；hits 命中率监控；expires_at 惰性过期）
+  `CREATE TABLE IF NOT EXISTS "ai_response_cache" (
+    "cache_key" text PRIMARY KEY,
+    "scope" text NOT NULL,
+    "response" text NOT NULL,
+    "hits" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "expires_at" timestamp NOT NULL
+  )`,
+  // content_reports：用户举报（uq 索引保证同一举报人对同一目标仅一条，天然幂等；pending→resolved/dismissed）
+  `CREATE TABLE IF NOT EXISTS "content_reports" (
+    "id" text PRIMARY KEY,
+    "reporter_id" uuid NOT NULL REFERENCES "users"("id"),
+    "target_type" text NOT NULL,
+    "target_id" text NOT NULL,
+    "reason" text NOT NULL,
+    "detail" text,
+    "status" text DEFAULT 'pending' NOT NULL,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "resolved_at" timestamp,
+    "resolved_by" uuid
+  )`,
 ];
 
 /**
@@ -1179,6 +1203,11 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS "idx_stripe_orders_user" ON "stripe_orders" ("user_id", "created_at" DESC)`,
   // Aibi ↔ 聊天（v12，drizzle/0029）：chat 页按 thread_id 反查会话主体
   `CREATE INDEX IF NOT EXISTS "idx_aibi_tokens_thread_id" ON "aibi_tokens" ("thread_id")`,
+  // Phase 8（v20，drizzle/0035）：缓存过期扫描 / 举报列表与举报人查询 / 举报幂等
+  `CREATE INDEX IF NOT EXISTS "idx_ai_cache_scope_expires" ON "ai_response_cache" ("scope", "expires_at")`,
+  `CREATE INDEX IF NOT EXISTS "idx_content_reports_status" ON "content_reports" ("status", "created_at" DESC)`,
+  `CREATE INDEX IF NOT EXISTS "idx_content_reports_reporter" ON "content_reports" ("reporter_id", "created_at" DESC)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "uq_content_reports_target" ON "content_reports" ("reporter_id", "target_type", "target_id")`,
 ];
 
 let schemaReadyPromise: Promise<void> | null = null;
@@ -1256,7 +1285,10 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     user_id+pool_id）3 新表（drizzle/0034）；pets 养成字段 level/exp/last_feed_time/
 //     evolution_stage 幂等补列（与 adoptions.level 口径独立）。points_log.reason 为 text
 //     无约束，新值域 first_purchase_bonus/pity_reward/promotion_purchase/style_unlock 无需 DDL
-const SCHEMA_VERSION = 19;
+// v20: Phase 8 AI 集成优化 —— ai_response_cache（AI 响应缓存，+scope/expires 索引）/
+//     content_reports（用户举报，+status/reporter 索引 + (reporter,target_type,target_id) 唯一幂等）
+//     2 新表（drizzle/0035）。⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
+const SCHEMA_VERSION = 20;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

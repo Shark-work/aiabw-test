@@ -1037,3 +1037,29 @@ export const pityCounter = pgTable('pity_counter', {
   primaryKey({ columns: [t.userId, t.poolId] }),
 ]);
 
+/** AI 响应缓存（Phase 8 成本优化）：scope+prompt 哈希主键；hits 计数供命中率监控；expires_at 惰性过期 */
+export const aiResponseCache = pgTable('ai_response_cache', {
+  cacheKey: text('cache_key').primaryKey(),
+  scope: text('scope').notNull(),
+  response: text('response').notNull(),
+  hits: integer('hits').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+});
+
+/** 用户举报（Phase 8 内容审核）：同一举报人对同一目标仅一条（uq_content_reports_target 幂等）；状态 pending→resolved/dismissed */
+export const contentReports = pgTable('content_reports', {
+  id: text('id').primaryKey(),
+  reporterId: uuid('reporter_id').notNull().references(() => users.id),
+  /** 举报对象类型：chat | pet_name | ugc_pet | postcard | news */
+  targetType: text('target_type').notNull(),
+  targetId: text('target_id').notNull(),
+  /** 举报原因：spam | nsfw | abuse | illegal | other */
+  reason: text('reason').notNull(),
+  detail: text('detail'),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: uuid('resolved_by'),
+});
+

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { generateText } from "ai";
 
 import { getUserFromRequest } from "@/lib/auth";
-import { getModel } from "@/lib/get-model";
+import { generateCached } from "@/lib/llm-fallback";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 
 export const runtime = "nodejs";
@@ -11,11 +10,12 @@ export const runtime = "nodejs";
  * POST /api/onboarding/name-suggestions — 新手引导 Step 3「起名」AI 建议名
  * 请求体：{ speciesName?, category?, element? }（均为可选上下文，帮助生成更贴合的名字）
  * 响应：{ ok, names: string[3], source: "ai" | "fallback" }
- *  - LLM 链复用全站单点 getModel()（generateText 小参数：temperature 0.9 / maxOutputTokens 80，
- *    单次成本极低）；
- *  - LLM 失败/超时/解析不足 3 个 → 本地预设池随机 3 个兜底（source='fallback'），
+ *  - LLM 链路（Phase 8）：generateCached 单点——相同物种上下文命中 ai_response_cache
+ *    （TTL 7 天，起名是离散度低的 prompt，缓存收益高）+ 高峰并发限速 +
+ *    跨 provider 自动降级（temperature 0.9 / maxOutputTokens 80，单次成本极低）；
+ *  - LLM 失败/高峰占满/解析不足 3 个 → 本地预设池随机 3 个兜底（source='fallback'），
  *    保证引导流程永不被 AI 故障阻断；
- *  - 纯生成接口，不落库、无副作用。
+ *  - 纯生成接口，除缓存行外不落库、无副作用。
  */
 
 /** 本地预设名兜底池（zh/en 各 8 个，随机取 3）。 */
@@ -73,8 +73,9 @@ export async function POST(req: Request) {
     .join(isEn ? ", " : "，");
 
   try {
-    const { text } = await generateText({
-      model: getModel(),
+    const { text } = await generateCached({
+      scope: "name-suggestions",
+      cacheTtlDays: 7,
       system: isEn
         ? "You suggest cute pet names. Output exactly 3 names, one per line, no numbering, no explanations."
         : "你为灵宠建议可爱的名字。严格输出 3 个名字，每行一个，不要编号，不要任何解释。",

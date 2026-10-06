@@ -93,7 +93,7 @@ test("phase7c(G1): i18n——offerBanner + cosmetics 新 key 双语 parity", () 
     assert.ok(en.cosmetics[k], `en.cosmetics.${k}`);
   }
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 19;/, "SCHEMA_VERSION 维持 19");
+  assert.match(client, /const SCHEMA_VERSION = 20;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
   const migrations = readdirSync(new URL("../drizzle", import.meta.url));
-  assert.ok(!migrations.some((f) => /^003[5-9]|^00[4-9]\d/.test(f)), "无 0035+ 新迁移");
+  assert.ok(!migrations.some((f) => /^003[6-9]|^00[4-9]\d/.test(f)), "无 0036+ 新迁移（0035 属 Phase 8）");
 });

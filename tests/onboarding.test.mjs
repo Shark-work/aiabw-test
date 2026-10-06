@@ -293,9 +293,10 @@ test("onboarding name-suggestions api: getModel single-point + fallback pool + a
   assert.ok(c.includes("export async function POST"), "POST handler");
   assert.ok(c.includes("getUserFromRequest(req)"), "auth via bearer");
   assert.ok(c.includes("{ status: 401 }"), "unauthenticated 401");
-  // LLM 链复用全站单点（Vercel AI SDK generateText + getModel）
-  assert.ok(c.includes('import { generateText } from "ai"'), "AI SDK generateText");
-  assert.ok(c.includes('import { getModel } from "@/lib/get-model"'), "single-point model");
+  // LLM 链复用全站单点（Phase 8 起为 generateCached：响应缓存 + 并发限速 + 跨 provider 降级）
+  assert.ok(c.includes('import { generateCached } from "@/lib/llm-fallback"'), "single-point cached LLM");
+  assert.ok(c.includes('scope: "name-suggestions"'), "ai_response_cache scope wired");
+  assert.ok(c.includes("cacheTtlDays: 7"), "cache TTL 7 days");
   assert.ok(c.includes("maxOutputTokens"), "cost-capped tokens");
   // 降级：LLM 失败/解析不足 3 个 → 本地预设池随机 3 个（流程不被 AI 故障阻断）
   assert.ok(c.includes("FALLBACK_NAMES"), "local fallback pool");
