@@ -76,7 +76,6 @@ const UNIT_KEY: Record<Exclude<LeaderboardCategory, "popularity">, string> = {
  */
 export function LeaderboardV2() {
   const t = useTranslations("leaderboard");
-  const tc = useTranslations("common");
   const locale = useLocale();
   const [category, setCategory] = useState<LeaderboardCategory>("popularity");
   const [period, setPeriod] = useState<LeaderboardPeriod>("week");

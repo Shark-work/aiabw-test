@@ -166,6 +166,9 @@ export function PromoteModal({
       setMsg(tc("networkError"));
       setMsgKind("err");
     } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -309,7 +312,3 @@ export function PromoteModal({
     </div>
   );
 }
-
-      setSubmitting(false);
-    }
-  };
