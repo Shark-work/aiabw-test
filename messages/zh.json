@@ -623,7 +623,15 @@
     "soulCardBurnFailed": "销毁失败，请稍后重试",
     "promoteInvalidRequest": "推广参数无效",
     "promoteAlreadyActive": "该藏品已在推广中，到期后可再次推广",
-    "accelNotNeeded": "该藏品当前不在结晶冷却中，无需加速"
+    "accelNotNeeded": "该藏品当前不在结晶冷却中，无需加速",
+    "videoUnavailable": "视频生成功能暂未开放，请稍后再试",
+    "videoPetNotFound": "没有找到这只灵宠（或它不属于你）",
+    "videoQuotaExceeded": "今日视频生成次数已用完（{max} 次），明天再来吧",
+    "videoSubmitFailed": "视频任务提交失败，本次次数已退还",
+    "videoGenerateFailed": "视频生成失败，请稍后重试",
+    "videoNotFound": "视频任务不存在",
+    "videoPollBadRequest": "缺少查询参数",
+    "videoPollFailed": "查询视频状态失败，请稍后重试"
   },
   "nav": {
     "home": "首页",
@@ -1842,5 +1850,28 @@
     "endConfirm": "确定提前下架该推广？已消耗积分不退还",
     "endDone": "已提前下架",
     "endFailed": "下架失败，请稍后重试"
+  },
+  "petVideo": {
+    "title": "灵宠日常短视频",
+    "entry": "日常视频",
+    "entryTitle": "生成 TA 的日常小短片（9:16 竖屏，可下载分享）",
+    "quotaHint": "免费用户每日可生成 1 次，失败自动退还次数",
+    "quotaLeft": "今日还可生成 {left}/{max} 次",
+    "generating": "正在生成 TA 的日常小短片…",
+    "generatingHint": "AI 编剧 → 可灵图生视频，约需 1-3 分钟，可稍后再回来看",
+    "idleHint": "点一次，生成一段 5 秒治愈小短片（带字幕和 BGM）",
+    "generateCta": "生成日常视频",
+    "retry": "重试生成",
+    "regenerate": "再生成一段（消耗今日次数）",
+    "download": "下载视频",
+    "shareXhs": "分享小红书",
+    "shareBili": "分享B站",
+    "shareCopied": "已复制文案和链接，去粘贴发布吧",
+    "shareText": "{name}｜我在艾比世界养的灵宠成精了！快来领养你的专属 AI 灵宠 👉 {url}",
+    "shareFallbackTitle": "灵宠日常",
+    "failed": "生成失败",
+    "failedRefunded": "本次次数已自动退还，可放心重试",
+    "bgmLabel": "BGM",
+    "backToMyPets": "我的灵宠"
   }
 }

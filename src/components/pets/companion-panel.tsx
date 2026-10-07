@@ -51,6 +51,7 @@ export function CompanionPanel() {
   const tc = useTranslations("common");
   const tchat = useTranslations("chat");
   const tck = useTranslations("checkin");
+  const tv = useTranslations("petVideo");
   const locale = useLocale();
   const router = useRouter();
   const [pets, setPets] = useState<PetItem[]>([]);
@@ -370,6 +371,14 @@ export function CompanionPanel() {
                           {tc("unlocked")}
                         </span>
                       )}
+                      {/* Phase 10：生成日常短视频入口（9:16 竖屏小短片，可下载/分享） */}
+                      <Link
+                        href={`/pets/${pet.id}/video`}
+                        title={tv("entryTitle")}
+                        className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600 transition hover:bg-violet-100"
+                      >
+                        🎬 {tv("entry")}
+                      </Link>
                     </div>
                     <div className="mt-0.5 text-xs text-zinc-500">
                       {t("statsLine", { emoji: mo.emoji, label: moodLabel(tchat, mo.mood), points: pet.monthlyPoints, chats: pet.chatCount })}

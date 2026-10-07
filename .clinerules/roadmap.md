@@ -146,6 +146,25 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 ---
 
+## Phase 10 · 灵宠日常短视频（✅ 2026-10-16，单批次）
+
+**目标**：零人工剪辑，一段话生成可导出的 9:16 竖屏 MP4（治愈/搞笑小短片，带字幕和 BGM），可下载 + 一键分享小红书/B 站（官网链接反哺冷启动）。
+
+| 层 | 落地 |
+| --- | --- |
+| 数据 | `video_generations` 表（drizzle/0036，全生命周期状态机 pending→processing→succeeded/failed；user_day/task/status 3 索引）+ `users.video_quota`（默认 1/日，预留 XorPay/Stripe 付费扩容）；SCHEMA_VERSION 20→21 |
+| 核心库 | `src/lib/pet-video.ts`：DeepSeek 脚本生成走 Phase 8 `generateThrottled`（并发槽+跨 provider 降级；AI 繁忙/失败 → 本地模板兜底，功能永可用）→ 可灵/百炼图生视频（9:16、5s、audio=true；env 驱动双 provider：KLING_BASE_URL 含 klingai 走可灵官方字段映射，否则 DashScope 异步任务模式）→ SUCCEEDED 即转存 Vercel Blob（平台临时链接有效期短，Blob 长期有效；转存失败降级保留临时链接） |
+| API | `POST /api/pets/[id]/video/generate`（401/限流 6/h/未配密钥 503 降级/归属校验/事务占位权威计数→脚本→提交→bind；失败 `markVideoFailed` 退还）；`GET /api/video/poll`（`?id=` 前端轮询 / `?petId=` 刷新恢复 / `?mode=sweep` CRON_SECRET cron 兜底；10min 平台超时 failed 退还） |
+| 前端 | `/[locale]/pets/[id]/video`（noindex 私有页）+ `pet-video-client`（idle→generating 5s 轮询→done/failed 状态机；9:16 舞台 + aiabw.com 水印叠层 + 字幕条；下载 + 分享小红书/B 站：navigator.share 优先、剪贴板兜底，文案带官网链接）；入口 = 我的灵宠卡片 🎬 徽章 |
+| 关键决策 | ①「cron 每 30s 轮询」在 Vercel hobby 物理不可行（最低每日一次）→ 前端 5s 轮询承担实时性 + cron 每日 sweep 兜底；②serverless 无 ffmpeg 烧录水印 → 播放器叠层 + 分享文案带链接双保险；③配额口径 `COUNT(status<>'failed')` → failed 天然不计数 = 失败自动退还，无退款式补偿逻辑 |
+
+- 契约测试 `tests/pet-video.test.mjs` 10 项；旧断言演进 8 文件（SCHEMA_VERSION 20→21 / 0036 豁免→0037，node UTF8 脚本执行——⚠️ 勿用 PowerShell Set-Content 改测试文件，GBK 转码毁全文件中文）。
+- 全量 715/715 + tsc 0 + build 205/205（3 新路由注册）。
+- ⚠️ **部署红线**：SCHEMA_VERSION 20→21，推送上线后必须手动跑 `scripts/db-migrate-prod.mjs`（ops-rules），确认 `_schema_meta.version=21` 再跑 smoke。
+- 待用户配置：Vercel 环境变量 `KLING_API_KEY`（缺省回退复用 `BAILIAN_API_KEY`；两者都缺 → generate 503 降级不影响主站）；可选 `KLING_BASE_URL`/`KLING_MODEL` 切换平台/模型名。
+
+---
+
 ## Phase 9 · 测试、部署与上线（✅ 2026-10-16）
 
 **上线窗口**：本地 15+1 commit 一次性推送（Phase 4~8 + 构建修复），生产从 Phase 3 直升 Phase 8。

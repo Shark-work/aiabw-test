@@ -1096,6 +1096,25 @@ const SCHEMA_ALTERS: string[] = [
     "resolved_at" timestamp,
     "resolved_by" uuid
   )`,
+
+  // ===== Phase 10 灵宠日常短视频（drizzle/0036）=====
+  // video_generations：生成任务全生命周期（pending→processing→succeeded/failed；
+  // 配额口径：当日 COUNT(status != 'failed') >= users.video_quota → 拒绝，failed 不计数=失败自动退还）
+  `CREATE TABLE IF NOT EXISTS "video_generations" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "pet_id" text NOT NULL,
+    "task_id" text,
+    "status" text NOT NULL DEFAULT 'pending',
+    "script" jsonb,
+    "video_url" text,
+    "source_url" text,
+    "error" text,
+    "created_at" timestamp DEFAULT now() NOT NULL,
+    "updated_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  // users.video_quota：每日视频额度（默认 1，预留 XorPay/Stripe 付费扩容）
+  `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "video_quota" integer DEFAULT 1 NOT NULL`,
 ];
 
 /**
@@ -1114,6 +1133,10 @@ const SCHEMA_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_uc_owner ON "user_collectibles" ("owner_id", "status")`,
   `CREATE INDEX IF NOT EXISTS idx_uc_collectible ON "user_collectibles" ("collectible_id")`,
   `CREATE INDEX IF NOT EXISTS idx_uc_hash ON "user_collectibles" ("hash_id")`,
+  // Phase 10 灵宠短视频：当日配额计数 / 任务反查 / sweep 扫描
+  `CREATE INDEX IF NOT EXISTS idx_video_generations_user_day ON "video_generations" ("user_id", "created_at")`,
+  `CREATE INDEX IF NOT EXISTS idx_video_generations_task ON "video_generations" ("task_id")`,
+  `CREATE INDEX IF NOT EXISTS idx_video_generations_status ON "video_generations" ("status")`,
   `CREATE INDEX IF NOT EXISTS idx_uc_locked ON "user_collectibles" ("locked_until")`,
   `CREATE INDEX IF NOT EXISTS idx_threads_user_id ON "threads" ("user_id")`,
   `CREATE INDEX IF NOT EXISTS idx_points_log_user_id ON "points_log" ("user_id")`,
@@ -1288,7 +1311,10 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // v20: Phase 8 AI 集成优化 —— ai_response_cache（AI 响应缓存，+scope/expires 索引）/
 //     content_reports（用户举报，+status/reporter 索引 + (reporter,target_type,target_id) 唯一幂等）
 //     2 新表（drizzle/0035）。⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
-const SCHEMA_VERSION = 20;
+// v21: Phase 10 灵宠日常短视频 —— video_generations（生成任务全生命周期，+user_day/task/status
+//     索引）1 新表（drizzle/0036）；users.video_quota 每日视频额度（默认 1，预留付费扩容）。
+//     ⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
+const SCHEMA_VERSION = 21;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

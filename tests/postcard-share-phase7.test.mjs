@@ -80,7 +80,7 @@ test("phase7d(C1): i18n——templatePick/template.*/shareReward 双语 + api.sh
   assert.ok(zw.shareReward.includes("{points}") && ew.shareReward.includes("{points}"), "shareReward {points} 占位");
   assert.ok(zh.api.shareRewardFailed && en.api.shareRewardFailed, "api.shareRewardFailed 双语");
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 20;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
+  assert.match(client, /const SCHEMA_VERSION = 21;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
   const migrations = readdirSync(new URL("../drizzle", import.meta.url));
-  assert.ok(!migrations.some((f) => /^003[6-9]|^00[4-9]\d/.test(f)), "无 0036+ 新迁移（0035 属 Phase 8）");
+  assert.ok(!migrations.some((f) => /^003[7-9]|^00[4-9]\d/.test(f)), "无 0036+ 新迁移（0035 属 Phase 8）");
 });

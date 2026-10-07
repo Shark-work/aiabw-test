@@ -27,6 +27,8 @@ export const users = pgTable('users', {
   inviteCode: text('invite_code').unique(),
   /** 裂变邀请：由谁邀请（邀请人 user id） */
   invitedBy: uuid('invited_by').references((): AnyPgColumn => users.id),
+  /** Phase 10：每日灵宠短视频额度（默认 1，预留 XorPay/Stripe 付费扩容） */
+  videoQuota: integer('video_quota').notNull().default(1),
   /** 金币余额：探险商城（shop_items）通用货币，新用户默认 0（2026-10-09 死表清理：原默认 200 无获取渠道，误导新用户） */
   coins: integer('coins').notNull().default(0),
   /** 站内唯一公开标识（昵称）：注册必填，可修改；存量用户系统回填 user_0001 格式；邮箱仅后端用途，不再对外展示 */
@@ -1061,5 +1063,27 @@ export const contentReports = pgTable('content_reports', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   resolvedAt: timestamp('resolved_at'),
   resolvedBy: uuid('resolved_by'),
+});
+
+/** Phase 10 灵宠日常短视频（drizzle/0036）：生成任务全生命周期。
+ *  状态机：pending（已提交脚本）→ processing（视频平台已接单）→ succeeded（已转存 Blob）/ failed。
+ *  配额口径：当日 COUNT(status != 'failed') >= users.video_quota → 拒绝；failed 不计数 = 失败自动退还。 */
+export const videoGenerations = pgTable('video_generations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  /** 灵宠 id（adoptions.id，text 兼容历史口径） */
+  petId: text('pet_id').notNull(),
+  /** 视频平台异步任务 id（可灵/百炼） */
+  taskId: text('task_id'),
+  status: text('status').notNull().default('pending'),
+  /** AI 脚本快照：{ scene, subtitle, bgmStyle, prompt } */
+  script: jsonb('script'),
+  /** 转存后的自有对象存储 URL（Vercel Blob，长期有效） */
+  videoUrl: text('video_url'),
+  /** 平台原始临时 URL（有效期短，仅留档排障） */
+  sourceUrl: text('source_url'),
+  error: text('error'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 

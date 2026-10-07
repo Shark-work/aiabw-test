@@ -623,7 +623,15 @@
     "soulCardBurnFailed": "Burn failed. Please try again later",
     "promoteInvalidRequest": "Invalid promotion request",
     "promoteAlreadyActive": "Already promoted; promote again after it expires",
-    "accelNotNeeded": "Not in crystal cooldown - no acceleration needed"
+    "accelNotNeeded": "Not in crystal cooldown - no acceleration needed",
+    "videoUnavailable": "Video generation is not available yet. Please try again later.",
+    "videoPetNotFound": "Pet not found (or it doesn't belong to you)",
+    "videoQuotaExceeded": "Daily video limit reached ({max}). Come back tomorrow!",
+    "videoSubmitFailed": "Failed to submit the video task. The attempt was refunded.",
+    "videoGenerateFailed": "Video generation failed. Please try again later.",
+    "videoNotFound": "Video task not found",
+    "videoPollBadRequest": "Missing query parameter",
+    "videoPollFailed": "Failed to query video status. Please try again later."
   },
   "nav": {
     "home": "Home",
@@ -1842,5 +1850,28 @@
     "endConfirm": "End this promotion early? Spent points are not refunded",
     "endDone": "Promotion ended",
     "endFailed": "Failed to end, please try again"
+  },
+  "petVideo": {
+    "title": "Pet Daily Shorts",
+    "entry": "Daily video",
+    "entryTitle": "Generate a daily short clip (9:16 vertical, downloadable & shareable)",
+    "quotaHint": "Free users get 1 generation per day; failed attempts are refunded",
+    "quotaLeft": "{left}/{max} generations left today",
+    "generating": "Generating the daily short…",
+    "generatingHint": "AI script → text-to-video, about 1-3 min. You can come back later.",
+    "idleHint": "One tap to generate a 5-second healing clip (with subtitles & BGM)",
+    "generateCta": "Generate daily video",
+    "retry": "Retry",
+    "regenerate": "Generate another (uses today's quota)",
+    "download": "Download video",
+    "shareXhs": "Share to RED",
+    "shareBili": "Share to Bilibili",
+    "shareCopied": "Caption & link copied — paste it to publish",
+    "shareText": "{name} | My AI pet at AIABW came alive! Adopt yours 👉 {url}",
+    "shareFallbackTitle": "Pet daily",
+    "failed": "Generation failed",
+    "failedRefunded": "The attempt was auto-refunded. Feel free to retry.",
+    "bgmLabel": "BGM",
+    "backToMyPets": "My pets"
   }
 }

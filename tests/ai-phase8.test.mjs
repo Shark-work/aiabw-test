@@ -40,7 +40,7 @@ test("phase8-8A: drizzle/0035_ai_safety.sql 两表 + 索引齐备且幂等", () 
 // ───────────── 2) client.ts 运行时同步 ─────────────
 test("phase8-8A: client.ts SCHEMA_VERSION=20 + 两表 DDL + 4 索引", () => {
   const c = read("src/db/client.ts");
-  assert.match(c, /const SCHEMA_VERSION = 20;/, "SCHEMA_VERSION bumped to 20");
+  assert.match(c, /const SCHEMA_VERSION = 21;/, "SCHEMA_VERSION bumped to 20");
   assert.ok(c.includes('CREATE TABLE IF NOT EXISTS "ai_response_cache"'), "cache DDL in SCHEMA_CREATES");
   assert.ok(c.includes('CREATE TABLE IF NOT EXISTS "content_reports"'), "reports DDL in SCHEMA_CREATES");
   for (const idx of [
