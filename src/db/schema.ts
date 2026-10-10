@@ -1087,3 +1087,69 @@ export const videoGenerations = pgTable('video_generations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// ─────────────────────────────────────────────────────────────
+// 艾比大陆世界观（2026-10-16，drizzle/0037）：四张公开只读内容表
+// （区域/生命形态/信条/概念辞典，双语列；种子源 src/lib/worldview-data.ts）
+// ─────────────────────────────────────────────────────────────
+
+/** 大陆区域（8：艾比小镇 + 7 探索区域；habitat_id 逻辑映射 aibi_habitats.id，不建 FK） */
+export const worldRegions = pgTable('world_regions', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  typeZh: text('type_zh').notNull(),
+  typeEn: text('type_en').notNull(),
+  elementZh: text('element_zh').notNull(),
+  elementEn: text('element_en').notNull(),
+  representativesZh: text('representatives_zh').notNull(),
+  representativesEn: text('representatives_en').notNull(),
+  descriptionZh: text('description_zh').notNull(),
+  descriptionEn: text('description_en').notNull(),
+  habitatId: text('habitat_id'),
+  emoji: text('emoji').notNull().default('🗺️'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 生命形态（3：凡兽/灵宠/古灵） */
+export const worldLifeForms = pgTable('world_life_forms', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  titleZh: text('title_zh').notNull(),
+  titleEn: text('title_en').notNull(),
+  descriptionZh: text('description_zh').notNull(),
+  descriptionEn: text('description_en').notNull(),
+  examplesZh: text('examples_zh').notNull(),
+  examplesEn: text('examples_en').notNull(),
+  emoji: text('emoji').notNull().default('🐾'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 五大信条（共鸣/探索/收藏/羁绊/传承） */
+export const worldValues = pgTable('world_values', {
+  id: text('id').primaryKey(),
+  nameZh: text('name_zh').notNull(),
+  nameEn: text('name_en').notNull(),
+  sloganZh: text('slogan_zh').notNull(),
+  sloganEn: text('slogan_en').notNull(),
+  featureZh: text('feature_zh').notNull(),
+  featureEn: text('feature_en').notNull(),
+  emoji: text('emoji').notNull().default('✨'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/** 核心概念辞典（6：灵魂种子/灵魂卡/地脉能量/羁绊结晶/明信片/灵魂树） */
+export const worldGlossary = pgTable('world_glossary', {
+  id: text('id').primaryKey(),
+  termZh: text('term_zh').notNull(),
+  termEn: text('term_en').notNull(),
+  definitionZh: text('definition_zh').notNull(),
+  definitionEn: text('definition_en').notNull(),
+  emoji: text('emoji').notNull().default('📖'),
+  sortOrder: integer('sort_order').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+

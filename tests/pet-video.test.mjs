@@ -39,7 +39,7 @@ test("phase10: drizzle/0036 + 手动迁移副本齐备且幂等", () => {
 // ───────────── 2) client.ts 运行时同步 ─────────────
 test("phase10: client.ts SCHEMA_VERSION=21 + DDL/索引/补列", () => {
   const c = read("src/db/client.ts");
-  assert.match(c, /const SCHEMA_VERSION = 21;/, "SCHEMA_VERSION bumped to 21");
+  assert.match(c, /const SCHEMA_VERSION = 22;/, "SCHEMA_VERSION bumped to 21");
   assert.ok(c.includes('CREATE TABLE IF NOT EXISTS "video_generations"'), "建表 DDL 入 SCHEMA_CREATES");
   assert.ok(c.includes('ADD COLUMN IF NOT EXISTS "video_quota"'), "video_quota 补列幂等");
   for (const idx of ["idx_video_generations_user_day", "idx_video_generations_task", "idx_video_generations_status"]) {

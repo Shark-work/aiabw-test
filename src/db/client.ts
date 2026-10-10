@@ -1,6 +1,7 @@
 import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { buildAibiCatalogSeedSql } from './aibi-catalog-seed';
+import { buildWorldviewSeedSql } from './worldview-seed';
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -1115,6 +1116,65 @@ const SCHEMA_ALTERS: string[] = [
   )`,
   // users.video_quota：每日视频额度（默认 1，预留 XorPay/Stripe 付费扩容）
   `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "video_quota" integer DEFAULT 1 NOT NULL`,
+
+  // ===== 艾比大陆世界观（drizzle/0037，2026-10-16）=====
+  // 四张公开只读内容表：区域/生命形态/信条/概念辞典（双语列；habitat_id 仅逻辑映射
+  // aibi_habitats.id 不建 FK——区域是世界观概念，栖息地是游戏数据）
+  `CREATE TABLE IF NOT EXISTS "world_regions" (
+    "id"                  text PRIMARY KEY,
+    "name_zh"             text NOT NULL,
+    "name_en"             text NOT NULL,
+    "type_zh"             text NOT NULL,
+    "type_en"             text NOT NULL,
+    "element_zh"          text NOT NULL,
+    "element_en"          text NOT NULL,
+    "representatives_zh"  text NOT NULL,
+    "representatives_en"  text NOT NULL,
+    "description_zh"      text NOT NULL,
+    "description_en"      text NOT NULL,
+    "habitat_id"          text,
+    "emoji"               text NOT NULL DEFAULT '🗺️',
+    "sort_order"          integer NOT NULL DEFAULT 0,
+    "created_at"          timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "world_life_forms" (
+    "id"              text PRIMARY KEY,
+    "name_zh"         text NOT NULL,
+    "name_en"         text NOT NULL,
+    "title_zh"        text NOT NULL,
+    "title_en"        text NOT NULL,
+    "description_zh"  text NOT NULL,
+    "description_en"  text NOT NULL,
+    "examples_zh"     text NOT NULL,
+    "examples_en"     text NOT NULL,
+    "emoji"           text NOT NULL DEFAULT '🐾',
+    "sort_order"      integer NOT NULL DEFAULT 0,
+    "created_at"      timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "world_values" (
+    "id"          text PRIMARY KEY,
+    "name_zh"     text NOT NULL,
+    "name_en"     text NOT NULL,
+    "slogan_zh"   text NOT NULL,
+    "slogan_en"   text NOT NULL,
+    "feature_zh"  text NOT NULL,
+    "feature_en"  text NOT NULL,
+    "emoji"       text NOT NULL DEFAULT '✨',
+    "sort_order"  integer NOT NULL DEFAULT 0,
+    "created_at"  timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE TABLE IF NOT EXISTS "world_glossary" (
+    "id"             text PRIMARY KEY,
+    "term_zh"        text NOT NULL,
+    "term_en"        text NOT NULL,
+    "definition_zh"  text NOT NULL,
+    "definition_en"  text NOT NULL,
+    "emoji"          text NOT NULL DEFAULT '📖',
+    "sort_order"     integer NOT NULL DEFAULT 0,
+    "created_at"     timestamp DEFAULT now() NOT NULL
+  )`,
+  // ----- 世界观种子（22 行 upsert，源：src/lib/worldview-data.ts，ON CONFLICT DO UPDATE 可演进） -----
+  ...buildWorldviewSeedSql(),
 ];
 
 /**
@@ -1314,7 +1374,11 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 // v21: Phase 10 灵宠日常短视频 —— video_generations（生成任务全生命周期，+user_day/task/status
 //     索引）1 新表（drizzle/0036）；users.video_quota 每日视频额度（默认 1，预留付费扩容）。
 //     ⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
-const SCHEMA_VERSION = 21;
+// v22: 艾比大陆世界观内容体系 —— world_regions（8 区域）/ world_life_forms（3 形态）/
+//     world_values（5 信条）/ world_glossary（6 词条）4 新表（drizzle/0037）；
+//     种子由 src/lib/worldview-data.ts 单一数据源经 worldview-seed.ts 生成（22 行 upsert）。
+//     ⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
+const SCHEMA_VERSION = 22;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

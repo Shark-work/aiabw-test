@@ -128,9 +128,9 @@ test("phase7(F1): i18n——slogan 对齐计划四维度（7.1-1）+ 新 key 双
 // ───────────── G) 零 schema 变更红线 ─────────────
 test("phase7(G1): 零 schema 变更——SCHEMA_VERSION 维持 19 + 两 API 无 DDL", () => {
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 21;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
+  assert.match(client, /const SCHEMA_VERSION = 22;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
   const migrations = readdirSync(new URL("../drizzle", import.meta.url));
-  assert.ok(!migrations.some((f) => /^003[7-9]|^00[4-9]\d/.test(f)), "无 0036+ 新迁移（0035 属 Phase 8）");
+  assert.ok(!migrations.some((f) => /^003[8-9]|^00[4-9]\d/.test(f)), "无 0037+ 新迁移（0036 属 Phase 10）");
   for (const f of [
     "../src/app/api/soul-cards/featured/route.ts",
     "../src/app/api/home/stats/route.ts",

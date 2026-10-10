@@ -256,11 +256,11 @@ test("i18n: 占位符 zh/en 一致（{rank}/{n}/{cost}/{slots}/{end}/{time}/{nam
 test("schema 红线：无新迁移 + SCHEMA_VERSION 无 Phase 5 变更（20 由 Phase 8 提升）+ 源码无 DDL", () => {
   const migrations = readdirSync(new URL("../drizzle", import.meta.url)).filter((f) => f.endsWith(".sql"));
   assert.ok(
-    !migrations.some((f) => /003[7-9]|leaderboard|promote/.test(f)),
-    `不得出现 Phase 5 新迁移（0035 属 Phase 8）：${migrations.filter((f) => /003[7-9]|leaderboard|promote/.test(f)).join(",")}`,
+    !migrations.some((f) => /003[8-9]|leaderboard|promote/.test(f)),
+    `不得出现 Phase 5 新迁移（0037 属世界观）：${migrations.filter((f) => /003[8-9]|leaderboard|promote/.test(f)).join(",")}`,
   );
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 21;/);
+  assert.match(client, /const SCHEMA_VERSION = 22;/);
   for (const f of ["../src/app/api/content/promote/route.ts", "../src/app/api/content/promoted/route.ts", "../src/app/api/leaderboard/route.ts", "../src/lib/promotions.ts"]) {
     assert.ok(!/CREATE TABLE|ALTER TABLE/.test(read(f)), `${f} 不得含 DDL`);
   }

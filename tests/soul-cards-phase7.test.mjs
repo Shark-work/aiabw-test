@@ -109,8 +109,8 @@ test("phase7b(E1): i18n——flipHint/tabs/hot/progress/compare 新 key 双语 p
 // ───────────── F) 零 schema 变更红线 ─────────────
 test("phase7b(F1): 零 schema 变更——SCHEMA_VERSION 维持 19 + 无新迁移", () => {
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 21;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
+  assert.match(client, /const SCHEMA_VERSION = 22;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
   const migrations = readdirSync(new URL("../drizzle", import.meta.url));
-  assert.ok(!migrations.some((f) => /^003[7-9]|^00[4-9]\d/.test(f)), "无 0036+ 新迁移（0035 属 Phase 8）");
+  assert.ok(!migrations.some((f) => /^003[8-9]|^00[4-9]\d/.test(f)), "无 0037+ 新迁移（0036 属 Phase 10）");
 });
 

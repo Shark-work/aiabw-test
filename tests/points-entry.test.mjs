@@ -182,11 +182,11 @@ test("points-entry(13): i18n pointsEntry 双语 key parity + 占位符对齐", (
 // === 10) 零 schema 变更红线 ===
 test("points-entry(14): 零 schema 变更——first_purchase 为 v19 既有表，无 DDL/VERSION 改动", () => {
   const client = read("../src/db/client.ts");
-  assert.match(client, /const SCHEMA_VERSION = 21;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
+  assert.match(client, /const SCHEMA_VERSION = 22;/, "SCHEMA_VERSION 本 Phase 无变更（20 由 Phase 8 提升）");
   // first_purchase DDL 仍是 v19 既有定义（本 Phase 只读应用层，不新增/改列）
   assert.match(client, /CREATE TABLE IF NOT EXISTS "first_purchase"/);
   const migrations = readdirSync(new URL("../drizzle", import.meta.url));
   // 注：0027_aibi_phase4_columns.sql 为 aibi 平台历史迁移，与本 Phase 无关，勿误伤
-  assert.ok(!migrations.some((f) => /003[7-9]|points_entry/.test(f)), "无新增迁移文件（0035 属 Phase 8）");
+  assert.ok(!migrations.some((f) => /003[8-9]|points_entry/.test(f)), "无新增迁移文件（0037 属世界观）");
 });
 
