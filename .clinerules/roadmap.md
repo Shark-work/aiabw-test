@@ -165,6 +165,26 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 
 ---
 
+## Phase 11 · 艾比大陆世界观内容体系（✅ 2026-10-16，6 commits）
+
+**目标**：完整奇幻世界观落地品牌叙事——创世神话/8 区域/3 生命形态/5 信条/6 概念词条，百科页 + 现有页面植入 + 灵魂树彩蛋。
+
+| 产出物 | 落地 | 提交 |
+| --- | --- | --- |
+| 4 · 数据层 | `src/lib/worldview-data.ts` 单一数据源（8 区域/3 形态/5 信条/6 词条/3 古灵，全双语；habitat_id 映射既有 AIBI_HABITATS ×5）+ `worldview-seed.ts`（22 行 ON CONFLICT DO UPDATE）+ 四表 DDL（drizzle/0037 + client.ts + schema.ts + 手动副本）+ `GET /api/world`（lang 双语/60s 缓存/降级 null）+ `GET /api/world/stats`（图鉴物种/灵宠物种/区域数/总共鸣次数）；SCHEMA_VERSION 21→**22** | `d67a400` |
+| 3 · i18n | `worldview` 命名空间 43 keys 双语 parity + `home.subtitle` 世界观叙事（「灵魂种子正在等待与你的共鸣」）+ `nav.navWorld` | `44a8dee` |
+| 1 · 百科页 | `/[locale]/world` SSR 五板块（创世神话装饰插图区/8 区域卡/形态对比/信条卡/辞典）；SSG 静态预渲染（209/209） | `667743f` |
+| 2 · 植入 | pets/[id] 世界观区块（生命形态标签+栖息地 lore+背景故事）/ 探索页 WorldRegionsSection（8 区域卡+区域志弹窗）/ 图鉴生命形态筛选（凡兽=现有 catalog、灵宠=AIBI 12 种静态卡、古灵=沉睡传说卡）/ 导航 moreItems「🌍 世界观」 | `e79ffef` |
+| 5 · 彩蛋 | `soul-tree.tsx`（🌳 glow 按钮 → 创世短文案 + /api/world/stats 实时统计 + 树叶飘落×4；globals.css 两 keyframes + reduced-motion 豁免）；挂载首页 Hero + /world | `ea995e2` |
+| 测试+文档 | `tests/worldview.test.mjs` 18 项（含用户-facing 无 mint/链上/NFT/合约/钱包地址红线锁）+ `docs/WORLDVIEW_BIBLE.md` | `5cdaa68` |
+
+- **关键决策**：①内容双轨——lib 配置模块（前端/SSR 静态 import，零 DB 依赖）+ DB 镜像（种子灌库 + /api/world 对外查询验证落库），与 aibi-catalog 同模式；②古灵暂无可领养物种 → 图鉴筛选项保留 + 「尚未苏醒」空态（不虚构可领内容）；③凡兽栖息地统一=艾比小镇（pet_dictionary 物种无栖息地映射）。
+- 验收：733/733 + tsc 0 + build 209/209；生产活性 `/zh|en/world` 200 + `/api/world` zh/en 8/3/5/6 + `/api/world/stats` 4 指标。
+- ⚠️ **v22 迁移事故**（已按 ops-rules 处置）：首次迁移进程被工具 30s 超时连坐杀死 → `_schema_meta.version=-1` 死锁；诊断三连确认四表未建、无卡住 DDL；`UPDATE _schema_meta SET version=21 WHERE id=1 AND version=-1` 清锁 → 重跑成功 `synced to version 22`。**教训：db-migrate-prod.mjs 必须 Start-Process 后台跑（脱离工具超时 job），严禁前台 cmd /c**。
+- 旧断言演进 12 文件（SCHEMA_VERSION 21→22 ×9、豁免正则 003[7-9]→003[8-9] ×5+2 变体、locale-routes en.home.subtitle、soul-pet reduced-motion 断言改多块语义）。
+
+---
+
 ## Phase 9 · 测试、部署与上线（✅ 2026-10-16）
 
 **上线窗口**：本地 15+1 commit 一次性推送（Phase 4~8 + 构建修复），生产从 Phase 3 直升 Phase 8。
