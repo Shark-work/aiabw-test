@@ -12,6 +12,8 @@ import { getRarityMeta } from "@/lib/pet-status";
 import { unlockPriceCnyLabel } from "@/lib/pricing";
 import { rarityWeight } from "@/lib/species-group";
 import { AIBI_RARITY_MIN_WEIGHT } from "@/lib/aibi-names";
+import { AIBI_HABITATS, AIBI_RARITIES, AIBI_SPECIES } from "@/lib/aibi-catalog";
+import { WORLD_ANCIENTS, WORLD_REGIONS } from "@/lib/worldview-data";
 import { getAnonymousId } from "@/lib/anon-id";
 import { SITE_URL } from "@/lib/site";
 
@@ -61,11 +63,15 @@ const LD_SPECIES = [
  */
 export default function PetsCatalogPage() {
   const t = useTranslations("petsCatalog");
+  const tw = useTranslations("worldview");
   const locale = useLocale();
   const [pets, setPets] = useState<CatalogPet[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [element, setElement] = useState("");
+  // 生命形态筛选（2026-10-16 世界观体系）："" / mortal=凡兽（现有图鉴物种全为凡兽）；
+  // spirit=灵宠（AIBI 目录 12 种静态展示）；ancient=古灵（沉睡传说卡，不可领养）
+  const [lifeForm, setLifeForm] = useState<"" | "mortal" | "spirit" | "ancient">("");
   // 图鉴是物种百科：按 speciesId 去重展示，不做稀有度筛选（rarity 筛选已迁移到 /pets/my 我的宠物页）。
   // 今日幸运宠等外部入口可通过 ?species=xxx 直达该物种
   const [species, setSpecies] = useState("");
@@ -383,6 +389,114 @@ export default function PetsCatalogPage() {
           ))}
         </div>
 
+        {/* 生命形态筛选（2026-10-16 世界观体系）：凡兽 / 灵宠 / 古灵 */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-zinc-400">{tw("lifeFormLabel")}</span>
+          {([
+            { key: "", label: tw("filterAll") },
+            { key: "mortal", label: `🐾 ${tw("filterMortal")}` },
+            { key: "spirit", label: `✨ ${tw("filterSpirit")}` },
+            { key: "ancient", label: `🐉 ${tw("filterAncient")}` },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setLifeForm(f.key)}
+              className={chip(lifeForm === f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+          <Link
+            href="/world"
+            className="ml-auto text-[11px] font-medium text-violet-500 transition hover:text-violet-600"
+          >
+            {tw("worldLink")}
+          </Link>
+        </div>
+
+        {lifeForm === "spirit" ? (
+          /* 灵宠分支：AIBI 目录 12 种静态展示（来源 src/lib/aibi-catalog.ts 单一数据源） */
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {AIBI_SPECIES.map((s) => {
+              const rm = AIBI_RARITIES.find((r) => r.id === s.rarityId);
+              const hab = AIBI_HABITATS.find((h) => h.id === s.habitatId);
+              return (
+                <div key={s.id} className="rounded-2xl border border-violet-200 bg-white/80 p-4 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 text-2xl"
+                      style={{ borderColor: rm?.color ?? "#c4b5fd", backgroundColor: `${rm?.color ?? "#c4b5fd"}1a` }}
+                    >
+                      ✨
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-zinc-900">
+                        {locale === "en" ? s.nameEn : s.nameZh}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1 text-[10px]">
+                        <span
+                          className="rounded-full px-2 py-0.5 font-semibold text-white"
+                          style={{ backgroundColor: rm?.color ?? "#c4b5fd" }}
+                        >
+                          {locale === "en" ? rm?.nameEn : rm?.nameZh}
+                        </span>
+                        <span className="rounded-full bg-sky-50 px-2 py-0.5 font-medium text-sky-600">{s.element}</span>
+                        {hab && (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-600">
+                            🏞️ {locale === "en" ? hab.nameEn : hab.nameZh}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+                    {locale === "en" ? s.descriptionEn : s.description}
+                  </p>
+                </div>
+              );
+            })}
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 p-4 text-center">
+              <p className="text-xs text-violet-500">{tw("spiritHint")}</p>
+              <Link
+                href="/codex"
+                className="mt-2 rounded-full bg-violet-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-600"
+              >
+                {tw("viewCodex")}
+              </Link>
+            </div>
+          </div>
+        ) : lifeForm === "ancient" ? (
+          /* 古灵分支：沉睡传说卡（世界意志化身，不可领养） */
+          <div>
+            <p className="mb-3 rounded-xl bg-zinc-50 px-3 py-2 text-xs text-zinc-500">💤 {tw("ancientEmpty")}</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {WORLD_ANCIENTS.map((a) => {
+                const region = WORLD_REGIONS.find((r) => r.id === a.regionId);
+                return (
+                  <div
+                    key={a.id}
+                    className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/60 p-4 text-center opacity-75 grayscale"
+                  >
+                    <p className="text-3xl">{a.emoji}</p>
+                    <p className="mt-1 text-sm font-bold text-zinc-700">
+                      {locale === "en" ? a.nameEn : a.nameZh} · {locale === "en" ? a.titleEn : a.titleZh}
+                    </p>
+                    {region && (
+                      <p className="mt-1 text-[11px] text-zinc-400">
+                        {region.emoji} {locale === "en" ? region.nameEn : region.nameZh}
+                      </p>
+                    )}
+                    <p className="mt-2 inline-block rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] font-semibold text-zinc-500">
+                      💤 {locale === "en" ? "Slumbering" : "沉睡中"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
         {loading && <p className="py-10 text-center text-sm text-zinc-400">{t("loading")}</p>}
         {error && <p className="py-10 text-center text-sm text-red-500">{error}</p>}
         {!loading && !error && pets.length === 0 && (
@@ -492,6 +606,8 @@ export default function PetsCatalogPage() {
             );
           })}
         </div>
+          </>
+        )}
           </>
         ) : (
           <LeaderboardPanel />

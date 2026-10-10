@@ -258,6 +258,25 @@ export function lifeFormOfSpecies(speciesId: string, aibiSpeciesIds: ReadonlySet
   return aibiSpeciesIds.has(speciesId) ? "spirit" : "mortal";
 }
 
+// ---------- 古灵个体（传说守护兽 ×3；文档 §3 动物观） ----------
+/** 古灵不可被唤醒/领养——它们是世界本身意志的化身（图鉴「古灵」筛选的沉睡展示卡）。 */
+export interface WorldAncient {
+  id: string;
+  nameZh: string;
+  nameEn: string;
+  titleZh: string;
+  titleEn: string;
+  /** 关联区域（lore：lava_rift 描述提及焰心化石；其余为区域守护者归属） */
+  regionId: string;
+  emoji: string;
+}
+
+export const WORLD_ANCIENTS: readonly WorldAncient[] = [
+  { id: "flameheart", nameZh: "焰心", nameEn: "Flameheart", titleZh: "火龙", titleEn: "Fire Dragon", regionId: "lava_rift", emoji: "🔥" },
+  { id: "cloudspine", nameZh: "云脊", nameEn: "Cloudspine", titleZh: "风龙", titleEn: "Wind Dragon", regionId: "cloud_islands", emoji: "🌪️" },
+  { id: "starpupil", nameZh: "星瞳", nameEn: "Starpupil", titleZh: "猫神", titleEn: "Cat Deity", regionId: "star_mist", emoji: "🌟" },
+];
+
 
 // ---------- 五大信条 ----------
 export interface WorldValue {

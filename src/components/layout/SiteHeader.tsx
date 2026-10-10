@@ -118,6 +118,7 @@ export function SiteHeader() {
   // 次要入口：桌面端收纳进「更多」下拉，移动端在汉堡面板分组展示
   const moreItems = [
     { href: "/", label: t("home") },
+    { href: "/world", label: t("navWorld") }, // 2026-10-16 世界观百科（艾比大陆五板块）
     { href: "/pets/my", label: t("myPets") }, // 2026-10-09 双页合并：统一入口（/my-pets 308 兼容）
     { href: "/shop", label: t("shop") },
     { href: "/codex", label: t("codex") },

@@ -11,7 +11,12 @@ import { unlockPriceCnyLabel } from "@/lib/pricing";
 import { rarityWeight } from "@/lib/species-group";
 import { aibiNameFor } from "@/lib/aibi-names";
 import { soulNameFor } from "@/lib/soul-pet";
+import { AIBI_SPECIES } from "@/lib/aibi-catalog";
+import { WORLD_LIFE_FORMS, WORLD_REGIONS, lifeFormOfSpecies } from "@/lib/worldview-data";
 import { SITE_URL, ogShareFields } from "@/lib/site";
+
+/** AIBI 目录物种 id 集（生命形态判定：命中=灵宠，其余图鉴物种=凡兽） */
+const AIBI_SPECIES_IDS: ReadonlySet<string> = new Set(AIBI_SPECIES.map((s) => s.id));
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -56,6 +61,7 @@ export default async function PetSpeciesPage({ params }: Props) {
   setRequestLocale(locale);
   const t = await getTranslations("seo");
   const tc = await getTranslations("petsCatalog");
+  const tw = await getTranslations("worldview");
 
   const { rows } = await pool.query(
     `SELECT d.id, d.name_zh AS "nameZh", d.name_en AS "nameEn", d.category, d.category_en AS "categoryEn",
@@ -109,6 +115,17 @@ export default async function PetSpeciesPage({ params }: Props) {
   // 灵魂名（灵宠体系，仅页面内展示；title/OG/JSON-LD/sitemap 一律维持原型名 —— SEO 强约束）：
   // rep 口径 = 最高稀有度版本（variants[0]）的元素 + 艾比名/原型名。
   const soulName = soulNameFor(variants[0]?.element, aibi ?? name, locale);
+
+  // ── 世界观区块数据（2026-10-16）：生命形态标签 / 栖息地 lore / 背景小故事 ──
+  const lifeForm = lifeFormOfSpecies(species.id, AIBI_SPECIES_IDS);
+  const formMeta = WORLD_LIFE_FORMS.find((f) => f.id === lifeForm) ?? WORLD_LIFE_FORMS[0];
+  // 栖息地：灵宠物种 → 其 AIBI 栖息地映射的大陆区域；凡兽 → 艾比小镇（凡兽聚集的中心枢纽）
+  const aibiSpecies = AIBI_SPECIES.find((s) => s.id === species.id);
+  const homeRegion =
+    (aibiSpecies && WORLD_REGIONS.find((r) => r.habitatId === aibiSpecies.habitatId)) ||
+    WORLD_REGIONS.find((r) => r.id === "town") ||
+    WORLD_REGIONS[0];
+  const story = tw(lifeForm === "spirit" ? "lifeFormSpiritStory" : "lifeFormMortalStory", { name });
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
@@ -176,6 +193,31 @@ export default async function PetSpeciesPage({ params }: Props) {
           </div>
 
           <p className="mt-4 border-t border-zinc-100 pt-3 text-sm leading-relaxed text-zinc-600">{desc}</p>
+
+          {/* 世界观区块（2026-10-16）：生命形态标签 + 栖息地 lore + 背景小故事 */}
+          <div className="mt-4 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/60 to-sky-50/60 p-4">
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span className="rounded-full bg-violet-100 px-2 py-0.5 font-semibold text-violet-700">
+                {formMeta.emoji} {tw("lifeFormLabel")} · {locale === "en" ? formMeta.nameEn : formMeta.nameZh}
+              </span>
+              <Link
+                href="/world"
+                className="rounded-full bg-white/70 px-2 py-0.5 font-medium text-zinc-500 transition hover:text-violet-600"
+              >
+                {tw("worldLink")}
+              </Link>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-600">
+              <span className="font-semibold text-zinc-700">
+                🏞️ {tw("habitatLoreTitle")} · {locale === "en" ? homeRegion.nameEn : homeRegion.nameZh}
+              </span>
+              <span className="mt-0.5 block">{locale === "en" ? homeRegion.descriptionEn : homeRegion.descriptionZh}</span>
+            </p>
+            <p className="mt-2 border-t border-violet-100/70 pt-2 text-xs italic leading-relaxed text-zinc-500">
+              <span className="font-semibold not-italic text-zinc-600">📖 {tw("storyTitle")}：</span>
+              {story}
+            </p>
+          </div>
 
           {/* 稀有度版本列表：图鉴按物种去重后，各版本在详情页展示与定价 */}
           {variants.length > 0 && (

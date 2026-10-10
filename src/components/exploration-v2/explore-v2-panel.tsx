@@ -27,6 +27,7 @@ import {
 } from "@/components/exploration-v2/explore-result-modal";
 import { PostcardWall } from "@/components/exploration-v2/postcard-wall";
 import { AchievementPanel } from "@/components/achievements/achievement-panel";
+import { WorldRegionsSection } from "@/components/world/world-regions-section";
 import { EXPLORATION_REWARD_CONFIG } from "@/lib/exploration-rewards";
 
 type Quota = { todayCount: number; maxCount: number; isVip: boolean; streak: number };
@@ -273,6 +274,9 @@ export function ExploreV2Panel({ className = "" }: { className?: string }) {
       </header>
 
       <AchievementPanel refreshKey={achvRefreshKey} />
+
+      {/* 世界观（2026-10-16）：大陆区域图鉴（8 区域卡 + 区域志弹窗，静态数据源零网络依赖） */}
+      <WorldRegionsSection />
 
       {quota ? (
         <ExploreButton
