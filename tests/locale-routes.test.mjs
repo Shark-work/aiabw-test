@@ -74,9 +74,10 @@ test("C: RecentBornMarquee 渲染前按 id 去重（双语共用组件）", () =
 // ---- D) /en 路径同步更新（2026-10-06 核实：五 key + 导航 en 值均已存在且正确）----
 test("D: en home 五 key 与导航 en 值完整正确", () => {
   assert.equal(en.home.title, "Adopt Your AI Companion · Raise · Explore · Collect · Rank");
+  // 2026-10-16 世界观体系落地：副标题切换为艾比大陆世界观叙事（zh 侧同步，见 worldview 命名空间）
   assert.equal(
     en.home.subtitle,
-    "Raise a unique AI pet, explore together, and collect scarce digital Soul Cards.",
+    "At the heart of the Aibi Continent, a Soul Seed awaits its resonance with you. Adopt your Soul Pet and set out on an adventure across eight regions.",
   );
   assert.equal(en.home.heroCta, "Adopt Now");
   assert.equal(en.home.socialProof, "Join {count}+ collectors raising their AI companions");
