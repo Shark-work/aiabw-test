@@ -550,3 +550,35 @@ body,
   }
 }
 
+/* ────────────────────────────────────────────────────────────
+ * 灵魂树彩蛋（2026-10-16 世界观体系 · 产出物 5）
+ *  .soul-tree-glow  树冠光芒呼吸（drop-shadow 明暗交替）
+ *  .soul-tree-leaf  弹窗内树叶飘落（绝对定位，自上而下旋转飘落）
+ * 遵守 prefers-reduced-motion：全部停用（保留静态展示）。
+ * ──────────────────────────────────────────────────────────── */
+@keyframes soul-tree-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(250, 204, 21, 0.5)); }
+  50% { filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.95)); }
+}
+.soul-tree-glow {
+  animation: soul-tree-glow 2.6s ease-in-out infinite;
+}
+@keyframes soul-tree-leaf-fall {
+  0% { transform: translateY(-12%) rotate(0deg); opacity: 0; }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(240%) rotate(300deg); opacity: 0; }
+}
+.soul-tree-leaf {
+  position: absolute;
+  top: 0;
+  animation: soul-tree-leaf-fall 4.2s linear infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .soul-tree-glow,
+  .soul-tree-leaf {
+    animation: none !important;
+  }
+}
+

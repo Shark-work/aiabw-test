@@ -174,8 +174,17 @@ test("css: 已拥有卡片流光关键帧 + prefers-reduced-motion 降级", () =
   assert.ok(css.includes(".soul-card-owned"), "已拥有卡片类定义");
   assert.ok(css.includes(".soul-card-owned::after"), "流光扫掠伪元素");
   // 降级块内停用动画（keyframe 只用 transform/opacity/box-shadow，不动 layout）
-  const reduced = css.slice(css.lastIndexOf("@media (prefers-reduced-motion: reduce)"));
-  assert.ok(reduced.includes(".soul-card-owned"), "减弱动效降级覆盖 soul-card-owned");
+  // 2026-10-16 修订：globals.css 有多个组件级 reduced-motion 块（living-pet/soul-card/soul-tree 等），
+  // 不再假设唯一/最后一块，改为「存在覆盖目标类的块」语义断言。
+  const reducedBlocks = css.split("@media (prefers-reduced-motion: reduce)");
+  assert.ok(
+    reducedBlocks.some((b) => b.includes(".soul-card-owned")),
+    "减弱动效降级覆盖 soul-card-owned",
+  );
+  assert.ok(
+    reducedBlocks.some((b) => b.includes(".soul-tree-leaf") && b.includes(".soul-tree-glow")),
+    "减弱动效降级覆盖灵魂树彩蛋（世界观体系）",
+  );
   assert.ok(!/@keyframes soul[^{]*\{[^}]*(?:width|height|top|left|margin|padding):/.test(css), "关键帧不动 layout 属性");
 });
 

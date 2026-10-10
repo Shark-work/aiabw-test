@@ -16,6 +16,7 @@ import { getAnonymousId } from "@/lib/anon-id";
 import { OnboardingBanner } from "@/components/onboarding/onboarding-banner";
 import { RecallBanner } from "@/components/home/recall-banner";
 import { SoulCardCarousel } from "@/components/home/soul-card-carousel";
+import { SoulTreeEgg } from "@/components/world/soul-tree";
 import { CommunityStats } from "@/components/home/community-stats";
 
 export default function Home() {
@@ -197,6 +198,10 @@ export default function Home() {
             >
               {t("heroCtaShop")}
             </Link>
+          </div>
+          {/* 灵魂树彩蛋（2026-10-16 世界观）：创世短文案 + 大陆统计 + 树叶飘落动画 */}
+          <div className="mt-3 flex justify-center">
+            <SoulTreeEgg />
           </div>
           <SocialProof className="mt-4 text-xs text-zinc-400" />
         </div>

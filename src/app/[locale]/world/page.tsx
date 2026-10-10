@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
+import { SoulTreeEgg } from "@/components/world/soul-tree";
 import {
   WORLD_GLOSSARY,
   WORLD_LIFE_FORMS,
@@ -50,6 +51,10 @@ export default async function WorldPage({ params }: Props) {
           {t("pageTitle")}
         </h1>
         <p className="mt-2 text-sm text-zinc-500">{t("pageSubtitle")}</p>
+        {/* 灵魂树彩蛋（产出物 5）：创世短文案 + 大陆统计 + 树叶飘落动画 */}
+        <div className="mt-4 flex justify-center">
+          <SoulTreeEgg />
+        </div>
       </header>
 
       {/* 板块一 · 创世神话（叙事文案 + 装饰性插图区域） */}
