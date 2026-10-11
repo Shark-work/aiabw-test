@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF9F5"/>
+  <!-- 蓬松脸颊（奶油白波浪圆） -->
+  <path d="M256 150 Q300 152 332 176 Q368 184 380 220 Q402 244 394 280 Q404 314 384 338 Q366 368 332 372 Q308 392 256 394 Q204 392 180 372 Q146 368 128 338 Q108 314 118 280 Q110 244 132 220 Q144 184 180 176 Q212 152 256 150Z" fill="#F7EAD8"/>
+  <!-- 小圆耳（半埋毛里） -->
+  <circle cx="172" cy="176" r="24" fill="#F7EAD8"/>
+  <circle cx="340" cy="176" r="24" fill="#F7EAD8"/>
+  <circle cx="172" cy="176" r="11" fill="#E8C4B8"/>
+  <circle cx="340" cy="176" r="11" fill="#E8C4B8"/>
+  <!-- 内脸（稍浅） -->
+  <ellipse cx="256" cy="276" rx="98" ry="88" fill="#FDF4E8"/>
+  <!-- 铜色大圆眼（宽眼距扁脸） -->
+  <circle cx="202" cy="256" r="22" fill="#D8893C"/>
+  <circle cx="310" cy="256" r="22" fill="#D8893C"/>
+  <circle cx="202" cy="256" r="11" fill="#3E2A20"/>
+  <circle cx="310" cy="256" r="11" fill="#3E2A20"/>
+  <circle cx="207" cy="250" r="4" fill="#FFFFFF"/>
+  <circle cx="315" cy="250" r="4" fill="#FFFFFF"/>
+  <!-- 小粉鼻 + 扁脸小嘴 -->
+  <ellipse cx="256" cy="290" rx="11" ry="8" fill="#F2A0AC"/>
+  <path d="M256 298 Q250 308 240 306 M256 298 Q262 308 272 306" stroke="#B08A6A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="176" cy="300" rx="13" ry="9" fill="#F2C9C0" opacity="0.8"/>
+  <ellipse cx="336" cy="300" rx="13" ry="9" fill="#F2C9C0" opacity="0.8"/>
+</svg>

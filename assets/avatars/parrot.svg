@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F0FAF2"/>
+  <!-- 尾羽（蓝绿长羽） -->
+  <path d="M210 380 Q200 430 214 452 Q228 434 232 396Z" fill="#2E8AB0"/>
+  <path d="M250 390 Q246 436 262 456 Q274 436 274 398Z" fill="#3DBE5B"/>
+  <!-- 身体（翠绿） -->
+  <ellipse cx="252" cy="292" rx="96" ry="106" fill="#3DBE5B"/>
+  <!-- 翅膀（深绿 + 蓝翼尖） -->
+  <ellipse cx="318" cy="310" rx="34" ry="66" fill="#2E9E4A" transform="rotate(-12 318 310)"/>
+  <path d="M330 350 Q344 366 338 384 Q322 378 316 356Z" fill="#2E8AB0"/>
+  <!-- 浅色胸 -->
+  <ellipse cx="222" cy="320" rx="44" ry="56" fill="#8FE0A8"/>
+  <!-- 头 -->
+  <circle cx="238" cy="196" r="72" fill="#3DBE5B"/>
+  <!-- 白色眼圈 + 眼 -->
+  <circle cx="218" cy="188" r="22" fill="#FFFFFF"/>
+  <circle cx="218" cy="188" r="11" fill="#2A3A2A"/>
+  <circle cx="222" cy="184" r="3.5" fill="#FFFFFF"/>
+  <!-- 橙红大钩喙 -->
+  <path d="M172 208 Q136 218 128 248 Q124 274 148 280 Q140 290 158 292 Q182 290 194 268 Q204 246 200 224Z" fill="#F25C3C"/>
+  <path d="M134 256 Q152 264 170 256" stroke="#C93E26" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 冠羽 -->
+  <path d="M258 128 Q266 108 282 102 M274 142 Q288 126 302 124" stroke="#2E9E4A" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- 爪握枝 -->
+  <path d="M168 408 Q256 396 344 408" stroke="#8A6038" stroke-width="12" stroke-linecap="round"/>
+  <path d="M226 396 L222 410 M246 394 L244 408" stroke="#E8963C" stroke-width="8" stroke-linecap="round"/>
+</svg>

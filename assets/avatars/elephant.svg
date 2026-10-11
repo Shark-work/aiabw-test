@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F2F7F7"/>
+  <!-- 大耳朵（灰 + 浅粉内） -->
+  <ellipse cx="142" cy="248" rx="50" ry="80" fill="#9AAAB5" transform="rotate(8 142 248)"/>
+  <ellipse cx="370" cy="248" rx="50" ry="80" fill="#9AAAB5" transform="rotate(-8 370 248)"/>
+  <ellipse cx="146" cy="252" rx="28" ry="52" fill="#D8BFC8" transform="rotate(8 146 252)"/>
+  <ellipse cx="366" cy="252" rx="28" ry="52" fill="#D8BFC8" transform="rotate(-8 366 252)"/>
+  <!-- 头（灰） -->
+  <circle cx="256" cy="238" r="110" fill="#9AAAB5"/>
+  <!-- 长鼻（下垂卷曲） -->
+  <path d="M256 300 Q252 356 244 392 Q238 424 268 430 Q296 434 298 408" stroke="#9AAAB5" stroke-width="42" fill="none" stroke-linecap="round"/>
+  <path d="M258 320 L246 322 M256 348 L244 350 M252 376 L240 378 M250 402 L238 404" stroke="#8295A2" stroke-width="5" stroke-linecap="round"/>
+  <!-- 眼睛（带温柔弧眉） -->
+  <circle cx="206" cy="224" r="12" fill="#3A4A55"/>
+  <circle cx="306" cy="224" r="12" fill="#3A4A55"/>
+  <circle cx="210" cy="220" r="4" fill="#FFFFFF"/>
+  <circle cx="310" cy="220" r="4" fill="#FFFFFF"/>
+  <path d="M192 202 Q206 194 220 202 M292 202 Q306 194 320 202" stroke="#8295A2" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- 额纹 -->
+  <path d="M240 158 Q256 152 272 158 M236 178 Q256 170 276 178" stroke="#8295A2" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="188" cy="272" rx="13" ry="9" fill="#D8BFC8" opacity="0.85"/>
+  <ellipse cx="324" cy="272" rx="13" ry="9" fill="#D8BFC8" opacity="0.85"/>
+</svg>

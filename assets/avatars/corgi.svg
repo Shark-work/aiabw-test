@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF9F0"/>
+  <!-- 大立耳（柯基灵魂，橘 + 粉内） -->
+  <path d="M150 162 L164 58 L232 132 Z" fill="#E8913A"/>
+  <path d="M362 162 L348 58 L280 132 Z" fill="#E8913A"/>
+  <path d="M166 140 L176 84 L216 124 Z" fill="#F7C9D4"/>
+  <path d="M346 140 L336 84 L296 124 Z" fill="#F7C9D4"/>
+  <!-- 头（橘） -->
+  <circle cx="256" cy="262" r="108" fill="#E8913A"/>
+  <!-- 白色口鼻宽带（额 → 鼻 → 嘴） -->
+  <path d="M256 156 Q268 200 268 240 Q296 262 298 302 Q292 350 256 358 Q220 350 214 302 Q216 262 244 240 Q244 200 256 156Z" fill="#FFFFFF"/>
+  <!-- 眼睛 -->
+  <circle cx="204" cy="248" r="13" fill="#4A2E1A"/>
+  <circle cx="308" cy="248" r="13" fill="#4A2E1A"/>
+  <circle cx="208" cy="244" r="4.5" fill="#FFFFFF"/>
+  <circle cx="312" cy="244" r="4.5" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 -->
+  <ellipse cx="256" cy="300" rx="15" ry="11" fill="#3A2A20"/>
+  <path d="M256 310 Q247 324 232 320 M256 310 Q265 324 280 320" stroke="#3A2A20" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="192" cy="300" rx="13" ry="9" fill="#F0B9A0" opacity="0.8"/>
+  <ellipse cx="320" cy="300" rx="13" ry="9" fill="#F0B9A0" opacity="0.8"/>
+</svg>

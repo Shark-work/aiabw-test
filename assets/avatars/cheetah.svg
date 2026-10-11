@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF7E6"/>
+  <!-- 耳朵 -->
+  <circle cx="158" cy="146" r="36" fill="#FFC93C"/>
+  <circle cx="354" cy="146" r="36" fill="#FFC93C"/>
+  <circle cx="158" cy="146" r="17" fill="#8A5A2B"/>
+  <circle cx="354" cy="146" r="17" fill="#8A5A2B"/>
+  <!-- 头（明黄） -->
+  <circle cx="256" cy="256" r="118" fill="#FFC93C"/>
+  <!-- 白色口鼻区 -->
+  <ellipse cx="256" cy="316" rx="66" ry="48" fill="#FFF3DC"/>
+  <!-- 黑色泪痕（猎豹灵魂特征） -->
+  <path d="M198 246 Q190 284 180 310" stroke="#3E2A20" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <path d="M314 246 Q322 284 332 310" stroke="#3E2A20" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <!-- 眼睛 -->
+  <circle cx="208" cy="228" r="15" fill="#3E2A20"/>
+  <circle cx="304" cy="228" r="15" fill="#3E2A20"/>
+  <circle cx="213" cy="223" r="5" fill="#FFFFFF"/>
+  <circle cx="309" cy="223" r="5" fill="#FFFFFF"/>
+  <!-- 斑点：额头 + 两颊 -->
+  <circle cx="256" cy="158" r="7" fill="#3E2A20"/>
+  <circle cx="216" cy="168" r="6" fill="#3E2A20"/>
+  <circle cx="296" cy="168" r="6" fill="#3E2A20"/>
+  <circle cx="158" cy="218" r="6" fill="#3E2A20"/>
+  <circle cx="150" cy="256" r="7" fill="#3E2A20"/>
+  <circle cx="164" cy="292" r="6" fill="#3E2A20"/>
+  <circle cx="354" cy="218" r="6" fill="#3E2A20"/>
+  <circle cx="362" cy="256" r="7" fill="#3E2A20"/>
+  <circle cx="348" cy="292" r="6" fill="#3E2A20"/>
+  <circle cx="186" cy="186" r="5" fill="#3E2A20"/>
+  <circle cx="326" cy="186" r="5" fill="#3E2A20"/>
+  <!-- 鼻 + 嘴 -->
+  <path d="M256 274 L238 290 Q256 304 274 290 Z" fill="#3E2A20"/>
+  <path d="M256 300 Q247 314 230 310 M256 300 Q265 314 282 310" stroke="#3E2A20" stroke-width="6" fill="none" stroke-linecap="round"/>
+</svg>

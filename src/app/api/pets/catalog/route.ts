@@ -7,6 +7,7 @@ import { renderPetDescription } from "@/lib/pet-dictionary";
 import { groupBySpecies } from "@/lib/species-group";
 import { aibiNameFor } from "@/lib/aibi-names";
 import { soulNameFor } from "@/lib/soul-pet";
+import { speciesAvatarFor } from "@/lib/species-avatars";
 
 export const runtime = "nodejs";
 
@@ -123,7 +124,8 @@ export async function GET(req: Request) {
       soulName: soulNameFor(r.traits?.element, aibiName ?? speciesName, locale),
       category: locale === "en" ? (r.categoryEn ?? r.category) : r.category,
       habitat: locale === "en" ? (r.habitatEn ?? r.habitat) : r.habitat,
-      imageUrl: r.image_url,
+      // 物种统一头像（扁平矢量，读路径派生；未命中映射回退 DB 个性化图）
+      imageUrl: speciesAvatarFor(r.species_id) ?? r.image_url,
       traits: r.traits ?? {},
       generation: Number(r.generation),
       parentIds: r.parent_ids,

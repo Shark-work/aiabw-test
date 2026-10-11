@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF5EC"/>
+  <!-- 耳朵：红棕 + 白色耳缘 -->
+  <circle cx="160" cy="144" r="38" fill="#C25532"/>
+  <circle cx="352" cy="144" r="38" fill="#C25532"/>
+  <circle cx="160" cy="144" r="38" fill="none" stroke="#FFF3E6" stroke-width="9"/>
+  <circle cx="352" cy="144" r="38" fill="none" stroke="#FFF3E6" stroke-width="9"/>
+  <circle cx="160" cy="144" r="15" fill="#FFF3E6"/>
+  <circle cx="352" cy="144" r="15" fill="#FFF3E6"/>
+  <!-- 头（红棕） -->
+  <circle cx="256" cy="258" r="116" fill="#D0603C"/>
+  <!-- 白色脸纹（眼周 + 口鼻面具） -->
+  <ellipse cx="210" cy="246" rx="27" ry="23" fill="#FFF3E6"/>
+  <ellipse cx="302" cy="246" rx="27" ry="23" fill="#FFF3E6"/>
+  <ellipse cx="256" cy="300" rx="80" ry="60" fill="#FFF3E6"/>
+  <!-- 白色眉斑 -->
+  <ellipse cx="206" cy="212" rx="18" ry="10" fill="#FFF3E6"/>
+  <ellipse cx="306" cy="212" rx="18" ry="10" fill="#FFF3E6"/>
+  <!-- 红棕泪纹 -->
+  <path d="M206 268 Q198 302 192 324" stroke="#8A3A20" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M306 268 Q314 302 320 324" stroke="#8A3A20" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- 眼睛 -->
+  <circle cx="212" cy="248" r="10.5" fill="#3E2A20"/>
+  <circle cx="300" cy="248" r="10.5" fill="#3E2A20"/>
+  <circle cx="215" cy="245" r="3.5" fill="#FFFFFF"/>
+  <circle cx="303" cy="245" r="3.5" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 -->
+  <ellipse cx="256" cy="302" rx="14" ry="10" fill="#3E2A20"/>
+  <path d="M256 312 Q247 324 233 320 M256 312 Q265 324 279 320" stroke="#3E2A20" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>

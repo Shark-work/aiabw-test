@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F0FAF0"/>
+  <!-- 尾巴 + 后肢（黄皮肤） -->
+  <path d="M394 348 Q422 354 414 374 Q398 374 390 360Z" fill="#F2D15C"/>
+  <ellipse cx="140" cy="392" rx="36" ry="22" fill="#F2D15C"/>
+  <ellipse cx="372" cy="392" rx="36" ry="22" fill="#F2D15C"/>
+  <!-- 头（黄色，从壳顶探出） -->
+  <circle cx="256" cy="152" r="47" fill="#F2D15C"/>
+  <circle cx="237" cy="144" r="7" fill="#3E2A20"/>
+  <circle cx="275" cy="144" r="7" fill="#3E2A20"/>
+  <circle cx="239" cy="141" r="2.5" fill="#FFFFFF"/>
+  <circle cx="277" cy="141" r="2.5" fill="#FFFFFF"/>
+  <path d="M244 166 Q256 176 268 166" stroke="#3E2A20" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="224" cy="160" rx="9" ry="6" fill="#F0B9A0" opacity="0.7"/>
+  <ellipse cx="288" cy="160" rx="9" ry="6" fill="#F0B9A0" opacity="0.7"/>
+  <!-- 前肢 -->
+  <ellipse cx="130" cy="348" rx="30" ry="34" fill="#F2D15C"/>
+  <ellipse cx="382" cy="348" rx="30" ry="34" fill="#F2D15C"/>
+  <!-- 绿色龟壳（半圆顶） -->
+  <path d="M120 328 Q120 200 256 200 Q392 200 392 328 Q392 344 376 344 L136 344 Q120 344 120 328Z" fill="#5BAE5B"/>
+  <!-- 六边形壳纹 -->
+  <path d="M256 226 L298 250 L298 298 L256 322 L214 298 L214 250Z" fill="none" stroke="#3E8E3E" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M176 252 L214 268 M176 316 L214 298 M336 252 L298 268 M336 316 L298 298" stroke="#3E8E3E" stroke-width="7" stroke-linecap="round"/>
+  <path d="M214 250 L186 226 M298 250 L326 226" stroke="#3E8E3E" stroke-width="7" stroke-linecap="round"/>
+  <!-- 壳底缘 -->
+  <rect x="124" y="336" width="264" height="22" rx="11" fill="#4A9A4A"/>
+</svg>

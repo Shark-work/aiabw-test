@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF4E0"/>
+  <!-- 鬃毛（深金棕大圆 + 波浪缘） -->
+  <path d="M256 96 Q296 100 326 116 Q362 118 384 144 Q410 160 416 192 Q434 216 428 248 Q440 278 426 306 Q428 338 406 358 Q392 386 362 394 Q340 416 308 414 Q284 430 256 424 Q228 430 204 414 Q172 416 150 394 Q120 386 106 358 Q84 338 86 306 Q72 278 84 248 Q78 216 96 192 Q102 160 128 144 Q150 118 186 116 Q216 100 256 96Z" fill="#B86E28"/>
+  <!-- 小圆耳（半露） -->
+  <circle cx="176" cy="156" r="22" fill="#E8B04B"/>
+  <circle cx="336" cy="156" r="22" fill="#E8B04B"/>
+  <!-- 脸（浅金） -->
+  <circle cx="256" cy="258" r="86" fill="#E8B04B"/>
+  <!-- 浅口鼻 -->
+  <ellipse cx="256" cy="306" rx="50" ry="38" fill="#F7DCA8"/>
+  <!-- 眼睛 -->
+  <circle cx="218" cy="240" r="12" fill="#4A2E1A"/>
+  <circle cx="294" cy="240" r="12" fill="#4A2E1A"/>
+  <circle cx="222" cy="236" r="4" fill="#FFFFFF"/>
+  <circle cx="298" cy="236" r="4" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 -->
+  <path d="M256 286 L238 300 Q256 314 274 300 Z" fill="#7A4E2A"/>
+  <path d="M256 312 Q248 326 234 322 M256 312 Q264 326 278 322" stroke="#4A2E1A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="200" cy="292" rx="12" ry="8" fill="#E8A87C" opacity="0.7"/>
+  <ellipse cx="312" cy="292" rx="12" ry="8" fill="#E8A87C" opacity="0.7"/>
+</svg>

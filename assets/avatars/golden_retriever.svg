@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF9F0"/>
+  <!-- 垂耳（深金） -->
+  <ellipse cx="152" cy="252" rx="34" ry="76" fill="#C98F2E" transform="rotate(10 152 252)"/>
+  <ellipse cx="360" cy="252" rx="34" ry="76" fill="#C98F2E" transform="rotate(-10 360 252)"/>
+  <!-- 头（金色） -->
+  <circle cx="256" cy="248" r="112" fill="#E8B04B"/>
+  <!-- 浅色口鼻 -->
+  <ellipse cx="256" cy="308" rx="58" ry="44" fill="#F7DCA8"/>
+  <!-- 眼睛 -->
+  <circle cx="212" cy="232" r="13" fill="#4A2E1A"/>
+  <circle cx="300" cy="232" r="13" fill="#4A2E1A"/>
+  <circle cx="216" cy="228" r="4.5" fill="#FFFFFF"/>
+  <circle cx="304" cy="228" r="4.5" fill="#FFFFFF"/>
+  <!-- 眉毛点（金毛温柔感） -->
+  <ellipse cx="210" cy="206" rx="12" ry="6" fill="#F7DCA8"/>
+  <ellipse cx="302" cy="206" rx="12" ry="6" fill="#F7DCA8"/>
+  <!-- 鼻 -->
+  <ellipse cx="256" cy="288" rx="16" ry="12" fill="#4A2E1A"/>
+  <!-- 嘴 + 吐舌 -->
+  <path d="M256 300 Q244 314 226 308 M256 300 Q268 314 286 308" stroke="#4A2E1A" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M244 316 Q244 352 256 356 Q268 352 268 316 Q262 322 256 322 Q250 322 244 316Z" fill="#F28BA8"/>
+  <path d="M256 324 L256 348" stroke="#E06A8C" stroke-width="4" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="190" cy="282" rx="14" ry="9" fill="#F0C29A" opacity="0.8"/>
+  <ellipse cx="322" cy="282" rx="14" ry="9" fill="#F0C29A" opacity="0.8"/>
+</svg>

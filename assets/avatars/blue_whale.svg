@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#EAF4FF"/>
+  <!-- 喷水柱 + 水滴 -->
+  <path d="M196 186 Q188 150 176 138 M212 182 Q212 144 212 126 M228 186 Q238 152 250 140" stroke="#8FC4F0" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="170" cy="126" r="8" fill="#8FC4F0"/>
+  <circle cx="212" cy="112" r="9" fill="#8FC4F0"/>
+  <circle cx="256" cy="128" r="8" fill="#8FC4F0"/>
+  <!-- 尾鳍 -->
+  <path d="M372 252 Q416 222 436 244 Q418 262 400 268 Q424 284 430 308 Q404 306 380 282 Q366 268 372 252Z" fill="#3B7DD8"/>
+  <!-- 身体（深蓝） -->
+  <ellipse cx="240" cy="272" rx="142" ry="90" fill="#3B7DD8"/>
+  <!-- 背鳍 -->
+  <path d="M292 190 Q306 160 322 166 Q316 188 306 196Z" fill="#2E63B0"/>
+  <!-- 白色腹部 -->
+  <path d="M110 296 Q180 356 318 342 Q350 338 366 322 Q340 358 240 362 Q140 360 112 312Z" fill="#D6E9FC"/>
+  <path d="M150 330 Q220 352 300 344 M170 344 Q230 358 290 352" stroke="#B9D8F5" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 胸鳍 -->
+  <ellipse cx="246" cy="336" rx="30" ry="12" fill="#2E63B0" transform="rotate(-14 246 336)"/>
+  <!-- 眼 + 微笑 -->
+  <circle cx="156" cy="254" r="10" fill="#1E3A5C"/>
+  <circle cx="159" cy="251" r="3.5" fill="#FFFFFF"/>
+  <path d="M136 288 Q164 304 194 296" stroke="#1E3A5C" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- 水波纹装饰 -->
+  <path d="M116 404 Q152 388 188 404 Q224 420 260 404" stroke="#8FC4F0" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <path d="M300 404 Q336 388 372 404 Q396 414 408 406" stroke="#8FC4F0" stroke-width="9" fill="none" stroke-linecap="round"/>
+</svg>

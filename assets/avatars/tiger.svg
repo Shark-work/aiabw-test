@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF7EC"/>
+  <!-- 圆耳（橘 + 深内耳） -->
+  <circle cx="164" cy="148" r="34" fill="#F08C28"/>
+  <circle cx="348" cy="148" r="34" fill="#F08C28"/>
+  <circle cx="164" cy="148" r="15" fill="#8A4A1A"/>
+  <circle cx="348" cy="148" r="15" fill="#8A4A1A"/>
+  <!-- 头（橘） -->
+  <circle cx="256" cy="256" r="114" fill="#F08C28"/>
+  <!-- 黑色条纹：额 3 竖 + 两颊各 2 横 -->
+  <path d="M256 148 L256 190 M222 156 L230 194 M290 156 L282 194" stroke="#3E2A20" stroke-width="11" stroke-linecap="round"/>
+  <path d="M150 218 L186 230 M146 262 L184 268 M362 218 L326 230 M366 262 L328 268" stroke="#3E2A20" stroke-width="10" stroke-linecap="round"/>
+  <!-- 白色口鼻区 -->
+  <ellipse cx="256" cy="314" rx="62" ry="46" fill="#FFF3E6"/>
+  <!-- 眼睛（琥珀） -->
+  <circle cx="208" cy="238" r="14" fill="#E8A83C"/>
+  <circle cx="304" cy="238" r="14" fill="#E8A83C"/>
+  <circle cx="208" cy="238" r="7" fill="#3E2A20"/>
+  <circle cx="304" cy="238" r="7" fill="#3E2A20"/>
+  <circle cx="212" cy="234" r="2.5" fill="#FFFFFF"/>
+  <circle cx="308" cy="234" r="2.5" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 -->
+  <path d="M256 292 L239 307 Q256 320 273 307 Z" fill="#D87E7E"/>
+  <path d="M256 318 Q248 332 233 328 M256 318 Q264 332 279 328" stroke="#3E2A20" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FDF6EA"/>
+  <!-- 耳羽簇 -->
+  <path d="M168 160 L188 96 L228 146 Z" fill="#9A7048"/>
+  <path d="M344 160 L324 96 L284 146 Z" fill="#9A7048"/>
+  <!-- 身体（棕竖椭圆） -->
+  <ellipse cx="256" cy="278" rx="112" ry="128" fill="#9A7048"/>
+  <!-- 翅膀色块 -->
+  <ellipse cx="160" cy="300" rx="26" ry="62" fill="#8A5F3C" transform="rotate(10 160 300)"/>
+  <ellipse cx="352" cy="300" rx="26" ry="62" fill="#8A5F3C" transform="rotate(-10 352 300)"/>
+  <!-- 面盘（两个浅米白大圆） -->
+  <circle cx="214" cy="232" r="50" fill="#F2E2C4"/>
+  <circle cx="298" cy="232" r="50" fill="#F2E2C4"/>
+  <!-- 超大黄眼 + 黑瞳 -->
+  <circle cx="214" cy="232" r="21" fill="#F5B93C"/>
+  <circle cx="298" cy="232" r="21" fill="#F5B93C"/>
+  <circle cx="214" cy="232" r="10" fill="#2A1A10"/>
+  <circle cx="298" cy="232" r="10" fill="#2A1A10"/>
+  <circle cx="218" cy="227" r="3.5" fill="#FFFFFF"/>
+  <circle cx="302" cy="227" r="3.5" fill="#FFFFFF"/>
+  <!-- 小钩喙 -->
+  <path d="M256 262 L244 278 Q256 292 268 278 Z" fill="#E8963C"/>
+  <!-- 胸羽纹 -->
+  <path d="M200 330 Q214 342 228 330 M236 344 Q250 356 264 344 M272 330 Q286 342 300 330 M218 362 Q232 374 246 362 M262 362 Q276 374 290 362" stroke="#C9A877" stroke-width="7" fill="none" stroke-linecap="round"/>
+</svg>

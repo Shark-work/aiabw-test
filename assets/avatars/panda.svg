@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F7FAF5"/>
+  <!-- 黑色肩部（头下露出） -->
+  <path d="M128 420 Q150 356 256 352 Q362 356 384 420 Q390 436 372 436 L140 436 Q122 436 128 420Z" fill="#3A3A3A"/>
+  <!-- 黑色大圆耳 -->
+  <circle cx="164" cy="146" r="37" fill="#3A3A3A"/>
+  <circle cx="348" cy="146" r="37" fill="#3A3A3A"/>
+  <!-- 白色圆头 -->
+  <circle cx="256" cy="254" r="116" fill="#FFFFFF"/>
+  <!-- 黑眼圈（斜椭圆） -->
+  <ellipse cx="208" cy="240" rx="27" ry="37" fill="#3A3A3A" transform="rotate(18 208 240)"/>
+  <ellipse cx="304" cy="240" rx="27" ry="37" fill="#3A3A3A" transform="rotate(-18 304 240)"/>
+  <!-- 眼睛（黑眼圈内） -->
+  <circle cx="212" cy="244" r="9" fill="#FFFFFF"/>
+  <circle cx="300" cy="244" r="9" fill="#FFFFFF"/>
+  <circle cx="214" cy="246" r="5" fill="#3A3A3A"/>
+  <circle cx="298" cy="246" r="5" fill="#3A3A3A"/>
+  <!-- 鼻 + 嘴 -->
+  <path d="M256 292 L238 306 Q256 320 274 306 Z" fill="#3A3A3A"/>
+  <path d="M256 318 Q248 332 234 328 M256 318 Q264 332 278 328" stroke="#3A3A3A" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="180" cy="300" rx="14" ry="9" fill="#F2C9C0" opacity="0.8"/>
+  <ellipse cx="332" cy="300" rx="14" ry="9" fill="#F2C9C0" opacity="0.8"/>
+</svg>

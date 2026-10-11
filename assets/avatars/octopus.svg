@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#EFF6FF"/>
+  <!-- 卷曲触手（圆头曲线，先画垫在头下） -->
+  <path d="M212 296 Q172 336 152 376 Q140 408 170 414 Q196 418 191 394" stroke="#9B7EDE" stroke-width="26" fill="none" stroke-linecap="round"/>
+  <path d="M300 296 Q340 336 360 376 Q372 408 342 414 Q316 418 321 394" stroke="#9B7EDE" stroke-width="26" fill="none" stroke-linecap="round"/>
+  <path d="M256 306 Q256 358 240 392 Q228 420 258 424 Q284 427 281 402" stroke="#9B7EDE" stroke-width="26" fill="none" stroke-linecap="round"/>
+  <path d="M182 276 Q134 294 120 336 Q112 362 138 366" stroke="#9B7EDE" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <path d="M330 276 Q378 294 392 336 Q400 362 374 366" stroke="#9B7EDE" stroke-width="24" fill="none" stroke-linecap="round"/>
+  <!-- 吸盘（浅色小圆） -->
+  <circle cx="170" cy="350" r="6" fill="#D9CCF5"/>
+  <circle cx="158" cy="384" r="6" fill="#D9CCF5"/>
+  <circle cx="186" cy="406" r="5" fill="#D9CCF5"/>
+  <circle cx="342" cy="350" r="6" fill="#D9CCF5"/>
+  <circle cx="354" cy="384" r="6" fill="#D9CCF5"/>
+  <circle cx="326" cy="406" r="5" fill="#D9CCF5"/>
+  <circle cx="248" cy="366" r="6" fill="#D9CCF5"/>
+  <circle cx="244" cy="398" r="5" fill="#D9CCF5"/>
+  <!-- 圆脑袋（亮紫） -->
+  <ellipse cx="256" cy="202" rx="102" ry="94" fill="#9B7EDE"/>
+  <!-- 眼睛 -->
+  <circle cx="214" cy="192" r="21" fill="#FFFFFF"/>
+  <circle cx="298" cy="192" r="21" fill="#FFFFFF"/>
+  <circle cx="219" cy="197" r="10.5" fill="#3E2A20"/>
+  <circle cx="293" cy="197" r="10.5" fill="#3E2A20"/>
+  <circle cx="223" cy="192" r="3.5" fill="#FFFFFF"/>
+  <circle cx="297" cy="192" r="3.5" fill="#FFFFFF"/>
+  <!-- 嘴 -->
+  <path d="M243 234 Q256 246 269 234" stroke="#3E2A20" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="184" cy="226" rx="14" ry="9" fill="#E8A8C8" opacity="0.8"/>
+  <ellipse cx="328" cy="226" rx="14" ry="9" fill="#E8A8C8" opacity="0.8"/>
+</svg>

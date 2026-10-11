@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F2FAF0"/>
+  <!-- 卷尾（螺旋） -->
+  <path d="M352 320 Q410 318 424 272 Q432 234 402 222 Q376 214 366 238 Q358 260 378 268 Q394 272 398 256" stroke="#58C24E" stroke-width="22" fill="none" stroke-linecap="round"/>
+  <!-- 背脊锯齿冠 -->
+  <path d="M196 224 L208 190 L228 218 L244 186 L262 216 L280 188 L296 220 L312 196 L322 228 Z" fill="#3E9E38"/>
+  <!-- 身体（绿侧视） -->
+  <ellipse cx="256" cy="300" rx="122" ry="84" fill="#58C24E"/>
+  <!-- 头（三角锥延伸） -->
+  <path d="M140 300 Q130 260 168 244 Q200 232 220 252 Q236 272 226 300 Q210 330 176 328 Q148 324 140 300Z" fill="#58C24E"/>
+  <!-- 眼塔（鼓出圆眼） -->
+  <circle cx="196" cy="226" r="30" fill="#58C24E"/>
+  <circle cx="196" cy="226" r="18" fill="#C9E8A0"/>
+  <circle cx="192" cy="222" r="8" fill="#2A3A20"/>
+  <circle cx="195" cy="219" r="2.5" fill="#FFFFFF"/>
+  <!-- 腹纹 + 体侧花纹 -->
+  <path d="M240 320 Q260 336 284 326 M296 316 Q316 330 336 318" stroke="#3E9E38" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <circle cx="282" cy="280" r="9" fill="#A8E07C"/>
+  <circle cx="318" cy="292" r="7" fill="#A8E07C"/>
+  <circle cx="246" cy="268" r="7" fill="#A8E07C"/>
+  <!-- 嘴（微笑弧） -->
+  <path d="M146 306 Q168 316 190 308" stroke="#2A3A20" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 四肢 + 树枝 -->
+  <path d="M196 372 L190 398 M236 376 L232 400 M300 374 L304 398 M336 366 L344 392" stroke="#4AAE42" stroke-width="14" stroke-linecap="round"/>
+  <path d="M120 412 Q256 398 392 412" stroke="#8A6038" stroke-width="13" stroke-linecap="round"/>
+</svg>

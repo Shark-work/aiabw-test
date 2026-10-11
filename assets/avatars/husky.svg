@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F0F7FF"/>
+  <!-- 立耳（灰 + 粉内） -->
+  <path d="M158 150 L186 64 L226 138 Z" fill="#8A9BA8"/>
+  <path d="M354 150 L326 64 L286 138 Z" fill="#8A9BA8"/>
+  <path d="M172 134 L188 88 L212 128 Z" fill="#F2B8C6"/>
+  <path d="M340 134 L324 88 L300 128 Z" fill="#F2B8C6"/>
+  <!-- 头（灰） -->
+  <circle cx="256" cy="254" r="112" fill="#8A9BA8"/>
+  <!-- 白色面具（额 → 眼周 → 口鼻） -->
+  <path d="M256 142 Q300 168 316 218 Q330 262 322 302 Q300 352 256 358 Q212 352 190 302 Q182 262 196 218 Q212 168 256 142Z" fill="#FFFFFF"/>
+  <!-- 冰蓝眼睛（哈士奇灵魂） -->
+  <circle cx="216" cy="238" r="14" fill="#6EC6F5"/>
+  <circle cx="296" cy="238" r="14" fill="#6EC6F5"/>
+  <circle cx="216" cy="238" r="7" fill="#2A4A6A"/>
+  <circle cx="296" cy="238" r="7" fill="#2A4A6A"/>
+  <circle cx="219" cy="234" r="2.5" fill="#FFFFFF"/>
+  <circle cx="299" cy="234" r="2.5" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 -->
+  <ellipse cx="256" cy="296" rx="15" ry="11" fill="#3A3A3A"/>
+  <path d="M256 306 Q247 320 232 316 M256 306 Q265 320 280 316" stroke="#3A3A3A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="196" cy="290" rx="12" ry="8" fill="#F2C9C0" opacity="0.8"/>
+  <ellipse cx="316" cy="290" rx="12" ry="8" fill="#F2C9C0" opacity="0.8"/>
+</svg>

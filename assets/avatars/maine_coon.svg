@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FDF3E7"/>
+  <!-- 蓬松鬃毛领（深棕锯齿） -->
+  <path d="M256 396 L232 366 L200 384 L196 348 L160 350 L172 316 L142 300 L170 282 L150 256 L184 254 L178 218 L212 228 L220 192 L248 214 L256 178 L264 214 L292 192 L300 228 L334 218 L328 254 L362 256 L342 282 L370 300 L340 316 L352 350 L316 348 L312 384 L280 366 Z" fill="#7A4E2A"/>
+  <!-- 耳朵 + 耳尖簇毛 -->
+  <path d="M168 156 L184 84 L232 142 Z" fill="#A0683C"/>
+  <path d="M344 156 L328 84 L280 142 Z" fill="#A0683C"/>
+  <path d="M180 100 L172 68 L192 84 Z" fill="#7A4E2A"/>
+  <path d="M332 100 L340 68 L320 84 Z" fill="#7A4E2A"/>
+  <path d="M180 140 L190 104 L216 134 Z" fill="#D8B49A"/>
+  <path d="M332 140 L322 104 L296 134 Z" fill="#D8B49A"/>
+  <!-- 头（棕） -->
+  <circle cx="256" cy="240" r="104" fill="#A0683C"/>
+  <!-- 浅色口鼻 -->
+  <ellipse cx="256" cy="296" rx="54" ry="40" fill="#E8CDAF"/>
+  <!-- 眼睛（金绿） -->
+  <circle cx="212" cy="230" r="13" fill="#C9A227"/>
+  <circle cx="300" cy="230" r="13" fill="#C9A227"/>
+  <circle cx="212" cy="230" r="6.5" fill="#3E2A20"/>
+  <circle cx="300" cy="230" r="6.5" fill="#3E2A20"/>
+  <circle cx="215" cy="226" r="2.5" fill="#FFFFFF"/>
+  <circle cx="303" cy="226" r="2.5" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 -->
+  <path d="M256 280 L242 292 Q256 302 270 292 Z" fill="#C97E7E"/>
+  <path d="M256 300 Q248 312 236 308 M256 300 Q264 312 276 308" stroke="#3E2A20" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 额纹 -->
+  <path d="M236 170 L240 192 M256 164 L256 188 M276 170 L272 192" stroke="#7A4E2A" stroke-width="7" stroke-linecap="round"/>
+</svg>

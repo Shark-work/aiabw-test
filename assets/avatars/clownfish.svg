@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#EAF6FF"/>
+  <!-- 尾鳍 -->
+  <path d="M372 256 Q416 224 434 246 Q420 262 406 270 Q424 284 430 306 Q404 306 384 286 Q372 272 372 256Z" fill="#F2780C" stroke="#3A3A3A" stroke-width="5" stroke-linejoin="round"/>
+  <!-- 身体（橙椭圆侧视） -->
+  <ellipse cx="242" cy="272" rx="132" ry="88" fill="#F2780C"/>
+  <!-- 三条白纹（黑边） -->
+  <path d="M172 196 Q196 270 168 346 Q150 342 140 330 Q164 270 144 212 Q156 200 172 196Z" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M266 186 Q290 272 262 358 Q244 360 232 356 Q258 272 236 188 Q250 184 266 186Z" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M342 208 Q360 272 342 334 Q330 342 320 340 Q338 272 322 214 Q332 208 342 208Z" fill="#FFFFFF" stroke="#3A3A3A" stroke-width="6" stroke-linejoin="round"/>
+  <!-- 背鳍 -->
+  <path d="M200 192 Q230 152 286 160 Q300 166 292 180 Q250 168 216 196Z" fill="#F2780C" stroke="#3A3A3A" stroke-width="5" stroke-linejoin="round"/>
+  <!-- 胸鳍 -->
+  <ellipse cx="228" cy="330" rx="26" ry="14" fill="#F8A04A" stroke="#3A3A3A" stroke-width="5" transform="rotate(-16 228 330)"/>
+  <!-- 大黑眼 -->
+  <circle cx="152" cy="248" r="15" fill="#3A3A3A"/>
+  <circle cx="157" cy="243" r="5" fill="#FFFFFF"/>
+  <!-- 嘴 -->
+  <path d="M108 284 Q122 292 136 288" stroke="#3A3A3A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 小气泡 -->
+  <circle cx="392" cy="150" r="8" fill="#B9DDF5"/>
+  <circle cx="416" cy="124" r="6" fill="#B9DDF5"/>
+  <circle cx="368" cy="118" r="5" fill="#B9DDF5"/>
+</svg>

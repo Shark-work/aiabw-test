@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#F0F8FF"/>
+  <!-- 冰块平台 -->
+  <path d="M104 402 Q150 378 256 384 Q362 378 408 402 Q424 418 404 434 L108 434 Q88 418 104 402Z" fill="#CFE6F8"/>
+  <path d="M140 408 Q200 394 256 398 Q312 394 372 408" stroke="#EAF5FD" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- 橙色脚蹼 -->
+  <ellipse cx="216" cy="416" rx="28" ry="13" fill="#FF8C3B"/>
+  <ellipse cx="296" cy="416" rx="28" ry="13" fill="#FF8C3B"/>
+  <!-- 身体（深蓝黑） -->
+  <ellipse cx="256" cy="272" rx="118" ry="142" fill="#33404F"/>
+  <!-- 翅膀 -->
+  <ellipse cx="148" cy="302" rx="22" ry="60" fill="#2A3644" transform="rotate(14 148 302)"/>
+  <ellipse cx="364" cy="302" rx="22" ry="60" fill="#2A3644" transform="rotate(-14 364 302)"/>
+  <!-- 白色肚皮 -->
+  <ellipse cx="256" cy="314" rx="74" ry="98" fill="#FFFFFF"/>
+  <!-- 眼睛 -->
+  <circle cx="211" cy="190" r="17" fill="#FFFFFF"/>
+  <circle cx="301" cy="190" r="17" fill="#FFFFFF"/>
+  <circle cx="215" cy="194" r="8.5" fill="#33404F"/>
+  <circle cx="297" cy="194" r="8.5" fill="#33404F"/>
+  <circle cx="218" cy="191" r="3" fill="#FFFFFF"/>
+  <circle cx="300" cy="191" r="3" fill="#FFFFFF"/>
+  <!-- 橙色嘴 -->
+  <path d="M256 206 L230 226 Q256 246 282 226 Z" fill="#FF8C3B"/>
+  <path d="M230 226 Q256 236 282 226" stroke="#E5731F" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="176" cy="232" rx="14" ry="9" fill="#A9CDEB" opacity="0.8"/>
+  <ellipse cx="336" cy="232" rx="14" ry="9" fill="#A9CDEB" opacity="0.8"/>
+</svg>

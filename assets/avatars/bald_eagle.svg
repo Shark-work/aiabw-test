@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#EFF5FB"/>
+  <!-- 深棕身体 -->
+  <ellipse cx="266" cy="330" rx="118" ry="102" fill="#5A3E28"/>
+  <path d="M170 380 Q200 420 260 428 M340 380 Q320 414 272 426" stroke="#4A3120" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <!-- 白色头部 -->
+  <circle cx="238" cy="196" r="86" fill="#FFFFFF"/>
+  <path d="M160 240 Q180 292 232 308 Q290 316 322 280 Q300 330 240 332 Q172 326 152 262Z" fill="#FFFFFF"/>
+  <!-- 黄色钩喙 -->
+  <path d="M164 200 Q120 206 104 232 Q96 252 116 258 Q104 268 120 274 Q144 278 162 262 Q176 246 176 226Z" fill="#F2B63C"/>
+  <path d="M112 244 Q130 250 148 244" stroke="#D8952A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- 锐眼（白眉骨下压） -->
+  <path d="M196 176 Q222 164 248 176" stroke="#D8D8D8" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="222" cy="192" r="11" fill="#2A2A2A"/>
+  <circle cx="225" cy="188" r="3.5" fill="#FFFFFF"/>
+  <!-- 头顶羽纹 -->
+  <path d="M266 128 Q280 118 296 122 M278 148 Q294 140 308 146" stroke="#E4E4E4" stroke-width="7" fill="none" stroke-linecap="round"/>
+</svg>

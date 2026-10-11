@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="246" fill="#FFF7EE"/>
+  <!-- 大尾巴（灵魂：右后超大弯月） -->
+  <path d="M318 380 Q420 360 428 260 Q434 168 360 138 Q320 122 300 150 Q286 172 308 186 Q340 204 336 258 Q332 326 268 348 Q290 372 318 380Z" fill="#C9763A"/>
+  <path d="M340 330 Q390 300 394 236 Q396 190 362 168" stroke="#B06028" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- 身体（橘棕） -->
+  <ellipse cx="228" cy="330" rx="78" ry="86" fill="#D0803E"/>
+  <!-- 白肚皮 -->
+  <ellipse cx="232" cy="348" rx="46" ry="54" fill="#FBE8D0"/>
+  <!-- 头 -->
+  <circle cx="228" cy="212" r="72" fill="#D0803E"/>
+  <!-- 耳 + 簇毛 -->
+  <circle cx="176" cy="152" r="18" fill="#D0803E"/>
+  <circle cx="280" cy="152" r="18" fill="#D0803E"/>
+  <path d="M172 138 L166 114 L184 128Z" fill="#B06028"/>
+  <path d="M284 138 L290 114 L272 128Z" fill="#B06028"/>
+  <!-- 眼睛（黑亮） -->
+  <circle cx="202" cy="204" r="11" fill="#2A1A10"/>
+  <circle cx="256" cy="204" r="11" fill="#2A1A10"/>
+  <circle cx="206" cy="200" r="4" fill="#FFFFFF"/>
+  <circle cx="260" cy="200" r="4" fill="#FFFFFF"/>
+  <!-- 鼻 + 嘴 + 门牙 -->
+  <ellipse cx="229" cy="232" rx="10" ry="8" fill="#7A4A26"/>
+  <path d="M229 240 Q221 252 209 248 M229 240 Q237 252 249 248" stroke="#7A4A26" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <rect x="222" y="250" width="14" height="14" rx="3" fill="#FFFFFF"/>
+  <!-- 腮红 -->
+  <ellipse cx="184" cy="238" rx="11" ry="8" fill="#F0B9A0" opacity="0.8"/>
+  <ellipse cx="272" cy="238" rx="11" ry="8" fill="#F0B9A0" opacity="0.8"/>
+  <!-- 前爪抱橡果 -->
+  <ellipse cx="190" cy="316" rx="22" ry="18" fill="#C9763A"/>
+  <ellipse cx="272" cy="316" rx="22" ry="18" fill="#C9763A"/>
+  <ellipse cx="231" cy="318" rx="22" ry="26" fill="#A86838"/>
+  <path d="M209 306 Q231 288 253 306 Q253 314 231 316 Q209 314 209 306Z" fill="#7A4A26"/>
+  <path d="M231 292 L231 284" stroke="#7A4A26" stroke-width="6" stroke-linecap="round"/>
+</svg>

@@ -11,6 +11,7 @@ import {
 import { renderPetDescription } from "@/lib/pet-dictionary";
 import { SPECIES_PET_TYPE_PREFIX } from "@/lib/species-prompt";
 import { aibiNameFor } from "@/lib/aibi-names";
+import { speciesAvatarFor } from "@/lib/species-avatars";
 import { mintCollectible } from "@/lib/nfr";
 import { releaseInviteReward } from "@/lib/referral-reward";
 import { findSoulCardByPetId } from "@/server/repositories/soul-card-repository";
@@ -249,7 +250,8 @@ export async function POST(req: Request) {
           speciesName: locale === "en" ? pet.nameEn : pet.nameZh,
           // 艾比名（物种在映射白名单时派生；展示门槛由调用方按 traits.rarity ≥ epic 判定）
           aibiName: aibiNameFor(pet.species_id, locale) ?? undefined,
-          imageUrl: pet.image_url,
+          // 物种统一头像（读路径派生；链上藏品 mintCollectible 仍用 DB 原图）
+          imageUrl: speciesAvatarFor(pet.species_id) ?? pet.image_url,
           traits: pet.traits ?? {},
           defaultDescription: renderPetDescription(
             {
