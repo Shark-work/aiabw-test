@@ -582,3 +582,22 @@ body,
   }
 }
 
+/* ─── 宠物互动页（/pets/my/[id]/play）降级情绪动画：愤怒甩头 ──────────────
+   Rive 资产缺席时 .pet-play-shake 驱动（pet-stage.tsx）；遵守全局 reduced-motion 豁免。 */
+@keyframes pet-play-shake {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-10px) rotate(-4deg); }
+  40% { transform: translateX(9px) rotate(3deg); }
+  60% { transform: translateX(-6px) rotate(-2deg); }
+  80% { transform: translateX(4px) rotate(1deg); }
+}
+.pet-play-shake {
+  animation: pet-play-shake 0.55s ease-in-out 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pet-play-shake {
+    animation: none;
+  }
+}
+
+

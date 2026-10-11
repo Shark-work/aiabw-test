@@ -213,6 +213,25 @@ export const adoptions = pgTable('adoptions', {
   memoryContext: text('memory_context'),
   // V1 探索遗产列：累计步数（成就系统 V1 折算口径 max(Σsteps÷100, 明信片数) 的数据源，原列保留）
   explorationSteps: integer('exploration_steps').notNull().default(0),
+  /** 饥饿度 0-100（AI 宠物互动页 /pets/my/[id]/play，drizzle/0038）：喂食 +N，对话缓慢消耗。 */
+  hungerLevel: integer('hunger_level').notNull().default(50),
+});
+
+/**
+ * AI 宠物互动对话流水（/pets/my/[id]/play，drizzle/0038）：
+ *  - 需求「chat_logs 表」落点：user_input / pet_reply / emotion / created_at 全字段对齐；
+ *  - 扩展 adoption_id（宠物维度历史）+ action（Rive 状态机触发动作，服务端契约需落库可审计）；
+ *  - emotion/action 值域由 src/lib/pet-play-config.ts 白名单约束（应用层校验，DB 不加 CHECK 便于演进）。
+ */
+export const petPlayLogs = pgTable('pet_play_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id).notNull(),
+  adoptionId: uuid('adoption_id').references(() => adoptions.id).notNull(),
+  userInput: text('user_input').notNull(),
+  petReply: text('pet_reply').notNull(),
+  emotion: text('emotion').notNull().default('idle'),
+  action: text('action').notNull().default('idle'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 /**

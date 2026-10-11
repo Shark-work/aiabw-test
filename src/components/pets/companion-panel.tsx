@@ -410,6 +410,14 @@ export function CompanionPanel() {
                       {tc("chat")}
                     </button>
                   )}
+                  {/* AI 互动页入口（/pets/my/[id]/play：Rive 舞台 + 打工橘猫人设对话） */}
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/pets/my/${pet.id}/play`)}
+                    className="shrink-0 rounded-full bg-orange-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-orange-600"
+                  >
+                    {t("playMode")}
+                  </button>
                 </div>
 
                 {/* 损失厌恶：低心情（happiness<40）→ 醒目喂食提示 */}

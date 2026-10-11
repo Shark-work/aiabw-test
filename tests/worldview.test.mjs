@@ -115,7 +115,7 @@ test("worldview(B1): seed 生成器 22 语句全 ON CONFLICT DO UPDATE + 四表�
 
 test("worldview(B2): client.ts SCHEMA_VERSION=22 + 四表 DDL + 种子生成器接入", () => {
   const c = read("src/db/client.ts");
-  assert.match(c, /const SCHEMA_VERSION = 22;/, "SCHEMA_VERSION bumped to 22");
+  assert.match(c, /const SCHEMA_VERSION = 23;/, "SCHEMA_VERSION bumped to 22");
   assert.ok(c.includes("import { buildWorldviewSeedSql } from './worldview-seed'"), "import 生成器");
   assert.ok(c.includes("...buildWorldviewSeedSql(),"), "种子语句入 SCHEMA_CREATES");
   for (const t of ["world_regions", "world_life_forms", "world_values", "world_glossary"]) {

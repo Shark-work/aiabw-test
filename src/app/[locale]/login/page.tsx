@@ -56,9 +56,24 @@ export default function LoginPage() {
         })();
       }
 
-      const redirect =
-        new URLSearchParams(window.location.search).get("redirect") || "/";
-      router.push(redirect);
+      // 登录后默认直达宠物互动页（产品要求：登录后最先出现 AI 互动界面）——
+      // 显式 ?redirect= 优先（回跳场景）；否则取第一只灵宠进 /pets/my/{id}/play，
+      // 无宠物或查询失败回退首页（best-effort，不阻塞登录）。
+      const redirect = new URLSearchParams(window.location.search).get("redirect");
+      if (redirect) {
+        router.push(redirect);
+      } else {
+        try {
+          const r = await fetch("/api/pets?anonymousId=", {
+            headers: { Authorization: `Bearer ${data.token}` },
+          }).then((x) => x.json());
+          const firstId =
+            Array.isArray(r?.pets) && r.pets.length > 0 ? String(r.pets[0].id) : null;
+          router.push(firstId ? `/pets/my/${firstId}/play` : "/");
+        } catch {
+          router.push("/");
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failed"));
       setLoading(false);

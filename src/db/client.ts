@@ -1175,6 +1175,21 @@ const SCHEMA_ALTERS: string[] = [
   )`,
   // ----- 世界观种子（22 行 upsert，源：src/lib/worldview-data.ts，ON CONFLICT DO UPDATE 可演进） -----
   ...buildWorldviewSeedSql(),
+  // ----- v23 AI 宠物互动页（drizzle/0038；4 表映射见档案头注：pets→adoptions 补列、
+  //      items→代码常量 pet-play-config、user_backpack→user_items 复用、chat_logs→pet_play_logs） -----
+  `ALTER TABLE "adoptions" ADD COLUMN IF NOT EXISTS "hunger_level" integer DEFAULT 50 NOT NULL`,
+  `CREATE TABLE IF NOT EXISTS "pet_play_logs" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "user_id" uuid NOT NULL REFERENCES "users"("id"),
+    "adoption_id" uuid NOT NULL REFERENCES "adoptions"("id"),
+    "user_input" text NOT NULL,
+    "pet_reply" text NOT NULL,
+    "emotion" text NOT NULL DEFAULT 'idle',
+    "action" text NOT NULL DEFAULT 'idle',
+    "created_at" timestamp DEFAULT now() NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS "idx_pet_play_logs_user" ON "pet_play_logs" ("user_id", "created_at")`,
+  `CREATE INDEX IF NOT EXISTS "idx_pet_play_logs_adoption" ON "pet_play_logs" ("adoption_id", "created_at")`,
 ];
 
 /**
@@ -1378,7 +1393,12 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     world_values（5 信条）/ world_glossary（6 词条）4 新表（drizzle/0037）；
 //     种子由 src/lib/worldview-data.ts 单一数据源经 worldview-seed.ts 生成（22 行 upsert）。
 //     ⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
-const SCHEMA_VERSION = 22;
+// v23: AI 宠物互动页（/pets/my/[id]/play）—— adoptions.hunger_level 补列（饥饿度）+
+//     pet_play_logs 1 新表（对话流水 + emotion/action Rive 契约，+user/adoption 2 索引）
+//     （drizzle/0038）；需求 4 表映射：items→pet-play-config 代码常量、
+//     user_backpack→user_items 复用，零重复建表。
+//     ⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
+const SCHEMA_VERSION = 23;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

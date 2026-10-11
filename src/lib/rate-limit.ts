@@ -27,6 +27,10 @@ export const RATE_LIMITS = {
   ugcPublish: { limit: 20, windowSec: 3600 },
   /** 灵宠短视频生成 6 次/小时/用户（每日 video_quota 是主约束，本规则防连点刷可灵调用）。 */
   video: { limit: 6, windowSec: 3600 },
+  /** 宠物互动页对话 30 次/分钟/用户（每句 1 积分事务扣除是主约束，本规则防连点/脚本刷接口）。 */
+  petPlay: { limit: 30, windowSec: 60 },
+  /** Rive 动画资产下发 30 次/分钟/用户（防盗链批量抓取；单页加载 1 次 + 浏览器 blob 缓存足够）。 */
+  petAsset: { limit: 30, windowSec: 60 },
 } satisfies Record<string, RateLimitRule>;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
