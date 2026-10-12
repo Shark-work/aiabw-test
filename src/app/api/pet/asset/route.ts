@@ -39,6 +39,25 @@ export async function GET(req: Request) {
   const rl = checkRateLimit(`pet-asset:${user.id}`, RATE_LIMITS.petAsset);
   if (rl.limited) return rateLimitResponse(req, rl.retryAfterSec);
 
+  // 防盗链第三道闸（需求四.2）：跨站 Referer/Origin → 403（第三方站点嵌入/盗链场景）。
+  // 无 Referer（浏览器隐私模式/直接 fetch）放行——JWT 鉴权 + 限流 + 白名单已兜底；
+  // 头存在但无法解析 → 视为伪造，同样拒绝。
+  const source = req.headers.get("referer") ?? req.headers.get("origin");
+  if (source) {
+    let crossSite = true;
+    try {
+      crossSite = new URL(source).host !== new URL(req.url).host;
+    } catch {
+      crossSite = true;
+    }
+    if (crossSite) {
+      return Response.json(
+        { ok: false, error: apiError(locale, "petAssetForbidden") },
+        { status: 403 },
+      );
+    }
+  }
+
   const name = new URL(req.url).searchParams.get("name") ?? "";
   if (!NAME_RE.test(name)) {
     return Response.json(

@@ -119,6 +119,7 @@ export function SiteHeader() {
   const moreItems = [
     { href: "/", label: t("home") },
     { href: "/world", label: t("navWorld") }, // 2026-10-16 世界观百科（艾比大陆五板块）
+    { href: "/pet-movie", label: t("navPetMovie") }, // 2026-10-11 电影式宠物剧场（打工橘猫）
     { href: "/pets/my", label: t("myPets") }, // 2026-10-09 双页合并：统一入口（/my-pets 308 兼容）
     { href: "/shop", label: t("shop") },
     { href: "/codex", label: t("codex") },

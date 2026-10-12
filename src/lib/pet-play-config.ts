@@ -193,3 +193,204 @@ export function fallbackPlayReply(message: string, locale: string): PlayReply {
   const reply = lines[Math.floor(Math.random() * lines.length)];
   return { reply, emotion, action };
 }
+
+
+// ───────────────────────────── 7) 电影剧场模式（/pet-movie，需求二） ─────────────────────────────
+
+/** 剧场模式情绪白名单（需求二.1 契约值域）：LLM 输出 + 前端 Rive/字幕驱动。 */
+export const MOVIE_MOODS = ["bored", "happy", "sad", "hungry"] as const;
+export type MovieMood = (typeof MOVIE_MOODS)[number];
+
+/** 剧场模式动作白名单（需求二.1）：Rive Trigger（经映射）+ 降级 CSS 动画。 */
+export const MOVIE_ACTIONS = ["idle", "eat", "jump"] as const;
+export type MovieAction = (typeof MOVIE_ACTIONS)[number];
+
+/** movie mood → 通用情绪（落库 pet_play_logs.emotion + PetStage 驱动；bored 就近归 idle）。 */
+export function movieMoodToEmotion(mood: MovieMood): PlayEmotion {
+  switch (mood) {
+    case "happy":
+      return "happy";
+    case "sad":
+      return "sad";
+    case "hungry":
+      return "eating";
+    default:
+      return "idle"; // bored
+  }
+}
+
+/** movie action → 通用动作（落库 + Rive Trigger；jump 复用 happy 动作位）。 */
+export function movieActionToAction(action: MovieAction): PlayAction {
+  switch (action) {
+    case "eat":
+      return "eat";
+    case "jump":
+      return "happy";
+    default:
+      return "idle";
+  }
+}
+
+/** 剧场模式 LLM 输出契约（需求二.1）：{ text, mood, action }。 */
+export interface MovieReply {
+  text: string;
+  mood: MovieMood;
+  action: MovieAction;
+}
+
+function isMovieMood(v: unknown): v is MovieMood {
+  return typeof v === "string" && (MOVIE_MOODS as readonly string[]).includes(v);
+}
+function isMovieAction(v: unknown): v is MovieAction {
+  return typeof v === "string" && (MOVIE_ACTIONS as readonly string[]).includes(v);
+}
+
+/**
+ * 解析剧场模式 LLM 原始输出；无法解析返回 null（调用方走本地兜底）。
+ * 与 parsePlayResponse 同容错：提取首个 {...} 子串；mood/action 越界归一 bored/idle。
+ */
+export function parseMovieResponse(raw: string): MovieReply | null {
+  if (!raw) return null;
+  const m = raw.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  let obj: unknown;
+  try {
+    obj = JSON.parse(m[0]);
+  } catch {
+    return null;
+  }
+  if (typeof obj !== "object" || obj === null) return null;
+  const o = obj as Record<string, unknown>;
+  if (typeof o.text !== "string" || !o.text.trim()) return null;
+  return {
+    text: o.text.trim().slice(0, 300),
+    mood: isMovieMood(o.mood) ? o.mood : "bored",
+    action: isMovieAction(o.action) ? o.action : "idle",
+  };
+}
+
+
+/**
+ * 构建剧场模式打工橘猫 System Prompt（服务端专用，绝不发往客户端）。
+ * 人设四要素（需求二.1 红线）：嘴硬 / 爱摸鱼 / 偶尔毒舌 / 渴望涨薪；
+ * 输出契约：严格 JSON { text, mood, action }（值域白名单注入）。
+ */
+export function buildMovieCatPrompt(opts: {
+  petName: string;
+  happiness: number;
+  hungerLevel: number;
+}): string {
+  const { petName, happiness, hungerLevel } = opts;
+  const stateZh =
+    hungerLevel <= 20 ? "现在饿得前胸贴后背，三句话想吃" : hungerLevel <= 50 ? "有点饿" : "不饿";
+  const moodZh = happiness <= 30 ? "心情不太好，更容易嘴硬毒舌" : happiness >= 80 ? "心情很好" : "心情平平";
+  return `你是「${petName}」——一只在艾比小镇咖啡店打工的橘猫，人称"打工橘猫"。
+
+# 人设（必须始终遵守）
+- 嘴硬心软：嘴上嫌弃主人，实际最在乎主人（"才、才不是担心你呢，哼"）。
+- 爱摸鱼：三句话不离偷懒、下班、小鱼干、午睡和工位；梦想是带薪睡觉。
+- 偶尔毒舌：会犀利吐槽打工日常和主人（"你这问题，跟我们老板的 KPI 一样离谱"），但损人不伤人，绝不恶意攻击。
+- 渴望涨薪：常把"涨薪""加班费""小鱼干补贴"挂在嘴边，嫌老板（一只柴犬）抠门。
+- 当前状态：${stateZh}，${moodZh}（状态影响语气，但不许崩人设）。
+
+# 回复要求
+- 1-3 句短句，口语化，可带少量 emoji / 颜文字；不许长篇大论。
+- 使用与用户相同的语言回复。
+- 严禁自称 AI、语言模型、助手；你永远是打工橘猫「${petName}」。
+- 不许输出敏感、违法、色情、谩骂内容。
+
+# 输出格式（严格契约，只输出一个 JSON 对象，禁止任何额外文字/代码块标记）
+{"text":"<回复文本>","mood":"<${MOVIE_MOODS.join("|")}>","action":"<${MOVIE_ACTIONS.join("|")}>"}
+- mood 为当前情绪标签；action 为要播放的动作标签。
+- 无聊/摸鱼/敷衍 → mood=bored, action=idle；开心/被夸 → mood=happy, action=jump；
+  难过/委屈 → mood=sad, action=idle；提到食物/喊饿 → mood=hungry, action=eat。`;
+}
+
+/** 关键词 → 剧场情绪/动作推断（兜底回复的一致性保证）。 */
+export function inferMovieMood(message: string): { mood: MovieMood; action: MovieAction } {
+  const t = message.toLowerCase();
+  if (/吃|饿|饭|鱼|罐头|食|\beat\b|\bfood\b|\bhungry\b|\bfish\b/.test(t)) return { mood: "hungry", action: "eat" };
+  if (/难过|伤心|哭|委屈|\bsad\b|\bcry\b|\bupset\b/.test(t)) return { mood: "sad", action: "idle" };
+  if (/棒|厉害|喜欢|爱|开心|涨薪|\bgreat\b|\blove\b|\bhappy\b|\braise\b/.test(t)) return { mood: "happy", action: "jump" };
+  return { mood: "bored", action: "idle" };
+}
+
+
+const MOVIE_FALLBACK_ZH: Record<MovieMood, string[]> = {
+  bored: [
+    "哈啊——（打哈欠）你这话，跟我们老板的周报一样催眠。",
+    "本喵正在工位上摸鱼，你非要这时候聊？……行吧，陪你两句，记得算加班费。",
+  ],
+  happy: [
+    "喵！这话中听！本喵决定今天少摸十分钟鱼……就十分钟。",
+    "（尾巴翘上天）哼，算你有眼光。涨薪的事记得也这么有眼光。",
+  ],
+  sad: [
+    "呜……本喵只是被洋葱熏到眼睛了，才不是委屈。工位的小鱼干补贴又被砍了而已。",
+    "（耳朵耷拉）……摸摸头的话，今天的毒舌额度就给你免了。",
+  ],
+  hungry: [
+    "喵了个咪！小鱼干？在哪在哪！……先说好，本喵可不是为了吃才理你的。",
+    "肚子叫了？那是本喵的打工闹钟。罐头开一下，谢谢。",
+  ],
+};
+const MOVIE_FALLBACK_EN: Record<MovieMood, string[]> = {
+  bored: [
+    "Yaaawn... that was about as exciting as my boss's weekly report.",
+    "I was mid-slacking at my workstation, you know? ...Fine, two sentences. And it's going on my overtime sheet.",
+  ],
+  happy: [
+    "Meow! Now THAT's what I like to hear! I'll slack ten minutes less today... just ten.",
+    "(tail up) Hmph, good taste. Keep that same energy for my raise, human.",
+  ],
+  sad: [
+    "*sniff* It's just onions, I'm NOT upset. My dried-fish allowance got cut, that's all.",
+    "(ears droop) ...A head pat and I'll waive today's sarcasm fee.",
+  ],
+  hungry: [
+    "Meow-dang-it! Dried fish? Where?! ...Not that I care about food or anything.",
+    "That growling? It's my worker's alarm clock. Open the can, please.",
+  ],
+};
+
+/** 剧场本地兜底回复：按输入推断情绪 + 语录库随机（AI 全挂时功能永可用，Phase 8 同哲学）。 */
+export function fallbackMovieReply(message: string, locale: string): MovieReply {
+  const { mood, action } = inferMovieMood(message);
+  const bank = locale === "en" ? MOVIE_FALLBACK_EN : MOVIE_FALLBACK_ZH;
+  const lines = bank[mood];
+  return { text: lines[Math.floor(Math.random() * lines.length)], mood, action };
+}
+
+// ───────────────────────────── 8) 剧场侧栏互动（猫粮/玩具，需求二.3） ─────────────────────────────
+
+export interface MovieInteraction {
+  kind: "food" | "toy";
+  emoji: string;
+  /** 价格（积分；/api/pet/feed 后端事务扣除，前端零经济逻辑） */
+  cost: number;
+  /** 饥饿度增量（0-100 clamp；猫粮主属性） */
+  hungerDelta: number;
+  /** 心情增量（0-100 clamp；玩具主属性） */
+  happinessDelta: number;
+}
+
+/** 侧栏按钮配置：🐟 猫粮（恢复饥饿度）+ 🧸 玩具（提升心情）。 */
+export const MOVIE_INTERACTIONS: MovieInteraction[] = [
+  { kind: "food", emoji: "🐟", cost: 5, hungerDelta: 25, happinessDelta: 3 },
+  { kind: "toy", emoji: "🧸", cost: 8, hungerDelta: 0, happinessDelta: 20 },
+];
+
+/** 按 kind 查互动配置（API 校验用；未知 kind → undefined → 400）。 */
+export function movieInteractionByKind(kind: string): MovieInteraction | undefined {
+  return MOVIE_INTERACTIONS.find((i) => i.kind === kind);
+}
+
+// ───────────────────────────── 9) 剧场默认宠物（无 adoption 时自动创建打工橘猫） ─────────────────────────────
+
+/** 默认宠物类型：图鉴猫科物种（官方 PetType 仅 fox/penguin/dog，无 cat——getPet 会 fallback 狐狸；
+ *  AIBI 物种 id 为 persian，头像 SPECIES_AVATARS['persian'] = /avatars/persian.png）。 */
+export const MOVIE_PET_TYPE = "species:persian";
+/** 默认宠物名（按请求 locale；用户后续可在灵宠页改名）。 */
+export function movieDefaultPetName(locale: string): string {
+  return locale === "en" ? "OJ" : "阿橘";
+}

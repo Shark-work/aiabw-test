@@ -31,6 +31,8 @@ export const RATE_LIMITS = {
   petPlay: { limit: 30, windowSec: 60 },
   /** Rive 动画资产下发 30 次/分钟/用户（防盗链批量抓取；单页加载 1 次 + 浏览器 blob 缓存足够）。 */
   petAsset: { limit: 30, windowSec: 60 },
+  /** 剧场喂食/玩耍 20 次/分钟/用户（积分事务扣除是主约束，本规则防连点/脚本刷接口）。 */
+  petFeed: { limit: 20, windowSec: 60 },
 } satisfies Record<string, RateLimitRule>;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
