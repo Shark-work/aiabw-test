@@ -104,6 +104,13 @@ export default async function LocaleLayout({
   const messages = (await import(`../../../messages/${locale}.json`)).default;
   const t = await getTranslations("common");
 
+  // 宠物沉浸页（需求七.1）：/pet-movie 与 /pets/my/[id]/play 隐藏主站导航/页脚/客服/签到弹窗，
+  // 页内迷你工具条（返回主站/静音/退出沉浸）接管——middleware 注入的 x-pathname 无 locale 前缀。
+  const h = await headers();
+  const pathname = h.get("x-pathname") ?? "/";
+  const isPetImmersive =
+    /^\/pet-movie(?:\/|$)/.test(pathname) || /^\/pets\/my\/[^/]+\/play(?:\/|$)/.test(pathname);
+
   return (
     <html lang={locale}>
       <head>
@@ -122,6 +129,11 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           {/* 主题（cute/wild 一键切换，localStorage 持久化 + head 内联脚本防闪烁） */}
           <ThemeProvider>
+          {isPetImmersive ? (
+            /* 宠物沉浸页（需求七.1）：零主站 chrome，全宽全高舞台 */
+            <div className="flex flex-1 flex-col">{children}</div>
+          ) : (
+          <>
           {/* 全局固定顶部导航（所有页面可见，移动端折叠为汉堡菜单） */}
           <SiteHeader />
           {/* 右下角悬浮客服按钮（/chat 页自动隐藏） */}
@@ -135,6 +147,8 @@ export default async function LocaleLayout({
           {/* Footer（含 LanguageSwitcher）与 Analytics 必须在 Provider 内部：
               否则 LanguageSwitcher 的 useLocale() 找不到 intl 上下文，全站渲染崩溃。 */}
           <Footer />
+          </>
+          )}
           <Analytics />
           </ThemeProvider>
         </NextIntlClientProvider>

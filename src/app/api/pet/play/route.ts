@@ -8,7 +8,14 @@ import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { getPet } from "@/lib/pet-config";
 import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
 import { speciesAvatarFor } from "@/lib/species-avatars";
-import { PLAY_ITEMS, PLAY_ITEM_SOURCE } from "@/lib/pet-play-config";
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
+import { characterView, resolveCharacter } from "@/lib/pets/characters";
+import {
+  HUNGER_SETTLE_SQL,
+  HUNGRY_THRESHOLD,
+  PLAY_ITEMS,
+  PLAY_ITEM_SOURCE,
+} from "@/lib/pet-play-config";
 
 export const runtime = "nodejs";
 
@@ -28,6 +35,9 @@ export async function GET(req: Request) {
       { status: 401 },
     );
   }
+
+  const rl = checkRateLimit(`pet-movie:${user.id}`, RATE_LIMITS.petPlay);
+  if (rl.limited) return rateLimitResponse(req, rl.retryAfterSec);
 
   const adoptionId = new URL(req.url).searchParams.get("adoptionId") ?? "";
   if (!UUID_RE.test(adoptionId)) {
@@ -66,6 +76,14 @@ export async function GET(req: Request) {
       );
     }
 
+    // 离线饥饿结算（需求四.4：回到页面时按离线整小时衰减，重新结算后下发）
+    const settled = await pool.query<{ hungerLevel: number }>(
+      `UPDATE adoptions SET ${HUNGER_SETTLE_SQL}, last_interacted_at = now()
+        WHERE id = $1 RETURNING hunger_level AS "hungerLevel"`,
+      [adoptionId],
+    );
+    const hungerLevel = Number(settled.rows[0]?.hungerLevel ?? pet.hungerLevel);
+
     // 积分余额 + 互动背包（source='pet_play' 聚合数量）并行查询
     const [balRes, bagRes] = await Promise.all([
       pool.query<{ points: number }>(`SELECT points FROM users WHERE id = $1`, [user.id]),
@@ -90,9 +108,12 @@ export async function GET(req: Request) {
         petType: pet.petType,
         avatar,
         happiness: pet.happiness,
-        hungerLevel: pet.hungerLevel,
+        hungerLevel,
         level: pet.level,
       },
+      // 角色展示层（需求一：greeting/displayName 由角色注册表下发，前端零硬编码）
+      character: characterView(resolveCharacter(pet.petType), locale),
+      hungry: hungerLevel <= HUNGRY_THRESHOLD,
       points: Number(balRes.rows[0]?.points ?? 0),
       items: PLAY_ITEMS.map((i) => ({
         key: i.key,

@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { ensureDbSchemaOnce, pool } from "@/db/client";
 import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
-import { PLAY_ITEM_SOURCE, playItemByKey } from "@/lib/pet-play-config";
+import { actionForMood, resolveCharacter } from "@/lib/pets/characters";
+import { HUNGER_SETTLE_SQL, PLAY_ITEM_SOURCE, playItemByKey, type PetMood } from "@/lib/pet-play-config";
 
 export const runtime = "nodejs";
 
@@ -47,9 +48,10 @@ export async function POST(req: Request) {
     await ensureDbSchemaOnce();
     await client.query("BEGIN");
 
-    // 宠物归属校验（行内校验，避免 TOCTOU 后再验一次的成本——先锁道具再校验归属足够）
-    const own = await client.query<{ ok: boolean }>(
-      `SELECT (user_id = $2) AS ok FROM adoptions WHERE id = $1`,
+    // 宠物归属校验（行内校验，避免 TOCTOU 后再验一次的成本——先锁道具再校验归属足够；
+    // 带 pet_type 供角色台词解析——需求一）
+    const own = await client.query<{ ok: boolean; petType: string }>(
+      `SELECT (user_id = $2) AS ok, pet_type AS "petType" FROM adoptions WHERE id = $1`,
       [adoptionId, user.id],
     );
     if (own.rows.length === 0) {
@@ -66,6 +68,13 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+    const petType = own.rows[0].petType;
+
+    // 离线饥饿结算（需求四.4：先按离线时长衰减，再叠加道具增量）
+    await client.query(
+      `UPDATE adoptions SET ${HUNGER_SETTLE_SQL}, last_interacted_at = now() WHERE id = $1`,
+      [adoptionId],
+    );
 
     // 锁取最早一件（FIFO 消耗）
     const row = await client.query<{ id: string }>(
@@ -96,11 +105,29 @@ export async function POST(req: Request) {
       `SELECT COUNT(*)::text AS qty FROM user_items WHERE user_id = $1 AND item_key = $2 AND source = $3`,
       [user.id, item.key, PLAY_ITEM_SOURCE],
     );
+
+    // 交互记录（需求四.3：点击喂食写 pet_play_logs；kind='item' 不占每日对话计数）
+    const mood: PetMood = item.effect === "eat" ? "hungry" : "happy";
+    const action = actionForMood(mood);
+    const character = resolveCharacter(petType);
+    const bank = locale === "en" ? character.linesEn : character.linesZh;
+    const lines = bank[mood];
+    const text = lines[Math.floor(Math.random() * lines.length)];
+    await client.query(
+      `INSERT INTO pet_play_logs (user_id, adoption_id, user_input, pet_reply, emotion, action, kind, source)
+       VALUES ($1, $2, $3, $4, $5, $6, 'item', 'fallback')`,
+      [user.id, adoptionId, `use:${item.key}`, text, mood, action],
+    );
+
     await client.query("COMMIT");
 
     return NextResponse.json({
       ok: true,
       itemKey: item.key,
+      effect: item.effect,
+      text,
+      mood,
+      action,
       hungerLevel: Number(upd.rows[0]?.hungerLevel ?? 0),
       happiness: Number(upd.rows[0]?.happiness ?? 0),
       remaining: Number(remain.rows[0]?.qty ?? 0),

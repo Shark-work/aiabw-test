@@ -9,10 +9,15 @@ import { getPet } from "@/lib/pet-config";
 import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
 import { speciesAvatarFor } from "@/lib/species-avatars";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
+import { characterView, resolveCharacter } from "@/lib/pets/characters";
 import {
+  HUNGER_SETTLE_SQL,
+  HUNGRY_THRESHOLD,
   MOVIE_INTERACTIONS,
   MOVIE_PET_TYPE,
   movieDefaultPetName,
+  PLAY_ITEMS,
+  PLAY_ITEM_SOURCE,
 } from "@/lib/pet-play-config";
 
 export const runtime = "nodejs";
@@ -82,11 +87,25 @@ export async function GET(req: Request) {
       );
     }
 
-    // 3) 积分余额 + 头像派生（与 /api/pet/play 同口径）
-    const balRes = await pool.query<{ points: number }>(
-      `SELECT points FROM users WHERE id = $1`,
-      [user.id],
+    // 3) 离线饥饿结算（需求四.4：回到页面按离线整小时衰减后下发）+ 积分余额 + 头像派生 + 背包
+    const settled = await pool.query<{ hungerLevel: number }>(
+      `UPDATE adoptions SET ${HUNGER_SETTLE_SQL}, last_interacted_at = now()
+        WHERE id = $1 RETURNING hunger_level AS "hungerLevel"`,
+      [pet.id],
     );
+    const hungerLevel = Number(settled.rows[0]?.hungerLevel ?? pet.hungerLevel);
+
+    const [balRes, bagRes] = await Promise.all([
+      pool.query<{ points: number }>(`SELECT points FROM users WHERE id = $1`, [user.id]),
+      pool.query<{ itemKey: string; qty: string }>(
+        `SELECT item_key AS "itemKey", COUNT(*)::text AS qty
+           FROM user_items WHERE user_id = $1 AND source = $2
+          GROUP BY item_key`,
+        [user.id, PLAY_ITEM_SOURCE],
+      ),
+    ]);
+    const bagMap = new Map(bagRes.rows.map((r) => [r.itemKey, Number(r.qty)]));
+
     const avatar = isSpeciesPetType(pet.petType)
       ? (speciesAvatarFor(speciesIdOf(pet.petType)) ?? getPet(pet.petType).avatar)
       : getPet(pet.petType).avatar;
@@ -99,11 +118,26 @@ export async function GET(req: Request) {
         petType: pet.petType,
         avatar,
         happiness: pet.happiness,
-        hungerLevel: pet.hungerLevel,
+        hungerLevel,
         level: pet.level,
       },
+      // 角色展示层（需求一：greeting/displayName 由角色注册表下发，前端零硬编码）
+      character: characterView(resolveCharacter(pet.petType), locale),
+      hungry: hungerLevel <= HUNGRY_THRESHOLD,
       points: Number(balRes.rows[0]?.points ?? 0),
-      // 侧栏互动配置（价格/数值全部由服务端下发；名称走前端 i18n petMovie.feed/toy）
+      // 背包商品目录（需求四：剧场侧栏改背包模式，与 play 页同目录/同事务路由）
+      items: PLAY_ITEMS.map((i) => ({
+        key: i.key,
+        name: locale === "en" ? i.nameEn : i.nameZh,
+        emoji: i.emoji,
+        price: i.price,
+        hungerDelta: i.hungerDelta,
+        happinessDelta: i.happinessDelta,
+        effect: i.effect,
+        desc: locale === "en" ? i.descEn : i.descZh,
+        owned: bagMap.get(i.key) ?? 0,
+      })),
+      // legacy 直购互动（老客户端兼容；新客户端走 items + /api/pet/play/buy|use）
       interactions: MOVIE_INTERACTIONS.map((i) => ({
         kind: i.kind,
         emoji: i.emoji,

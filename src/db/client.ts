@@ -1190,6 +1190,12 @@ const SCHEMA_ALTERS: string[] = [
   )`,
   `CREATE INDEX IF NOT EXISTS "idx_pet_play_logs_user" ON "pet_play_logs" ("user_id", "created_at")`,
   `CREATE INDEX IF NOT EXISTS "idx_pet_play_logs_adoption" ON "pet_play_logs" ("adoption_id", "created_at")`,
+  // ----- v24 宠物对话可观测性（drizzle/0039）：kind 区分 chat/chat_refund/item（每日免费计数口径
+  //      = 当日 kind='chat' 行数）、source 区分 ai/fallback、duration_ms/tokens_used 成本核算 -----
+  `ALTER TABLE "pet_play_logs" ADD COLUMN IF NOT EXISTS "kind" text DEFAULT 'chat' NOT NULL`,
+  `ALTER TABLE "pet_play_logs" ADD COLUMN IF NOT EXISTS "source" text DEFAULT 'ai' NOT NULL`,
+  `ALTER TABLE "pet_play_logs" ADD COLUMN IF NOT EXISTS "duration_ms" integer`,
+  `ALTER TABLE "pet_play_logs" ADD COLUMN IF NOT EXISTS "tokens_used" integer`,
 ];
 
 /**
@@ -1398,7 +1404,7 @@ async function runAlters(client: { query: (sql: string) => Promise<unknown> }) {
 //     （drizzle/0038）；需求 4 表映射：items→pet-play-config 代码常量、
 //     user_backpack→user_items 复用，零重复建表。
 //     ⚠️ 部署后必须手动跑 scripts/db-migrate-prod.mjs（ops-rules 红线）
-const SCHEMA_VERSION = 23;
+const SCHEMA_VERSION = 24;
 
 const META_TABLE_DDL = `CREATE TABLE IF NOT EXISTS "_schema_meta" (
   "id" integer PRIMARY KEY,

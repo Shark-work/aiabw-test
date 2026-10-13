@@ -75,6 +75,8 @@ export interface FallbackResult {
   provider: string;
   /** 尝试次数（>1 表示发生了降级切换）。 */
   attempts: number;
+  /** token 总消耗（provider 未上报时为 undefined，调用方可按字符估算兜底——成本核算用）。 */
+  tokens?: number;
 }
 
 /** 跨 provider 顺序重试：第一个成功的 provider 出文；全部失败抛 AggregateError。 */
@@ -88,7 +90,7 @@ export async function generateWithFallback(
   const errors: unknown[] = [];
   for (const c of candidates) {
     try {
-      const { text } = await generateText({
+      const { text, usage } = await generateText({
         model: buildChatModel(c, opts.modelName),
         system: opts.system,
         prompt: opts.prompt,
@@ -96,7 +98,7 @@ export async function generateWithFallback(
         maxOutputTokens: opts.maxOutputTokens,
       });
       if (text && text.trim()) {
-        return { text, provider: c.id, attempts: errors.length + 1 };
+        return { text, provider: c.id, attempts: errors.length + 1, tokens: usage?.totalTokens };
       }
       errors.push(new Error(`${c.id}: empty response`));
     } catch (err) {

@@ -33,6 +33,8 @@ export const RATE_LIMITS = {
   petAsset: { limit: 30, windowSec: 60 },
   /** 剧场喂食/玩耍 20 次/分钟/用户（积分事务扣除是主约束，本规则防连点/脚本刷接口）。 */
   petFeed: { limit: 20, windowSec: 60 },
+  /** 宠物对话 IP 维度 60 次/分钟（需求六.1 用户+IP 双维度限流：防多账号同 IP 刷爆大模型费用）。 */
+  petChatIp: { limit: 60, windowSec: 60 },
 } satisfies Record<string, RateLimitRule>;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();

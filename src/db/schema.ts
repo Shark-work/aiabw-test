@@ -231,6 +231,12 @@ export const petPlayLogs = pgTable('pet_play_logs', {
   petReply: text('pet_reply').notNull(),
   emotion: text('emotion').notNull().default('idle'),
   action: text('action').notNull().default('idle'),
+  // v24 可观测性（drizzle/0039）：kind=chat/chat_refund/item；source=ai/fallback；
+  // durationMs/tokensUsed 为 AI 调用耗时与 token 消耗（成本核算，兜底/道具行为 null）。
+  kind: text('kind').notNull().default('chat'),
+  source: text('source').notNull().default('ai'),
+  durationMs: integer('duration_ms'),
+  tokensUsed: integer('tokens_used'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

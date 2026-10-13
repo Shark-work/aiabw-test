@@ -5,24 +5,25 @@ import { useRive } from "@rive-app/react-canvas";
 
 import { LivingPet } from "@/components/LivingPet";
 import {
-  PLAY_EMOTIONS,
+  PET_MOODS,
   RIVE_ASSET_NAME,
   RIVE_STATE_MACHINE,
-  type PlayAction,
-  type PlayEmotion,
+  type PetAction,
+  type PetMood,
 } from "@/lib/pet-play-config";
 
-/** emotion → Rive Number 输入索引（与 pet-play-config 白名单顺序一致，美术侧按此绑定）。 */
-const EMOTION_INDEX = new Map<string, number>(PLAY_EMOTIONS.map((e, i) => [e, i]));
+/** mood → Rive Number 输入索引（与 PET_MOODS 白名单顺序一致，美术侧按此绑定）。 */
+const MOOD_INDEX = new Map<string, number>(PET_MOODS.map((e, i) => [e, i]));
 
-/** 降级模式 emotion → 外层 CSS 动画类（Rive 缺席时的情绪外显）。 */
-const FALLBACK_ANIM: Record<PlayEmotion, string> = {
+/** 降级模式 mood → 外层 CSS 动画类（Rive 缺席时的情绪外显）。 */
+const FALLBACK_ANIM: Record<PetMood, string> = {
   idle: "",
   happy: "animate-bounce",
   sad: "animate-pulse opacity-75",
   angry: "pet-play-shake",
-  eating: "animate-pulse",
+  hungry: "animate-pulse",
   thinking: "animate-pulse",
+  sleepy: "animate-pulse opacity-80",
 };
 
 interface PetStageProps {
@@ -31,22 +32,31 @@ interface PetStageProps {
   /** 降级立绘（物种头像 / 官方宠物图） */
   avatar: string;
   alt: string;
-  emotion: PlayEmotion;
-  action: PlayAction;
+  mood: PetMood;
+  action: PetAction;
+  /** 情绪强度 0-2（Rive Number 输入「intensity」，资产未做该输入时自动跳过） */
+  intensity?: 0 | 1 | 2;
+  /** 资产加载失败上报（需求二.2：控制台明确错误 + 页面轻提示，禁止静默失败） */
+  onAssetFailed?: (reason: string) => void;
+  /** 点击宠物（蹭蹭互动：直接 fire rub 动作位 + 通知父组件播音效/台词） */
+  onPetTap?: () => void;
 }
 
 /**
- * 宠物舞台（需求 1.1 核心）：Rive 渲染优先，CSS 动画立绘降级双模。
- *  - 资产通道：fetch /api/pet/asset（Bearer 鉴权 + 限流）→ ArrayBuffer → useRive；
- *    401/404/网络错误（.riv 未上架）自动降级 LivingPet（呼吸/眨眼/摇尾/点击撒娇）；
- *  - 状态机契约：emotion → Number 输入「emotion」（白名单索引）；action → 同名 Trigger fire；
- *  - 双模共用同一 { emotion, action } 驱动接口，上层零感知。
+ * 宠物舞台（需求三.1 核心）：@rive-app/react-canvas 加载 .riv + 接入 State Machine。
+ *  - 资产通道：fetch /api/pet/asset（Bearer 鉴权 + 限流 + Referer 校验）→ ArrayBuffer → useRive；
+ *    失败（401/404/.riv 未上架）console.error 明确原因 + onAssetFailed 上报 + 降级 LivingPet
+ *    （呼吸/眨眼/摇尾），**不静默失败**（需求二.2）；
+ *  - 状态机契约：mood → Number 输入「emotion」（白名单索引）；intensity → Number 输入
+ *    「intensity」（0-2）；action → 同名 Trigger fire；全部经映射表驱动（需求三.2）；
+ *  - 点击宠物 = 蹭蹭（rub Trigger），双模共用同一 { mood, action, intensity } 驱动接口。
  */
-export function PetStage({ token, avatar, alt, emotion, action }: PetStageProps) {
+export function PetStage({ token, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
   const [riveUrl, setRiveUrl] = useState<string | null>(null);
   const [assetFailed, setAssetFailed] = useState(false);
+  const [rubbing, setRubbing] = useState(false);
 
-  // 1) 经鉴权 API 拉取 .riv（防盗链：无公开 URL；失败即降级）→ Blob ObjectURL
+  // 1) 经鉴权 API 拉取 .riv（防盗链：无公开 URL）→ Blob ObjectURL；失败上报 + 降级
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -61,14 +71,21 @@ export function PetStage({ token, avatar, alt, emotion, action }: PetStageProps)
         if (cancelled) return;
         objectUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
         setRiveUrl(objectUrl);
-      } catch {
-        if (!cancelled) setAssetFailed(true);
+      } catch (err) {
+        // 需求二.2：控制台明确错误（含 HTTP 状态）+ 上报父组件轻提示，不静默
+        const reason = err instanceof Error ? err.message : String(err);
+        console.error(`[pet-stage] Rive asset load failed (${reason}); falling back to static sprite`);
+        if (!cancelled) {
+          setAssetFailed(true);
+          onAssetFailed?.(reason);
+        }
       }
     })();
     return () => {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // 2) Rive 初始化（react 4.x 类型契约 src:string → Blob URL；会话内私有、卸载即吊销）
@@ -78,20 +95,23 @@ export function PetStage({ token, avatar, alt, emotion, action }: PetStageProps)
     autoplay: true,
   });
 
-  // 3) emotion → Number 输入同步（duck typing：数值输入有 value 属性）
+  // 3) mood → Number 输入「emotion」同步；intensity → Number 输入「intensity」（duck typing）
   useEffect(() => {
     if (!rive) return;
     try {
-      const input = (rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? []).find(
-        (i) => i.name === "emotion",
-      );
-      if (input && typeof input.value === "number") {
-        input.value = EMOTION_INDEX.get(emotion) ?? 0;
+      const inputs = rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? [];
+      const emotionInput = inputs.find((i) => i.name === "emotion");
+      if (emotionInput && typeof emotionInput.value === "number") {
+        emotionInput.value = MOOD_INDEX.get(mood) ?? 0;
+      }
+      const intensityInput = inputs.find((i) => i.name === "intensity");
+      if (intensityInput && typeof intensityInput.value === "number") {
+        intensityInput.value = intensity;
       }
     } catch {
       // 状态机输入缺失（资产未按约定制作）时静默，不打断互动
     }
-  }, [rive, emotion]);
+  }, [rive, mood, intensity]);
 
   // 4) action → 同名 Trigger 触发（duck typing：Trigger 有 fire 方法）
   useEffect(() => {
@@ -106,18 +126,44 @@ export function PetStage({ token, avatar, alt, emotion, action }: PetStageProps)
     }
   }, [rive, action]);
 
-  // 5) 双模渲染
+  // 5) 蹭蹭互动（需求三.2 rub 动作位：点击宠物直接 fire，不占情绪位）
+  const handleTap = () => {
+    onPetTap?.();
+    if (rive) {
+      try {
+        const trigger = (rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? []).find(
+          (i) => i.name === "rub",
+        );
+        if (trigger && typeof trigger.fire === "function") trigger.fire();
+      } catch {
+        /* 输入缺失静默 */
+      }
+    } else {
+      // 降级模式：短暂 CSS 弹跳反馈
+      setRubbing(true);
+      setTimeout(() => setRubbing(false), 600);
+    }
+  };
+
+  // 6) 双模渲染
   if (riveUrl && !assetFailed) {
     return (
-      <RiveComponent
-        className="h-[46vh] w-[46vh] max-h-[420px] max-w-[420px]"
-        aria-label={alt}
-      />
+      <button type="button" onClick={handleTap} aria-label={alt} className="cursor-pointer">
+        <RiveComponent
+          className="h-[46vh] w-[46vh] max-h-[420px] max-w-[420px]"
+          aria-label={alt}
+        />
+      </button>
     );
   }
   return (
-    <div className={`transition-transform duration-300 ${FALLBACK_ANIM[emotion]}`}>
+    <button
+      type="button"
+      onClick={handleTap}
+      aria-label={alt}
+      className={`cursor-pointer transition-transform duration-300 ${FALLBACK_ANIM[mood]} ${rubbing ? "scale-105" : ""}`}
+    >
       <LivingPet src={avatar} alt={alt} width={280} height={280} priority />
-    </div>
+    </button>
   );
 }

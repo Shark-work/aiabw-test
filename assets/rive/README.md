@@ -17,10 +17,13 @@
 ## .riv 制作约定（美术 / Rive Editor 交付需遵守）
 
 - 画布：建议 1024×1024，透明背景，主角居中偏下（舞台 `h-[46vh]` 正方形容器）。
-- 状态机名称：**`PetStateMachine`**（`src/lib/pet-play-config.ts` 的 `RIVE_STATE_MACHINE`）。
-- 输入 1 — Number 类型，名称 **`emotion`**：情绪索引，取值 0-5，顺序即
-  `PLAY_EMOTIONS` 白名单：`0=idle 1=happy 2=sad 3=angry 4=eating 5=thinking`。
+- 状态机名称：**`PetStateMachine`**（`src/lib/pets/characters.ts` 的 `RIVE_STATE_MACHINE`）。
+- 输入 1 — Number 类型，名称 **`emotion`**：情绪索引，取值 0-6，顺序即
+  `PET_MOODS` 白名单：`0=idle 1=happy 2=sad 3=angry 4=hungry 5=thinking 6=sleepy`。
   状态机应按值切换对应表情/待机动画。
-- 输入 2 — Trigger 类型，与动作同名（`PLAY_ACTIONS` 白名单）：
-  `idle / happy / sad / angry / eat / sleep / think / wave`，fire 后播放一次性动作。
+- 输入 2 — Number 类型，名称 **`intensity`**（可选）：情绪强度 0-2，
+  用于驱动动画幅度（0 弱 / 1 中 / 2 强）；资产未做该输入时前端自动跳过。
+- 输入 3 — Trigger 类型，与动作同名（`PET_ACTIONS` 白名单）：
+  `idle / happy / sad / angry / eat / sleep / think / wave / rub`，fire 后播放一次性动作；
+  `rub` 为「蹭蹭」互动动作（用户点击宠物时触发）。
 - 合规：原创或 Rive Community 可商用授权素材二次制作；交付前在 PR 描述注明来源与授权。

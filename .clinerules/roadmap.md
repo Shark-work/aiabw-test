@@ -6,6 +6,32 @@
 
 ---
 
+## Phase 12 · AI 宠物模块框架性修复（✅ 2026-10-17，单批次）
+
+**背景**：pet-movie/pet-play 两页存在框架性问题——角色文案与宠物物种错配（显示雪豹但文案是橘猫）、
+Rive 资产 404 静默降级、双契约并存（play 的 emotion/action vs movie 的 mood/action）、
+movie 页喂食无背包、饥饿零离线衰减、扣费无退款、无免费额度、无 IP 限流、无成本观测、
+宠物页带全站导航。按用户九项清单一次性修复。
+
+| 需求 | 落地 |
+| --- | --- |
+| 一 · 统一角色数据源 | `src/lib/pets/characters.ts` 角色注册表（id/name/species/personality/buildSystemPrompt/riveFileKey/fallbackImage/台词库 7 情绪×双语）；`resolveCharacter(petType)`：persian→打工橘猫，其余物种/官方宠物→艾比灵宠（雪豹不再说橘猫话）；占位符 {name} 参数化；greeting 经 API characterView 下发（prompt/台词零进 bundle） |
+| 二 · 资源 404 与兜底 | 404 根因=worker-cat.riv 从未上架（设计降级路径）；pet-stage 失败 console.error+onAssetFailed→toast；缓存 private 1h + Referer 403 既有防线保留 |
+| 三 · Rive 状态机统一 | PET_MOODS 7 值（idle/happy/sad/angry/hungry/thinking/sleepy）+ PET_ACTIONS 9 值（含 rub 蹭蹭）+ MOOD_ACTION_MAP 服务端推导；LLM 契约统一 {text,mood,intensity}（非法 mood→idle、intensity 钳 0-2）；intensity→Rive Number 输入；thinking 即时触发 |
+| 四 · 背包喂食闭环 | movie 侧栏改背包模式（复用 /api/pet/play/buy|use）；桌面 hover 侧栏 + 移动端 🎒 FAB 底部抽屉（PetBackpack 双形态）；use 路由补 pet_play_logs(kind='item')+角色台词下发；离线饥饿衰减 2/h（HUNGER_SETTLE_SQL 四入口结算）；hungerLevel≤20 → hungry 态+买粮提示 |
+| 五 · 积分体验 | 每日免费 5 句（kind='chat' 行数口径）；AI 全挂自动退款（pet_play_refund + chat_refund 不占次）；402 → InsufficientPointsModal 充值/签到引导弹窗 |
+| 六 · 成本风控 | /api/pet/chat 用户 30/min + IP 60/min 双维限流（petChatIp）；日上限 100 句（DAILY_CAP 429）；pet_play_logs +duration_ms/tokens_used（llm-fallback FallbackResult.tokens 扩展，未上报按 ≈4 字符/token 估算） |
+| 七 · 沉浸式 | layout.tsx 按 x-pathname 隐藏 SiteHeader/Footer/客服/签到（isPetImmersive）；页内工具条（返回/静音/退出沉浸）；pet-sound WebAudio 音效+localStorage 静音；play 页 404 领养引导空态 |
+| 八 · 埋点 | pet-track.ts（gtag+_hmt 双通道）：pet_page_view/pet_chat_send/pet_feed_click/pet_item_buy/pet_page_exit（visibilitychange+beforeunload 双保险） |
+| 九 · 文档 | pet-movie-integration.md 全量重写（角色配置/情绪映射/DB 表/接口/资源路径/已知风险/迁移红线） |
+
+- **SCHEMA_VERSION 23→24**（drizzle/0039_pet_chat_observability：pet_play_logs +kind/source/duration_ms/tokens_used 四列幂等补列）。⚠️ **部署红线**：推送上线后必须按 ops-rules 手动跑 `scripts/db-migrate-prod.mjs`（Start-Process 后台跑），确认 `_schema_meta.version=24` 再跑 smoke。
+- 契约测试：新建 pet-characters.test.mjs（11 项）；pet-play.test.mjs（18 项）/pet-movie.test.mjs（8 项）全量重写演进；旧断言演进 12 文件（SCHEMA_VERSION→24 ×10、drizzle 豁免→0040 ×7 含 5 个正则修正）；package.json test 脚本补挂 pet-movie/pet-characters。
+- 全量回归 783/783 + tsc 0 + build 通过；feed 路由保留 legacy 兼容（不删不加功能）。
+- 关键决策：①角色配置放代码常量（与 checkin-items 同模式，非 DB 表——免迁移演进）；②免费计数并发窗口可接受（日上限 100 硬兜底）；③退款失败仅 console.error（points_log 可审计补）；④离线衰减读路径懒结算（无独立 cron）。
+
+---
+
 ## 一、新宠物扩展：垂耳兔 & 玄凤鹦鹉（P1）
 
 **目标**：扩充宠物池，丰富养成体验，提升用户留存与付费意愿。

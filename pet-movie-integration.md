@@ -1,161 +1,235 @@
-# 宠物剧场（/pet-movie）集成文档
+# 宠物剧场 / 互动页集成文档（pet-movie-integration）
 
-> 电影式 AI 宠物互动子模块：主站 Header/Footer 保留的沉浸式电影舞台——
-> Rive 宠物居中 + 打字机字幕 + 右缘 5% 热区滑出背包 + 底部对话输入框。
-> 本文档：路由结构 / 数据库表结构 / API 接口说明 / Rive 状态机命名规范 / 安全措施生效位置。
-
----
-
-## 1. 路由结构
-
-| 层 | 位置 | 说明 |
-| --- | --- | --- |
-| 页面 | `src/app/[locale]/pet-movie/page.tsx` | SSR 壳 + `generateMetadata`（noindex 私有互动页） |
-| 客户端 | `src/components/pet-movie/pet-movie-client.tsx` | 舞台状态机（mood/action/打字机/侧栏/输入） |
-| URL | `/pet-movie` → middleware 自动补 locale 前缀 → **`/zh/pet-movie`、`/en/pet-movie`** | next-intl 规范（与全站一致，无字面 `/pet-movie` 路由文件） |
-| Header/Footer | `src/app/[locale]/layout.tsx`（全局自带 `SiteHeader` + `Footer`） | 舞台是主站内容区内的深色沉浸容器，主站 chrome 一致 |
-| 导航入口 | `src/components/layout/SiteHeader.tsx` `moreItems`「🎬 宠物剧场」 | i18n `nav.navPetMovie` |
-
-**舞台六区块（需求一.2 布局契约，测试锁定）**：
-
-| 区块 | 实现 | 关键类名 |
-| --- | --- | --- |
-| `<Stage>` | 全局深色背景 / 隐藏滚动 / 禁止选中 | `relative h-[calc(100dvh-220px)] min-h-[560px] overflow-hidden bg-[#121212] select-none`（高度扣除 Header/Footer） |
-| `<Navbar>` | 顶部状态条：宠物名 + Lv + 🍗 饥饿度进度条 + ❤️ 心情 + 🪙 积分 | `absolute top-0 left-0 w-full z-20` |
-| `<PetContainer>` | 中央舞台：Rive 优先，资产缺席降级 CSS 动画立绘（`pet-stage.tsx` 双模复用） | `absolute inset-0 flex items-center justify-center z-10` |
-| `<Subtitle>` | 底部字幕：打字机逐字（`use-typewriter.ts`），默认隐藏、说话时显示 | `absolute bottom-[120px] text-white text-lg` + `text-shadow` |
-| `<Sidebar>` | 右侧悬浮背包：**右缘 5% 热区**悬停滑出；🐟 猫粮 / 🧸 玩具一键互动 | 热区 `w-[5%]`；侧栏 `absolute top-[20%] right-0 w-[80px] h-[60%] bg-black/40 backdrop-blur-md`，`translate-x-full ↔ translate-x-0` |
-| `<ChatInput>` | 底部输入框：半透明圆角长条 + 发送按钮 | `absolute bottom-[30px] left-1/2 -translate-x-1/2 w-[60%] max-w-[800px]` |
+> AI 宠物模块（`/pet-movie` 剧场页 + `/pets/my/[id]/play` 互动页）的统一集成文档。
+> 2026-10-17 Phase 12 框架性修复：统一角色数据源 / Rive 状态机契约统一 / 背包喂食闭环 /
+> 积分免费额度与退款 / 双维限流与成本观测 / 沉浸式体验 / 埋点。
 
 ---
 
-## 2. 数据库表结构（需求三落点）
+## 1. 角色配置结构（统一角色数据源，`src/lib/pets/characters.ts`）
 
-**核心决策：零 schema 变更（SCHEMA_VERSION 保持 23），需求表名映射到既有表。**
+**单一事实源**：人设、System Prompt、开场白、台词库、Rive 资产 key、降级立绘全部在角色注册表
+`PET_CHARACTERS` 中；组件与 API 一律经 `resolveCharacter(petType)` 取角色，
+**禁止在任何组件里硬编码角色文案**（「显示雪豹但文案是橘猫」错配的根治点）。
 
-| 需求表 | 实际落点 | 原因 |
+```ts
+interface PetCharacter {
+  id: string;                  // "worker-cat" | "aibi-spirit"
+  nameZh / nameEn: string;     // 角色展示名
+  species: readonly string[];  // 匹配的物种 id（species:<id> 的 id 部分；空数组 = 兜底角色）
+  personality: string;         // 人设一句话
+  riveFileKey: string;         // Rive 资产 key（/api/pet/asset?name=<key>）
+  fallbackImage: string;       // 降级立绘（空串 = 由 API 按宠物 petType 运行时派生）
+  greetingZh / greetingEn: string;            // 开场白（经 API character.greeting 下发）
+  linesZh / linesEn: Record<PetMood, string[]>;  // 台词库：7 情绪 × 双语（本地兜底回复）
+  buildSystemPrompt(opts): string;            // System Prompt 构建器（服务端专用）
+}
+```
+
+| 角色 | 匹配 | 人设 |
 | --- | --- | --- |
-| `pets`（宠物状态） | **`adoptions`** | 项目已存在 `pets` 表（灵魂卡/收藏系统，`src/db/schema.ts:265`，`speciesId → petDictionary`）——新建同名表直接撞表。`adoptions` 自 drizzle/0038 起具备全部所需字段 |
-| `pet_interactions`（互动流水） | **`pet_play_logs`** | drizzle/0038 已建，字段与需求全对齐并扩展（见下）；避免双真相源 |
+| `worker-cat` 打工橘猫 | `species:persian` | 嘴硬心软 / 爱摸鱼 / 打工梗（KPI、周报、涨薪） |
+| `aibi-spirit` 艾比灵宠 | 其余全部物种 + 官方宠物（fox/penguin/dog）+ 未知类型 | 温柔治愈 / 陪伴型 / 艾比大陆见闻 |
 
-**字段对照**：
+**解析规则**：`resolveCharacter("species:persian") → worker-cat`；其余一律 `aibi-spirit`。
+新增角色 = 注册表追加条目 + `species` 列表填写匹配物种 id，零路由/组件改动。
 
-| 需求字段 | 实际列 | 说明 |
-| --- | --- | --- |
-| pets.id | `adoptions.id` (uuid) | 主键 |
-| pets.user_id | `adoptions.user_id` (text) | 归属 |
-| pets.name | `adoptions.pet_name` | 剧场主角名 |
-| pets.hunger | `adoptions.hunger_level` (int 0-100, 默认 50) | 喂食 +N / 对话自然消耗 |
-| pets.mood | `adoptions.happiness` (int 0-100) | 心情值 |
-| — | `adoptions.last_interacted_at` | 最近互动时间 |
-| pet_interactions.id | `pet_play_logs.id` (uuid) | 主键 |
-| pet_interactions.user_id | `pet_play_logs.user_id` (uuid → users) | 外键 |
-| pet_interactions.user_input | `pet_play_logs.user_input` (text) | 用户输入 |
-| pet_interactions.pet_reply | `pet_play_logs.pet_reply` (text) | 宠物回复 |
-| pet_interactions.created_at | `pet_play_logs.created_at` (timestamp) | 时间戳 |
-| （扩展） | `pet_play_logs.adoption_id` / `emotion` / `action` | 宠物维度历史 + Rive 驱动标签审计（值域由应用层白名单约束） |
-
-**默认宠物**：无 adoption 的用户首次进入剧场，由 `GET /api/pet/movie` 自动创建打工橘猫
-（`pet_type = species:persian`，名字按 locale「阿橘 / OJ」）。
-> 为什么不是 `'cat'`：官方 `PetType` 仅 fox/penguin/dog（`src/lib/pet-config.ts`），
-> `getPet('cat')` 会 fallback 成狐狸头像；图鉴猫科物种（AIBI id `persian`）走
-> `speciesAvatarFor('persian')` 派生手绘头像 `/avatars/persian.png`。
+**防抄袭红线**：characters.ts 含 prompt 构建器与台词库，**只能服务端 import**；
+前端经 `/api/pet/play|movie` 响应的 `character: { id, displayName, greeting }` 子对象获取展示层字段
+（`characterView()` 最小子集，零 prompt、零台词库）。页面标题走 i18n；输入框占位符
+`petPlay.inputPlaceholder` 为 `"和 {name} 说点什么…"`（宠物名参数化）。
 
 ---
 
+## 2. 情绪映射表（统一命名，`characters.ts` 导出，pet-play-config re-export）
 
-## 3. API 接口说明（需求二）
+### 2.1 情绪白名单 `PET_MOODS`（7 值，Rive Number 输入「emotion」索引序）
 
-全部接口：JWT Bearer 鉴权（`getUserFromRequest`）+ 内存固定窗口限流（429 + `Retry-After`）+ i18n 错误文案。
-**防抄袭红线：状态判断 / 大模型调用 / 积分扣除 / 数值结算 100% 在服务端完成，客户端零密钥、零 System Prompt、零经济参数。**
+| 索引 | mood | 含义 | 映射动作（MOOD_ACTION_MAP） |
+| --- | --- | --- | --- |
+| 0 | `idle` | 待机 | `idle` |
+| 1 | `happy` | 开心 | `happy` |
+| 2 | `sad` | 难过 | `sad` |
+| 3 | `angry` | 生气 | `angry` |
+| 4 | `hungry` | 饥饿 | `eat` |
+| 5 | `thinking` | 思考 | `think` |
+| 6 | `sleepy` | 困倦 | `sleep` |
 
-### 3.1 `POST /api/pet/chat` · 剧场对话（需求二.1/2.2）
+### 2.2 动作白名单 `PET_ACTIONS`（Rive Trigger，同名 fire）
 
-在既有互动屋路由上扩展 **`mode: "movie"`** 剧场契约（`mode` 缺省 = 互动屋 `{reply, emotion, action}`，向后兼容，`/pets/my/[id]/play` 零影响）。
+`idle / eat / sleep / think / wave / happy / sad / angry / rub`
+（`rub` = 蹭蹭：前端点击宠物直接 fire 的互动动作位，不占情绪位。）
 
-- 请求：`{ "adoptionId": "<uuid>", "message": "1-500 字", "mode": "movie" }`
-- 响应：`{ "ok": true, "text": "回复文本", "mood": "bored|happy|sad|hungry", "action": "idle|eat|jump", "points": 94, "happiness": 51, "hungerLevel": 49, "source": "ai|fallback" }`
-- 错误：`401` 未登录 / `429` 限流（30/min）/ `400` 参数或输入审核 / `402` 积分不足 / `403` 非本人宠物 / `404` 宠物不存在
-- 服务端流程：鉴权 → 限流 → 参数校验 → **输入内容审核** → 归属校验 → **事务扣 1 积分**（`points_log reason='pet_play'`)
-  → `generateThrottled`（并发槽 + 跨 provider 降级链；System Prompt = 嘴硬/摸鱼/毒舌/渴望涨薪 四要素，
-  `buildMovieCatPrompt`，密钥仅服务端环境变量）→ **输出内容审核** → 写 `pet_play_logs`
-  （`emotion/action` 经映射落库）+ 养成状态推进（心情 +1 / 饥饿 −1）→ 统一契约返回。
-- **AI 全挂时自动切本地兜底**（`fallbackMovieReply`，关键词推断 + 人设语录库），契约字段永远在，功能永可用。
-- mood/action 值域由 `MOVIE_MOODS` / `MOVIE_ACTIONS` 白名单归一（越界 → bored/idle）。
+### 2.3 统一 LLM 输出契约（需求三.3）
 
-### 3.2 `GET /api/pet/movie` · 剧场初始化聚合
+```json
+{ "text": "<回复文本>", "mood": "<PET_MOODS 之一>", "intensity": 0 }
+```
 
-- 响应：`{ "ok": true, "pet": { "id", "name", "petType", "avatar", "happiness", "hungerLevel", "level" }, "points": 100, "interactions": [ { "kind": "food", "emoji": "🐟", "cost": 5, "hungerDelta": 25, "happinessDelta": 3 }, { "kind": "toy", ... } ] }`
-- 宠物解析：用户最早一只 adoption；**无则自动创建打工橘猫**（见 §2 默认宠物）。
-- 侧栏互动的价格/数值全部由本接口下发，前端不硬编码经济参数。
-
-### 3.3 `POST /api/pet/feed` · 侧栏一键互动（需求二.3）
-
-- 请求：`{ "adoptionId": "<uuid>", "kind": "food" | "toy" }`
-- 响应：`{ "ok": true, "kind": "food", "points": 95, "hungerLevel": 75, "happiness": 53 }`
-- 事务（与 `/api/pet/play/use` 同模式）：归属校验 → `SELECT ... FOR UPDATE` 锁余额 → 不足 `402`
-  → 扣积分 + `points_log reason='pet_movie_feed'` → `adoptions` 饥饿度/心情 SQL 内 clamp(0-100) 结算 → COMMIT。
-- 配置（`MOVIE_INTERACTIONS`，改常量即生效无需迁移）：🐟 猫粮 5 积分 +25 饥饿/+3 心情；🧸 玩具 8 积分 +20 心情。
-- 前端收到成功后触发 Rive **eat**（猫粮）/ **jump**（玩具）动作并更新顶部状态条。
-
-### 3.4 `GET /api/pet/asset?name=worker-cat` · Rive 资产安全下发（需求四.2）
-
-- 防线（依序）：JWT `401` → 限流 30/min `429` → **Referer/Origin 跨站校验 `403`** → 文件名白名单 `400`
-  → 存在性 `404` → 流式输出（`Content-Disposition:inline` + `nosniff` + `Cache-Control: private, max-age=3600`）。
-- Referer 校验规则：头存在且 host ≠ 本站 → 拒绝；头缺失（隐私模式/直接 fetch）放行（鉴权+限流兜底）。
-- `.riv` 存放于仓库私有目录 `assets/rive/`（**绝不放 `public/`**），浏览器唯一获取通道即本接口。
+- 大模型**只返回 { text, mood, intensity }**——**不返回动画名**；
+  动作由服务端 `MOOD_ACTION_MAP` 推导（需求三.2 红线，prompt 契约段不注入动作名）。
+- `mood` 越界 → 归一 `idle`；`intensity` 缺省 1、钳制 0-2（`parsePetChatResponse`）。
+- `intensity` → Rive Number 输入「intensity」（资产未做该输入时前端自动跳过）。
+- 用户输入时前端立即 `thinking`；回复结束后由契约 mood 接管，4s 脉冲回 `idle`。
 
 ---
 
-## 4. Rive 状态机触发器命名规范（美术 / Rive Editor 交付契约）
+## 3. 数据库表（SCHEMA_VERSION 24）
+
+| 表 | 关键列 | 说明 |
+| --- | --- | --- |
+| `adoptions` | `hunger_level`（默认 50）、`happiness`、`last_interacted_at`、`chat_count` | 养成状态；饥饿度离线衰减结算落点 |
+| `pet_play_logs` | `user_id` / `adoption_id` / `user_input` / `pet_reply` / `emotion` / `action` + **v24**：`kind` / `source` / `duration_ms` / `tokens_used` | 交互与调用日志（成本核算） |
+| `user_items` | `item_key` / `source='pet_play'` | 背包（COUNT(*) 聚合数量，一件一行） |
+| `points_log` | `reason='pet_play' / 'pet_play_refund' / 'pet_play_buy' / 'pet_movie_feed'` | 积分流水（退款负负相抵） |
+
+**`pet_play_logs.kind` 三值**（每日免费计数与日上限口径的核心）：
+- `chat`：AI 成功出文的对话（**每日免费 5 次与日上限 100 次都只计本类**，`created_at::date = CURRENT_DATE`）；
+- `chat_refund`：AI 全 provider 失败、已退款的兜底对话（不占免费次数）；
+- `item`：道具使用记录（需求四.3，不占对话计数）。
+
+`source`：`ai`（模型出文）/ `fallback`（本地兜底）。`duration_ms` / `tokens_used`
+（provider 未上报 usage 时按字符 ≈4/token 估算）仅 AI 行非 null。
+
+迁移：`drizzle/0038_pet_play.sql`（基线）+ `drizzle/0039_pet_chat_observability.sql`（v24 四列，
+全部 `ADD COLUMN IF NOT EXISTS` 幂等）。生产同步走 client.ts 版本闸门。
+
+---
+
+## 4. 接口说明
+
+### 4.1 `POST /api/pet/chat` · 对话（统一契约）
+
+- 请求：`{ adoptionId, message(1-500), mode? }`（`mode` 为 legacy 兼容参数，忽略——双契约已废除）。
+- 防线顺序：JWT `401` → **用户 30/min + IP 60/min 双维限流** `429`（需求六.1）→ 参数校验
+  → 输入内容审核 `400` → 归属校验 `403/404` → **离线饥饿结算** → **每日上限 100 `429`
+  （code=DAILY_CAP）** → 免费额度判定（当日 `kind='chat'` ≥ 5 → 事务扣 1 积分，不足 `402`
+  code=INSUFFICIENT_POINTS）→ `generateThrottled`（并发槽 + 跨 provider 降级；System Prompt
+  由 `resolveCharacter(petType).buildSystemPrompt` 构建）→ 失败**自动退款**
+  （points_log `pet_play_refund` + 日志 `chat_refund`，需求五.2）→ 输出审核 → 养成推进 + 日志落库。
+- 响应：`{ ok, text, mood, intensity, action, points, freeRemaining, happiness, hungerLevel, hungry, source }`
+  （`hungry` = hungerLevel ≤ 20，前端据此进 hungry 态 + 提示买粮）。
+
+### 4.2 `GET /api/pet/play?adoptionId=` · 互动页初始化聚合
+
+宠物（离线结算后的饥饿度）+ `character`（id/displayName/greeting）+ `hungry` 标志 +
+积分余额 + `items`（5 件商品目录 + owned 背包数量）。30/min 限流。
+
+### 4.3 `GET /api/pet/movie` · 剧场页初始化聚合
+
+同 4.2 之外：主角 = 最早一只 adoption，**无宠物自动创建打工橘猫**
+（`species:persian`，名「阿橘 / OJ」）；额外下发 legacy `interactions`（老客户端兼容）。
+
+### 4.4 `POST /api/pet/play/buy` · 购买道具
+
+事务：行锁余额 → 402 → 扣积分（`pet_play_buy`）→ `user_items` 入库。响应 `{ ok, points, owned }`。
+
+### 4.5 `POST /api/pet/play/use` · 使用道具（喂食/玩耍）
+
+事务：归属校验（带 pet_type）→ **先离线饥饿结算** → FIFO 锁取道具（无库存 `409` ITEM_EMPTY）
+→ 删除道具 → 饥饿/心情 clamp 增量 → **写 `pet_play_logs`（kind='item'）**。
+响应 `{ ok, itemKey, effect, text, mood, action, hungerLevel, happiness, remaining }`
+（`text` = 角色台词库对应情绪随机条——喂食播 eat、玩耍播 happy，前端零文案）。
+
+### 4.6 `POST /api/pet/feed` · legacy 直购互动（保留兼容）
+
+剧场老客户端的直购喂食（kind=food|toy 直接扣积分，无背包概念）。
+**新客户端一律走背包（4.4/4.5）**；本路由不删除、不新增功能。
+
+### 4.7 `GET /api/pet/asset?name=` · Rive 资产安全下发
+
+防线：JWT `401` → 30/min `429` → **Referer/Origin 跨站 `403`** → 文件名白名单 `400`
+→ 存在性 `404` → 流式输出（`Cache-Control: private, max-age=3600` + `nosniff`）。
+`.riv` 存仓库私有目录 `assets/rive/`（**绝不放 `public/`**），浏览器唯一获取通道即本接口。
+
+---
+
+## 5. 计费与免费额度（需求五）
+
+| 规则 | 口径 |
+| --- | --- |
+| 每日免费对话 | **5 句**（`PET_CHAT_FREE_DAILY`；当日 `pet_play_logs` 中 `kind='chat'` 行数 < 5 不计费） |
+| 超出后 | 每句 **1 积分**（`PLAY_CHAT_COST`），事务扣除 + `points_log('pet_play')` |
+| 余额不足 | `402` + `INSUFFICIENT_POINTS` → 前端**充值引导弹窗**（去充值 /pay、去签到 /checkin；不再静默 toast） |
+| AI 失败退款 | 全 provider 抛错 → 本地兜底回复 + **积分自动退回**（`pet_play_refund`）+ 日志 `chat_refund` 不占免费次数 |
+| 每日总上限 | **100 句/用户**（`PET_CHAT_DAILY_CAP`；超出 `429` + `DAILY_CAP`） |
+| 单条长度 | 500 字（`PET_CHAT_MAX_LEN`） |
+
+免费次数计数在扣费前完成（并发下两句同时判定为免费是接受的——经济主约束是日上限与限流）。
+
+---
+
+## 6. 资源部署路径与 Rive 状态机约定（需求二、三）
 
 | 项 | 约定 |
 | --- | --- |
-| 资产文件 | `assets/rive/worker-cat.riv`（私有目录；缺席时前端自动降级 CSS 动画立绘，功能完整可用） |
-| 状态机名称 | **`PetStateMachine`**（`src/lib/pet-play-config.ts` 的 `RIVE_STATE_MACHINE`） |
-| 输入 1 | **Number 类型，名称 `emotion`**：情绪索引 0-5，顺序 = `PLAY_EMOTIONS`：`0=idle 1=happy 2=sad 3=angry 4=eating 5=thinking` |
-| 输入 2 | **Trigger 类型，与动作同名**：`idle / happy / sad / angry / eat / sleep / think / wave`，`fire()` 播放一次性动作 |
+| 资产文件 | `assets/rive/worker-cat.riv`（私有目录；缺席时前端自动降级物种头像 + CSS 情绪动画） |
+| 下发通道 | `GET /api/pet/asset?name=worker-cat`（JWT + 限流 + Referer 校验 + 白名单 + 流式） |
+| 状态机名称 | **`PetStateMachine`** |
+| 输入 1 | **Number `emotion`**：情绪索引 0-6，顺序 = `PET_MOODS`（`0=idle 1=happy 2=sad 3=angry 4=hungry 5=thinking 6=sleepy`） |
+| 输入 2 | **Number `intensity`**：情绪强度 0-2（可选；资产未做前端自动跳过） |
+| 输入 3 | **Trigger（与动作同名）**：`idle / eat / sleep / think / wave / happy / sad / angry / rub`，`fire()` 播放一次性动作 |
 
-**剧场值域 → 状态机映射**（`pet-play-config.ts` 的 `movieMoodToEmotion` / `movieActionToAction`，前后端共用）：
-
-| 剧场 mood | emotion 输入 | 剧场 action | Trigger |
-| --- | --- | --- | --- |
-| bored | 0 (idle) | idle | 不 fire |
-| happy | 1 (happy) | eat | `eat` |
-| sad | 2 (sad) | jump | `happy` |
-| hungry | 4 (eating) | | |
-
-> 完整制作约定（画布/授权/降级策略）见 `assets/rive/README.md`。
+**加载失败兜底链**（需求二.2，不静默失败）：
+`fetch 401/404/网络错` → `console.error('[pet-stage] Rive asset load failed (...)')` 明确原因
+→ `onAssetFailed` 回调 → 页面 toast 轻提示（`petPlay.assetFallback`）→ 降级 `LivingPet`
+（呼吸/眨眼/摇尾 + 情绪 CSS 类）。**当前 `worker-cat.riv` 尚未上架**（二进制资产无法由代码生成），
+生产即走本降级链，功能完整可用；放入真实 `.riv` 后自动切换 Rive 渲染，无需改代码。
 
 ---
 
-## 5. 安全措施生效位置（需求四）
+## 7. 沉浸式体验与埋点（需求七、八）
 
-| 措施 | 文件 · 位置 |
+- **主站 chrome**：`[locale]/layout.tsx` 按 middleware `x-pathname` 判定
+  （`/pet-movie`、`/pets/my/[id]/play`）隐藏 SiteHeader / Footer / 客服按钮 / 签到弹窗；
+  页内迷你工具条接管：← 返回、🔊/🔇 静音开关、⏻ 退出沉浸。
+- **音效**：`src/lib/pet-sound.ts`（WebAudio 振荡器短音：send/reply/feed/buy；零素材）；
+  静音开关 `localStorage: aiabw_pet_mute` 持久化。
+- **空状态**：play 页宠物 404 → 领养引导卡片（跳 `/pets/adopt`）；movie 页自动创建橘猫无空态。
+- **异常状态**：接口失败 toast、资源失败 toast（assetFallback）、402 充值弹窗、429 日上限提示。
+- **埋点**：`src/lib/pet-track.ts`（GA gtag + 百度 _hmt 双通道，脚本缺席静默）——
+  `pet_page_view / pet_chat_send / pet_feed_click / pet_item_buy / pet_page_exit`
+  （退出 = visibilitychange hidden + beforeunload 双保险，只发一次）。
+
+---
+
+## 8. 成本与风控（需求六）
+
+| 项 | 实现 |
 | --- | --- |
-| **业务 100% 服务端化**（防抄袭根基） | `src/app/api/pet/chat|feed|movie/route.ts`：密钥（DEEPSEEK_* 等，经 `llm-fallback` 降级链读取）、System Prompt、扣费、数值结算均在服务端；客户端 bundle 零密钥零 prompt |
-| **生产代码混淆** | `next.config.ts` `webpack()`：`!dev && !isServer` 时挂 `webpack-obfuscator`（字符串数组 base64 + 紧凑化保守档；require 失败仅告警不阻断构建） |
-| **反 F12 / DevTools** | `src/components/pet-play/use-anti-debug.ts`（窗口尺寸差轮询 → `router.replace("/")` 跳离）+ `use-anti-copy.ts`（F12 / Ctrl⌘+Shift+I/J/C / Ctrl⌘+U / Ctrl⌘+S 快捷键拦截，capture 阶段） |
-| **防右键** | `use-anti-copy.ts`：`contextmenu` 事件 `preventDefault` |
-| **仅生产生效** | 两个 hook 均 `process.env.NODE_ENV === "production"` 门控，开发零干扰 |
-| **_document.tsx 说明** | 本项目为 App Router（无 `_document`），等效注入点 = 客户端 hook（`pet-movie-client.tsx` 挂载处） |
-| **Rive 资产防盗链** | `src/app/api/pet/asset/route.ts`：JWT + 限流 + **Referer/Origin 跨站 403** + 白名单 + 目录前缀二次校验 + 流式 + private 缓存；`.riv` 不入 `public/` |
-| **限流** | `src/lib/rate-limit.ts`：`petPlay` 30/min（对话+初始化）、`petFeed` 20/min（侧栏互动）、`petAsset` 30/min（资产） |
-| **鉴权** | JWT Bearer（`getUserFromRequest`，`src/lib/auth.ts`）；宠物归属逐请求校验 |
-| **内容审核** | `moderateText` 输入/输出双向（chat 路由第 4/8 步，命中词表替换为安全兜底文案） |
+| 限流 | `/api/pet/chat`：**用户 30/min（petPlay）+ IP 60/min（petChatIp，x-forwarded-for 首跳）**；单实例口径（serverless 各实例独立，削峰足够；精确全局限流可平替 Redis，接口不变） |
+| 输入约束 | 单条 500 字；输入/输出双向 `moderateText` 内容审核 |
+| 每日总量 | 100 句/用户封顶（`DAILY_CAP` 429） |
+| 调用日志 | `pet_play_logs`：user_id、duration_ms、tokens_used（未上报按 ≈4 字符/token 估算）、source（ai/fallback）、provider 经 llm-fallback attempts 记 console |
+| 成本查看 | SQL：`SELECT date(created_at), COUNT(*) FILTER (WHERE kind='chat'), SUM(tokens_used), AVG(duration_ms) FROM pet_play_logs GROUP BY 1 ORDER BY 1 DESC` |
 
 ---
 
-## 6. 测试与部署
+## 9. 已知风险
 
-- 契约测试：`tests/pet-movie.test.mjs`（布局契约 / API 契约 / 安全红线 / i18n parity / 纯函数单测）。
-- 本地验证：
-  ```powershell
-  node --experimental-loader ./tests/_paths-loader.mjs --test tests/pet-movie.test.mjs
-  node --experimental-loader ./tests/_paths-loader.mjs --test tests/*.test.mjs   # 全量回归
-  npx tsc --noEmit
-  npm run build   # 注：依赖安装必须 pnpm（npm 会因 symlink 结构崩溃）
-  ```
-- 部署：**零 schema 变更（SCHEMA_VERSION 23 不变），无需跑迁移脚本**；`assets/rive/worker-cat.riv` 上架即自动切换 Rive 渲染，无需改代码。
+1. **`worker-cat.riv` 未上架**：Rive 路径从未在生产真正渲染——状态机输入契约（emotion/intensity/Trigger）
+   由契约测试锁定但未经真实资产验证；美术交付后需真机回归（降级链已是生产常态，无阻塞）。
+2. **限流为单实例口径**：serverless 多实例下整体限额 ≈ N×limit（Vercel hobby 冷启动实例数少，
+   削峰足够）；IP 维限流对共享出口（校园/公司 NAT）可能误伤，阈值 60/min 已留余量。
+3. **免费计数并发窗口**：同一毫秒内的并发请求可能都按"免费"放行（超出 1-2 句），
+   日上限 100 是硬兜底，经济影响可忽略。
+4. **token 估算偏差**：部分 provider 不上报 usage 时按字符估算（≈4 字符/token），
+   成本核算存在 ±20% 级误差；以 provider 后台账单为准。
+5. **离线衰减结算点**：只在 play/movie/chat/use 四入口结算（读路径懒结算），
+   用户长期不打开页面不衰减（无独立 cron——小时粒度下打开即结清，无感知差异）。
+6. **退款失败窗口**：退款事务自身失败仅 console.error（积分极小金额，admin 可经 points_log 审计补）。
 
-_创建：2026-10-11 · 宠物剧场 /pet-movie（打工橘猫 · 毒舌涨薪人设）。_
+---
+
+## 10. 测试与部署
+
+- 契约测试：`tests/pet-characters.test.mjs`（11 项，角色注册表/解析/契约/映射表）、
+  `tests/pet-play.test.mjs`（18 项）、`tests/pet-movie.test.mjs`（8 项）。
+- 部署：**SCHEMA_VERSION 23 → 24**，推送上线后必须按 ops-rules 手动跑
+  `node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs`
+  （建议 `Start-Process` 后台跑，防工具 30s 超时连坐杀进程 → `_schema_meta.version=-1` 死锁），
+  确认输出 `schema synced to version 24` 再跑 smoke。
+- 本地验证：`npx tsc --noEmit` + `npm run build`（注：依赖安装必须 pnpm）。
+
+_创建：2026-10-11 · 宠物剧场 /pet-movie（打工橘猫 · 毒舌涨薪人设）。
+重构：2026-10-17 · Phase 12 AI 宠物模块框架性修复（九需求闭环：角色/契约/背包/计费/风控/沉浸/埋点）。_
