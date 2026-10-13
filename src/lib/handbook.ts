@@ -1,9 +1,8 @@
-import { generateText } from "ai";
 import { and, asc, eq, lt, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { adoptions, handbooks, messages as messagesTable } from "@/db/schema";
-import { getModel } from "@/lib/get-model";
+import { AiBusyError, generateThrottled } from "@/lib/llm-fallback";
 import { resolvePetConfig } from "@/lib/ugc";
 
 const HANDBOOK_PROMPT = `You are the memory journal assistant of "AIABW". Turn the chat history between the user and their pet into a warm Markdown memory journal.
@@ -79,12 +78,12 @@ export async function runHandbookTask(taskId: string): Promise<void> {
       }
     }
 
-    const { text } = await generateText({
-      model: getModel(),
-      temperature: 0.7,
-      maxOutputTokens: 1200,
+    // Phase 8 通道：并发限速 + 跨 provider 降级（手账内容必须 LLM 生成，无模板兜底）
+    const { text } = await generateThrottled({
       system: HANDBOOK_PROMPT,
       prompt: `Pet name: ${petName}\n\nChat history:\n${messagesText}`,
+      temperature: 0.7,
+      maxOutputTokens: 1200,
     });
 
     await db
@@ -97,6 +96,15 @@ export async function runHandbookTask(taskId: string): Promise<void> {
       })
       .where(eq(handbooks.id, taskId));
   } catch (err) {
+    if (err instanceof AiBusyError) {
+      // 高峰期 AI 并发占满：非真失败——回滚为 processing，由 cron 下轮自动重试（零用户感知）
+      console.warn("[handbook] AI busy, task re-queued:", taskId);
+      await db
+        .update(handbooks)
+        .set({ status: "processing", updatedAt: new Date() })
+        .where(eq(handbooks.id, taskId));
+      return;
+    }
     console.error("[handbook] task failed:", err);
     await db
       .update(handbooks)

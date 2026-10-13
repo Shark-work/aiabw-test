@@ -6,8 +6,10 @@
 //   DEEPSEEK → OPENAI → BAILIAN（第一个配置了 API Key 的生效）。
 // 注（ff906ea）：优先级由 OPENAI 优先调整为 DEEPSEEK 优先——Vercel 上残留的
 //   OPENAI_API_KEY 是失效的 ark- key（401），而 DEEPSEEK_API_KEY 有效。
-// /api/chat、agent-psychology、handbook、memory、memory-context、social-poster
-// 共 6 处调用点全部经由 getModel()，单点改造即全站生效。
+// /api/chat（流式红线）保留 getModel() 单点；agent-psychology（Phase 8A）与
+// handbook / memory / memory-context / social-poster（Phase 8C）五处 generateText
+// 调用点已统一迁移 generateThrottled（并发限速 + 跨 provider 运行期降级，
+// 候选链仍来自本文件锁定的 DEEPSEEK → OPENAI → BAILIAN 优先级）。
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

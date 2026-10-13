@@ -142,7 +142,8 @@ drizzle/0016_exploration.sql + src/lib/exploration-config.ts）。
 - 红线：聊天流式链路不缓存（千人千面 system prompt + SSE 重试语义）；词表只收高置信违规词（误伤成本>漏放成本，情绪倾诉由宠物温柔回应）。
 - ⚠️ **部署警示**：SCHEMA_VERSION 19→20，推送上线后必须手动跑 `scripts/db-migrate-prod.mjs`（ops-rules 红线），确认 `_schema_meta.version=20` 再跑 smoke。
 - 契约测试 ai-phase8.test.mjs 19 项（8A 9 项 + 8B 10 项，含 moderateText 运行时单测）；全量回归 702/702 + tsc 0；旧断言演进 8 文件（SCHEMA_VERSION 19→20 / 0035 豁免）。
-- 后续可选（未做，非阻塞）：memory/handbook/social-poster 三处 getModel 直调可迁移 generateThrottled；moderation 词表可叠加阿里云内容安全 API（接口不变）；限流可换 Redis 实现多实例精确配额（接口不变）。
+- 后续可选（未做，非阻塞）：moderation 词表可叠加阿里云内容安全 API（接口不变）；限流可换 Redis 实现多实例精确配额（接口不变）。
+- 批次 8C 遗留收尾（✅ 2026-10-17）：memory / memory-context / handbook / social-poster 四处 getModel 直调迁移 generateThrottled（并发限速 + 跨 provider 运行期降级）。要点：①GenerateOptions.system 可选化（memory-context 无 system 场景）+ generateCached key 拼接空安全；②handbook AiBusyError（高峰占满）→ status 回 processing 由 cron 自动重试（不标 error），真失败才 error；③social-poster 动态 import 模式保留（Node 测试自动回退模板）；④**红线**：llm-fallback 对 ai-cache 改动态 import——静态引入会把 db/client 模块级 schema sync 带进纯 LLM 路径，Node 测试环境（无 DATABASE_URL）产生测试结束后的 uncaughtException；⑤/api/chat 流式红线保留 getModel() 不变。契约测试 ai-phase8.test.mjs +5（8C 20~24），openai-model-config 注释演进。
 
 ---
 

@@ -16,8 +16,7 @@ import type { UIMessage } from "ai";
 
 import { db } from "@/db/client";
 import { petMemories } from "@/db/schema";
-import { generateText } from "ai";
-import { getModel } from "@/lib/get-model";
+import { generateThrottled } from "@/lib/llm-fallback";
 
 /** 4 类记忆类型，与 drizzle/0019_pet_memories.sql 的 CHECK 约束对齐 */
 export type MemoryType = "preference" | "event" | "fact" | "emotion";
@@ -223,8 +222,8 @@ export async function extractMemories(
 
   let raw = "";
   try {
-    const { text } = await generateText({
-      model: getModel(),
+    // Phase 8 通道：并发占满（AiBusyError）/ 全 provider 失败 → catch 返回 0（本轮不提取，不阻塞聊天）
+    const { text } = await generateThrottled({
       prompt,
       maxOutputTokens: 500,
     });

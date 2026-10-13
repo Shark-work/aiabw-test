@@ -5,10 +5,9 @@
 //    SOCIALECHO_* 多套命名），绝不硬编码；未配置时优雅降级（返回 ok:false，不抛异常）。
 //  - 所有发布调用均为异步非阻塞；调用方需 catch，失败只记录错误日志。
 //
-// 发帖文案：优先调用 AI（getModel）按宠物基因/稀有度生成带话题标签的炫耀文案，
-// 失败自动回退到本地模板（保证零成本可用）。
+// 发帖文案：优先调用 AI（Phase 8 generateThrottled：并发限速 + 跨 provider 降级）
+// 按宠物基因/稀有度生成带话题标签的炫耀文案，失败自动回退到本地模板（保证零成本可用）。
 import crypto from "crypto";
-import { generateText } from "ai";
 
 /** 依次读取环境变量，返回第一个非空值。 */
 function env(names: string[]): string {
@@ -79,10 +78,9 @@ export function buildFallbackShareText(meta: BreedShareMeta): string {
 /** AI 生成炫耀文案（带话题标签），失败回退模板。 */
 export async function generateShareText(meta: BreedShareMeta): Promise<string> {
   try {
-    // 动态加载模型（避免模块级依赖；Next 编译正常解析，Node 测试自动回退模板）
-    const { getModel } = await import("@/lib/get-model");
-    const { text } = await generateText({
-      model: getModel(),
+    // 动态加载 Phase 8 通道（避免模块级依赖；Next 编译正常解析，Node 测试自动回退模板）
+    const { generateThrottled } = await import("@/lib/llm-fallback");
+    const { text } = await generateThrottled({
       system:
         "你是艾比世界（AIABW）的社媒运营助手。请用活泼、有成就感的语气生成一条用于微博/X 的宠物炫耀文案，必须自然带上话题标签：#艾比世界 和稀有度标签。",
       prompt: `请为下面这只共鸣结晶诞生的灵宠生成一条中文炫耀文案（不超过 100 字，包含 emoji 与话题标签）：${JSON.stringify(meta)}`,

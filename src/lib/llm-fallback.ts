@@ -15,7 +15,16 @@
 import { generateText } from "ai";
 
 import { buildChatModel, getModelCandidates } from "./get-model";
-import { getCachedAiResponse, setCachedAiResponse } from "./ai-cache";
+
+// 注意：ai-cache 刻意**动态 import**（仅 generateCached 内）——静态引入会把
+// db/client 的模块级 schema sync 副作用带进纯 LLM 路径（generateThrottled），
+// Node 测试环境（无 DATABASE_URL）下会产生测试结束后的 uncaughtException。
+type AiCacheModule = typeof import("./ai-cache");
+let aiCachePromise: Promise<AiCacheModule> | null = null;
+function loadAiCache(): Promise<AiCacheModule> {
+  aiCachePromise ??= import("./ai-cache");
+  return aiCachePromise;
+}
 
 /** 高峰期并发占满信号：调用方应直接走本地兜底，不排队等待。 */
 export class AiBusyError extends Error {
@@ -51,7 +60,8 @@ export function releaseAiSlot(): void {
 }
 
 export interface GenerateOptions {
-  system: string;
+  /** 可选：无 system 的调用（如 memory-context 把指令整体放 prompt）直接省略。 */
+  system?: string;
   prompt: string;
   temperature?: number;
   maxOutputTokens?: number;
@@ -131,7 +141,8 @@ export interface CachedGenerateResult {
 export async function generateCached(
   opts: CachedGenerateOptions,
 ): Promise<CachedGenerateResult> {
-  const cachePrompt = `${opts.system}\n${opts.prompt}`;
+  const { getCachedAiResponse, setCachedAiResponse } = await loadAiCache();
+  const cachePrompt = `${opts.system ?? ""}\n${opts.prompt}`;
   const cached = await getCachedAiResponse(opts.scope, cachePrompt);
   if (cached) return { text: cached, source: "cache" };
 

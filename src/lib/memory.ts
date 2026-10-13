@@ -1,10 +1,9 @@
-import { generateText } from "ai";
 import type { UIMessage } from "ai";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { adoptions } from "@/db/schema";
-import { getModel } from "@/lib/get-model";
+import { generateThrottled } from "@/lib/llm-fallback";
 
 /**
  * 长期记忆：提取、去重存储、注入。
@@ -246,7 +245,7 @@ function parseFactsResult(facts: unknown[]): { text: string; category?: MemoryCa
   return out;
 }
 
-/** 调用模型提取关键事实（复用当前模型；JSON 容错解析） */
+/** 调用模型提取关键事实（Phase 8 通道：并发限速 + 跨 provider 降级；JSON 容错解析） */
 async function extractFacts(
   userText: string,
   assistantText: string,
@@ -259,12 +258,12 @@ async function extractFacts(
     .join("\n");
   if (!convo.trim()) return [];
 
-  const { text } = await generateText({
-    model: getModel(MEMORY_EXTRACT_MODEL),
-    temperature: 0.2,
-    maxOutputTokens: EXTRACT_MAX_OUTPUT_TOKENS,
+  const { text } = await generateThrottled({
     system: EXTRACT_PROMPT,
     prompt: `${convo}\n\nOutput JSON only:`,
+    temperature: 0.2,
+    maxOutputTokens: EXTRACT_MAX_OUTPUT_TOKENS,
+    modelName: MEMORY_EXTRACT_MODEL,
   });
 
   const t = text.trim();

@@ -284,6 +284,73 @@ test("phase8-8B: /admin/moderation 页 + admin-shell 菜单挂载 + mojibake 已
   assert.ok(exists(pg), "page exists");
   const c = read(pg);
   assert.ok(c.includes("/api/admin/reports?"), "loads report queue");
+
+// ============================================================================
+// 批次 8C：遗留收尾——memory / memory-context / handbook / social-poster
+// 四处 getModel 直调迁移 generateThrottled（并发限速 + 跨 provider 运行期降级）
+// ============================================================================
+
+// ───────────── 20) GenerateOptions.system 可选化（memory-context 无 system 场景） ─────────────
+test("phase8-8C: llm-fallback GenerateOptions.system 可选 + 缓存 key 拼接空安全", () => {
+  const l = read("src/lib/llm-fallback.ts");
+  assert.ok(/system\?: string/.test(l), "system optional（无 system 调用省略）");
+  assert.ok(l.includes('opts.system ?? ""'), "generateCached cache key join null-safe");
+  // 既有入口签名不变
+  assert.ok(l.includes("export async function generateThrottled("), "generateThrottled preserved");
+  assert.ok(l.includes("export async function generateCached("), "generateCached preserved");
+  // 红线：ai-cache 必须动态 import——静态引入会把 db/client 模块级 schema sync 副作用
+  // 带进纯 LLM 路径（Node 测试环境无 DATABASE_URL → 测试结束后 uncaughtException）
+  assert.ok(l.includes('import("./ai-cache")'), "ai-cache dynamic import（纯 LLM 路径零 DB 副作用）");
+  assert.ok(!l.includes('from "./ai-cache"'), "no static ai-cache import");
+});
+
+// ───────────── 21) memory.ts 迁移（长期记忆提取） ─────────────
+test("phase8-8C: memory.ts 走 generateThrottled（MEMORY_EXTRACT_MODEL 保留为 modelName）", () => {
+  const m = read("src/lib/memory.ts");
+  assert.ok(m.includes('import { generateThrottled } from "@/lib/llm-fallback"'), "throttled entry");
+  assert.ok(m.includes("await generateThrottled({"), "call site migrated");
+  assert.ok(m.includes("modelName: MEMORY_EXTRACT_MODEL"), "extract model override preserved");
+  assert.ok(m.includes("temperature: 0.2"), "temperature preserved");
+  assert.ok(!m.includes("getModel"), "no getModel dependency");
+  assert.ok(!/import \{ generateText \} from "ai"/.test(m), "no direct generateText import");
+});
+
+// ───────────── 22) memory-context.ts 迁移（VIP 记忆提取） ─────────────
+test("phase8-8C: memory-context.ts 走 generateThrottled + 失败 return 0 兜底保留", () => {
+  const m = read("src/lib/memory-context.ts");
+  assert.ok(m.includes('import { generateThrottled } from "@/lib/llm-fallback"'), "throttled entry");
+  assert.ok(m.includes("await generateThrottled({"), "call site migrated");
+  assert.ok(!m.includes("getModel"), "no getModel dependency");
+  assert.ok(!/import \{ generateText \} from "ai"/.test(m), "no direct generateText import");
+  assert.ok(m.includes("[memory] extract LLM call failed:"), "catch → return 0 fallback preserved");
+  assert.ok(m.includes("return 0;"), "LLM failure resolves to 0 (本轮不提取，不阻塞聊天)");
+});
+
+// ───────────── 23) handbook.ts 迁移 + AiBusyError 重排语义 ─────────────
+test("phase8-8C: handbook.ts 走 generateThrottled + AiBusyError 回 processing 由 cron 重试", () => {
+  const h = read("src/lib/handbook.ts");
+  assert.ok(h.includes('import { AiBusyError, generateThrottled } from "@/lib/llm-fallback"'), "phase8 channel + busy signal");
+  assert.ok(h.includes("await generateThrottled({"), "call site migrated");
+  assert.ok(!h.includes("getModel"), "no getModel dependency");
+  assert.ok(!/import \{ generateText \} from "ai"/.test(h), "no direct generateText import");
+  assert.ok(h.includes("err instanceof AiBusyError"), "busy distinguished from real failure");
+  assert.ok(h.includes('status: "processing"'), "busy → re-queue processing（非真失败不标 error）");
+  assert.ok(h.includes('status: "error"'), "real failure → error preserved");
+  // 重试闭环：cron 确实扫描 processing 状态的任务
+  const cron = read("src/app/api/cron/process-handbooks/route.ts");
+  assert.ok(cron.includes('eq(handbooks.status, "processing")'), "cron scans processing（重试闭环）");
+});
+
+// ───────────── 24) social-poster.ts 迁移（动态 import 保留 + 模板兜底） ─────────────
+test("phase8-8C: social-poster.ts 动态 import llm-fallback + 模板兜底保留", () => {
+  const s = read("src/lib/social-poster.ts");
+  assert.ok(s.includes('await import("@/lib/llm-fallback")'), "dynamic import phase8 channel（Node 测试自动回退模板）");
+  assert.ok(s.includes("await generateThrottled({"), "call site migrated");
+  assert.ok(!s.includes("getModel"), "no getModel dependency");
+  assert.ok(!/import \{ generateText \} from "ai"/.test(s), "no static generateText import");
+  assert.ok(s.includes("buildFallbackShareText(meta)"), "template fallback preserved");
+});
+
   assert.ok(c.includes('action === "resolve" ? "已确认违规" : "已驳回举报"'), "resolve/dismiss actions");
   assert.ok(c.includes("先报先审"), "pending FIFO copy");
   // AI 成本监控条（计划 9.2 缓存命中率监控可视化）
