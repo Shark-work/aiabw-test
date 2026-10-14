@@ -601,3 +601,19 @@ body,
 }
 
 
+
+/* ===================== 宠物舞台·物种场景主题（species-visuals.sceneTheme 消费；径向渐变氛围底） =====================
+ * 换皮层：主题只是舞台氛围底，宠物本体由 LivingPet/Rive 呈现；
+ * 新增物种在 species-visuals 注册表配 sceneTheme 并在此加一条同名类即可（未知主题无样式 = 透明底）。 */
+.pet-scene-meadow,
+.pet-scene-workshop {
+  position: relative;
+  border-radius: 9999px;
+}
+.pet-scene-meadow {
+  background: radial-gradient(circle at 50% 62%, rgba(52, 211, 153, 0.16), rgba(52, 211, 153, 0.05) 55%, transparent 72%);
+}
+.pet-scene-workshop {
+  background: radial-gradient(circle at 50% 62%, rgba(251, 191, 36, 0.18), rgba(251, 146, 60, 0.06) 55%, transparent 72%);
+}
+

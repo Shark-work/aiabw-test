@@ -35,7 +35,7 @@ test("pet-movie(1): movie 路由——最早 adoption / 无则自动建猫 / 角
   assert.ok(c.includes("PLAY_ITEMS") && c.includes("PLAY_ITEM_SOURCE"), "背包商品目录下发（需求四）");
   assert.ok(c.includes("HUNGER_SETTLE_SQL") && c.includes("HUNGRY_THRESHOLD"), "离线结算 + 饥饿标志");
   assert.ok(c.includes("MOVIE_INTERACTIONS"), "legacy interactions 保留下发");
-  assert.ok(c.includes("riveAvailable: isRiveAssetAvailable(RIVE_ASSET_NAME)"), "Rive 上架探测下发（未上架零请求直降）");
+  assert.ok(c.includes("visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false"), "Rive 上架探测按物种 rivePath 下发（未上架零请求直降）");
 });
 
 // ───────────── 2) 统一契约：chat 路由无剧场双契约残留 ─────────────

@@ -18,6 +18,7 @@ interface MoviePet {
   id: string;
   name: string;
   petType: string;
+  speciesId?: string | null;
   avatar: string;
   happiness: number;
   hungerLevel: number;
@@ -383,6 +384,7 @@ export function PetMovieClient() {
       <main className="absolute inset-0 z-10 flex items-center justify-center">
         <PetStage
           token={token}
+          speciesId={pet.speciesId}
           riveAvailable={riveAvailable}
           avatar={pet.avatar}
           alt={pet.name}

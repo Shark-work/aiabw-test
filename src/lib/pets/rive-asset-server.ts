@@ -1,10 +1,14 @@
 /**
  * Rive 资产上架探测（**服务端专用**：node:fs——客户端组件禁止 import 本模块）。
  *
- * 背景：worker-cat.riv 二进制资产由美术交付、随部署上架。未上架期间
+ * 背景：.riv 二进制资产由美术交付、随部署上架。未上架期间
  * /api/pet/play|movie 聚合响应下发 riveAvailable=false，前端**零请求直降**
  * 静态立绘（不再产生 404 / console.error / toast 噪音）；资产随部署上架后
  * 同一代码自动切换 Rive 渲染——本探测即「自动切换」的开关。
+ *
+ * 换皮层（species-visuals.ts）：探测按物种注册的 rivePath **逐路径**进行，
+ * 缓存 key = 资产路径名（Map 逐 key）——某物种素材缺席只影响该物种，
+ * 绝不出现「一个 404 污染全部物种」的全局布尔。
  *
  * 部署红线：.riv 为运行时 fs 读取（非静态 import），必须经 next.config
  * outputFileTracingIncludes 纳入 serverless 文件追踪（已覆盖
@@ -23,7 +27,7 @@ const RIVE_DIR = path.resolve(process.cwd(), "assets", "rive");
  */
 const availabilityCache = new Map<string, boolean>();
 
-/** 指定 .riv 资产是否已随当前部署上架（name = /api/pet/asset 白名单资产名）。 */
+/** 指定 .riv 资产是否已随当前部署上架（name = species-visuals 注册的 rivePath；缓存按 name 逐路径）。 */
 export function isRiveAssetAvailable(name: string): boolean {
   const cached = availabilityCache.get(name);
   if (cached !== undefined) return cached;

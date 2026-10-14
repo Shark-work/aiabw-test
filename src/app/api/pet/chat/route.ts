@@ -8,9 +8,8 @@ import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { moderateText } from "@/lib/content-moderation";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { generateThrottled } from "@/lib/llm-fallback";
-import { resolveCharacter } from "@/lib/pets/characters";
+import { fallbackPetReply, resolveCharacter } from "@/lib/pets/characters";
 import {
-  fallbackPetReply,
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
   parsePetChatResponse,

@@ -1,13 +1,10 @@
-// AI 宠物互动契约层：情绪/动作统一枚举（re-export 自角色注册表）、商品目录、
-// 积分经济常量、LLM 输出解析（{ text, mood, intensity } 契约 + 白名单归一）、本地兜底。
-// 人设 / System Prompt / 台词库 → src/lib/pets/characters.ts（需求一：统一角色数据源）。
-// 纯数据/纯函数模块 —— API 路由 / 前端组件 / 契约测试三方共用。
+// AI 宠物互动契约层：情绪/动作统一枚举（re-export 自 sm-contract 纯契约模块）、商品目录、
+// 积分经济常量、LLM 输出解析（{ text, mood, intensity } 契约 + 白名单归一）。
+// 人设 / System Prompt / 台词库 / 本地兜底回复 → src/lib/pets/characters.ts（服务端专用）；
+// 动画契约枚举 / Rive 输入名 / 关键词情绪推断 → src/lib/pets/sm-contract.ts（纯模块）。
+// 纯数据/纯函数模块 —— API 路由 / 前端组件 / 契约测试三方共用（本模块不得 import characters）。
 
-import {
-  actionForMood,
-  resolveCharacter,
-  type PetMood,
-} from "@/lib/pets/characters";
+import { actionForMood, type PetChatReply, type PetMood } from "@/lib/pets/sm-contract";
 
 // 统一情绪/动作契约 re-export（前端组件与 API 路由继续从本模块取契约，单一 import 口）。
 export {
@@ -17,9 +14,14 @@ export {
   actionForMood,
   RIVE_ASSET_NAME,
   RIVE_STATE_MACHINE,
+  PET_SM_TRIGGERS,
+  ACTION_TRIGGER_ALIAS,
+  inferMood,
   type PetMood,
   type PetAction,
-} from "@/lib/pets/characters";
+  type PetSmTrigger,
+  type PetChatReply,
+} from "@/lib/pets/sm-contract";
 
 // ───────────────────────────── 1) 互动商品目录（需求四.1 道具表） ─────────────────────────────
 
@@ -84,15 +86,7 @@ export const HUNGER_SETTLE_SQL = `hunger_level = GREATEST(0, hunger_level - FLOO
 
 // ───────────────────────────── 3) LLM 输出解析（需求三.3 统一结构 + 白名单归一） ─────────────────────────────
 
-/** 统一对话回复契约：大模型只返回 { text, mood, intensity }；action 由 MOOD_ACTION_MAP 推导。 */
-export interface PetChatReply {
-  text: string;
-  mood: PetMood;
-  /** 情绪强度 0-2（Rive Number 输入「intensity」；解析缺省 1，越界钳制）。 */
-  intensity: 0 | 1 | 2;
-  /** 由映射表推导（需求三.2：大模型不返回动画名）。 */
-  action: import("@/lib/pets/characters").PetAction;
-}
+// 统一对话回复契约 PetChatReply → sm-contract.ts（本文件头部 re-export，import 口不变）。
 
 const MOOD_SET = new Set<string>([
   "idle", "happy", "sad", "angry", "hungry", "thinking", "sleepy",
@@ -127,29 +121,12 @@ export function parsePetChatResponse(raw: string): PetChatReply | null {
   return { text: o.text.trim().slice(0, 300), mood, intensity, action: actionForMood(mood) };
 }
 
-// ───────────────────────────── 4) 本地兜底（AI 繁忙/失败时功能永可用，Phase 8 同哲学） ─────────────────────────────
+// ───────────────────────────── 4) 关键词推断 / 本地兜底 → 已外迁 ─────────────────────────────
 
-/** 关键词 → 情绪推断（兜底回复的情绪一致性保证；新统一枚举）。 */
-export function inferMood(message: string): PetMood {
-  const t = message.toLowerCase();
-  if (/吃|饿|饭|鱼|罐头|食|\beat\b|\bfood\b|\bhungry\b|\bfish\b/.test(t)) return "hungry";
-  if (/睡|困|累|摸鱼|下班|晚安|\bsleep\b|\btired\b|\brest\b|\blazy\b/.test(t)) return "sleepy";
-  if (/笨蛋|讨厌|滚|傻|\bstupid\b|\bhate\b|\bshut\b/.test(t)) return "angry";
-  if (/难过|伤心|哭|委屈|\bsad\b|\bcry\b|\bupset\b/.test(t)) return "sad";
-  if (/为什么|怎么|想|吗|？|\bwhy\b|\bthink\b|\bhow\b|\bwhat\b/.test(t)) return "thinking";
-  if (/棒|厉害|喜欢|爱|开心|你好|嗨|早|涨薪|\bgreat\b|\blove\b|\bhappy\b|\bhi\b|\bhello\b|\bhey\b|\bmorning\b|\braise\b/.test(t)) return "happy";
-  return "idle";
-}
-
-/** 本地兜底回复：按输入推断情绪 + 当前角色台词库随机（永不抛错；台词随角色走——雪豹不再说橘猫话）。 */
-export function fallbackPetReply(message: string, locale: string, petType?: string | null): PetChatReply {
-  const mood = inferMood(message);
-  const c = resolveCharacter(petType);
-  const bank = locale === "en" ? c.linesEn : c.linesZh;
-  const lines = bank[mood]?.length ? bank[mood] : bank.idle;
-  const text = lines[Math.floor(Math.random() * lines.length)];
-  return { text, mood, intensity: 1, action: actionForMood(mood) };
-}
+// inferMood（关键词情绪推断，纯函数）→ sm-contract.ts（头部 re-export，import 口不变）；
+// fallbackPetReply（角色台词库兜底回复）→ characters.ts（服务端专用——依赖台词库；
+// 本模块因此不再 import characters，保持纯数据、客户端可安全 import——
+// 修复 prompt 经本模块链进客户端 bundle 的红线泄漏）。
 
 // ───────────────────────────── 5) 剧场 legacy 侧栏互动（/api/pet/feed 保留兼容） ─────────────────────────────
 

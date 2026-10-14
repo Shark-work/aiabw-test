@@ -31,13 +31,13 @@ const read = (p) => readFileSync(join(ROOT, p), "utf8");
 test("pet-characters(A1): ≥2 角色且每角色字段齐全", () => {
   assert.ok(PET_CHARACTERS.length >= 2, "至少 打工橘猫 + 艾比灵宠 两角色");
   for (const c of PET_CHARACTERS) {
-    for (const f of ["id", "nameZh", "nameEn", "personality", "riveFileKey", "greetingZh", "greetingEn"]) {
+    for (const f of ["id", "nameZh", "nameEn", "personality", "greetingZh", "greetingEn"]) {
       assert.ok(typeof c[f] === "string" && c[f].length > 0, `${c.id}.${f} 非空`);
     }
     assert.ok(Array.isArray(c.species), `${c.id}.species 数组`);
     assert.equal(typeof c.buildSystemPrompt, "function", `${c.id}.buildSystemPrompt 函数`);
-    assert.equal(c.riveFileKey, "worker-cat", `${c.id}.riveFileKey 契约`);
-    assert.ok("fallbackImage" in c, `${c.id}.fallbackImage 字段存在`);
+    // 视觉字段已解耦至 species-visuals.ts（换皮层）：角色注册表只管人设/台词/prompt
+    assert.ok(!("riveFileKey" in c) && !("fallbackImage" in c), `${c.id} 视觉字段已迁至 species-visuals`);
   }
   // 兜底角色必须在注册表内且为 DEFAULT_CHARACTER
   assert.ok(PET_CHARACTERS.includes(DEFAULT_CHARACTER), "DEFAULT_CHARACTER 在注册表内");

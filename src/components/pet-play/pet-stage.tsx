@@ -6,11 +6,11 @@ import { useRive } from "@rive-app/react-canvas";
 import { LivingPet } from "@/components/LivingPet";
 import {
   PET_MOODS,
-  RIVE_ASSET_NAME,
   RIVE_STATE_MACHINE,
   type PetAction,
   type PetMood,
-} from "@/lib/pet-play-config";
+} from "@/lib/pets/sm-contract";
+import { resolveSpeciesVisual } from "@/lib/pets/species-visuals";
 
 /** mood → Rive Number 输入索引（与 PET_MOODS 白名单顺序一致，美术侧按此绑定）。 */
 const MOOD_INDEX = new Map<string, number>(PET_MOODS.map((e, i) => [e, i]));
@@ -29,6 +29,8 @@ const FALLBACK_ANIM: Record<PetMood, string> = {
 interface PetStageProps {
   /** JWT（/api/pet/asset 鉴权下载 .riv 用；null 时直接走降级立绘） */
   token: string | null;
+  /** 物种 id（species:<id> 的 id 部分；官方宠物/未知为 null）——经物种视觉注册表决定素材/立绘/场景 */
+  speciesId?: string | null;
   /**
    * 服务端资产上架探测（/api/pet/play|movie 聚合响应下发）：
    * false = .riv 未随部署上架 → **零请求直降**静态立绘（无 404 / console.error / toast 噪音）；
@@ -50,7 +52,9 @@ interface PetStageProps {
 
 /**
  * 宠物舞台（需求三.1 核心）：@rive-app/react-canvas 加载 .riv + 接入 State Machine。
- *  - 资产通道：fetch /api/pet/asset（Bearer 鉴权 + 限流 + Referer 校验）→ ArrayBuffer → useRive；
+ *  - 物种换皮：speciesId → species-visuals 注册表（rivePath / 立绘 / 场景主题），
+ *    动画契约（sm-contract）与物种外观解耦；未注册物种零请求直降各自立绘；
+ *  - 资产通道：fetch /api/pet/asset?name=<rivePath>（Bearer 鉴权 + 限流 + Referer 校验）→ ArrayBuffer → useRive；
  *    失败（401/404/网络错）console.error 明确原因 + onAssetFailed 上报 + 降级 LivingPet
  *    （呼吸/眨眼/摇尾），**不静默失败**（需求二.2）；
  *  - 上架探测短路：riveAvailable=false（服务端已探测 .riv 未随部署上架）时**零请求直降**
@@ -61,7 +65,11 @@ interface PetStageProps {
  *    「intensity」（0-2）；action → 同名 Trigger fire；全部经映射表驱动（需求三.2）；
  *  - 点击宠物 = 蹭蹭（rub Trigger），双模共用同一 { mood, action, intensity } 驱动接口。
  */
-export function PetStage({ token, riveAvailable = true, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
+export function PetStage({ token, speciesId = null, riveAvailable = true, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
+  // 物种换皮：视觉注册表按 speciesId 解析（rivePath 资产 / 静态立绘 / 场景主题）；
+  // 未注册物种 rivePath=undefined → 零请求直降各自立绘（雪豹绝不复用橘猫素材）。
+  const visual = resolveSpeciesVisual(speciesId);
+  const sprite = visual.staticImage || avatar;
   const [riveUrl, setRiveUrl] = useState<string | null>(null);
   /** 资产是否含契约状态机（PetStateMachine）：素材资产=false → autoplay 默认动画 */
   const [contractSM, setContractSM] = useState(false);
@@ -71,6 +79,11 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
   // 1) 经鉴权 API 拉取 .riv（防盗链：无公开 URL）→ Blob ObjectURL；失败上报 + 降级
   useEffect(() => {
     if (!token) return;
+    // 物种无 Rive 素材（注册表未配 rivePath）：零请求直降静态立绘（info 级，非错误）。
+    if (!visual.rivePath) {
+      console.info(`[pet-stage] no Rive asset registered for species "${speciesId ?? "unknown"}"; static sprite mode (zero-fetch)`);
+      return;
+    }
     // 服务端已探测 .riv 未上架：零请求直降静态立绘（info 级透明信息，非错误）。
     // 资产随部署上架后聚合响应 riveAvailable=true，本短路自动解除。
     if (!riveAvailable) {
@@ -81,7 +94,7 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
     let objectUrl: string | null = null;
     void (async () => {
       try {
-        const res = await fetch(`/api/pet/asset?name=${RIVE_ASSET_NAME}`, {
+        const res = await fetch(`/api/pet/asset?name=${visual.rivePath}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error(`asset ${res.status}`);
@@ -109,7 +122,7 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, riveAvailable]);
+  }, [token, riveAvailable, visual.rivePath, speciesId]);
 
   // 2) Rive 初始化（react 4.x 类型契约 src:string → Blob URL；会话内私有、卸载即吊销）
   //    contractSM=false（素材资产）时不指定 stateMachines → autoplay 默认状态机/动画
@@ -172,7 +185,7 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
   // 6) 双模渲染
   if (riveUrl && !assetFailed) {
     return (
-      <button type="button" onClick={handleTap} aria-label={alt} className="cursor-pointer">
+      <button type="button" onClick={handleTap} aria-label={alt} className={`cursor-pointer pet-scene-${visual.sceneTheme}`}>
         <RiveComponent
           className="h-[46vh] w-[46vh] max-h-[420px] max-w-[420px]"
           aria-label={alt}
@@ -185,9 +198,9 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
       type="button"
       onClick={handleTap}
       aria-label={alt}
-      className={`cursor-pointer transition-transform duration-300 ${FALLBACK_ANIM[mood]} ${rubbing ? "scale-105" : ""}`}
+      className={`cursor-pointer transition-transform duration-300 pet-scene-${visual.sceneTheme} ${FALLBACK_ANIM[mood]} ${rubbing ? "scale-105" : ""}`}
     >
-      <LivingPet src={avatar} alt={alt} width={280} height={280} priority />
+      <LivingPet src={sprite} alt={alt} width={280} height={280} priority />
     </button>
   );
 }

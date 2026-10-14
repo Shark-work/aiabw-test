@@ -29,10 +29,10 @@ import {
   PLAY_ITEMS,
   RIVE_ASSET_NAME,
   RIVE_STATE_MACHINE,
-  fallbackPetReply,
   inferMood,
   parsePetChatResponse,
 } from "../src/lib/pet-play-config.ts";
+import { fallbackPetReply } from "../src/lib/pets/characters.ts";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFileSync(join(ROOT, p), "utf8");
@@ -245,8 +245,8 @@ test("pet-play(C5): rive-asset-server 探测模块 + play/movie 下发 riveAvail
   ]) {
     assert.ok(src.includes('from "@/lib/pets/rive-asset-server"'), `${name} 引入探测模块`);
     assert.ok(
-      src.includes("riveAvailable: isRiveAssetAvailable(RIVE_ASSET_NAME)"),
-      `${name} 聚合响应下发 riveAvailable`,
+      src.includes("visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false"),
+      `${name} 聚合响应按物种 rivePath 下发 riveAvailable（换皮层逐路径探测）`,
     );
   }
 

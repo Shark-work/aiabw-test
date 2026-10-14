@@ -11,12 +11,12 @@ import { speciesAvatarFor } from "@/lib/species-avatars";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { characterView, resolveCharacter } from "@/lib/pets/characters";
 import { isRiveAssetAvailable } from "@/lib/pets/rive-asset-server";
+import { resolveSpeciesVisual } from "@/lib/pets/species-visuals";
 import {
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
   PLAY_ITEMS,
   PLAY_ITEM_SOURCE,
-  RIVE_ASSET_NAME,
 } from "@/lib/pet-play-config";
 
 export const runtime = "nodejs";
@@ -101,6 +101,10 @@ export async function GET(req: Request) {
     const avatar = isSpeciesPetType(pet.petType)
       ? (speciesAvatarFor(speciesIdOf(pet.petType)) ?? getPet(pet.petType).avatar)
       : getPet(pet.petType).avatar;
+    // 物种视觉注册表（换皮层）：speciesId → Rive 资产/立绘/场景主题；
+    // 按 rivePath 逐路径探测上架——某物种素材缺席只影响该物种（雪豹不再播橘猫素材）。
+    const speciesId = isSpeciesPetType(pet.petType) ? speciesIdOf(pet.petType) : null;
+    const visual = resolveSpeciesVisual(speciesId);
 
     return NextResponse.json({
       ok: true,
@@ -108,6 +112,7 @@ export async function GET(req: Request) {
         id: pet.id,
         name: pet.petName,
         petType: pet.petType,
+        speciesId,
         avatar,
         happiness: pet.happiness,
         hungerLevel,
@@ -115,8 +120,8 @@ export async function GET(req: Request) {
       },
       // 角色展示层（需求一：greeting/displayName 由角色注册表下发，前端零硬编码）
       character: characterView(resolveCharacter(pet.petType), locale),
-      // Rive 上架探测：未上架 → 前端零请求直降静态立绘（无 404 噪音）；上架自动切 Rive
-      riveAvailable: isRiveAssetAvailable(RIVE_ASSET_NAME),
+      // Rive 上架探测（按物种 rivePath 逐路径）：未上架 → 前端零请求直降静态立绘；上架自动切 Rive
+      riveAvailable: visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false,
       hungry: hungerLevel <= HUNGRY_THRESHOLD,
       points: Number(balRes.rows[0]?.points ?? 0),
       items: PLAY_ITEMS.map((i) => ({

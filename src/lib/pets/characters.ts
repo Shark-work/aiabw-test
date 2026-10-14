@@ -2,8 +2,9 @@
  * AI 宠物角色注册表（需求一：统一角色数据源；服务端专用模块）。
  *
  * 单一事实源：页面标题之外的**角色相关一切**——人设、System Prompt、开场白、
- * 台词库、Rive 资产 key、降级立绘——全部在本文件注册；组件与 API 路由一律经
- * resolveCharacter(petType) 取角色，禁止在任何组件里硬编码角色文案。
+ * 台词库——全部在本文件注册；组件与 API 路由一律经 resolveCharacter(petType)
+ * 取角色，禁止在任何组件里硬编码角色文案。
+ * （Rive 资产 / 降级立绘 / 场景主题等**视觉配置**已解耦至 species-visuals.ts 注册表。）
  *
  * 防抄袭红线（需求四）：本模块含 System Prompt 构建器与台词库，
  * **只能在服务端 import**——前端经 /api/pet/play|movie 聚合响应的 character
@@ -16,59 +17,34 @@
  */
 
 import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
+import {
+  actionForMood,
+  inferMood,
+  PET_MOODS,
+  type PetChatReply,
+  type PetMood,
+} from "@/lib/pets/sm-contract";
 
-// ───────────────────────────── 1) 情绪/动作契约（全站统一命名，需求三.2） ─────────────────────────────
+// ───────────────────────────── 1) 情绪/动作契约（全站统一命名） ─────────────────────────────
 
-/** 情绪白名单：LLM 输出 mood 值域 + Rive 状态机 Number 输入「emotion」（索引序，美术按此绑定）。 */
-export const PET_MOODS = [
-  "idle",
-  "happy",
-  "sad",
-  "angry",
-  "hungry",
-  "thinking",
-  "sleepy",
-] as const;
-export type PetMood = (typeof PET_MOODS)[number];
-
-/** 动作白名单：Rive 状态机 Trigger 输入（同名 fire）；无 .riv 资产时驱动降级 CSS 动画。 */
-export const PET_ACTIONS = [
-  "idle",
-  "eat",
-  "sleep",
-  "think",
-  "wave",
-  "happy",
-  "sad",
-  "angry",
-  "rub",
-] as const;
-export type PetAction = (typeof PET_ACTIONS)[number];
-
-/**
- * 情绪 → 动作映射表（需求三.2 红线：全站只经本表把情绪翻译成动画动作，
- * 大模型输出契约只含 { text, mood, intensity }，不返回动画名）。
- * 「蹭蹭」rub 为互动动作位（前端点击宠物/道具反馈时直接 fire，不占情绪位）。
- */
-export const MOOD_ACTION_MAP: Record<PetMood, PetAction> = {
-  idle: "idle",
-  happy: "happy",
-  sad: "sad",
-  angry: "angry",
-  hungry: "eat",
-  thinking: "think",
-  sleepy: "sleep",
-};
-
-/** 情绪 → 动作（映射表唯一入口；未知情绪降级 idle）。 */
-export function actionForMood(mood: PetMood): PetAction {
-  return MOOD_ACTION_MAP[mood] ?? "idle";
-}
-
-/** Rive 资产契约：/api/pet/asset?name=<key> 下发 assets/rive/<key>.riv（非 public）。 */
-export const RIVE_ASSET_NAME = "worker-cat";
-/** .riv 内状态机名称约定（美术交付需遵守；详见 assets/rive/README.md）。 */
-export const RIVE_STATE_MACHINE = "PetStateMachine";
+// 契约枚举 / 映射表 / Rive 输入名已解耦至纯模块 sm-contract.ts（动画逻辑层，客户端可安全
+// import——修复 pet-stage 经 pet-play-config 本模块链把 prompt 带进客户端 bundle 的红线泄漏）；
+// 此处 re-export 保持既有 import 口兼容（本文件仍为服务端专用：下方含 prompt 构建器与台词库）。
+export {
+  PET_MOODS,
+  PET_ACTIONS,
+  MOOD_ACTION_MAP,
+  actionForMood,
+  RIVE_ASSET_NAME,
+  RIVE_STATE_MACHINE,
+  PET_SM_TRIGGERS,
+  ACTION_TRIGGER_ALIAS,
+  inferMood,
+  type PetMood,
+  type PetAction,
+  type PetSmTrigger,
+  type PetChatReply,
+} from "@/lib/pets/sm-contract";
 
 // ───────────────────────────── 2) 角色类型与 Prompt 构建 ─────────────────────────────
 
@@ -89,10 +65,7 @@ export interface PetCharacter {
   species: readonly string[];
   /** 人设一句话（文档/管理端展示用）。 */
   personality: string;
-  /** Rive 资产 key（/api/pet/asset?name=<key>）。 */
-  riveFileKey: string;
-  /** 降级立绘（物种头像；空串 = 由 API 按宠物 petType 运行时派生）。 */
-  fallbackImage: string;
+  // （视觉配置——Rive 资产 / 降级立绘 / 场景主题——已解耦至 species-visuals.ts 注册表）
   greetingZh: string;
   greetingEn: string;
   /** 台词库：按情绪分组（本地兜底回复 = 对应情绪台词随机一条）。 */
@@ -134,8 +107,6 @@ const WORKER_CAT: PetCharacter = {
   nameEn: "Worker Cat",
   species: ["persian"],
   personality: "嘴硬心软 / 爱摸鱼 / 打工人梗（KPI、周报、涨薪）",
-  riveFileKey: RIVE_ASSET_NAME,
-  fallbackImage: "/avatars/persian.png",
   greetingZh: "喵，你来了。本喵刚摸完一轮鱼，有事快说——先说好，本喵可不是在等你。",
   greetingEn: "Meow, you're here. I just finished a round of slacking — say it quick. Not that I was waiting for you.",
   linesZh: {
@@ -230,8 +201,6 @@ const AIBI_SPIRIT: PetCharacter = {
   nameEn: "AIBI Spirit",
   species: [],
   personality: "温柔治愈 / 陪伴型 / 对艾比大陆充满好奇",
-  riveFileKey: RIVE_ASSET_NAME,
-  fallbackImage: "",
   greetingZh: "你来啦。我在艾比大陆等了你一整天——今天想聊点什么？",
   greetingEn: "You're here. I've been waiting all day in the AIBI world — what shall we talk about today?",
   linesZh: {
@@ -342,4 +311,21 @@ export function characterView(c: PetCharacter, locale: string) {
     displayName: locale === "en" ? c.nameEn : c.nameZh,
     greeting: locale === "en" ? c.greetingEn : c.greetingZh,
   };
+}
+
+
+// ───────────────────────────── 6) 本地兜底回复（AI 繁忙/失败时功能永可用） ─────────────────────────────
+
+/**
+ * 本地兜底回复：按输入关键词推断情绪 + 当前角色台词库随机一条（永不抛错；
+ * 台词随角色走——雪豹不再说橘猫话）。自 pet-play-config 迁入（依赖角色台词库，
+ * 使契约层保持纯数据、客户端可安全 import）。
+ */
+export function fallbackPetReply(message: string, locale: string, petType?: string | null): PetChatReply {
+  const mood = inferMood(message);
+  const c = resolveCharacter(petType);
+  const bank = locale === "en" ? c.linesEn : c.linesZh;
+  const lines = bank[mood]?.length ? bank[mood] : bank.idle;
+  const text = lines[Math.floor(Math.random() * lines.length)];
+  return { text, mood, intensity: 1, action: actionForMood(mood) };
 }
