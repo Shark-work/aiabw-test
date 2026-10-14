@@ -1,25 +1,29 @@
 /**
- * 生产数据库 schema 迁移脚本：v6 → v9（幂等，可重复执行）
+ * 生产数据库 schema 迁移脚本（幂等，可重复执行）
  *
  * 与运行时同一条权威路径：调用 src/db/client.ts 的版本闸门
- * （ensureDbSchemaOnce → 原子认领 → 幂等 DDL 全量同步 + v8 目录种子 upsert）。
+ * （ensureDbSchemaOnce → 原子认领 → 幂等 DDL 全量同步 + 目录种子 upsert）。
  * 真实执行全量同步时由 client.ts 输出：
- *   [db] schema synced to version 9
- * 若库已在 v9，走快速路径（1 次轻量查询），脚本提示 already synced。
+ *   [db] schema synced to version N
+ * 若库已在当前 SCHEMA_VERSION，走快速路径（1 次轻量查询），脚本提示 already synced。
  *
  * 用法（在仓库根目录执行）：
- *   node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs
+ *   node scripts/db-migrate-prod.mjs
+ * （脚本内建 ESM loader 自举：client.ts 的无后缀相对导入需 tests/_paths-loader.mjs
+ *   补 .ts 后缀，进程内 register 免命令行参数；旧写法
+ *   node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs 仍兼容）
  *
  * DATABASE_URL 解析顺序：
  *   process.env.DATABASE_URL → .env.production → .env.local → .env
  * 推荐显式传入（PowerShell 示例）：
  *   $env:DATABASE_URL="postgresql://...pooler..."; `
- *   node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs
+ *   node scripts/db-migrate-prod.mjs
  * 或用 Vercel CLI：vercel env pull .env.production 后直接运行本脚本。
  *
- * 退出码：0 = 已同步到 v9 且全部校验通过；1 = 失败。
+ * 退出码：0 = 已同步到当前 SCHEMA_VERSION 且全部校验通过；1 = 失败。
  */
 import fs from "node:fs";
+import { register } from "node:module";
 
 for (const name of [".env.production", ".env.local", ".env"]) {
   if (process.env.DATABASE_URL?.trim()) break;
@@ -34,7 +38,36 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const { ensureDbSchemaOnce, pool } = await import("../src/db/client.ts");
+// ── ESM loader 自举（修复裸跑 ERR_MODULE_NOT_FOUND，2026-10-17）──────────────
+// src/db/client.ts 引用 './aibi-catalog-seed' 等无后缀相对导入，Node 原生 ESM
+// 无法解析，需 tests/_paths-loader.mjs 的 resolve hook 补 .ts 后缀。
+// 进程内 register（Node ≥20.6；对后续动态 import 生效），免 --experimental-loader；
+// 已带 loader 启动时跳过，避免重复注册。
+{
+  const loaderUrl = new URL("../tests/_paths-loader.mjs", import.meta.url);
+  const preloaded = process.execArgv.some((a) => a.includes("_paths-loader"));
+  if (!preloaded && fs.existsSync(loaderUrl)) {
+    register(loaderUrl, import.meta.url);
+  }
+}
+
+// 版本闸门落点校验用：先从源码读 SCHEMA_VERSION（纯文件读取，先于 import 无副作用）
+const clientSrc = fs.readFileSync(new URL("../src/db/client.ts", import.meta.url), "utf8");
+const expected = Number(clientSrc.match(/const SCHEMA_VERSION = (\d+);/)?.[1] ?? 0);
+
+let ensureDbSchemaOnce, pool;
+try {
+  ({ ensureDbSchemaOnce, pool } = await import("../src/db/client.ts"));
+} catch (e) {
+  if (e && (e.code === "ERR_MODULE_NOT_FOUND" || e.code === "ERR_UNKNOWN_FILE_EXTENSION")) {
+    console.error(
+      "[migrate-prod] FAIL: 加载 src/db/client.ts 失败（无后缀相对导入需 paths loader 自举，疑似 loader 文件缺失或 Node < 20.6）。\n" +
+        "  兼容回退命令：node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs",
+    );
+    process.exit(1);
+  }
+  throw e;
+}
 
 let ok = true;
 const check = (label, pass, detail = "") => {
@@ -43,12 +76,10 @@ const check = (label, pass, detail = "") => {
 };
 
 try {
-  console.log("[migrate-prod] running version gate (v6 → v9 full sync if needed)…");
+  console.log(`[migrate-prod] running version gate (v6 → v${expected || "?"} full sync if needed)…`);
   await ensureDbSchemaOnce();
 
   // 1) 版本闸门落点（动态：与 src/db/client.ts 的 SCHEMA_VERSION 对齐，随版本迭代自动升级）
-  const clientSrc = fs.readFileSync(new URL("../src/db/client.ts", import.meta.url), "utf8");
-  const expected = Number(clientSrc.match(/const SCHEMA_VERSION = (\d+);/)?.[1] ?? 0);
   const v = await pool.query(`SELECT "version" FROM "_schema_meta" WHERE "id" = 1`);
   const version = Number(v.rows[0]?.version ?? -999);
   if (expected > 0 && version >= expected) {

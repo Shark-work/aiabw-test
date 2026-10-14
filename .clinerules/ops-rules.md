@@ -40,7 +40,9 @@
 **规则**：任何 bump `SCHEMA_VERSION` 的 commit 推送上线后，立即执行：
 
 ```powershell
-node --experimental-loader ./tests/_paths-loader.mjs scripts/db-migrate-prod.mjs
+Start-Process -FilePath 'cmd.exe' -ArgumentList '/c node scripts/db-migrate-prod.mjs > migrate.log 2>&1' -WorkingDirectory '<仓库根>' -WindowStyle Hidden
+# 脚本已内建 ESM loader 自举（2026-10-17 修复），裸跑即可；
+# 必须 Start-Process 后台跑（脱离工具 30s 超时 job，防进程连坐被杀 → _schema_meta=-1 死锁）
 ```
 
 确认输出 `[db] schema synced to version N` 且 `_schema_meta.version = N`，再跑 smoke。
