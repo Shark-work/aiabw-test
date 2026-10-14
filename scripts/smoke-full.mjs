@@ -105,7 +105,8 @@ try {
 
   // P0-1 唤醒即铸卡端到端：onboarding 候选 → claim → 自动铸造灵魂卡（soulCard.certificateNo）
   const ob0 = await api("/api/onboarding", { token });
-  const candidatePetId = ob0.json?.candidate?.petId;
+  // GET /api/onboarding 返回 candidates 复数数组（Phase 2 视觉化卡片选择，至多 3 只），取首只
+  const candidatePetId = ob0.json?.candidates?.[0]?.petId ?? null;
   const claim = candidatePetId
     ? await api("/api/pets/claim", { method: "POST", token, body: { petId: candidatePetId } })
     : { status: 0, json: {}, raw: "no candidate" };
