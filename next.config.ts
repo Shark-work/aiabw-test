@@ -76,6 +76,14 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  // assets/rive/*.riv 为运行时 fs 读取（/api/pet/asset 流式下发 + play/movie 上架探测），
+  // 非静态 import——必须显式纳入 serverless 函数文件追踪；否则美术交付 .riv 后
+  // 部署内 existsSync 仍恒 false / asset 路由 404（「放入即自动切换」失效）。
+  outputFileTracingIncludes: {
+    "/api/pet/asset": ["./assets/rive/**/*.riv"],
+    "/api/pet/play": ["./assets/rive/**/*.riv"],
+    "/api/pet/movie": ["./assets/rive/**/*.riv"],
+  },
   env: {
     NEXT_PUBLIC_APP_VERSION: resolveAppVersion(),
     // 提升 scrypt 等 CPU 密集异步任务的并发度（libuv 线程池默认 4）。

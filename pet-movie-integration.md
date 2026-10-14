@@ -142,6 +142,12 @@ interface PetCharacter {
 → 存在性 `404` → 流式输出（`Cache-Control: private, max-age=3600` + `nosniff`）。
 `.riv` 存仓库私有目录 `assets/rive/`（**绝不放 `public/`**），浏览器唯一获取通道即本接口。
 
+**上架探测（2026-10-17 收尾）**：`/api/pet/play|movie` 聚合响应附带 `riveAvailable`
+（`src/lib/pets/rive-asset-server.ts` 服务端 existsSync + 实例级缓存）；`false` 时前端
+pet-stage **零请求直降**静态立绘——不再发注定 404 的鉴权请求（console 红字/toast 噪音消除）。
+资产随部署上架后 `riveAvailable=true`，同一代码自动恢复 Rive 渲染链路
+（部署文件追踪：next.config `outputFileTracingIncludes` 已覆盖 `assets/rive` → 三条 pet 路由）。
+
 ---
 
 ## 5. 计费与免费额度（需求五）
@@ -170,11 +176,12 @@ interface PetCharacter {
 | 输入 2 | **Number `intensity`**：情绪强度 0-2（可选；资产未做前端自动跳过） |
 | 输入 3 | **Trigger（与动作同名）**：`idle / eat / sleep / think / wave / happy / sad / angry / rub`，`fire()` 播放一次性动作 |
 
-**加载失败兜底链**（需求二.2，不静默失败）：
+**加载失败兜底链**（需求二.2，不静默失败；仅在 `riveAvailable=true` 但 fetch 真失败时触发）：
 `fetch 401/404/网络错` → `console.error('[pet-stage] Rive asset load failed (...)')` 明确原因
 → `onAssetFailed` 回调 → 页面 toast 轻提示（`petPlay.assetFallback`）→ 降级 `LivingPet`
-（呼吸/眨眼/摇尾 + 情绪 CSS 类）。**当前 `worker-cat.riv` 尚未上架**（二进制资产无法由代码生成），
-生产即走本降级链，功能完整可用；放入真实 `.riv` 后自动切换 Rive 渲染，无需改代码。
+（呼吸/眨眼/摇尾 + 情绪 CSS 类）。**当前 `worker-cat.riv` 尚未上架**（二进制资产无法由代码生成）：
+聚合响应 `riveAvailable=false` → 前端**零请求直降**静态立绘（无 404/console 红字/toast，
+仅一条 info 级透明日志），功能完整可用；放入真实 `.riv` 重新部署后自动切换 Rive 渲染，无需改代码。
 
 ---
 
@@ -208,7 +215,9 @@ interface PetCharacter {
 ## 9. 已知风险
 
 1. **`worker-cat.riv` 未上架**：Rive 路径从未在生产真正渲染——状态机输入契约（emotion/intensity/Trigger）
-   由契约测试锁定但未经真实资产验证；美术交付后需真机回归（降级链已是生产常态，无阻塞）。
+   由契约测试锁定但未经真实资产验证；美术交付后需真机回归。未上架期间前端经 `riveAvailable=false`
+   零请求直降静态立绘（2026-10-17 收尾：404/console 红字/toast 噪音已消除），无阻塞；
+   上架动作 = 提交 `.riv` 到 `assets/rive/` 重新部署（文件追踪已备，自动切换，无需改代码）。
 2. **限流为单实例口径**：serverless 多实例下整体限额 ≈ N×limit（Vercel hobby 冷启动实例数少，
    削峰足够）；IP 维限流对共享出口（校园/公司 NAT）可能误伤，阈值 60/min 已留余量。
 3. **免费计数并发窗口**：同一毫秒内的并发请求可能都按"免费"放行（超出 1-2 句），

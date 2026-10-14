@@ -48,6 +48,8 @@ export function PetMovieClient() {
   const [character, setCharacter] = useState<CharacterView | null>(null);
   const [points, setPoints] = useState(0);
   const [items, setItems] = useState<BackpackItemView[]>([]);
+  // Rive 上架探测（聚合响应下发；false = 零请求直降静态立绘，无 404 噪音）
+  const [riveAvailable, setRiveAvailable] = useState(false);
   const [mood, setMood] = useState<PetMood>("idle");
   const [intensity, setIntensity] = useState<0 | 1 | 2>(1);
   const [action, setAction] = useState<PetAction>("idle");
@@ -104,6 +106,7 @@ export function PetMovieClient() {
         setCharacter(data.character ?? null);
         setPoints(data.points);
         setItems(data.items ?? []);
+        setRiveAvailable(data.riveAvailable === true);
         setPhase("ready");
         setReply(data.character?.greeting ?? "");
         if (data.hungry) {
@@ -380,6 +383,7 @@ export function PetMovieClient() {
       <main className="absolute inset-0 z-10 flex items-center justify-center">
         <PetStage
           token={token}
+          riveAvailable={riveAvailable}
           avatar={pet.avatar}
           alt={pet.name}
           mood={mood}

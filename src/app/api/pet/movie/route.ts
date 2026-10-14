@@ -10,6 +10,7 @@ import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
 import { speciesAvatarFor } from "@/lib/species-avatars";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { characterView, resolveCharacter } from "@/lib/pets/characters";
+import { isRiveAssetAvailable } from "@/lib/pets/rive-asset-server";
 import {
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
@@ -18,6 +19,7 @@ import {
   movieDefaultPetName,
   PLAY_ITEMS,
   PLAY_ITEM_SOURCE,
+  RIVE_ASSET_NAME,
 } from "@/lib/pet-play-config";
 
 export const runtime = "nodejs";
@@ -123,6 +125,8 @@ export async function GET(req: Request) {
       },
       // 角色展示层（需求一：greeting/displayName 由角色注册表下发，前端零硬编码）
       character: characterView(resolveCharacter(pet.petType), locale),
+      // Rive 上架探测：未上架 → 前端零请求直降静态立绘（无 404 噪音）；上架自动切 Rive
+      riveAvailable: isRiveAssetAvailable(RIVE_ASSET_NAME),
       hungry: hungerLevel <= HUNGRY_THRESHOLD,
       points: Number(balRes.rows[0]?.points ?? 0),
       // 背包商品目录（需求四：剧场侧栏改背包模式，与 play 页同目录/同事务路由）

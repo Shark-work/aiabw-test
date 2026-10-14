@@ -46,6 +46,8 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
   const [character, setCharacter] = useState<CharacterView | null>(null);
   const [points, setPoints] = useState(0);
   const [items, setItems] = useState<BackpackItemView[]>([]);
+  // Rive 上架探测（聚合响应下发；false = 零请求直降静态立绘，无 404 噪音）
+  const [riveAvailable, setRiveAvailable] = useState(false);
   const [mood, setMood] = useState<PetMood>("idle");
   const [intensity, setIntensity] = useState<0 | 1 | 2>(1);
   const [action, setAction] = useState<PetAction>("idle");
@@ -104,6 +106,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
         setCharacter(data.character ?? null);
         setPoints(data.points);
         setItems(data.items);
+        setRiveAvailable(data.riveAvailable === true);
         setPhase("ready");
         // 开场白由角色配置下发（需求一：文案不硬编码）；饥饿宠物进场即 hungry 态 + 买粮提示
         setReply(data.character?.greeting ?? "");
@@ -404,6 +407,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
       <main className="absolute inset-0 z-10 flex items-center justify-center">
         <PetStage
           token={token}
+          riveAvailable={riveAvailable}
           avatar={pet.avatar}
           alt={pet.name}
           mood={mood}

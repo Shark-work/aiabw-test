@@ -29,6 +29,12 @@ const FALLBACK_ANIM: Record<PetMood, string> = {
 interface PetStageProps {
   /** JWT（/api/pet/asset 鉴权下载 .riv 用；null 时直接走降级立绘） */
   token: string | null;
+  /**
+   * 服务端资产上架探测（/api/pet/play|movie 聚合响应下发）：
+   * false = .riv 未随部署上架 → **零请求直降**静态立绘（无 404 / console.error / toast 噪音）；
+   * 缺省 true = 保留旧探测行为（fetch 失败走 console.error + onAssetFailed 兜底链）。
+   */
+  riveAvailable?: boolean;
   /** 降级立绘（物种头像 / 官方宠物图） */
   avatar: string;
   alt: string;
@@ -45,13 +51,15 @@ interface PetStageProps {
 /**
  * 宠物舞台（需求三.1 核心）：@rive-app/react-canvas 加载 .riv + 接入 State Machine。
  *  - 资产通道：fetch /api/pet/asset（Bearer 鉴权 + 限流 + Referer 校验）→ ArrayBuffer → useRive；
- *    失败（401/404/.riv 未上架）console.error 明确原因 + onAssetFailed 上报 + 降级 LivingPet
+ *    失败（401/404/网络错）console.error 明确原因 + onAssetFailed 上报 + 降级 LivingPet
  *    （呼吸/眨眼/摇尾），**不静默失败**（需求二.2）；
+ *  - 上架探测短路：riveAvailable=false（服务端已探测 .riv 未随部署上架）时**零请求直降**
+ *    静态立绘——不发注定 404 的鉴权请求（console 红字 + toast 噪音消除）；上架后自动切回；
  *  - 状态机契约：mood → Number 输入「emotion」（白名单索引）；intensity → Number 输入
  *    「intensity」（0-2）；action → 同名 Trigger fire；全部经映射表驱动（需求三.2）；
  *  - 点击宠物 = 蹭蹭（rub Trigger），双模共用同一 { mood, action, intensity } 驱动接口。
  */
-export function PetStage({ token, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
+export function PetStage({ token, riveAvailable = true, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
   const [riveUrl, setRiveUrl] = useState<string | null>(null);
   const [assetFailed, setAssetFailed] = useState(false);
   const [rubbing, setRubbing] = useState(false);
@@ -59,6 +67,12 @@ export function PetStage({ token, avatar, alt, mood, action, intensity = 1, onAs
   // 1) 经鉴权 API 拉取 .riv（防盗链：无公开 URL）→ Blob ObjectURL；失败上报 + 降级
   useEffect(() => {
     if (!token) return;
+    // 服务端已探测 .riv 未上架：零请求直降静态立绘（info 级透明信息，非错误）。
+    // 资产随部署上架后聚合响应 riveAvailable=true，本短路自动解除。
+    if (!riveAvailable) {
+      console.info("[pet-stage] Rive asset not deployed on server; static sprite mode (zero-fetch)");
+      return;
+    }
     let cancelled = false;
     let objectUrl: string | null = null;
     void (async () => {
@@ -86,7 +100,7 @@ export function PetStage({ token, avatar, alt, mood, action, intensity = 1, onAs
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, riveAvailable]);
 
   // 2) Rive 初始化（react 4.x 类型契约 src:string → Blob URL；会话内私有、卸载即吊销）
   const { rive, RiveComponent } = useRive({

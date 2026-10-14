@@ -5,7 +5,7 @@
  *  B) 契约层 pet-play-config：统一枚举 re-export / 商品目录 / parsePetChatResponse /
  *     fallbackPetReply / 新经济常量（免费次数/日上限/离线衰减/饥饿阈值）；
  *  C) API：/api/pet/chat（双维限流/日上限/免费计数/退款/观测日志/统一契约）、
- *     /api/pet/asset（.riv 鉴权流式下发）、/api/pet/play|buy|use（聚合/事务/交互记录）；
+ *     /api/pet/asset（.riv 鉴权流式下发 + 上架探测零请求直降）、/api/pet/play|buy|use（聚合/事务/交互记录）；
  *  D) 前端：沉浸布局 / Rive 双模 + intensity / 背包双形态 / 402 弹窗 / 埋点 / 音效 / 零密钥锁；
  *  E) 防抄袭：next.config 混淆 + .riv 不在 public/ + 登录默认直达互动页。
  *  （角色注册表专项 → pet-characters.test.mjs；剧场页 → pet-movie.test.mjs）
@@ -229,6 +229,34 @@ test("pet-play(C4): /api/pet/play 聚合（角色/饥饿结算）+ buy/use 事�
   assert.ok(use.includes("resolveCharacter") && use.includes("linesZh"), "台词随角色下发（需求一）");
 });
 
+// ───────────── C5) Rive 上架探测（服务端 existsSync + 聚合下发 + 部署文件追踪） ─────────────
+test("pet-play(C5): rive-asset-server 探测模块 + play/movie 下发 riveAvailable + 部署追踪", () => {
+  // 服务端探测模块（node:fs 专用，客户端禁引）：未上架 → 前端零请求直降，无 404 噪音
+  const probe = read("src/lib/pets/rive-asset-server.ts");
+  assert.ok(probe.includes("existsSync"), "existsSync 探测");
+  assert.ok(probe.includes('path.resolve(process.cwd(), "assets", "rive")'), "私有资产目录（与 asset 路由同约定）");
+  assert.ok(probe.includes("availabilityCache"), "实例级缓存（免每请求 hit 磁盘）");
+  assert.ok(probe.includes("isRiveAssetAvailable"), "探测函数导出");
+
+  // play/movie 聚合响应下发 riveAvailable
+  for (const [name, src] of [
+    ["play", read("src/app/api/pet/play/route.ts")],
+    ["movie", read("src/app/api/pet/movie/route.ts")],
+  ]) {
+    assert.ok(src.includes('from "@/lib/pets/rive-asset-server"'), `${name} 引入探测模块`);
+    assert.ok(
+      src.includes("riveAvailable: isRiveAssetAvailable(RIVE_ASSET_NAME)"),
+      `${name} 聚合响应下发 riveAvailable`,
+    );
+  }
+
+  // 部署红线：.riv 为运行时 fs 读取（非静态 import），必须显式纳入 serverless 文件追踪，
+  // 否则美术交付后生产 existsSync 仍恒 false / asset 路由 404（「放入即自动切换」失效）。
+  const cfg = read("next.config.ts");
+  assert.ok(cfg.includes("outputFileTracingIncludes"), "next.config 部署追踪声明");
+  assert.ok(cfg.includes("assets/rive"), "追踪覆盖 assets/rive");
+});
+
 // ───────────── D1) 页面与沉浸布局 + 交互接线锁 ─────────────
 test("pet-play(D1): page.tsx SSR 壳 + 沉浸布局 + 背包/弹窗/埋点/音效/空状态接线", () => {
   const page = read("src/app/[locale]/pets/my/[id]/play/page.tsx");
@@ -261,6 +289,8 @@ test("pet-play(D1): page.tsx SSR 壳 + 沉浸布局 + 背包/弹窗/埋点/音�
   assert.ok(c.includes("no-pet") && c.includes("adoptCta") && c.includes("/pets/adopt"), "未领养引导");
   // 工具条：静音 + 退出沉浸（需求七.2）
   assert.ok(c.includes("toggleMute") && c.includes("exitImmersive"), "静音/退出沉浸");
+  // Rive 上架探测接线（未上架零请求直降，无 404 噪音）
+  assert.ok(c.includes("riveAvailable={riveAvailable}") && c.includes("data.riveAvailable === true"), "PetStage 上架探测接线");
   // 埋点五事件（需求八）
   for (const ev of ["pet_page_view", "pet_chat_send", "pet_feed_click", "pet_item_buy", "pet_page_exit"]) {
     assert.ok(c.includes(ev) || read("src/lib/pet-track.ts").includes(ev), `埋点 ${ev}`);
@@ -282,6 +312,8 @@ test("pet-play(D2): pet-stage Rive 状态机/intensity/失败上报 + 背包双�
   assert.ok(stage.includes("LivingPet"), "降级 CSS 动画立绘");
   assert.ok(stage.includes("console.error") && stage.includes("onAssetFailed"), "资源失败不静默（需求二.2）");
   assert.ok(stage.includes('"rub"'), "蹭蹭 rub Trigger（需求三.2）");
+  // 上架探测短路（2026-10-17 收尾）：false 零请求直降；info 级透明信息而非 error
+  assert.ok(stage.includes("if (!riveAvailable)") && stage.includes("console.info"), "未上架零请求直降（无 404 噪音）");
 
   const bag = read("src/components/pet-play/pet-backpack.tsx");
   assert.ok(bag.includes("md:block") && bag.includes("md:hidden"), "桌面侧栏/移动抽屉双形态（需求四.2）");

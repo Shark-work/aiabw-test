@@ -35,6 +35,7 @@ test("pet-movie(1): movie 路由——最早 adoption / 无则自动建猫 / 角
   assert.ok(c.includes("PLAY_ITEMS") && c.includes("PLAY_ITEM_SOURCE"), "背包商品目录下发（需求四）");
   assert.ok(c.includes("HUNGER_SETTLE_SQL") && c.includes("HUNGRY_THRESHOLD"), "离线结算 + 饥饿标志");
   assert.ok(c.includes("MOVIE_INTERACTIONS"), "legacy interactions 保留下发");
+  assert.ok(c.includes("riveAvailable: isRiveAssetAvailable(RIVE_ASSET_NAME)"), "Rive 上架探测下发（未上架零请求直降）");
 });
 
 // ───────────── 2) 统一契约：chat 路由无剧场双契约残留 ─────────────
@@ -101,6 +102,7 @@ test("pet-movie(5): movie 客户端——契约渲染/背包模式/防拷贝/埋
   }
   assert.ok(c.includes('trackPetExitOnce("movie")'), "退出埋点");
   assert.ok(c.includes("handleAssetFailed"), "资源失败轻提示（需求二.2）");
+  assert.ok(c.includes("riveAvailable={riveAvailable}") && c.includes("data.riveAvailable === true"), "PetStage 上架探测接线");
   assert.ok(c.includes("h-dvh"), "沉浸全屏");
 });
 

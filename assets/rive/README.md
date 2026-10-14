@@ -10,9 +10,12 @@
 | --- | --- | --- |
 | `worker-cat` | `assets/rive/worker-cat.riv` | 互动页舞台宠物（打工橘猫） |
 
-⚠️ `worker-cat.riv` 尚未上架（二进制资产无法由代码生成）。资产缺席时前端
-自动降级为物种头像 + CSS 情绪动画（`pet-stage.tsx`），功能完整可用；
-放入真实 `.riv` 后自动切换 Rive 渲染，无需改代码。
+⚠️ `worker-cat.riv` 尚未上架（二进制资产无法由代码生成）。未上架期间
+`/api/pet/play|movie` 聚合响应下发 `riveAvailable=false`（`src/lib/pets/rive-asset-server.ts`
+服务端 existsSync 探测），前端**零请求直降**物种头像 + CSS 情绪动画（`pet-stage.tsx`）——
+无 404 / 控制台报错 / toast 噪音，功能完整可用。
+放入真实 `.riv` 重新部署后自动切换 Rive 渲染，无需改代码
+（部署文件追踪已由 next.config `outputFileTracingIncludes` 覆盖本目录）。
 
 ## .riv 制作约定（美术 / Rive Editor 交付需遵守）
 
