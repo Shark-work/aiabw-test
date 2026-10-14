@@ -255,6 +255,12 @@ test("pet-play(C5): rive-asset-server 探测模块 + play/movie 下发 riveAvail
   const cfg = read("next.config.ts");
   assert.ok(cfg.includes("outputFileTracingIncludes"), "next.config 部署追踪声明");
   assert.ok(cfg.includes("assets/rive"), "追踪覆盖 assets/rive");
+
+  // 素材占位上架（2026-10-17）：worker-cat.riv = cat-playing 社区素材（默认 SM，
+  // 前端探测自适应 autoplay）；.gitignore 白名单只放行契约名，防 21MB 级素材误入库
+  assert.ok(existsSync(join(ROOT, "assets/rive/worker-cat.riv")), "worker-cat.riv 已上架");
+  const gi = read(".gitignore");
+  assert.ok(gi.includes("assets/rive/*.riv") && gi.includes("!assets/rive/worker-cat.riv"), ".gitignore 素材白名单");
 });
 
 // ───────────── D1) 页面与沉浸布局 + 交互接线锁 ─────────────
@@ -304,7 +310,9 @@ test("pet-play(D1): page.tsx SSR 壳 + 沉浸布局 + 背包/弹窗/埋点/音�
 test("pet-play(D2): pet-stage Rive 状态机/intensity/失败上报 + 背包双形态 + 零密钥", () => {
   const stage = read("src/components/pet-play/pet-stage.tsx");
   assert.ok(stage.includes("@rive-app/react-canvas") && stage.includes("useRive"), "Rive React 运行时（需求三.1）");
-  assert.ok(stage.includes("stateMachines: RIVE_STATE_MACHINE"), "状态机绑定");
+  // 状态机绑定（素材自适应：契约 SM 探测命中才绑定，素材资产 autoplay 默认动画）
+  assert.ok(stage.includes("stateMachines: contractSM ? RIVE_STATE_MACHINE : undefined"), "状态机自适应绑定");
+  assert.ok(stage.includes("TextDecoder") && stage.includes("setContractSM"), "二进制契约 SM 探测");
   assert.ok(stage.includes("stateMachineInputs") && stage.includes(".fire()"), "输入同步+Trigger 触发");
   assert.ok(stage.includes('"intensity"'), "intensity Number 输入（需求三.3）");
   assert.ok(stage.includes("/api/pet/asset") && stage.includes("Authorization"), "鉴权资产通道");

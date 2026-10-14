@@ -80,3 +80,8 @@ check-resources-report.md
 
 scripts/_realpay.*
 `n*.pid
+
+# Rive 资产显式白名单：只放行契约资产 worker-cat.riv（防 21MB 级素材误入库；
+# 新资产上架 = 改名/复制为目标契约名后去除本注释对应行。素材源文件留存本地即可）
+assets/rive/*.riv
+!assets/rive/worker-cat.riv

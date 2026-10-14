@@ -169,7 +169,7 @@ pet-stage **零请求直降**静态立绘——不再发注定 404 的鉴权请�
 
 | 项 | 约定 |
 | --- | --- |
-| 资产文件 | `assets/rive/worker-cat.riv`（私有目录；缺席时前端自动降级物种头像 + CSS 情绪动画） |
+| 资产文件 | `assets/rive/worker-cat.riv`（私有目录；当前 = cat-playing 社区素材占位，默认 SM → 前端探测自适应 autoplay；缺席时降级物种头像 + CSS 情绪动画） |
 | 下发通道 | `GET /api/pet/asset?name=worker-cat`（JWT + 限流 + Referer 校验 + 白名单 + 流式） |
 | 状态机名称 | **`PetStateMachine`** |
 | 输入 1 | **Number `emotion`**：情绪索引 0-6，顺序 = `PET_MOODS`（`0=idle 1=happy 2=sad 3=angry 4=hungry 5=thinking 6=sleepy`） |
@@ -179,9 +179,15 @@ pet-stage **零请求直降**静态立绘——不再发注定 404 的鉴权请�
 **加载失败兜底链**（需求二.2，不静默失败；仅在 `riveAvailable=true` 但 fetch 真失败时触发）：
 `fetch 401/404/网络错` → `console.error('[pet-stage] Rive asset load failed (...)')` 明确原因
 → `onAssetFailed` 回调 → 页面 toast 轻提示（`petPlay.assetFallback`）→ 降级 `LivingPet`
-（呼吸/眨眼/摇尾 + 情绪 CSS 类）。**当前 `worker-cat.riv` 尚未上架**（二进制资产无法由代码生成）：
-聚合响应 `riveAvailable=false` → 前端**零请求直降**静态立绘（无 404/console 红字/toast，
-仅一条 info 级透明日志），功能完整可用；放入真实 `.riv` 重新部署后自动切换 Rive 渲染，无需改代码。
+（呼吸/眨眼/摇尾 + 情绪 CSS 类）。
+
+**素材自适应（2026-10-17 上架）**：`worker-cat.riv` 当前为 cat-playing 社区素材占位
+（状态机 = 默认 `State Machine 1`，未按契约制作）。pet-stage 拉取二进制后探测是否含
+`PetStateMachine` 明文字符串：**不含 → 省略 `stateMachines`** 让运行时 autoplay 默认动画
+（emotion/intensity/Trigger 绑定挂起，点击无 rub 反馈）；**含 → 契约全绑定**。
+指定不存在的状态机会冻结画面并触发 wasm 报错——探测是两类资产同一代码兼容的关键。
+正式定制资产（按下表契约制作）同名替换即恢复全绑定，零代码改动。
+**合规**：素材授权需上线前确认（见 assets/rive/README.md），推荐替换原创/已购定制资产。
 
 ---
 
@@ -214,10 +220,10 @@ pet-stage **零请求直降**静态立绘——不再发注定 404 的鉴权请�
 
 ## 9. 已知风险
 
-1. **`worker-cat.riv` 未上架**：Rive 路径从未在生产真正渲染——状态机输入契约（emotion/intensity/Trigger）
-   由契约测试锁定但未经真实资产验证；美术交付后需真机回归。未上架期间前端经 `riveAvailable=false`
-   零请求直降静态立绘（2026-10-17 收尾：404/console 红字/toast 噪音已消除），无阻塞；
-   上架动作 = 提交 `.riv` 到 `assets/rive/` 重新部署（文件追踪已备，自动切换，无需改代码）。
+1. **`worker-cat.riv` 为社区素材占位**：素材状态机为默认 `State Machine 1`——emotion/intensity/Trigger
+   契约输入**挂起**（前端探测自适应 autoplay，动画可播但不随情绪/动作切换）；契约由测试锁定，
+   正式定制资产同名替换即恢复全绑定（需真机回归）。**素材商用授权待确认**（rive.app 社区页
+   License；推荐替换原创/已购资产）。`.gitignore` 白名单只放行契约名，素材源文件不入库。
 2. **限流为单实例口径**：serverless 多实例下整体限额 ≈ N×limit（Vercel hobby 冷启动实例数少，
    削峰足够）；IP 维限流对共享出口（校园/公司 NAT）可能误伤，阈值 60/min 已留余量。
 3. **免费计数并发窗口**：同一毫秒内的并发请求可能都按"免费"放行（超出 1-2 句），

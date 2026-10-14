@@ -16,7 +16,7 @@ movie 页喂食无背包、饥饿零离线衰减、扣费无退款、无免费�
 | 需求 | 落地 |
 | --- | --- |
 | 一 · 统一角色数据源 | `src/lib/pets/characters.ts` 角色注册表（id/name/species/personality/buildSystemPrompt/riveFileKey/fallbackImage/台词库 7 情绪×双语）；`resolveCharacter(petType)`：persian→打工橘猫，其余物种/官方宠物→艾比灵宠（雪豹不再说橘猫话）；占位符 {name} 参数化；greeting 经 API characterView 下发（prompt/台词零进 bundle） |
-| 二 · 资源 404 与兜底 | 404 根因=worker-cat.riv 从未上架（设计降级路径）；pet-stage 失败 console.error+onAssetFailed→toast；缓存 private 1h + Referer 403 既有防线保留。**收尾（2026-10-17）**：`rive-asset-server.ts` 服务端 existsSync 探测 + play/movie 聚合响应 `riveAvailable` → 未上架前端零请求直降（404/console 红字/toast 噪音消除）；next.config `outputFileTracingIncludes` 覆盖 assets/rive，美术交付 .riv 重新部署即自动切 Rive，零代码改动 |
+| 二 · 资源 404 与兜底 | 404 根因=worker-cat.riv 从未上架（设计降级路径）；pet-stage 失败 console.error+onAssetFailed→toast；缓存 private 1h + Referer 403 既有防线保留。**收尾（2026-10-17）**：`rive-asset-server.ts` 服务端 existsSync 探测 + play/movie 聚合响应 `riveAvailable` → 未上架前端零请求直降（404/console 红字/toast 噪音消除）；next.config `outputFileTracingIncludes` 覆盖 assets/rive。**素材上架（同日）**：worker-cat.riv = cat-playing 社区素材占位（默认 SM）→ pet-stage 二进制探测 PetStateMachine 自适应（素材 autoplay 默认动画，契约资产全绑定）；.gitignore 白名单防素材误入库；⚠️ 素材商用授权待确认，正式定制资产（含契约 SM）同名替换即恢复情绪/Trigger 全绑定 |
 | 三 · Rive 状态机统一 | PET_MOODS 7 值（idle/happy/sad/angry/hungry/thinking/sleepy）+ PET_ACTIONS 9 值（含 rub 蹭蹭）+ MOOD_ACTION_MAP 服务端推导；LLM 契约统一 {text,mood,intensity}（非法 mood→idle、intensity 钳 0-2）；intensity→Rive Number 输入；thinking 即时触发 |
 | 四 · 背包喂食闭环 | movie 侧栏改背包模式（复用 /api/pet/play/buy|use）；桌面 hover 侧栏 + 移动端 🎒 FAB 底部抽屉（PetBackpack 双形态）；use 路由补 pet_play_logs(kind='item')+角色台词下发；离线饥饿衰减 2/h（HUNGER_SETTLE_SQL 四入口结算）；hungerLevel≤20 → hungry 态+买粮提示 |
 | 五 · 积分体验 | 每日免费 5 句（kind='chat' 行数口径）；AI 全挂自动退款（pet_play_refund + chat_refund 不占次）；402 → InsufficientPointsModal 充值/签到引导弹窗 |

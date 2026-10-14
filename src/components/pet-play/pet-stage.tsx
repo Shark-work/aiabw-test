@@ -55,12 +55,16 @@ interface PetStageProps {
  *    （呼吸/眨眼/摇尾），**不静默失败**（需求二.2）；
  *  - 上架探测短路：riveAvailable=false（服务端已探测 .riv 未随部署上架）时**零请求直降**
  *    静态立绘——不发注定 404 的鉴权请求（console 红字 + toast 噪音消除）；上架后自动切回；
+ *  - 素材自适应：二进制探测资产是否含 PetStateMachine（素材 = 默认 State Machine 1
+ *    → autoplay 默认动画，输入绑定挂起；契约资产 → 全绑定），两类资产同一代码兼容；
  *  - 状态机契约：mood → Number 输入「emotion」（白名单索引）；intensity → Number 输入
  *    「intensity」（0-2）；action → 同名 Trigger fire；全部经映射表驱动（需求三.2）；
  *  - 点击宠物 = 蹭蹭（rub Trigger），双模共用同一 { mood, action, intensity } 驱动接口。
  */
 export function PetStage({ token, riveAvailable = true, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
   const [riveUrl, setRiveUrl] = useState<string | null>(null);
+  /** 资产是否含契约状态机（PetStateMachine）：素材资产=false → autoplay 默认动画 */
+  const [contractSM, setContractSM] = useState(false);
   const [assetFailed, setAssetFailed] = useState(false);
   const [rubbing, setRubbing] = useState(false);
 
@@ -83,6 +87,11 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
         if (!res.ok) throw new Error(`asset ${res.status}`);
         const buf = await res.arrayBuffer();
         if (cancelled) return;
+        // 契约探测（素材自适应）：.riv 二进制中状态机名以明文字符串存储。
+        // 含 PetStateMachine = 契约资产 → 绑定状态机 + emotion/intensity/Trigger 输入；
+        // 不含 = 社区素材（默认 State Machine 1）→ 省略 stateMachines 让运行时
+        // autoplay 默认动画——指定不存在的状态机会冻结画面并触发 wasm 报错。
+        setContractSM(new TextDecoder().decode(buf).includes(RIVE_STATE_MACHINE));
         objectUrl = URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
         setRiveUrl(objectUrl);
       } catch (err) {
@@ -103,9 +112,10 @@ export function PetStage({ token, riveAvailable = true, avatar, alt, mood, actio
   }, [token, riveAvailable]);
 
   // 2) Rive 初始化（react 4.x 类型契约 src:string → Blob URL；会话内私有、卸载即吊销）
+  //    contractSM=false（素材资产）时不指定 stateMachines → autoplay 默认状态机/动画
   const { rive, RiveComponent } = useRive({
     src: riveUrl ?? undefined,
-    stateMachines: RIVE_STATE_MACHINE,
+    stateMachines: contractSM ? RIVE_STATE_MACHINE : undefined,
     autoplay: true,
   });
 

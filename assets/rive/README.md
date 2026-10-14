@@ -8,14 +8,19 @@
 
 | 资产名 | 文件 | 用途 |
 | --- | --- | --- |
-| `worker-cat` | `assets/rive/worker-cat.riv` | 互动页舞台宠物（打工橘猫） |
+| `worker-cat` | `assets/rive/worker-cat.riv` | 互动页舞台宠物（当前 = cat-playing 社区素材占位，61KB） |
 
-⚠️ `worker-cat.riv` 尚未上架（二进制资产无法由代码生成）。未上架期间
-`/api/pet/play|movie` 聚合响应下发 `riveAvailable=false`（`src/lib/pets/rive-asset-server.ts`
-服务端 existsSync 探测），前端**零请求直降**物种头像 + CSS 情绪动画（`pet-stage.tsx`）——
-无 404 / 控制台报错 / toast 噪音，功能完整可用。
-放入真实 `.riv` 重新部署后自动切换 Rive 渲染，无需改代码
-（部署文件追踪已由 next.config `outputFileTracingIncludes` 覆盖本目录）。
+**当前状态（2026-10-17 素材占位上架）**：`worker-cat.riv` 为 Rive Community
+「cat-playing-animation」素材（状态机 = 默认 `State Machine 1`，**未按下方契约制作**）。
+前端 pet-stage 二进制探测资产是否含 `PetStateMachine`：不含 → 省略 `stateMachines`
+autoplay 默认动画（emotion/intensity/Trigger 输入绑定挂起）；含 → 契约全绑定。
+正式定制资产交付后**同名替换**本文件即恢复全绑定，零代码改动。
+
+**入库白名单**：`.gitignore` 只放行 `assets/rive/worker-cat.riv`，其余 `*.riv` 不入库
+（素材源文件留存本地即可——防大体积素材误提交；新契约资产上架 = 同名替换）。
+
+**合规提醒**：素材占位为过渡方案——正式上线前需确认该社区素材授权（rive.app 对应
+社区页标注的 License），或替换为原创/已购授权定制资产（推荐，顺带补齐契约状态机）。
 
 ## .riv 制作约定（美术 / Rive Editor 交付需遵守）
 
