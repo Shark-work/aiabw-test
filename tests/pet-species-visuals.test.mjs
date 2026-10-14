@@ -123,3 +123,19 @@ test("species-visuals(E1): rivePath 按需拉取 + 立绘/场景换皮 + 场景�
     assert.ok(css.includes(`.${theme}`), `globals.css 含 .${theme}`);
   }
 });
+
+// ───────────── B2) README 契约 v2 文档锁 ─────────────
+test("sm-contract(B2): README 契约 v2——emotion 0-6 / intensity 0-1 / 5 Trigger / 回 idle / .riv", () => {
+  const md = read("assets/rive/README.md");
+  assert.ok(md.includes("PetStateMachine"), "状态机名固定");
+  assert.ok(md.includes("0-6"), "emotion 取值 0-6（7 情绪索引）");
+  assert.ok(md.includes("0-1"), "intensity 取值 0-1");
+  for (const t of PET_SM_TRIGGERS) {
+    assert.ok(md.includes(`\`${t}\``), `Trigger ${t} 文档化`);
+  }
+  assert.ok(md.includes("自动回到 `idle`"), "播完自动回 idle 必备过渡");
+  assert.ok(md.includes("大小写严格"), "输入名大小写严格警示");
+  assert.ok(md.includes("`.riv`") && md.includes("`.rev`"), ".riv（非 .rev）扩展名规范");
+  assert.ok(md.includes("species-visuals"), "换皮注册表指引（新增物种只加一条）");
+  assert.ok(md.includes("sm-contract.ts"), "契约常量出处指向 sm-contract");
+});
