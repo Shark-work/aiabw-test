@@ -38,6 +38,12 @@ const TARGET_LABEL: Record<string, string> = {
 type AiStats = {
   cache: { entries: number; hits: number; hitRate: number; expired: number };
   concurrency: { inFlight: number; max: number };
+  petChat?: {
+    total7d: number;
+    keywordRate: number;
+    bySource: { source: string; count: number; avgMs: number; tokens: number }[];
+    byIntent: { action: string; count: number }[];
+  };
 };
 
 /** 🛡️ 内容审核：用户举报队列（pending 先报先审）+ 确认违规 / 驳回处置 + AI 成本监控条。 */
@@ -111,6 +117,23 @@ export default function AdminModerationPage() {
           <span>
             在途并发 {aiStats.concurrency.inFlight}/{aiStats.concurrency.max}（本实例）
           </span>
+          {/* 宠物对话 7 日观测（intent-resolver 三来源；keywordRate=零成本占比） */}
+          {aiStats.petChat && (
+            <span>
+              🐾 宠物对话 7d {aiStats.petChat.total7d} 句 · 关键词零成本{" "}
+              <b className="text-green-600">{(aiStats.petChat.keywordRate * 100).toFixed(0)}%</b>
+              {(() => {
+                const llm = aiStats.petChat?.bySource.find((s) => s.source === "llm");
+                const fb = aiStats.petChat?.bySource.find((s) => s.source === "fallback");
+                return (
+                  <>
+                    {llm ? ` · LLM ${llm.count} 句（均 ${llm.avgMs}ms / ${llm.tokens} tok）` : ""}
+                    {fb ? ` · 降级 ${fb.count} 句` : ""}
+                  </>
+                );
+              })()}
+            </span>
+          )}
         </div>
       )}
 

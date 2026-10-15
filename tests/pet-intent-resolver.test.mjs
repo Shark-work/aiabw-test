@@ -188,3 +188,32 @@ test("pet-intent(E1): chat 路由接线——resolver/退款按 source/观测落
     assert.ok(!src.includes(gone), `chat 路由不得残留 ${gone}`);
   }
 });
+
+// ───────────── F1) 可观测：ai-stats petChat 面板 + 监控条展示 ─────────────
+test("pet-intent(F1): /api/admin/ai-stats petChat 7日观测 + moderation 监控条展示", () => {
+  const route = read("src/app/api/admin/ai-stats/route.ts");
+  assert.ok(route.includes("pet_play_logs"), "pet_play_logs 数据源");
+  assert.ok(route.includes("keywordRate"), "关键词零成本占比");
+  assert.ok(route.includes("bySource") && route.includes("byIntent"), "三来源+意图分布");
+  assert.ok(route.includes("interval '7 days'"), "7 日窗口");
+  const page = read("src/app/admin/moderation/page.tsx");
+  assert.ok(page.includes("petChat") && page.includes("关键词零成本"), "监控条宠物对话展示");
+});
+
+// ───────────── F2) 架构文档锁：.clinerules/pet-state-machine.md ─────────────
+test("pet-intent(F2): .clinerules 宠物状态机文档（分层/契约 v2/新增物种一条注册表）", () => {
+  const doc = read(".clinerules/pet-state-machine.md");
+  for (const s of [
+    "sm-contract",
+    "species-visuals",
+    "intent-resolver",
+    "chat-bubble",
+    "PetStateMachine",
+    "pet/eat/play/sleep/wake",
+    "新增物种",
+    "0-1",
+    "keywordRate",
+  ]) {
+    assert.ok(doc.includes(s), `文档含 ${s}`);
+  }
+});
