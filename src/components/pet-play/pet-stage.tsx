@@ -67,6 +67,8 @@ interface PetStageProps {
  *    → autoplay 默认动画，输入绑定挂起；契约资产 → 全绑定），两类资产同一代码兼容；
  *  - 状态机契约 v2：mood → Number 输入「emotion」（白名单索引）；intensity → Number 输入
  *    「intensity」（0-1）；intent → 契约 Trigger（五值；无 intent 时 action 旧名经别名翻译）；
+ *  - 契约资产缺输入 → console.error 明确报错（美术交付红线不静默；素材资产无契约输入属正常）；
+ *  - 无障碍：prefers-reduced-motion → 一次性动作 Trigger / CSS 情绪动画豁免（情绪状态保留）；
  *  - 点击宠物 = 蹭蹭（pet Trigger，经 ACTION_TRIGGER_ALIAS.rub 别名），双模共用同一驱动接口。
  */
 export function PetStage({ token, speciesId = null, riveAvailable = true, avatar, alt, mood, action, intensity = 0.5, intent = null, onAssetFailed, onPetTap }: PetStageProps) {
@@ -79,6 +81,15 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
   const [contractSM, setContractSM] = useState(false);
   const [assetFailed, setAssetFailed] = useState(false);
   const [rubbing, setRubbing] = useState(false);
+  // 减少动态偏好（无障碍红线）：一次性动作 Trigger / CSS 情绪动画豁免，情绪状态保留
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   // 1) 经鉴权 API 拉取 .riv（防盗链：无公开 URL）→ Blob ObjectURL；失败上报 + 降级
   useEffect(() => {
@@ -136,7 +147,9 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
     autoplay: true,
   });
 
-  // 3) mood → Number 输入「emotion」同步；intensity → Number 输入「intensity」（duck typing）
+  // 3) mood → Number 输入「emotion」同步；intensity → Number 输入「intensity」（duck typing）；
+  //    契约资产缺输入 = 美术交付不符契约（assets/rive/README.md）→ console.error 不静默；
+  //    素材资产（contractSM=false）本就无契约输入 → 正常跳过
   useEffect(() => {
     if (!rive) return;
     try {
@@ -144,20 +157,26 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
       const emotionInput = inputs.find((i) => i.name === "emotion");
       if (emotionInput && typeof emotionInput.value === "number") {
         emotionInput.value = MOOD_INDEX.get(mood) ?? 0;
+      } else if (contractSM) {
+        console.error(`[pet-stage] contract asset missing Number input "emotion" (SM=${RIVE_STATE_MACHINE})`);
       }
       const intensityInput = inputs.find((i) => i.name === "intensity");
       if (intensityInput && typeof intensityInput.value === "number") {
         intensityInput.value = intensity;
+      } else if (contractSM) {
+        console.error(`[pet-stage] contract asset missing Number input "intensity" (SM=${RIVE_STATE_MACHINE})`);
       }
     } catch {
-      // 状态机输入缺失（资产未按约定制作）时静默，不打断互动
+      // 状态机未挂载（资产加载中）时静默，不打断互动
     }
-  }, [rive, mood, intensity]);
+  }, [rive, mood, intensity, contractSM]);
 
   // 4) intent → 契约 Trigger 触发（v2 五值 pet/eat/play/sleep/wake，duck typing：Trigger 有 fire 方法）；
   //    无 intent 时按 action 旧名经 ACTION_TRIGGER_ALIAS 翻译（向后兼容；think/wave/情绪位无 Trigger 不 fire）
   useEffect(() => {
     if (!rive) return;
+    // 减少动态偏好：跳过一次性动作（情绪状态由 emotion 输入保留，宠物不突然抽动）
+    if (reducedMotion) return;
     const name =
       intent && (PET_SM_TRIGGERS as readonly string[]).includes(intent)
         ? intent
@@ -167,15 +186,22 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
       const trigger = (rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? []).find(
         (i) => i.name === name,
       );
-      if (trigger && typeof trigger.fire === "function") trigger.fire();
+      if (trigger && typeof trigger.fire === "function") {
+        trigger.fire();
+      } else if (contractSM) {
+        // 契约资产缺 Trigger = 美术交付不符契约 → console.error 不静默
+        console.error(`[pet-stage] contract asset missing Trigger input "${name}" (SM=${RIVE_STATE_MACHINE})`);
+      }
     } catch {
-      // 同上：输入缺失静默
+      // 同上：状态机未挂载静默
     }
-  }, [rive, intent, action]);
+  }, [rive, intent, action, contractSM, reducedMotion]);
 
-  // 5) 蹭蹭互动（需求三.2 rub 动作位：点击宠物直接 fire，不占情绪位）
+  // 5) 蹭蹭互动（需求三.2 rub 动作位：点击宠物直接 fire，不占情绪位；
+  //    减少动态偏好 → 跳过动作动画，音效/台词仍触发）
   const handleTap = () => {
     onPetTap?.();
+    if (reducedMotion) return;
     if (rive) {
       try {
         const trigger = (rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? []).find(
@@ -208,7 +234,7 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
       type="button"
       onClick={handleTap}
       aria-label={alt}
-      className={`cursor-pointer transition-transform duration-300 pet-scene-${visual.sceneTheme} ${FALLBACK_ANIM[mood]} ${rubbing ? "scale-105" : ""}`}
+      className={`cursor-pointer transition-transform duration-300 pet-scene-${visual.sceneTheme} ${reducedMotion ? "" : FALLBACK_ANIM[mood]} ${rubbing ? "scale-105" : ""}`}
     >
       <LivingPet src={sprite} alt={alt} width={280} height={280} priority />
     </button>

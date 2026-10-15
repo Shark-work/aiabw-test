@@ -322,6 +322,11 @@ test("pet-play(D2): pet-stage Rive 状态机/intensity/失败上报 + 背包双�
   assert.ok(stage.includes("ACTION_TRIGGER_ALIAS.rub"), "蹭蹭经别名 → pet Trigger（需求三.2）");
   // intent → 契约 Trigger（v2 五值 pet/eat/play/sleep/wake）+ action 旧名别名翻译（向后兼容）
   assert.ok(stage.includes("PET_SM_TRIGGERS") && stage.includes("ACTION_TRIGGER_ALIAS[action]"), "intent 契约 Trigger + action 别名翻译");
+  // 契约资产缺输入 console.error 不静默（门控 contractSM：素材资产无契约输入属正常）
+  assert.ok(stage.includes("missing Number input") && stage.includes("missing Trigger input"), "契约资产缺输入报错");
+  assert.ok(stage.includes("[rive, mood, intensity, contractSM]") && stage.includes("[rive, intent, action, contractSM, reducedMotion]"), "报错/触发门控 contractSM");
+  // 无障碍：prefers-reduced-motion → 一次性动作与 CSS 情绪动画豁免
+  assert.ok(stage.includes("prefers-reduced-motion") && stage.includes("reducedMotion"), "减少动态偏好豁免");
   // 上架探测短路（2026-10-17 收尾）：false 零请求直降；info 级透明信息而非 error
   assert.ok(stage.includes("if (!riveAvailable)") && stage.includes("console.info"), "未上架零请求直降（无 404 噪音）");
 
