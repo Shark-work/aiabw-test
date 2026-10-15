@@ -600,6 +600,20 @@ body,
   }
 }
 
+/* ─── 宠物对话气泡淡入（chat-bubble.tsx；新回复 key 重挂载触发，遵守 reduced-motion 豁免） ─── */
+@keyframes pet-bubble-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.pet-bubble-in {
+  animation: pet-bubble-in 0.28s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pet-bubble-in {
+    animation: none;
+  }
+}
+
 
 
 /* ===================== 宠物舞台·物种场景主题（species-visuals.sceneTheme 消费；径向渐变氛围底） =====================

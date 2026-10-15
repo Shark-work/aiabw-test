@@ -9,7 +9,7 @@ import { PetBackpack, type BackpackItemView } from "@/components/pet-play/pet-ba
 import { InsufficientPointsModal } from "@/components/pet-play/insufficient-points-modal";
 import { useAntiCopy } from "@/components/pet-play/use-anti-copy";
 import { useAntiDebug } from "@/components/pet-play/use-anti-debug";
-import { useTypewriter } from "@/components/pet-play/use-typewriter";
+import { ChatBubble } from "@/components/pet-play/chat-bubble";
 import { isPetMuted, playPetSound, setPetMuted } from "@/lib/pet-sound";
 import { trackPet, trackPetExitOnce } from "@/lib/pet-track";
 import type { PetAction, PetMood } from "@/lib/pet-play-config";
@@ -67,7 +67,8 @@ export function PetMovieClient() {
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [muted, setMuted] = useState(true);
 
-  const { typed, done } = useTypewriter(reply);
+  // 打字中状态（ChatBubble 上报）：打字期间发送锁，防连点刷句刷费
+  const [typing, setTyping] = useState(false);
 
   // 防调试 + 防拷贝（需求四.1）：生产环境 DevTools 开启 → 跳离本页；禁右键/F12 快捷键
   useAntiDebug(useCallback(() => router.replace("/"), [router]));
@@ -152,7 +153,7 @@ export function PetMovieClient() {
   const sendMessage = async (e: FormEvent) => {
     e.preventDefault();
     const message = input.trim();
-    if (!message || sending || !token || !pet) return;
+    if (!message || sending || typing || !token || !pet) return;
     setSending(true);
     setInput("");
     // 需求三.4：用户输入时立即 thinking，回复结束后由契约 mood 接管
@@ -411,18 +412,8 @@ export function PetMovieClient() {
       </main>
 
       {/* 底部字幕：打字机逐字（台词由角色配置经服务端下发，需求一） */}
-      <div
-        className="absolute bottom-[120px] left-0 z-20 w-full px-6 text-center text-lg text-white pointer-events-none"
-        style={{ textShadow: "0 2px 10px rgba(0,0,0,0.85), 0 0 24px rgba(0,0,0,0.6)" }}
-        aria-live="polite"
-      >
-        {typed && (
-          <span className="inline-block max-w-[720px] rounded-2xl bg-black/45 px-5 py-2.5 backdrop-blur-sm">
-            {typed}
-            {!done && <span className="animate-pulse">▍</span>}
-          </span>
-        )}
-      </div>
+      {/* 对话气泡（单轮展示：打字机 + 淡入 + 打字状态上报发送锁） */}
+      <ChatBubble text={reply} onTypingChange={setTyping} />
 
       {/* 桌面端：右缘 5% 热区（hover 滑出背包侧栏） */}
       <div
@@ -463,7 +454,7 @@ export function PetMovieClient() {
         />
         <button
           type="submit"
-          disabled={sending || !input.trim()}
+          disabled={sending || typing || !input.trim()}
           className="shrink-0 rounded-full bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:opacity-40"
         >
           {sending ? t("sending") : t("send")}

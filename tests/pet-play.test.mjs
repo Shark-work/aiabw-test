@@ -272,9 +272,9 @@ test("pet-play(D1): page.tsx SSR 壳 + 沉浸布局 + 背包/弹窗/埋点/音�
   const c = read("src/components/pet-play/pet-play-client.tsx");
   // 沉浸舞台（全屏深色 select-none）
   assert.ok(c.includes("h-dvh") && c.includes("bg-[#121212]") && c.includes("select-none"), "Stage 沉浸全屏");
-  // 字幕（打字机 + text-shadow）
-  assert.ok(c.includes("absolute bottom-[120px]") && c.includes("textShadow:"), "Subtitle 定位+阴影");
-  assert.ok(c.includes("useTypewriter"), "打字机");
+  // 对话气泡（单轮打字机 + 淡入 + 打字状态上报发送锁；字幕定位/阴影内聚在 ChatBubble）
+  assert.ok(c.includes("ChatBubble") && c.includes("onTypingChange"), "对话气泡组件接线");
+  assert.ok(c.includes("sending || typing"), "打字机发送锁（打字期间禁止再发）");
   // 桌面热区 + 移动 FAB + 背包组件
   assert.ok(c.includes("onMouseEnter={() => setSidebarOpen(true)}"), "桌面 hover 热区");
   assert.ok(c.includes("🎒") && c.includes("md:hidden"), "移动端 🎒 浮动按钮（需求四.2）");
@@ -327,6 +327,15 @@ test("pet-play(D2): pet-stage Rive 状态机/intensity/失败上报 + 背包双�
   assert.ok(stage.includes("[rive, mood, intensity, contractSM]") && stage.includes("[rive, intent, action, contractSM, reducedMotion]"), "报错/触发门控 contractSM");
   // 无障碍：prefers-reduced-motion → 一次性动作与 CSS 情绪动画豁免
   assert.ok(stage.includes("prefers-reduced-motion") && stage.includes("reducedMotion"), "减少动态偏好豁免");
+
+  // 对话气泡组件 + 淡入关键帧（单轮展示/淡入/无障碍）
+  const bubble = read("src/components/pet-play/chat-bubble.tsx");
+  assert.ok(bubble.includes("useTypewriter") && bubble.includes("pet-bubble-in"), "气泡打字机+淡入");
+  assert.ok(bubble.includes("aria-live") && bubble.includes("key={text}"), "无障碍朗读+重挂载淡入");
+  assert.ok(bubble.includes("onTypingChange"), "打字状态上报（发送锁数据源）");
+  const css = read("src/app/globals.css");
+  assert.ok(css.includes("@keyframes pet-bubble-in"), "气泡淡入关键帧");
+  assert.ok(/@media \(prefers-reduced-motion: reduce\) \{\s*\.pet-bubble-in\s*\{\s*animation: none;/.test(css), "气泡动画减少动态豁免");
   // 上架探测短路（2026-10-17 收尾）：false 零请求直降；info 级透明信息而非 error
   assert.ok(stage.includes("if (!riveAvailable)") && stage.includes("console.info"), "未上架零请求直降（无 404 噪音）");
 

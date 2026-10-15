@@ -62,6 +62,7 @@ test("pet-characters(A3): 前端组件不得 import 角色注册表（prompt/台
     "src/components/pet-play/pet-stage.tsx",
     "src/components/pet-play/pet-backpack.tsx",
     "src/components/pet-play/insufficient-points-modal.tsx",
+    "src/components/pet-play/chat-bubble.tsx",
   ]) {
     const src = read(f);
     assert.ok(!src.includes("pets/characters"), `${f} 不得 import characters`);
