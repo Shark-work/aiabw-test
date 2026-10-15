@@ -109,17 +109,17 @@ test("pet-play(B1): 统一枚举 re-export / 商品目录 / Rive 契约 / 新经
 });
 
 // ───────────── B2) parsePetChatResponse 运行时（统一 { text, mood, intensity } 契约） ─────────────
-test("pet-play(B2): parsePetChatResponse——合法/包裹/越界 mood 归一/intensity 钳制", () => {
-  const good = parsePetChatResponse('{"text":"喵","mood":"happy","intensity":2}');
-  assert.deepEqual(good, { text: "喵", mood: "happy", intensity: 2, action: "happy" });
-  const wrapped = parsePetChatResponse('好的```json\n{"text":"摸鱼中","mood":"sleepy","intensity":1}\n```完毕');
+test("pet-play(B2): parsePetChatResponse——合法/包裹/越界 mood 归一/intensity 钳制 0-1", () => {
+  const good = parsePetChatResponse('{"text":"喵","mood":"happy","intensity":0.8}');
+  assert.deepEqual(good, { text: "喵", mood: "happy", intensity: 0.8, action: "happy" });
+  const wrapped = parsePetChatResponse('好的```json\n{"text":"摸鱼中","mood":"sleepy","intensity":0.3}\n```完毕');
   assert.equal(wrapped?.text, "摸鱼中");
   assert.equal(wrapped?.mood, "sleepy");
   assert.equal(wrapped?.action, "sleep", "动作由映射表推导");
   const invalid = parsePetChatResponse('{"text":"x","mood":"dance","intensity":9}');
-  assert.deepEqual(invalid, { text: "x", mood: "idle", intensity: 2, action: "idle" }, "越界 mood 归一 idle + intensity 钳 2");
+  assert.deepEqual(invalid, { text: "x", mood: "idle", intensity: 1, action: "idle" }, "越界 mood 归一 idle + intensity 钳 1");
   const noIntensity = parsePetChatResponse('{"text":"y","mood":"hungry"}');
-  assert.equal(noIntensity?.intensity, 1, "intensity 缺省 1");
+  assert.equal(noIntensity?.intensity, 0.5, "intensity 缺省 0.5");
   assert.equal(noIntensity?.action, "eat", "hungry→eat 推导");
   assert.equal(parsePetChatResponse("这不是 JSON"), null);
   assert.equal(parsePetChatResponse('{"mood":"happy"}'), null, "缺 text 拒绝");
@@ -139,7 +139,7 @@ test("pet-play(B3): inferMood 关键词推断 + fallbackPetReply 台词随角色
     assert.ok(r.text.length > 0, `${locale} 兜底有文案`);
     assert.ok(PET_MOODS.includes(r.mood), `${locale} mood 白名单`);
     assert.ok(PET_ACTIONS.includes(r.action), `${locale} action 白名单`);
-    assert.equal(r.intensity, 1, "兜底 intensity=1");
+    assert.equal(r.intensity, 0.5, "兜底 intensity=0.5");
   }
   // 台词随角色（需求一）：橘猫回复含人设梗；雪豹回复零橘猫梗
   const cat = fallbackPetReply("我饿了", "zh", "species:persian");
@@ -166,12 +166,12 @@ test("pet-play(C1): /api/pet/chat——双维限流/免费计数/退款/观测�
   assert.ok(src.includes("FOR UPDATE") && src.includes("BEGIN") && src.includes("ROLLBACK"), "积分事务");
   assert.ok(src.includes("INSUFFICIENT_POINTS") && src.includes("status: 402"), "积分不足 402");
   assert.ok(src.includes("pet_play_refund") && src.includes("chat_refund"), "AI 失败退款 + 不占次数（需求五.2）");
-  assert.ok(src.includes("generateThrottled"), "Phase 8 并发限速+降级链");
-  assert.ok(src.includes("resolveCharacter"), "角色注册表人设（需求一）");
-  assert.ok(src.includes("parsePetChatResponse") && src.includes("fallbackPetReply"), "解析+兜底");
+  assert.ok(src.includes("resolvePetIntent"), "意图情绪解析器接线（关键词→LLM→降级链）");
+  assert.ok(src.includes('from "@/lib/pets/intent-resolver"'), "intent-resolver 引入");
+  assert.ok(src.includes("absenceHours") && src.includes("lastInteractedAt"), "久别重逢捕获（结算前）");
   assert.ok(src.includes("duration_ms") && src.includes("tokens_used"), "观测列落库（需求六.3）");
   assert.ok(src.includes("hunger_level"), "饥饿度推进");
-  for (const field of ["text: result.text", "mood: result.mood", "intensity: result.intensity", "action: result.action", "freeRemaining", "hungry"]) {
+  for (const field of ["text: result.text", "mood: result.mood", "intensity: result.intensity", "action: result.action", "intent: resolution.intent", "emotion: resolution.emotion", "freeRemaining", "hungry"]) {
     assert.ok(src.includes(field), `统一契约响应含 ${field}`);
   }
 });
@@ -319,7 +319,9 @@ test("pet-play(D2): pet-stage Rive 状态机/intensity/失败上报 + 背包双�
   assert.ok(stage.includes("arrayBuffer"), "ArrayBuffer 喂 Rive（免 ObjectURL 泄漏面）");
   assert.ok(stage.includes("LivingPet"), "降级 CSS 动画立绘");
   assert.ok(stage.includes("console.error") && stage.includes("onAssetFailed"), "资源失败不静默（需求二.2）");
-  assert.ok(stage.includes('"rub"'), "蹭蹭 rub Trigger（需求三.2）");
+  assert.ok(stage.includes("ACTION_TRIGGER_ALIAS.rub"), "蹭蹭经别名 → pet Trigger（需求三.2）");
+  // intent → 契约 Trigger（v2 五值 pet/eat/play/sleep/wake）+ action 旧名别名翻译（向后兼容）
+  assert.ok(stage.includes("PET_SM_TRIGGERS") && stage.includes("ACTION_TRIGGER_ALIAS[action]"), "intent 契约 Trigger + action 别名翻译");
   // 上架探测短路（2026-10-17 收尾）：false 零请求直降；info 级透明信息而非 error
   assert.ok(stage.includes("if (!riveAvailable)") && stage.includes("console.info"), "未上架零请求直降（无 404 噪音）");
 

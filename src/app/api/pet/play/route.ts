@@ -15,6 +15,7 @@ import { resolveSpeciesVisual } from "@/lib/pets/species-visuals";
 import {
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
+  LONG_ABSENCE_HOURS,
   PLAY_ITEMS,
   PLAY_ITEM_SOURCE,
 } from "@/lib/pet-play-config";
@@ -61,6 +62,7 @@ export async function GET(req: Request) {
         happiness: adoptions.happiness,
         hungerLevel: adoptions.hungerLevel,
         level: adoptions.level,
+        lastInteractedAt: adoptions.lastInteractedAt,
       })
       .from(adoptions)
       .where(eq(adoptions.id, adoptionId))
@@ -77,6 +79,11 @@ export async function GET(req: Request) {
         { status: 403 },
       );
     }
+
+    // 距上次互动小时数（必须在结算刷新 last_interacted_at 前捕获；久别重逢 returning 标记）
+    const absenceHours = pet.lastInteractedAt
+      ? Math.max(0, (Date.now() - new Date(pet.lastInteractedAt).getTime()) / 3_600_000)
+      : 0;
 
     // 离线饥饿结算（需求四.4：回到页面时按离线整小时衰减，重新结算后下发）
     const settled = await pool.query<{ hungerLevel: number }>(
@@ -123,6 +130,8 @@ export async function GET(req: Request) {
       // Rive 上架探测（按物种 rivePath 逐路径）：未上架 → 前端零请求直降静态立绘；上架自动切 Rive
       riveAvailable: visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false,
       hungry: hungerLevel <= HUNGRY_THRESHOLD,
+      // 久别重逢（距上次互动 ≥ LONG_ABSENCE_HOURS）：前端进场 sleepy 态 + wake 唤醒
+      returning: absenceHours >= LONG_ABSENCE_HOURS,
       points: Number(balRes.rows[0]?.points ?? 0),
       items: PLAY_ITEMS.map((i) => ({
         key: i.key,

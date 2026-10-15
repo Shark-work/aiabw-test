@@ -7,12 +7,12 @@ import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { moderateText } from "@/lib/content-moderation";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
-import { generateThrottled } from "@/lib/llm-fallback";
-import { fallbackPetReply, resolveCharacter } from "@/lib/pets/characters";
+import { fallbackPetReply } from "@/lib/pets/characters";
+import { resolvePetIntent } from "@/lib/pets/intent-resolver";
 import {
+  actionForMood,
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
-  parsePetChatResponse,
   PET_CHAT_DAILY_CAP,
   PET_CHAT_FREE_DAILY,
   PET_CHAT_MAX_LEN,
@@ -111,6 +111,7 @@ export async function POST(req: Request) {
         petType: adoptions.petType,
         happiness: adoptions.happiness,
         hungerLevel: adoptions.hungerLevel,
+        lastInteractedAt: adoptions.lastInteractedAt,
       })
       .from(adoptions)
       .where(eq(adoptions.id, adoptionId))
@@ -127,6 +128,10 @@ export async function POST(req: Request) {
         { status: 403 },
       );
     }
+    // 距上次互动小时数（必须在结算刷新 last_interacted_at 前捕获；意图解析久别修正用）
+    const absenceHours = pet.lastInteractedAt
+      ? Math.max(0, (Date.now() - new Date(pet.lastInteractedAt).getTime()) / 3_600_000)
+      : 0;
     const settled = await pool.query<{ hungerLevel: number }>(
       `UPDATE adoptions SET ${HUNGER_SETTLE_SQL}, last_interacted_at = now()
         WHERE id = $1 RETURNING hunger_level AS "hungerLevel"`,
@@ -191,40 +196,31 @@ export async function POST(req: Request) {
       points = Number(balRes.rows[0]?.points ?? 0);
     }
 
-    // 8) 大模型生成（服务端密钥；并发限速 + 跨 provider 降级；角色人设按宠物物种解析——
-    //    需求一.3：显示雪豹就是雪豹人设，不再硬编码橘猫）
-    //    失败退款（需求五.2）：全 provider 抛错 → 本地兜底 + 已扣积分退回 + 日志 chat_refund。
-    const character = resolveCharacter(pet.petType);
-    let result: PetChatReply;
-    let source: "ai" | "fallback" = "ai";
-    let refunded = false;
-    let durationMs: number | null = null;
-    let tokensUsed: number | null = null;
-    const system = character.buildSystemPrompt({
+    // 8) 意图情绪解析（intent-resolver：关键词零成本短路 → LLM 严格契约 5s → 降级链；
+    //    角色人设按宠物物种解析——需求一.3：显示雪豹就是雪豹人设，不再硬编码橘猫）。
+    //    降级退款（需求五.2）：source=fallback（AI 没工作）→ 已扣积分退回 + 日志 chat_refund。
+    const resolution = await resolvePetIntent({
+      message,
+      locale,
+      petType: pet.petType,
       petName: pet.petName,
       happiness: pet.happiness,
       hungerLevel: settledHunger,
+      absenceHours,
     });
-    try {
-      const t0 = Date.now();
-      const r = await generateThrottled({
-        system,
-        prompt: message,
-        temperature: 0.9,
-        maxOutputTokens: 220,
-      });
-      durationMs = Date.now() - t0;
-      // provider 未上报 usage 时按字符估算（中英混合 ≈ 4 字符/token），成本核算不致缺数
-      tokensUsed = r.tokens ?? Math.ceil((system.length + message.length + r.text.length) / 4);
-      const parsed = parsePetChatResponse(r.text);
-      result = parsed ?? fallbackPetReply(message, locale, pet.petType);
-      if (!parsed) source = "fallback";
-    } catch (err) {
-      console.warn("[pet/chat] AI unavailable, local fallback:", err instanceof Error ? err.message : err);
-      result = fallbackPetReply(message, locale, pet.petType);
-      source = "fallback";
-      refunded = charged;
-    }
+    let result: PetChatReply = {
+      text: resolution.reply,
+      mood: resolution.emotion,
+      intensity: resolution.intensity,
+      action: actionForMood(resolution.emotion),
+    };
+    let source = resolution.source;
+    const refunded = source === "fallback" && charged;
+    const durationMs = resolution.llmMs ?? null;
+    const tokensUsed = resolution.tokens ?? null;
+    console.info(
+      `[pet/chat] intent=${resolution.intent} emotion=${resolution.emotion} source=${source} llmMs=${durationMs ?? "-"} tokens=${tokensUsed ?? "-"}`,
+    );
 
     // 退款（需求五.2：AI 没工作就不收费；积分退回 + 流水负负相抵）
     if (refunded) {
@@ -265,7 +261,8 @@ export async function POST(req: Request) {
         `INSERT INTO pet_play_logs (user_id, adoption_id, user_input, pet_reply, emotion, action, kind, source, duration_ms, tokens_used)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
-          user.id, adoptionId, message, result.text, result.mood, result.action,
+          user.id, adoptionId, message, result.text, result.mood,
+          resolution.intent !== "idle" ? resolution.intent : result.action,
           refunded ? "chat_refund" : "chat", source, durationMs, tokensUsed,
         ],
       );
@@ -284,8 +281,10 @@ export async function POST(req: Request) {
       ok: true,
       text: result.text,
       mood: result.mood,
+      emotion: resolution.emotion,
       intensity: result.intensity,
       action: result.action,
+      intent: resolution.intent,
       points,
       freeRemaining: Math.max(0, PET_CHAT_FREE_DAILY - todayChats - (refunded ? 0 : 1)),
       happiness,

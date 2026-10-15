@@ -100,14 +100,17 @@ test("pet-characters(B2): 雪豹角色 prompt 与开场白零橘猫文案", () =
   assert.ok(cat.greetingZh.includes("本喵"), "橘猫开场白保留人设");
 });
 
-// ───────────── C1) System Prompt 契约：{ text, mood, intensity } + 七情绪值域 ─────────────
-test("pet-characters(C1): prompt 注入统一契约与七情绪白名单", () => {
+// ───────────── C1) System Prompt 契约 v2：{ intent, emotion, intensity, reply } + 值域注入 ─────────────
+test("pet-characters(C1): prompt 注入意图情绪契约 v2 与七情绪白名单", () => {
   for (const c of PET_CHARACTERS) {
     const p = c.buildSystemPrompt({ petName: "测试", happiness: 60, hungerLevel: 15 });
-    assert.ok(p.includes('"text"'), `${c.id} 契约含 text`);
-    assert.ok(p.includes('"mood"'), `${c.id} 契约含 mood`);
+    assert.ok(p.includes('"intent"'), `${c.id} 契约含 intent`);
+    assert.ok(p.includes('"emotion"'), `${c.id} 契约含 emotion`);
     assert.ok(p.includes('"intensity"'), `${c.id} 契约含 intensity`);
+    assert.ok(p.includes('"reply"'), `${c.id} 契约含 reply`);
+    assert.ok(p.includes("idle|pet|eat|play|sleep|wake"), `${c.id} 意图值域注入（契约 Trigger 五值）`);
     assert.ok(p.includes(PET_MOODS.join("|")), `${c.id} 七情绪值域注入`);
+    assert.ok(p.includes("0~1"), `${c.id} intensity 0-1 说明`);
     assert.ok(p.includes("饿"), `${c.id} 饥饿状态注入`);
   }
 });
@@ -116,7 +119,7 @@ test("pet-characters(C1): prompt 注入统一契约与七情绪白名单", () =>
 test("pet-characters(C2): prompt 契约段不含动作名/动画名注入", () => {
   for (const c of PET_CHARACTERS) {
     const p = c.buildSystemPrompt({ petName: "测试", happiness: 60, hungerLevel: 60 });
-    // 输出契约只允许 { text, mood, intensity }——不得出现 "action" 字段契约
+    // 输出契约只允许 { intent, emotion, intensity, reply }——不得出现 "action" 字段契约
     assert.ok(!p.includes('"action"'), `${c.id} 契约不得含 action 字段`);
     // 动作名（rub 动画触发词）不得作为输出指令出现
     assert.ok(!p.includes("rub"), `${c.id} 不得注入 rub 动作`);

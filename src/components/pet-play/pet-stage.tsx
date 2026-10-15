@@ -5,7 +5,9 @@ import { useRive } from "@rive-app/react-canvas";
 
 import { LivingPet } from "@/components/LivingPet";
 import {
+  ACTION_TRIGGER_ALIAS,
   PET_MOODS,
+  PET_SM_TRIGGERS,
   RIVE_STATE_MACHINE,
   type PetAction,
   type PetMood,
@@ -42,8 +44,10 @@ interface PetStageProps {
   alt: string;
   mood: PetMood;
   action: PetAction;
-  /** 情绪强度 0-2（Rive Number 输入「intensity」，资产未做该输入时自动跳过） */
-  intensity?: 0 | 1 | 2;
+  /** 情绪强度 0-1（Rive Number 输入「intensity」，资产未做该输入时自动跳过） */
+  intensity?: number;
+  /** 互动意图（契约 Trigger 五值 pet/eat/play/sleep/wake；优先于 action 旧名驱动一次性动作） */
+  intent?: string | null;
   /** 资产加载失败上报（需求二.2：控制台明确错误 + 页面轻提示，禁止静默失败） */
   onAssetFailed?: (reason: string) => void;
   /** 点击宠物（蹭蹭互动：直接 fire rub 动作位 + 通知父组件播音效/台词） */
@@ -61,11 +65,11 @@ interface PetStageProps {
  *    静态立绘——不发注定 404 的鉴权请求（console 红字 + toast 噪音消除）；上架后自动切回；
  *  - 素材自适应：二进制探测资产是否含 PetStateMachine（素材 = 默认 State Machine 1
  *    → autoplay 默认动画，输入绑定挂起；契约资产 → 全绑定），两类资产同一代码兼容；
- *  - 状态机契约：mood → Number 输入「emotion」（白名单索引）；intensity → Number 输入
- *    「intensity」（0-2）；action → 同名 Trigger fire；全部经映射表驱动（需求三.2）；
- *  - 点击宠物 = 蹭蹭（rub Trigger），双模共用同一 { mood, action, intensity } 驱动接口。
+ *  - 状态机契约 v2：mood → Number 输入「emotion」（白名单索引）；intensity → Number 输入
+ *    「intensity」（0-1）；intent → 契约 Trigger（五值；无 intent 时 action 旧名经别名翻译）；
+ *  - 点击宠物 = 蹭蹭（pet Trigger，经 ACTION_TRIGGER_ALIAS.rub 别名），双模共用同一驱动接口。
  */
-export function PetStage({ token, speciesId = null, riveAvailable = true, avatar, alt, mood, action, intensity = 1, onAssetFailed, onPetTap }: PetStageProps) {
+export function PetStage({ token, speciesId = null, riveAvailable = true, avatar, alt, mood, action, intensity = 0.5, intent = null, onAssetFailed, onPetTap }: PetStageProps) {
   // 物种换皮：视觉注册表按 speciesId 解析（rivePath 资产 / 静态立绘 / 场景主题）；
   // 未注册物种 rivePath=undefined → 零请求直降各自立绘（雪豹绝不复用橘猫素材）。
   const visual = resolveSpeciesVisual(speciesId);
@@ -150,18 +154,24 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
     }
   }, [rive, mood, intensity]);
 
-  // 4) action → 同名 Trigger 触发（duck typing：Trigger 有 fire 方法）
+  // 4) intent → 契约 Trigger 触发（v2 五值 pet/eat/play/sleep/wake，duck typing：Trigger 有 fire 方法）；
+  //    无 intent 时按 action 旧名经 ACTION_TRIGGER_ALIAS 翻译（向后兼容；think/wave/情绪位无 Trigger 不 fire）
   useEffect(() => {
-    if (!rive || action === "idle") return;
+    if (!rive) return;
+    const name =
+      intent && (PET_SM_TRIGGERS as readonly string[]).includes(intent)
+        ? intent
+        : (ACTION_TRIGGER_ALIAS[action] ?? null);
+    if (!name) return;
     try {
       const trigger = (rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? []).find(
-        (i) => i.name === action,
+        (i) => i.name === name,
       );
       if (trigger && typeof trigger.fire === "function") trigger.fire();
     } catch {
       // 同上：输入缺失静默
     }
-  }, [rive, action]);
+  }, [rive, intent, action]);
 
   // 5) 蹭蹭互动（需求三.2 rub 动作位：点击宠物直接 fire，不占情绪位）
   const handleTap = () => {
@@ -169,7 +179,7 @@ export function PetStage({ token, speciesId = null, riveAvailable = true, avatar
     if (rive) {
       try {
         const trigger = (rive.stateMachineInputs(RIVE_STATE_MACHINE) ?? []).find(
-          (i) => i.name === "rub",
+          (i) => i.name === ACTION_TRIGGER_ALIAS.rub,
         );
         if (trigger && typeof trigger.fire === "function") trigger.fire();
       } catch {

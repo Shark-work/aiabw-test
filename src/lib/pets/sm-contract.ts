@@ -96,8 +96,8 @@ export const ACTION_TRIGGER_ALIAS: Partial<Record<PetAction, PetSmTrigger>> = {
 export interface PetChatReply {
   text: string;
   mood: PetMood;
-  /** 情绪强度 0-2（Rive Number 输入「intensity」；解析缺省 1，越界钳制）。 */
-  intensity: 0 | 1 | 2;
+  /** 情绪强度 0-1（Rive Number 输入「intensity」；解析缺省 0.5，越界钳制）。 */
+  intensity: number;
   /** 由映射表推导（大模型不返回动画名）。 */
   action: PetAction;
 }

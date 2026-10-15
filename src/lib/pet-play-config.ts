@@ -76,6 +76,8 @@ export const PET_CHAT_MAX_LEN = 500;
 export const HUNGER_DECAY_PER_HOUR = 2;
 /** 饥饿告警阈值（≤ 本值：前端 hungry 情绪 + 提示买粮，prompt 注入「饿」状态）。 */
 export const HUNGRY_THRESHOLD = 20;
+/** 久未访问阈值（小时）：距上次互动 ≥ 本值，回来优先 sleepy（久别重逢，没睡醒）。 */
+export const LONG_ABSENCE_HOURS = 12;
 
 /**
  * 离线饥饿衰减结算 SQL（需求四.4；UPDATE adoptions 的 SET 子句片段）：
@@ -99,7 +101,7 @@ function isMood(v: unknown): v is PetMood {
 /**
  * 解析 LLM 原始输出为 PetChatReply；无法解析返回 null（调用方走本地兜底）。
  * 容错点：模型可能包裹代码块/前后废话 → 提取第一个 {...} 子串；
- * mood 越界 → 归一 idle（需求三.3 非法值降级）；intensity 缺省 1、钳制 0-2；
+ * mood 越界 → 归一 idle（需求三.3 非法值降级）；intensity 缺省 0.5、钳制 0-1；
  * text 保留（情绪标签宁稳不错）并截断 300 字。
  */
 export function parsePetChatResponse(raw: string): PetChatReply | null {
@@ -116,8 +118,8 @@ export function parsePetChatResponse(raw: string): PetChatReply | null {
   const o = obj as Record<string, unknown>;
   if (typeof o.text !== "string" || !o.text.trim()) return null;
   const mood: PetMood = isMood(o.mood) ? o.mood : "idle";
-  const n = typeof o.intensity === "number" && Number.isFinite(o.intensity) ? Math.round(o.intensity) : 1;
-  const intensity = (n <= 0 ? 0 : n >= 2 ? 2 : n) as 0 | 1 | 2;
+  const n = typeof o.intensity === "number" && Number.isFinite(o.intensity) ? o.intensity : 0.5;
+  const intensity = Math.min(1, Math.max(0, n));
   return { text: o.text.trim().slice(0, 300), mood, intensity, action: actionForMood(mood) };
 }
 

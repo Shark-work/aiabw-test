@@ -50,8 +50,11 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
   // Rive 上架探测（聚合响应下发；false = 零请求直降静态立绘，无 404 噪音）
   const [riveAvailable, setRiveAvailable] = useState(false);
   const [mood, setMood] = useState<PetMood>("idle");
-  const [intensity, setIntensity] = useState<0 | 1 | 2>(1);
+  // 情绪强度 0-1（Rive Number 输入「intensity」）
+  const [intensity, setIntensity] = useState<number>(0.5);
   const [action, setAction] = useState<PetAction>("idle");
+  // 互动意图（契约 Trigger 五值 pet/eat/play/sleep/wake；服务端下发，驱动一次性动作）
+  const [intent, setIntent] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -114,7 +117,13 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
         if (data.hungry) {
           setMood("hungry");
           setAction("eat");
+          setIntent("eat");
           setToast(t("hungryHint"));
+        } else if (data.returning) {
+          // 久别重逢（服务端 returning 标记）：没睡醒的 sleepy 态进场，wake 唤醒一次
+          setMood("sleepy");
+          setAction("sleep");
+          setIntent("wake");
         } else {
           setMood("happy");
           setAction("wave");
@@ -134,7 +143,8 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
     const tm = setTimeout(() => {
       setMood("idle");
       setAction("idle");
-      setIntensity(1);
+      setIntent(null);
+      setIntensity(0.5);
     }, 4000);
     return () => clearTimeout(tm);
   }, [mood]);
@@ -149,6 +159,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
     // 需求三.4：用户输入时立即 thinking，回复结束后由契约 mood 接管
     setMood("thinking");
     setAction("think");
+    setIntent(null);
     setReply(t("thinking"));
     playPetSound("send");
     trackPet("pet_chat_send", { page: "play", len: message.length });
@@ -189,7 +200,8 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
       setReply(data.text);
       setMood(data.mood);
       setAction(data.action);
-      setIntensity(data.intensity ?? 1);
+      setIntent(typeof data.intent === "string" ? data.intent : null);
+      setIntensity(typeof data.intensity === "number" ? data.intensity : 0.5);
       setPoints(data.points);
       if (typeof data.freeRemaining === "number") setFreeRemaining(data.freeRemaining);
       setPet((p) => (p ? { ...p, happiness: data.happiness, hungerLevel: data.hungerLevel } : p));
@@ -271,7 +283,8 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
       setReply(data.text ?? "");
       setMood(data.mood ?? (item.effect === "eat" ? "hungry" : "happy"));
       setAction(data.action ?? (item.effect === "eat" ? "eat" : "happy"));
-      setIntensity(2);
+      setIntent(item.effect);
+      setIntensity(1);
       playPetSound("feed");
     } catch {
       setToast(t("useFailed"));
@@ -414,6 +427,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
           alt={pet.name}
           mood={mood}
           action={action}
+          intent={intent}
           intensity={intensity}
           onAssetFailed={handleAssetFailed}
           onPetTap={handlePetTap}

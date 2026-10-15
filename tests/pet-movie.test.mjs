@@ -39,9 +39,9 @@ test("pet-movie(1): movie 路由——最早 adoption / 无则自动建猫 / 角
 });
 
 // ───────────── 2) 统一契约：chat 路由无剧场双契约残留 ─────────────
-test("pet-movie(2): /api/pet/chat 统一 { text, mood, intensity } 契约（mode 双契约废除）", () => {
+test("pet-movie(2): /api/pet/chat 统一 { text, mood, intensity, intent } 契约（mode 双契约废除）", () => {
   const c = read("src/app/api/pet/chat/route.ts");
-  for (const f of ["text: result.text", "mood: result.mood", "intensity: result.intensity"]) {
+  for (const f of ["text: result.text", "mood: result.mood", "intensity: result.intensity", "intent: resolution.intent"]) {
     assert.ok(c.includes(f), `统一契约含 ${f}`);
   }
   // 旧剧场双契约符号已清除

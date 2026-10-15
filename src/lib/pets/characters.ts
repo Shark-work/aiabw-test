@@ -88,15 +88,17 @@ function stateLines(happiness: number, hungerLevel: number): { stateZh: string; 
   return { stateZh, moodZh };
 }
 
-/** 输出契约段（全角色共用；只含 { text, mood, intensity }——动作名由服务端映射表推导）。 */
+/** 输出契约段（全角色共用；只含 { intent, emotion, intensity, reply }——动作名由服务端映射推导）。 */
 function contractSection(): string {
   return `
 # 输出格式（严格契约，只输出一个 JSON 对象，禁止任何额外文字/代码块标记）
-{"text":"<回复文本>","mood":"<${PET_MOODS.join("|")}>","intensity":<0|1|2>}
-- mood 为当前情绪标签；intensity 为情绪强度（0 弱 / 1 中 / 2 强）。
-- 用户提到食物/喊饿/喂食 → mood=hungry；犯困/想偷懒/要睡觉 → mood=sleepy；
-  思考/难题/提问 → mood=thinking；被夸奖/开心 → mood=happy（特别开心 intensity=2）；
-  被惹恼 → mood=angry；委屈/难过 → mood=sad；其余 → mood=idle。`;
+{"intent":"<idle|pet|eat|play|sleep|wake>","emotion":"<${PET_MOODS.join("|")}>","intensity":<0~1 小数>,"reply":"<回复文本>"}
+- intent 为互动意图：用户要摸你/抱你 → pet；喂你食物/喊你吃东西 → eat；邀你玩耍 → play；
+  道晚安/让你睡觉 → sleep；早安/叫你起床 → wake；无明确动作 → idle。
+- emotion 为当前情绪标签；intensity 为情绪强度 0-1（0 弱 / 0.5 中 / 1 强）。
+- 用户提到食物/喊饿/喂食 → emotion=hungry；犯困/想偷懒/要睡觉 → emotion=sleepy；
+  思考/难题/提问 → emotion=thinking；被夸奖/开心 → emotion=happy（特别开心 intensity=1）；
+  被惹恼 → emotion=angry；委屈/难过 → emotion=sad；其余 → emotion=idle。`;
 }
 
 // ───────────────────────────── 3) 角色：打工橘猫（worker-cat） ─────────────────────────────
@@ -327,5 +329,5 @@ export function fallbackPetReply(message: string, locale: string, petType?: stri
   const bank = locale === "en" ? c.linesEn : c.linesZh;
   const lines = bank[mood]?.length ? bank[mood] : bank.idle;
   const text = lines[Math.floor(Math.random() * lines.length)];
-  return { text, mood, intensity: 1, action: actionForMood(mood) };
+  return { text, mood, intensity: 0.5, action: actionForMood(mood) };
 }

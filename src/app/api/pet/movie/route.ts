@@ -15,6 +15,7 @@ import { resolveSpeciesVisual } from "@/lib/pets/species-visuals";
 import {
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
+  LONG_ABSENCE_HOURS,
   MOVIE_INTERACTIONS,
   MOVIE_PET_TYPE,
   movieDefaultPetName,
@@ -31,6 +32,8 @@ interface MoviePetRow {
   happiness: number;
   hungerLevel: number;
   level: number;
+  /** 上次互动时间（自动创建的新宠物 = now() → 久别 0h）。 */
+  lastInteractedAt: Date | null;
 }
 
 /**
@@ -66,6 +69,7 @@ export async function GET(req: Request) {
         happiness: adoptions.happiness,
         hungerLevel: adoptions.hungerLevel,
         level: adoptions.level,
+        lastInteractedAt: adoptions.lastInteractedAt,
       })
       .from(adoptions)
       .where(eq(adoptions.userId, user.id))
@@ -77,7 +81,7 @@ export async function GET(req: Request) {
       const created = await pool.query<MoviePetRow>(
         `INSERT INTO adoptions (user_id, pet_name, pet_type)
          VALUES ($1, $2, $3)
-         RETURNING id, pet_name AS "petName", pet_type AS "petType", happiness, hunger_level AS "hungerLevel", level`,
+         RETURNING id, pet_name AS "petName", pet_type AS "petType", happiness, hunger_level AS "hungerLevel", level, last_interacted_at AS "lastInteractedAt"`,
         [user.id, movieDefaultPetName(locale), MOVIE_PET_TYPE],
       );
       pet = created.rows[0];
@@ -88,6 +92,11 @@ export async function GET(req: Request) {
         { status: 500 },
       );
     }
+
+    // 距上次互动小时数（必须在结算刷新 last_interacted_at 前捕获；久别重逢 returning 标记；新创建宠物 = 0）
+    const absenceHours = pet.lastInteractedAt
+      ? Math.max(0, (Date.now() - new Date(pet.lastInteractedAt).getTime()) / 3_600_000)
+      : 0;
 
     // 3) 离线饥饿结算（需求四.4：回到页面按离线整小时衰减后下发）+ 积分余额 + 头像派生 + 背包
     const settled = await pool.query<{ hungerLevel: number }>(
@@ -133,6 +142,8 @@ export async function GET(req: Request) {
       // Rive 上架探测（按物种 rivePath 逐路径）：未上架 → 前端零请求直降静态立绘；上架自动切 Rive
       riveAvailable: visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false,
       hungry: hungerLevel <= HUNGRY_THRESHOLD,
+      // 久别重逢（距上次互动 ≥ LONG_ABSENCE_HOURS）：前端进场 sleepy 态 + wake 唤醒
+      returning: absenceHours >= LONG_ABSENCE_HOURS,
       points: Number(balRes.rows[0]?.points ?? 0),
       // 背包商品目录（需求四：剧场侧栏改背包模式，与 play 页同目录/同事务路由）
       items: PLAY_ITEMS.map((i) => ({
