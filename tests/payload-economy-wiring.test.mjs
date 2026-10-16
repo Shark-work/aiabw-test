@@ -21,7 +21,7 @@ const read = (p) => readFileSync(join(ROOT, p), "utf8");
 // ─────────────────────── A) chat 计费 CMS 化 ───────────────────────
 test("economy-wiring(A): /api/pet/chat 免费句数走 CMS TokenRule + 常量回退 + freeDaily 下发", () => {
   const r = read("src/app/api/pet/chat/route.ts");
-  assert.ok(r.includes('import { getTokenRuleByKey } from "@/lib/cms/loaders"'), "引入 loader");
+  assert.ok(r.includes('getTokenRuleByKey } from "@/lib/cms/loaders"'), "引入 loader");
   assert.ok(r.includes('getTokenRuleByKey("pet.chat.free-quota")'), "读 pet.chat.free-quota 规则");
   assert.ok(r.includes("freeRule?.dailyLimit && freeRule.dailyLimit > 0"), "非法值防护");
   assert.ok(r.includes(": PET_CHAT_FREE_DAILY"), "回退代码常量（计费永不崩）");

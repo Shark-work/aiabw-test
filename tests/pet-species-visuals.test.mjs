@@ -112,7 +112,7 @@ test("species-visuals(D1): play/movie 视觉走 CMS loader（空表回退注册�
 // ───────────── E1) pet-stage 注册表驱动 ─────────────
 test("species-visuals(E1): rivePath 按需拉取 + 立绘/场景换皮 + 场景主题样式注册", () => {
   const stage = read("src/components/pet-play/pet-stage.tsx");
-  assert.ok(stage.includes("resolveSpeciesVisual(speciesId)"), "按 speciesId 读注册表");
+  assert.ok(stage.includes("visualOverride ?? resolveSpeciesVisual(speciesId)"), "CMS 视觉覆写优先，注册表兜底（任务四）");
   assert.ok(stage.includes("/api/pet/asset?name=${visual.rivePath}"), "按注册表 rivePath 拉取（禁硬编码）");
   assert.ok(!stage.includes("RIVE_ASSET_NAME"), "不再硬编码资产名");
   assert.ok(stage.includes("visual.staticImage || avatar"), "立绘：注册表优先，运行时头像兜底");

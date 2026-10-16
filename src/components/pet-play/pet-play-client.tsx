@@ -12,6 +12,7 @@ import { ChatBubble } from "@/components/pet-play/chat-bubble";
 import { isPetMuted, playPetSound, setPetMuted } from "@/lib/pet-sound";
 import { trackPet, trackPetExitOnce } from "@/lib/pet-track";
 import { PET_CHAT_FREE_DAILY, type PetAction, type PetMood } from "@/lib/pet-play-config";
+import type { SpeciesVisual } from "@/lib/pets/species-visuals";
 
 interface PlayPet {
   id: string;
@@ -49,6 +50,8 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
   const [items, setItems] = useState<BackpackItemView[]>([]);
   // Rive 上架探测（聚合响应下发；false = 零请求直降静态立绘，无 404 噪音）
   const [riveAvailable, setRiveAvailable] = useState(false);
+  // CMS 物种视觉覆写（任务四：聚合响应下发 → PetStage 优先消费；null = 客户端注册表兜底）
+  const [visualOverride, setVisualOverride] = useState<SpeciesVisual | null>(null);
   const [mood, setMood] = useState<PetMood>("idle");
   // 情绪强度 0-1（Rive Number 输入「intensity」）
   const [intensity, setIntensity] = useState<number>(0.5);
@@ -114,6 +117,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
         setPoints(data.points);
         setItems(data.items);
         setRiveAvailable(data.riveAvailable === true);
+        setVisualOverride(data.visual ?? null);
         if (typeof data.chatFreeDaily === "number" && data.chatFreeDaily > 0) {
           setChatFreeDaily(data.chatFreeDaily);
         }
@@ -429,6 +433,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
         <PetStage
           token={token}
           speciesId={pet.speciesId}
+          visualOverride={visualOverride}
           riveAvailable={riveAvailable}
           avatar={pet.avatar}
           alt={pet.name}

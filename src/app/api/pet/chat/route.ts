@@ -7,18 +7,21 @@ import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { moderateText } from "@/lib/content-moderation";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
-import { getTokenRuleByKey } from "@/lib/cms/loaders";
+import { getPetAnimationMap, getTokenRuleByKey } from "@/lib/cms/loaders";
 import { fallbackPetReply } from "@/lib/pets/characters";
 import { resolvePetIntent } from "@/lib/pets/intent-resolver";
+import { isSpeciesPetType, speciesIdOf } from "@/lib/species-prompt";
 import {
   actionForMood,
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
+  PET_ACTIONS,
   PET_CHAT_DAILY_CAP,
   PET_CHAT_FREE_DAILY,
   PET_CHAT_MAX_LEN,
   PLAY_CHAT_COST,
   PLAY_CHAT_HUNGER_DECAY,
+  type PetAction,
   type PetChatReply,
 } from "@/lib/pet-play-config";
 
@@ -216,11 +219,19 @@ export async function POST(req: Request) {
       hungerLevel: settledHunger,
       absenceHours,
     });
+    // 动作推导走 CMS 动画映射（任务四读取侧接线：pet-animations 全局默认 + 物种覆写合并，
+    // 60s 缓存 + afterChange 即新；loader 取不到/值越界 → 回退代码契约 actionForMood，Rive 输入白名单不破）
+    const speciesIdForAnim = isSpeciesPetType(pet.petType) ? speciesIdOf(pet.petType) : null;
+    const animMap = await getPetAnimationMap(speciesIdForAnim);
+    const mapped = animMap[resolution.emotion];
+    const derivedAction = (PET_ACTIONS as readonly string[]).includes(mapped)
+      ? (mapped as PetAction)
+      : actionForMood(resolution.emotion);
     let result: PetChatReply = {
       text: resolution.reply,
       mood: resolution.emotion,
       intensity: resolution.intensity,
-      action: actionForMood(resolution.emotion),
+      action: derivedAction,
     };
     let source = resolution.source;
     const refunded = source === "fallback" && charged;

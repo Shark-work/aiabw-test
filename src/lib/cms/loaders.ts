@@ -145,7 +145,12 @@ export const getPetAnimationMap = withFallback(
     }
     return map;
   },
-  () => ({ ...MOOD_ACTION_MAP } as Record<string, string>),
+  // fallback 声明同形参数（否则 withFallback 的 Args 推断为 []，带 speciesSlug 调用报类型错）；
+  // void 引用消 ESLint unused（参数仅为类型对齐，无运行期用途）
+  (_speciesSlug?: string | null) => {
+    void _speciesSlug;
+    return { ...MOOD_ACTION_MAP } as Record<string, string>;
+  },
   "pet-animations",
 );
 

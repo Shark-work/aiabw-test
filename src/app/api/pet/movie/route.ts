@@ -151,6 +151,9 @@ export async function GET(req: Request) {
       character: characterView(resolveCharacter(pet.petType), locale),
       // Rive 上架探测（按物种 rivePath 逐路径）：未上架 → 前端零请求直降静态立绘；上架自动切 Rive
       riveAvailable: visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false,
+      // 物种视觉下发（任务四：CMS 改的 rivePath/staticImage/sceneTheme 直达舞台，
+      // pet-stage visualOverride 优先消费；探测与下发同源——后台换素材 60s 内舞台切换）
+      visual,
       chatFreeDaily,
       hungry: hungerLevel <= HUNGRY_THRESHOLD,
       // 久别重逢（距上次互动 ≥ LONG_ABSENCE_HOURS）：前端进场 sleepy 态 + wake 唤醒

@@ -12,7 +12,7 @@ import {
   type PetAction,
   type PetMood,
 } from "@/lib/pets/sm-contract";
-import { resolveSpeciesVisual } from "@/lib/pets/species-visuals";
+import { resolveSpeciesVisual, type SpeciesVisual } from "@/lib/pets/species-visuals";
 
 /** mood → Rive Number 输入索引（与 PET_MOODS 白名单顺序一致，美术侧按此绑定）。 */
 const MOOD_INDEX = new Map<string, number>(PET_MOODS.map((e, i) => [e, i]));
@@ -33,6 +33,12 @@ interface PetStageProps {
   token: string | null;
   /** 物种 id（species:<id> 的 id 部分；官方宠物/未知为 null）——经物种视觉注册表决定素材/立绘/场景 */
   speciesId?: string | null;
+  /**
+   * CMS 物种视觉覆写（任务四：/api/pet/play|movie 聚合响应下发，60s 缓存 + afterChange 即新）：
+   * 优先于客户端注册表——后台改物种视觉（Rive 素材/立绘/场景）直达舞台；
+   * null = 回退 resolveSpeciesVisual(speciesId) 注册表（与接入前行为一致）。
+   */
+  visualOverride?: SpeciesVisual | null;
   /**
    * 服务端资产上架探测（/api/pet/play|movie 聚合响应下发）：
    * false = .riv 未随部署上架 → **零请求直降**静态立绘（无 404 / console.error / toast 噪音）；
@@ -71,10 +77,10 @@ interface PetStageProps {
  *  - 无障碍：prefers-reduced-motion → 一次性动作 Trigger / CSS 情绪动画豁免（情绪状态保留）；
  *  - 点击宠物 = 蹭蹭（pet Trigger，经 ACTION_TRIGGER_ALIAS.rub 别名），双模共用同一驱动接口。
  */
-export function PetStage({ token, speciesId = null, riveAvailable = true, avatar, alt, mood, action, intensity = 0.5, intent = null, onAssetFailed, onPetTap }: PetStageProps) {
-  // 物种换皮：视觉注册表按 speciesId 解析（rivePath 资产 / 静态立绘 / 场景主题）；
+export function PetStage({ token, speciesId = null, visualOverride = null, riveAvailable = true, avatar, alt, mood, action, intensity = 0.5, intent = null, onAssetFailed, onPetTap }: PetStageProps) {
+  // 物种换皮：CMS 视觉覆写优先（任务四：后台改表直达舞台），注册表兜底；
   // 未注册物种 rivePath=undefined → 零请求直降各自立绘（雪豹绝不复用橘猫素材）。
-  const visual = resolveSpeciesVisual(speciesId);
+  const visual = visualOverride ?? resolveSpeciesVisual(speciesId);
   const sprite = visual.staticImage || avatar;
   const [riveUrl, setRiveUrl] = useState<string | null>(null);
   /** 资产是否含契约状态机（PetStateMachine）：素材资产=false → autoplay 默认动画 */
