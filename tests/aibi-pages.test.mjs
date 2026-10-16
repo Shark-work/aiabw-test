@@ -184,7 +184,7 @@ test("components: profile / supply / 首页区块 数据源与分页接线", () 
 });
 
 test("site: 首页挂载 HomeAibiSection；导航新增 codex/supply/profile", () => {
-  const home = read("src/app/[locale]/page.tsx");
+  const home = read("src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.ok(home.includes("<HomeAibiSection />"), "首页艾比区块");
   const header = read("src/components/layout/SiteHeader.tsx");
   for (const href of ["/codex", "/supply", "/profile"]) {

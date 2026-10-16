@@ -74,7 +74,7 @@ test("recall banner: hidden when empty + three jump targets + home mounted", () 
   assert.ok(b.includes('t("reward", { n: r.count ?? 0 })'), "reward text with count");
   assert.ok(b.includes('href: "/my-pets"'), "missYou/feed → /my-pets");
   assert.ok(b.includes('href: "/explore-v2"'), "reward → /explore-v2");
-  const home = read("src/app/[locale]/page.tsx");
+  const home = read("src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.ok(home.includes("<RecallBanner />"), "mounted on home");
 });
 

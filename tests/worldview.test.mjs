@@ -245,7 +245,7 @@ test("worldview(F1): 彩蛋组件——弹窗 + 统计拉取 + 树叶飘落 + �
 });
 
 test("worldview(F2): 彩蛋挂载（首页 Hero + /world 页）+ CSS 动画 + reduced-motion", () => {
-  const home = read("src/app/[locale]/page.tsx");
+  const home = read("src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.ok(home.includes('import { SoulTreeEgg } from "@/components/world/soul-tree"'), "首页 import");
   assert.ok(home.includes("<SoulTreeEgg />"), "首页挂载");
   const world = read("src/app/[locale]/world/page.tsx");

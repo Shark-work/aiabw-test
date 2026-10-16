@@ -148,7 +148,7 @@ test("frontend: email display replaced by username everywhere", () => {
   assert.match(header, /href="\/settings"/, "导航提供设置入口");
   // 2026-10-08 首页账号条去重：账号身份（昵称/积分/退出）统一由全局 SiteHeader 承载，
   // 首页不再渲染任何账号信息 —— 昵称断言上移到上方 SiteHeader 断言（me.username），首页侧零邮箱泄露面。
-  const home = read("src/app/[locale]/page.tsx");
+  const home = read("src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.ok(!/user\.(email|username)/.test(home), "首页不再渲染账号身份（统一由 SiteHeader 承载）");
   const panel = read("src/components/leaderboard-panel.tsx");
   assert.ok(!/ownerEmail/.test(panel), "排行榜组件不渲染邮箱");

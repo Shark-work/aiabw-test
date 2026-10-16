@@ -212,7 +212,7 @@ test("onboarding narrative: no mint/on-chain wording in wizard+banner+i18n", () 
 
 // === 8) 首页沉睡 banner ===
 test("onboarding banner: mounted on home, shows only when !completed && !hasPet", () => {
-  const home = read("src/app/[locale]/page.tsx");
+  const home = read("src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.ok(
     home.includes('import { OnboardingBanner } from "@/components/onboarding/onboarding-banner"'),
     "import",

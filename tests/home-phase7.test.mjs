@@ -93,13 +93,16 @@ test("phase7(D1): CommunityStats——4 指标 + 千位格式化 + 静默降级"
 
 // ───────────── E) 首页接线 ─────────────
 test("phase7(E1): 首页——两组件挂载 + 探索/商城次级 CTA（7.1-4）", () => {
-  const src = read("../src/app/[locale]/page.tsx");
+  const src = read("../src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.match(src, /<SoulCardCarousel \/>/, "灵魂卡轮播挂载");
   assert.match(src, /<CommunityStats \/>/, "社区活跃数据挂载");
-  assert.match(src, /href="\/explore-v2"[\s\S]{0,400}?heroCtaExplore/, "探索次级 CTA");
-  assert.match(src, /href="\/shop"[\s\S]{0,400}?heroCtaShop/, "商城次级 CTA");
+  // CMS HomeHero 接线后：链接走 cta*.href（字段级回退现状硬编码），文案走 cta*.text（回退 i18n）
+  assert.match(src, /hero\?\.ctaExploreUrl\?\.trim\(\) \|\| "\/explore-v2"/, "探索次级 CTA 回退 /explore-v2");
+  assert.match(src, /hero\?\.ctaShopUrl\?\.trim\(\) \|\| "\/shop"/, "商城次级 CTA 回退 /shop");
+  assert.ok(src.includes('t("heroCtaExplore")') && src.includes("{ctaExplore.text}"), "探索 CTA 文案回退 i18n 并消费");
+  assert.ok(src.includes('t("heroCtaShop")') && src.includes("{ctaShop.text}"), "商城 CTA 文案回退 i18n 并消费");
   // 主 CTA 保留
-  assert.match(src, /href="\/pets"[\s\S]{0,400}?heroCta"\)\}/, "领养主 CTA 保留");
+  assert.match(src, /hero\?\.ctaPrimaryUrl\?\.trim\(\) \|\| "\/pets"/, "领养主 CTA 回退 /pets 保留");
 });
 
 // ───────────── F) i18n ─────────────

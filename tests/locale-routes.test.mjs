@@ -52,7 +52,7 @@ test("B: 旧 Hero 文案（养育你的 AI 生命体 / Raise your AI being）全
   assert.ok(!en.aibi.spotlight.subtitle.includes("Raise your AI being"), "en 旧 Hero 残留已清");
   assert.equal(zh.aibi.spotlight.subtitle, "实时供应 · 最新诞生 · 稀有橱窗", "zh 新区块自述");
   assert.equal(en.aibi.spotlight.subtitle, "Live supply · newest arrivals · rare showcase", "en 新区块自述");
-  const home = read("src/app/[locale]/page.tsx");
+  const home = read("src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地（page.tsx 壳存在性由上方 existsSync 断言）
   assert.ok(!home.includes("养育你的 AI 生命体"), "首页源码无硬编码旧 Hero");
   assert.ok(!home.includes("铸造艾比凭证"), "首页源码无硬编码旧 Hero(en/zh)");
 });

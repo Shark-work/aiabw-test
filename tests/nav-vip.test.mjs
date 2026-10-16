@@ -138,7 +138,7 @@ test("SiteHeader: creator apply posts /api/creator/apply, gated by me && !me.isC
 });
 
 test("home page: legacy account bar removed (dedup with global SiteHeader)", () => {
-  const home = readFileSync(join(ROOT, "src/app/[locale]/page.tsx"), "utf8");
+  const home = readFileSync(join(ROOT, "src/components/home/home-client.tsx"), "utf8"); // RSC 壳拆分后首页内容所在地
   assert.ok(!home.includes("账号入口"), "首页账号条区块已删除");
   assert.ok(!home.includes("handleCheckin"), "手动签到已移除（DailyCheckinModal 覆盖）");
   assert.ok(!home.includes("handleApplyCreator"), "成为创作者已迁入 SiteHeader「更多」");

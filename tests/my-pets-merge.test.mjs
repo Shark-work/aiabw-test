@@ -116,5 +116,5 @@ test("merge(6): 入口引用统一指向 /pets/my", () => {
   assert.match(read("../src/app/[locale]/points/page.tsx"), /href="\/pets\/my"/);
   assert.match(read("../src/app/[locale]/handbooks/page.tsx"), /href="\/pets\/my"/);
   assert.match(read("../src/app/[locale]/marketplace/page.tsx"), /href="\/pets\/my"/);
-  assert.match(read("../src/app/[locale]/page.tsx"), /redirect=\/pets\/my/);
+  assert.match(read("../src/components/home/home-client.tsx"), /redirect=\/pets\/my/); // RSC 壳拆分后首页内容所在地
 });

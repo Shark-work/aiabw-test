@@ -90,6 +90,6 @@ test("checkin-points: 前端文案契约——弹窗参数化 {points}；首页�
     assert.ok(!("becomeCreator" in m.home), "home.becomeCreator key removed");
     assert.equal(typeof m.nav.becomeCreator, "string", "nav.becomeCreator added");
   }
-  const homeSrc = read("../src/app/[locale]/page.tsx");
+  const homeSrc = read("../src/components/home/home-client.tsx"); // RSC 壳拆分后首页内容所在地
   assert.ok(!homeSrc.includes("handleCheckin"), "home page no longer hosts manual checkin");
 });
