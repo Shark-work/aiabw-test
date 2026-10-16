@@ -1,4 +1,4 @@
-import type { Access, CollectionConfig } from "payload";
+import type { Access, CollectionConfig, GlobalConfig } from "payload";
 
 /** 仅 admin 角色可写（role 已 saveToJWT，权限判断零查询）。 */
 export const isAdmin: Access = ({ req }) => req.user?.role === "admin";
@@ -16,3 +16,13 @@ export const publicReadAdminWrite: NonNullable<CollectionConfig["access"]> = {
   update: isAdmin,
   delete: isAdmin,
 };
+
+/**
+ * Global 形态访问策略（Global 只有 read/update，无 create/delete）：
+ * 站点设置/首页主视觉/积分经济参数均为公开展示信息，读公开、改仅 admin。
+ */
+export const publicReadAdminWriteGlobal: NonNullable<GlobalConfig["access"]> = {
+  read: () => true,
+  update: isAdmin,
+};
+

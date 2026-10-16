@@ -101,8 +101,16 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'site-settings': SiteSetting;
+    'home-hero': HomeHero;
+    'points-economy': PointsEconomy;
+  };
+  globalsSelect: {
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'home-hero': HomeHeroSelect<false> | HomeHeroSelect<true>;
+    'points-economy': PointsEconomySelect<false> | PointsEconomySelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -759,6 +767,172 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * 全站单例：品牌 / 联系渠道 / 备案 / 维护模式。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  siteNameZh?: string | null;
+  siteNameEn?: string | null;
+  sloganZh?: string | null;
+  sloganEn?: string | null;
+  contactEmail?: string | null;
+  qqGroup?: string | null;
+  xUrl?: string | null;
+  icpNumber?: string | null;
+  /**
+   * 开启后前台展示维护公告（接线后生效；API 不受影响）。
+   */
+  maintenanceMode?: boolean | null;
+  maintenanceMessageZh?: string | null;
+  maintenanceMessageEn?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * 首页 Hero：标题 / 副标题 / CTA / 背景 / 彩蛋开关。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-hero".
+ */
+export interface HomeHero {
+  id: number;
+  titleZh?: string | null;
+  titleEn?: string | null;
+  subtitleZh?: string | null;
+  subtitleEn?: string | null;
+  ctaPrimaryTextZh?: string | null;
+  ctaPrimaryTextEn?: string | null;
+  ctaPrimaryUrl?: string | null;
+  ctaExploreTextZh?: string | null;
+  ctaExploreTextEn?: string | null;
+  ctaExploreUrl?: string | null;
+  ctaShopTextZh?: string | null;
+  ctaShopTextEn?: string | null;
+  ctaShopUrl?: string | null;
+  backgroundImage?: (number | null) | Media;
+  backgroundPath?: string | null;
+  /**
+   * 关闭后首页隐藏 🌳 彩蛋按钮（Phase 11 灵魂树）。
+   */
+  soulTreeEnabled?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * 积分宏观参数：注册赠送 / 连签上限 / 充值汇率 / 经济说明。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "points-economy".
+ */
+export interface PointsEconomy {
+  id: number;
+  signupBonus?: number | null;
+  checkinBase?: number | null;
+  /**
+   * 连签第 N 天起奖励不再增长（防通胀闸）。
+   */
+  checkinStreakMax?: number | null;
+  /**
+   * 展示与结算口径；改汇率只影响新订单，不回溯。
+   */
+  pointsPerCny?: number | null;
+  descriptionZh?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  descriptionEn?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  siteNameZh?: T;
+  siteNameEn?: T;
+  sloganZh?: T;
+  sloganEn?: T;
+  contactEmail?: T;
+  qqGroup?: T;
+  xUrl?: T;
+  icpNumber?: T;
+  maintenanceMode?: T;
+  maintenanceMessageZh?: T;
+  maintenanceMessageEn?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-hero_select".
+ */
+export interface HomeHeroSelect<T extends boolean = true> {
+  titleZh?: T;
+  titleEn?: T;
+  subtitleZh?: T;
+  subtitleEn?: T;
+  ctaPrimaryTextZh?: T;
+  ctaPrimaryTextEn?: T;
+  ctaPrimaryUrl?: T;
+  ctaExploreTextZh?: T;
+  ctaExploreTextEn?: T;
+  ctaExploreUrl?: T;
+  ctaShopTextZh?: T;
+  ctaShopTextEn?: T;
+  ctaShopUrl?: T;
+  backgroundImage?: T;
+  backgroundPath?: T;
+  soulTreeEnabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "points-economy_select".
+ */
+export interface PointsEconomySelect<T extends boolean = true> {
+  signupBonus?: T;
+  checkinBase?: T;
+  checkinStreakMax?: T;
+  pointsPerCny?: T;
+  descriptionZh?: T;
+  descriptionEn?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

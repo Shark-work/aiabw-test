@@ -20,6 +20,9 @@ import { Species } from "./src/collections/Species.ts";
 import { Stories } from "./src/collections/Stories.ts";
 import { TokenRules } from "./src/collections/TokenRules.ts";
 import { Users } from "./src/collections/Users.ts";
+import { HomeHero } from "./src/globals/HomeHero.ts";
+import { PointsEconomy } from "./src/globals/PointsEconomy.ts";
+import { SiteSettings } from "./src/globals/SiteSettings.ts";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -62,6 +65,7 @@ export default buildConfig({
     outputFile: path.resolve(dirname, "src/payload-types.ts"),
   },
   collections: [Users, Media, Species, PetAnimations, Stories, Pages, Banners, Products, TokenRules],
+  globals: [SiteSettings, HomeHero, PointsEconomy],
   plugins: [
     ...(process.env.BLOB_READ_WRITE_TOKEN
       ? [
