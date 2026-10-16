@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
+import { withPayload } from "@payloadcms/next/withPayload";
 import createNextIntlPlugin from "next-intl/plugin";
 
 /** 自动版本号：优先使用 package.json 的语义化版本（v1.2.0），git hash 兑底。 */
@@ -105,4 +106,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+// withPayload 必须包在最外层（处理 Payload 依赖外置/SWC 兼容）；withNextIntl 保持内层。
+export default withPayload(withNextIntl(nextConfig));

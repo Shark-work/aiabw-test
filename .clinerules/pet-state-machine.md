@@ -43,7 +43,7 @@
   duration_ms/tokens_used，action 记录意图）；
 - console.info 结构化日志 `[pet/chat] intent=… emotion=… source=… llmMs=… tokens=…`；
 - /api/admin/ai-stats → petChat（7 日三来源分布 / keywordRate 零成本占比 / 意图分布），
-  /admin/moderation AI 成本条展示。
+  /console/moderation AI 成本条展示（2026-10-18 自研后台 /admin → /console）。
 
 ## 测试锁定
 

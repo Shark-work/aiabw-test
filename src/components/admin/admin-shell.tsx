@@ -4,19 +4,21 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// 2026-10-18：自研运营后台整体迁至 /console（/admin 让位给 Payload CMS 后台）。
 const MENU = [
-  { href: "/admin/dashboard", label: "📊 数据看板" },
-  { href: "/admin/pets", label: "🐾 宠物管理" },
-  { href: "/admin/users", label: "👥 用户管理" },
-  { href: "/admin/news", label: "📰 内容/新闻" },
-  { href: "/admin/moderation", label: "🛡️ 内容审核" },
-  { href: "/admin/economy", label: "💰 积分/商城" },
-  { href: "/admin/settings", label: "⚙️ 系统设置" },
+  { href: "/console/dashboard", label: "📊 数据看板" },
+  { href: "/console/pets", label: "🐾 宠物管理" },
+  { href: "/console/users", label: "👥 用户管理" },
+  { href: "/console/news", label: "📰 内容/新闻" },
+  { href: "/console/moderation", label: "🛡️ 内容审核" },
+  { href: "/console/economy", label: "💰 积分/商城" },
+  { href: "/console/settings", label: "⚙️ 系统设置" },
+  { href: "/admin", label: "📝 CMS 内容后台 ↗" },
 ];
 
 /**
  * 站长后台外壳（AdminGuard + 左侧边栏布局）：
- *  - 访问 /admin/* 必须登录且 role === 'admin'，否则重定向到登录页；
+ *  - 访问 /console/* 必须登录且 role === 'admin'，否则重定向到登录页；
  *  - 左侧边栏 + 右侧内容区，极简高信息密度。
  */
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -68,7 +70,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
         <nav className="flex flex-col gap-0.5 p-2">
           {MENU.map((m) => {
-            const active = pathname === m.href || (m.href !== "/admin/dashboard" && pathname.startsWith(m.href));
+            const active = pathname === m.href || (m.href !== "/console/dashboard" && m.href !== "/admin" && pathname.startsWith(m.href));
             return (
               <a
                 key={m.href}

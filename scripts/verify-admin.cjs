@@ -1,4 +1,4 @@
-// 站长后台 E2E：权限拦截（未登录/普通用户）+ admin 看板 + 宠物管理 API
+﻿// 站长后台 E2E：权限拦截（未登录/普通用户）+ admin 看板 + 宠物管理 API
 const puppeteer = require("puppeteer-core");
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const BASE = process.argv[2] || "http://localhost:3100";
@@ -26,8 +26,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     console.log("  WARN pageerror:", String(e).slice(0, 140));
   });
 
-  // ---- 1) 未登录访问 /admin/dashboard → 重定向登录页 ----
-  await pg.goto(BASE + "/admin/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
+  // ---- 1) 未登录访问 /console/dashboard → 重定向登录页 ----
+  await pg.goto(BASE + "/console/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
   await pg.waitForFunction(() => /login/.test(location.pathname), { timeout: 15000, polling: 250 }).catch(() => {});
   const url1 = await pg.evaluate(() => location.pathname + location.search);
   console.log("  guest ->", url1);
@@ -43,7 +43,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   }).then((r) => r.json());
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await pg.evaluate((tk) => localStorage.setItem("aiabw_token", tk), reg.token);
-  await pg.goto(BASE + "/admin/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
+  await pg.goto(BASE + "/console/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
   // 等待客户端鉴权重定向完成（避免导航中 evaluate 的 Execution context 竞态）
   await pg.waitForFunction(() => /login/.test(location.pathname), { timeout: 15000, polling: 250 }).catch(() => {});
   const url2 = await pg.evaluate(() => location.pathname);
@@ -63,7 +63,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   assert(!!login.token, "admin 登录成功");
   await pg.goto(BASE + "/zh", { waitUntil: "domcontentloaded", timeout: 30000 });
   await pg.evaluate((tk) => localStorage.setItem("aiabw_token", tk), login.token);
-  await pg.goto(BASE + "/admin/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
+  await pg.goto(BASE + "/console/dashboard", { waitUntil: "domcontentloaded", timeout: 30000 });
   // 等待看板内容渲染完成（label + 数值都出现，避免 loading 态假失败）
   await pg
     .waitForFunction(

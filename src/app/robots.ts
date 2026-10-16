@@ -15,7 +15,8 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: "/",
         disallow: [
-          "/admin/", // 后台管理
+          "/admin/", // Payload CMS 后台
+          "/console/", // 自研运营后台
           "/api/", // 支付回调 /api/pay/* 等一律屏蔽
           "/zh/login", "/en/login", // 登录（隐私页）
           "/zh/register", "/en/register", // 注册（隐私页）

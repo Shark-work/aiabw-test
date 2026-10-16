@@ -1,4 +1,4 @@
-# 运营与安全脚本使用说明
+﻿# 运营与安全脚本使用说明
 
 > 部署完成后按以下顺序初始化站长账号与安全配置。
 
@@ -8,7 +8,7 @@
 node scripts/make-admin.cjs <你的邮箱>
 ```
 
-> 将指定邮箱的 `role` 置为 `admin`，随后即可访问 `https://www.aiabw.com/admin/dashboard`。
+> 将指定邮箱的 `role` 置为 `admin`，随后即可访问 `https://www.aiabw.com/console/dashboard`。
 
 ## 2. 修改管理员密码
 
@@ -46,7 +46,7 @@ node scripts/unlock-user.cjs <邮箱>
 | 验证码 | 同一 IP 累计失败 10 次 → 要求数学验证码（如「3 + 5 = ?」） |
 | 登录审计 | 每次失败写入 `login_attempts`（ip / email / attempted_at），保留最近 30 分钟用于判定与审计 |
 | 后台会话时效 | `/api/admin/*` 校验 `last_login_at` 超过 24 小时 → 401 `reauth`，前端跳转登录页并带 `?reauth=true` |
-| 管理员管理 | `/admin/settings/admins`：查看/修改密码/新增管理员/解锁；禁止删除自己的管理员身份 |
+| 管理员管理 | `/console/settings/admins`：查看/修改密码/新增管理员/解锁；禁止删除自己的管理员身份 |
 
 ## 验证建议
 

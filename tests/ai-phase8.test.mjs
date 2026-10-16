@@ -278,9 +278,10 @@ test("phase8-8B: admin reports 列表（pending 先报先审）+ 处置（仅 pe
   assert.ok(p.includes("{ status: 409 }"), "409 on repeat resolve");
 });
 
-// ───────────── 16) admin/moderation 页 + nav 挂载（顺带修复 admin-shell mojibake） ─────────────
-test("phase8-8B: /admin/moderation 页 + admin-shell 菜单挂载 + mojibake 已修复", () => {
-  const pg = "src/app/admin/moderation/page.tsx";
+// ───────────── 16) console/moderation 页 + nav 挂载（顺带修复 admin-shell mojibake） ─────────────
+// 2026-10-18：自研后台 /admin → /console（/admin 让位 Payload CMS），断言同步演进。
+test("phase8-8B: /console/moderation 页 + admin-shell 菜单挂载 + mojibake 已修复", () => {
+  const pg = "src/app/console/moderation/page.tsx";
   assert.ok(exists(pg), "page exists");
   const c = read(pg);
   assert.ok(c.includes("/api/admin/reports?"), "loads report queue");
@@ -359,7 +360,7 @@ test("phase8-8C: social-poster.ts 动态 import llm-fallback + 模板兜底保�
   assert.ok(c.includes("在途并发"), "live concurrency displayed");
 
   const shell = read("src/components/admin/admin-shell.tsx");
-  assert.ok(shell.includes('{ href: "/admin/moderation", label: "🛡️ 内容审核" }'), "nav item mounted");
+  assert.ok(shell.includes('{ href: "/console/moderation", label: "🛡️ 内容审核" }'), "nav item mounted");
   // mojibake 修复回归：菜单/注释不得再含固化乱码字符
   assert.ok(!/馃|鈿|鏁版|瀹犵墿绠|绯荤粺璁/.test(shell), "no mojibake residue in admin shell");
   assert.ok(shell.includes("📊 数据看板"), "dashboard label restored");

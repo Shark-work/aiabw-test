@@ -196,7 +196,7 @@ test("pet-intent(F1): /api/admin/ai-stats petChat 7日观测 + moderation 监控
   assert.ok(route.includes("keywordRate"), "关键词零成本占比");
   assert.ok(route.includes("bySource") && route.includes("byIntent"), "三来源+意图分布");
   assert.ok(route.includes("interval '7 days'"), "7 日窗口");
-  const page = read("src/app/admin/moderation/page.tsx");
+  const page = read("src/app/console/moderation/page.tsx");
   assert.ok(page.includes("petChat") && page.includes("关键词零成本"), "监控条宠物对话展示");
 });
 
