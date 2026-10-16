@@ -164,19 +164,23 @@ test("worldview(C2): /api/world/stats——单 SQL 4 指标 + 缓存 + 降级", 
 });
 
 // ───────────── D) /world 百科页 ─────────────
-test("worldview(D1): /world 页面——五板块 + 静态数据源 + metadata + 彩蛋", () => {
+test("worldview(D1): /world 页面——五板块 + CMS loader 数据源 + metadata + 彩蛋", () => {
   const p = read("src/app/[locale]/world/page.tsx");
   for (const k of ["creationTitle", "mapTitle", "lifeFormsTitle", "valuesTitle", "glossaryTitle"]) {
     assert.ok(p.includes(`t("${k}")`), `板块标题 ${k}`);
   }
   assert.ok(p.includes("creationP1") && p.includes("creationP2"), "创世神话两段叙事");
-  for (const c of ["WORLD_REGIONS", "WORLD_LIFE_FORMS", "WORLD_VALUES", "WORLD_GLOSSARY"]) {
-    assert.ok(p.includes(`${c}.map(`), `${c} 渲染`);
+  // 2026-10-18 ui-wiring：四板块改从 getStoriesByKind（CMS + 降级链回退 worldview-data）
+  for (const arr of ["regions.map(", "lifeForms.map(", "creeds.map(", "glossary.map("]) {
+    assert.ok(p.includes(arr), `${arr} 渲染（CMS 统一形状）`);
+  }
+  for (const kind of ['getStoriesByKind("region")', 'getStoriesByKind("life-form")', 'getStoriesByKind("creed")', 'getStoriesByKind("glossary")']) {
+    assert.ok(p.includes(kind), `loader 取数 ${kind}`);
   }
   assert.ok(p.includes("generateMetadata"), "SEO metadata");
   assert.ok(p.includes("<SoulTreeEgg />"), "灵魂树彩蛋挂载");
   assert.ok(p.includes('href="/explore-v2"'), "底部探索 CTA");
-  assert.ok(p.includes("WORLD_REGIONS.map") && p.includes("representativesLabel"), "区域卡含代表灵宠");
+  assert.ok(p.includes("regions.map(") && p.includes("representativesLabel"), "区域卡含代表灵宠");
 });
 
 

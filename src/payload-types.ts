@@ -292,6 +292,18 @@ export interface Story {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * kind 特有字段：region→{typeZh/En,elementZh/En,representativesZh/En}；life-form→{subtitleZh/En,examplesZh/En}；creed→{sloganZh/En}。
+   */
+  extra?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   emoji?: string | null;
   sortOrder?: number | null;
   /**
@@ -645,6 +657,7 @@ export interface StoriesSelect<T extends boolean = true> {
   summaryEn?: T;
   contentZh?: T;
   contentEn?: T;
+  extra?: T;
   emoji?: T;
   sortOrder?: T;
   published?: T;
@@ -831,14 +844,20 @@ export interface HomeHero {
  */
 export interface PointsEconomy {
   id: number;
+  /**
+   * 与 api/auth/register 新手礼包口径一致（+20，reason='welcome'）。
+   */
   signupBonus?: number | null;
+  /**
+   * 加权随机 1-10 的期望取整；实际抽取逻辑见 src/lib/checkin-points.ts。
+   */
   checkinBase?: number | null;
   /**
    * 连签第 N 天起奖励不再增长（防通胀闸）。
    */
   checkinStreakMax?: number | null;
   /**
-   * 展示与结算口径；改汇率只影响新订单，不回溯。
+   * 基础档 100分/¥6 ≈ 16.7 取整；实际四档随量递增（src/lib/points-recharge.ts），改此值不改档位表。
    */
   pointsPerCny?: number | null;
   descriptionZh?: {

@@ -52,6 +52,15 @@ export const Stories: CollectionConfig = {
     { name: "summaryEn", type: "textarea", label: "摘要（英）" },
     { name: "contentZh", type: "richText", label: "正文（中）" },
     { name: "contentEn", type: "richText", label: "正文（英）" },
+    {
+      name: "extra",
+      type: "json",
+      label: "类别特有负载（JSON）",
+      admin: {
+        description:
+          "kind 特有字段：region→{typeZh/En,elementZh/En,representativesZh/En}；life-form→{subtitleZh/En,examplesZh/En}；creed→{sloganZh/En}。",
+      },
+    },
     { name: "emoji", type: "text", label: "图标 Emoji" },
     { name: "sortOrder", type: "number", defaultValue: 0, label: "排序" },
     {

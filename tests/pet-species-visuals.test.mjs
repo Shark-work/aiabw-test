@@ -95,11 +95,11 @@ test("species-visuals(C1): pet-stage/pet-play-config 解耦锁 + characters 视�
 });
 
 // ───────────── D1) 路由接线（按 rivePath 逐路径探测） ─────────────
-test("species-visuals(D1): play/movie 按 speciesId 解析视觉 + 逐路径探测（非全局布尔）", () => {
+test("species-visuals(D1): play/movie 视觉走 CMS loader（空表回退注册表）+ 逐路径探测（非全局布尔）", () => {
   for (const name of ["play", "movie"]) {
     const src = read(`src/app/api/pet/${name}/route.ts`);
-    assert.ok(src.includes('from "@/lib/pets/species-visuals"'), `${name} 引入注册表`);
-    assert.ok(src.includes("resolveSpeciesVisual(speciesId)"), `${name} 按 speciesId 解析`);
+    assert.ok(src.includes('from "@/lib/cms/loaders"'), `${name} 引入 CMS loaders（2026-10-18 ui-wiring）`);
+    assert.ok(src.includes("await getSpeciesVisualById("), `${name} 视觉经 loader（空表回退 resolveSpeciesVisual 注册表）`);
     assert.ok(src.includes("speciesId,"), `${name} pet 对象下发 speciesId`);
     assert.ok(
       src.includes("visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false"),

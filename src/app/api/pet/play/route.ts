@@ -11,7 +11,7 @@ import { speciesAvatarFor } from "@/lib/species-avatars";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { characterView, resolveCharacter } from "@/lib/pets/characters";
 import { isRiveAssetAvailable } from "@/lib/pets/rive-asset-server";
-import { resolveSpeciesVisual } from "@/lib/pets/species-visuals";
+import { getSpeciesVisualById } from "@/lib/cms/loaders";
 import {
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
@@ -111,7 +111,9 @@ export async function GET(req: Request) {
     // 物种视觉注册表（换皮层）：speciesId → Rive 资产/立绘/场景主题；
     // 按 rivePath 逐路径探测上架——某物种素材缺席只影响该物种（雪豹不再播橘猫素材）。
     const speciesId = isSpeciesPetType(pet.petType) ? speciesIdOf(pet.petType) : null;
-    const visual = resolveSpeciesVisual(speciesId);
+    // 视觉配置走 CMS loader（60s 缓存；空表/未配置回退 resolveSpeciesVisual 注册表——
+    // 后台改物种视觉「改表即改站」，2026-10-18 ui-wiring）
+    const visual = await getSpeciesVisualById(speciesId ?? "");
 
     return NextResponse.json({
       ok: true,

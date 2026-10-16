@@ -14,7 +14,7 @@ import { cmsEnabled, getCms } from "@/lib/cms/payload";
 import { MOOD_ACTION_MAP } from "@/lib/pets/sm-contract";
 import { resolveSpeciesVisual, SPECIES_VISUALS, type SpeciesVisual } from "@/lib/pets/species-visuals";
 import { WORLD_ANCIENTS, WORLD_GLOSSARY, WORLD_LIFE_FORMS, WORLD_REGIONS, WORLD_VALUES } from "@/lib/worldview-data";
-import type { Banner, HomeHero, Page, PointsEconomy, SiteSetting } from "@/payload-types";
+import type { HomeHero, Page, PointsEconomy, SiteSetting } from "@/payload-types";
 
 // ─────────────────────── 展示层类型（DB 行与降级数据的统一形状） ───────────────────────
 export interface CmsSpecies {
@@ -28,6 +28,8 @@ export interface CmsStory {
   slug: string; kind: string; titleZh: string; titleEn: string;
   summaryZh?: string | null; summaryEn?: string | null;
   contentZh?: unknown; contentEn?: unknown; emoji?: string | null; sortOrder?: number | null;
+  /** kind 特有负载（region→type/element/representatives；life-form→subtitle/examples；creed→slogan）。 */
+  extra?: Record<string, unknown> | null;
 }
 export type CmsPage = Pick<Page, "slug" | "titleZh" | "titleEn" | "bodyZh" | "bodyEn" | "seoTitleZh" | "seoTitleEn" | "seoDescZh" | "seoDescEn">;
 export interface CmsBanner {
@@ -140,14 +142,20 @@ const STORY_FALLBACKS: Record<string, () => CmsStory[]> = {
   region: () => WORLD_REGIONS.map((r) => ({
     slug: `region:${r.id}`, kind: "region", titleZh: r.nameZh, titleEn: r.nameEn,
     summaryZh: r.descriptionZh, summaryEn: r.descriptionEn, emoji: r.emoji, sortOrder: r.sortOrder,
+    extra: {
+      typeZh: r.typeZh, typeEn: r.typeEn, elementZh: r.elementZh, elementEn: r.elementEn,
+      representativesZh: r.representativesZh, representativesEn: r.representativesEn,
+    },
   })),
   "life-form": () => WORLD_LIFE_FORMS.map((f) => ({
     slug: `life-form:${f.id}`, kind: "life-form", titleZh: f.nameZh, titleEn: f.nameEn,
     summaryZh: f.descriptionZh, summaryEn: f.descriptionEn, emoji: f.emoji, sortOrder: f.sortOrder,
+    extra: { subtitleZh: f.titleZh, subtitleEn: f.titleEn, examplesZh: f.examplesZh, examplesEn: f.examplesEn },
   })),
   creed: () => WORLD_VALUES.map((v) => ({
     slug: `creed:${v.id}`, kind: "creed", titleZh: v.nameZh, titleEn: v.nameEn,
     summaryZh: v.featureZh, summaryEn: v.featureEn, emoji: v.emoji, sortOrder: v.sortOrder,
+    extra: { sloganZh: v.sloganZh, sloganEn: v.sloganEn },
   })),
   glossary: () => WORLD_GLOSSARY.map((g) => ({
     slug: `glossary:${g.id}`, kind: "glossary", titleZh: g.termZh, titleEn: g.termEn,
@@ -173,6 +181,7 @@ export const getStoriesByKind = withFallback(
       slug: d.slug, kind: d.kind, titleZh: d.titleZh, titleEn: d.titleEn,
       summaryZh: d.summaryZh, summaryEn: d.summaryEn,
       contentZh: d.contentZh, contentEn: d.contentEn, emoji: d.emoji, sortOrder: d.sortOrder,
+      extra: (d.extra ?? null) as Record<string, unknown> | null,
     }));
   },
   (kind: string) => STORY_FALLBACKS[kind]?.() ?? [],

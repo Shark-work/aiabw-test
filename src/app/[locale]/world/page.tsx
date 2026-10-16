@@ -3,24 +3,25 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { SoulTreeEgg } from "@/components/world/soul-tree";
-import {
-  WORLD_GLOSSARY,
-  WORLD_LIFE_FORMS,
-  WORLD_REGIONS,
-  WORLD_VALUES,
-} from "@/lib/worldview-data";
+import { getStoriesByKind, type CmsStory } from "@/lib/cms/loaders";
 import { SITE_URL, ogShareFields } from "@/lib/site";
 
 type Props = { params: Promise<{ locale: string }> };
 
 /**
- * /world · 艾比大陆世界观百科页（2026-10-16）
+ * /world · 艾比大陆世界观百科页（2026-10-16；2026-10-18 接线 CMS）
  *  - 五板块：创世神话 / 大陆地图（8 区域卡）/ 生命形态（凡兽·灵宠·古灵）/
  *    五大信条 / 概念辞典（6 词条）；
- *  - 数据源：src/lib/worldview-data.ts 单一数据源静态 import（SSR 零 DB 依赖；
- *    种子落库口径由 GET /api/world 对外提供）；
+ *  - 数据源：CMS Stories Collection 经 getStoriesByKind（60s 缓存 + ISR 60s），
+ *    空表/未配置自动回退 worldview-data.ts 硬编码——「改表即改站」，后台编辑
+ *    一分钟内生效；种子落库口径另由 GET /api/world 对外提供；
  *  - 灵魂树彩蛋（产出物 5）：页面顶部与首页各挂一颗。
  */
+export const revalidate = 60;
+
+/** CmsStory.extra 的类型化读取（kind 特有负载，缺省空对象）。 */
+const extraOf = (s: CmsStory): Record<string, string | undefined> =>
+  (s.extra ?? {}) as Record<string, string | undefined>;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations("worldview");
@@ -43,6 +44,14 @@ export default async function WorldPage({ params }: Props) {
   const t = await getTranslations("worldview");
   const tp = await getTranslations("pages");
   const en = locale === "en";
+
+  // CMS 数据源（带降级链：空表/未配置回退硬编码，渲染形状统一 CmsStory）
+  const [regions, lifeForms, creeds, glossary] = await Promise.all([
+    getStoriesByKind("region"),
+    getStoriesByKind("life-form"),
+    getStoriesByKind("creed"),
+    getStoriesByKind("glossary"),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
@@ -89,32 +98,35 @@ export default async function WorldPage({ params }: Props) {
         <h2 className="text-lg font-bold text-zinc-900">{t("mapTitle")}</h2>
         <p className="mt-1 text-xs text-zinc-400">{t("mapSubtitle")}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {WORLD_REGIONS.map((r) => (
-            <article
-              key={r.id}
-              className="flex flex-col rounded-2xl border border-zinc-100 bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden>{r.emoji}</span>
-                <div>
-                  <h3 className="text-sm font-bold text-zinc-900">{en ? r.nameEn : r.nameZh}</h3>
-                  <p className="text-[11px] text-zinc-400">{en ? r.typeEn : r.typeZh}</p>
+          {regions.map((r) => {
+            const x = extraOf(r);
+            return (
+              <article
+                key={r.slug}
+                className="flex flex-col rounded-2xl border border-zinc-100 bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden>{r.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-900">{en ? r.titleEn : r.titleZh}</h3>
+                    <p className="text-[11px] text-zinc-400">{en ? x.typeEn : x.typeZh}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1">
-                <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">
-                  {t("elementLabel")} · {en ? r.elementEn : r.elementZh}
-                </span>
-              </div>
-              <p className="mt-2 text-[11px] text-zinc-500">
-                <span className="font-semibold text-zinc-600">{t("representativesLabel")}：</span>
-                {en ? r.representativesEn : r.representativesZh}
-              </p>
-              <p className="mt-2 flex-1 text-xs leading-relaxed text-zinc-600">
-                {en ? r.descriptionEn : r.descriptionZh}
-              </p>
-            </article>
-          ))}
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-600">
+                    {t("elementLabel")} · {en ? x.elementEn : x.elementZh}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] text-zinc-500">
+                  <span className="font-semibold text-zinc-600">{t("representativesLabel")}：</span>
+                  {en ? x.representativesEn : x.representativesZh}
+                </p>
+                <p className="mt-2 flex-1 text-xs leading-relaxed text-zinc-600">
+                  {en ? r.summaryEn : r.summaryZh}
+                </p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -123,27 +135,30 @@ export default async function WorldPage({ params }: Props) {
         <h2 className="text-lg font-bold text-zinc-900">{t("lifeFormsTitle")}</h2>
         <p className="mt-1 text-xs text-zinc-400">{t("lifeFormsSubtitle")}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {WORLD_LIFE_FORMS.map((f) => (
-            <article
-              key={f.id}
-              className="rounded-2xl border border-zinc-100 bg-white/80 p-4 shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-2xl" aria-hidden>{f.emoji}</span>
-                <div>
-                  <h3 className="text-sm font-bold text-zinc-900">{en ? f.nameEn : f.nameZh}</h3>
-                  <p className="text-[11px] text-zinc-400">{en ? f.titleEn : f.titleZh}</p>
+          {lifeForms.map((f) => {
+            const x = extraOf(f);
+            return (
+              <article
+                key={f.slug}
+                className="rounded-2xl border border-zinc-100 bg-white/80 p-4 shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden>{f.emoji}</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-900">{en ? f.titleEn : f.titleZh}</h3>
+                    <p className="text-[11px] text-zinc-400">{en ? x.subtitleEn : x.subtitleZh}</p>
+                  </div>
                 </div>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-zinc-600">
-                {en ? f.descriptionEn : f.descriptionZh}
-              </p>
-              <p className="mt-3 rounded-xl bg-zinc-50 px-3 py-2 text-[11px] text-zinc-500">
-                <span className="font-semibold text-zinc-600">{t("examplesLabel")}：</span>
-                {en ? f.examplesEn : f.examplesZh}
-              </p>
-            </article>
-          ))}
+                <p className="mt-3 text-xs leading-relaxed text-zinc-600">
+                  {en ? f.summaryEn : f.summaryZh}
+                </p>
+                <p className="mt-3 rounded-xl bg-zinc-50 px-3 py-2 text-[11px] text-zinc-500">
+                  <span className="font-semibold text-zinc-600">{t("examplesLabel")}：</span>
+                  {en ? x.examplesEn : x.examplesZh}
+                </p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -152,21 +167,24 @@ export default async function WorldPage({ params }: Props) {
         <h2 className="text-lg font-bold text-zinc-900">{t("valuesTitle")}</h2>
         <p className="mt-1 text-xs text-zinc-400">{t("valuesSubtitle")}</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {WORLD_VALUES.map((v) => (
-            <article
-              key={v.id}
-              className="flex flex-col rounded-2xl border border-zinc-100 bg-white/80 p-4 text-center shadow-sm"
-            >
-              <span className="text-2xl" aria-hidden>{v.emoji}</span>
-              <h3 className="mt-1 text-sm font-bold text-zinc-900">{en ? v.nameEn : v.nameZh}</h3>
-              <blockquote className="mt-2 flex-1 text-[11px] italic leading-relaxed text-zinc-500">
-                「{en ? v.sloganEn : v.sloganZh}」
-              </blockquote>
-              <p className="mt-2 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-600">
-                {t("featureLabel")} · {en ? v.featureEn : v.featureZh}
-              </p>
-            </article>
-          ))}
+          {creeds.map((v) => {
+            const x = extraOf(v);
+            return (
+              <article
+                key={v.slug}
+                className="flex flex-col rounded-2xl border border-zinc-100 bg-white/80 p-4 text-center shadow-sm"
+              >
+                <span className="text-2xl" aria-hidden>{v.emoji}</span>
+                <h3 className="mt-1 text-sm font-bold text-zinc-900">{en ? v.titleEn : v.titleZh}</h3>
+                <blockquote className="mt-2 flex-1 text-[11px] italic leading-relaxed text-zinc-500">
+                  「{en ? x.sloganEn : x.sloganZh}」
+                </blockquote>
+                <p className="mt-2 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-600">
+                  {t("featureLabel")} · {en ? v.summaryEn : v.summaryZh}
+                </p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -177,17 +195,17 @@ export default async function WorldPage({ params }: Props) {
         <h2 className="text-lg font-bold text-zinc-900">{t("glossaryTitle")}</h2>
         <p className="mt-1 text-xs text-zinc-400">{t("glossarySubtitle")}</p>
         <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-          {WORLD_GLOSSARY.map((g) => (
+          {glossary.map((g) => (
             <div
-              key={g.id}
+              key={g.slug}
               className="rounded-2xl border border-zinc-100 bg-white/80 p-4 shadow-sm"
             >
               <dt className="flex items-center gap-2 text-sm font-bold text-zinc-900">
                 <span aria-hidden>{g.emoji}</span>
-                {en ? g.termEn : g.termZh}
+                {en ? g.titleEn : g.titleZh}
               </dt>
               <dd className="mt-2 text-xs leading-relaxed text-zinc-600">
-                {en ? g.definitionEn : g.definitionZh}
+                {en ? g.summaryEn : g.summaryZh}
               </dd>
             </div>
           ))}

@@ -129,14 +129,20 @@ const storyRows = [
   ...WORLD_REGIONS.map((r) => ({
     slug: `region:${r.id}`, kind: "region", titleZh: r.nameZh, titleEn: r.nameEn,
     summaryZh: r.descriptionZh, summaryEn: r.descriptionEn, emoji: r.emoji, sortOrder: r.sortOrder,
+    extra: {
+      typeZh: r.typeZh, typeEn: r.typeEn, elementZh: r.elementZh, elementEn: r.elementEn,
+      representativesZh: r.representativesZh, representativesEn: r.representativesEn,
+    },
   })),
   ...WORLD_LIFE_FORMS.map((f) => ({
     slug: `life-form:${f.id}`, kind: "life-form", titleZh: f.nameZh, titleEn: f.nameEn,
     summaryZh: f.descriptionZh, summaryEn: f.descriptionEn, emoji: f.emoji, sortOrder: f.sortOrder,
+    extra: { subtitleZh: f.titleZh, subtitleEn: f.titleEn, examplesZh: f.examplesZh, examplesEn: f.examplesEn },
   })),
   ...WORLD_VALUES.map((v) => ({
     slug: `creed:${v.id}`, kind: "creed", titleZh: v.nameZh, titleEn: v.nameEn,
     summaryZh: v.featureZh, summaryEn: v.featureEn, emoji: v.emoji, sortOrder: v.sortOrder,
+    extra: { sloganZh: v.sloganZh, sloganEn: v.sloganEn },
   })),
   ...WORLD_GLOSSARY.map((g) => ({
     slug: `glossary:${g.id}`, kind: "glossary", titleZh: g.termZh, titleEn: g.termEn,

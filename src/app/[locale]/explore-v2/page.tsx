@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 
+import { CmsBanner } from "@/components/cms/cms-banner";
 import { ExploreV2Panel } from "@/components/exploration-v2/explore-v2-panel";
 import { SeasonalEventBanner } from "@/components/exploration-v2/seasonal-event-banner";
 
@@ -24,6 +25,8 @@ export default async function ExploreV2Page({
 
   return (
     <main className="mx-auto max-w-md space-y-4 px-4 py-6">
+      {/* CMS 运营横幅（placement=explore-top；空表/时间窗外零渲染——改表即改站） */}
+      <CmsBanner placement="explore-top" locale={locale} />
       {/* P2 社交传播：季节活动 banner（仅进行中活动渲染，无活动静默） */}
       <SeasonalEventBanner />
       <ExploreV2Panel />
