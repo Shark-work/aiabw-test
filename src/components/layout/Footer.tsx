@@ -1,19 +1,42 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import { Link } from "@/i18n/navigation";
 import { MailIcon, QQIcon, XIcon } from "@/components/social-icons";
 import { VisitCounter } from "@/components/visit-counter";
 import { FooterCollapsible } from "@/components/layout/FooterCollapsible";
+import { getSiteSettings } from "@/lib/cms/loaders";
 import { CONTACT_INFO, EMAIL_URL } from "@/lib/config";
 
 /** 全局页脚：默认折叠仅显示主版权行（+展开按钮）；展开后显示辅助导航 / 联系方式 / 法律条款 / 访问计数。 */
 export async function Footer() {
   const t = await getTranslations("footer");
   const ts = await getTranslations("support");
+  const locale = await getLocale();
+  // CMS 站点设置（任务一读取侧接线：footerText 覆写版权行 / icpNumber 备案链接 /
+  // contactEmail·xUrl 覆写联系渠道；60s 缓存 + afterChange 即新，字段留空回退 i18n/config）
+  const settings = await getSiteSettings();
+  const copyrightLine =
+    (locale === "en" ? settings?.footerTextEn : settings?.footerTextZh)?.trim() ||
+    t("copyrightLine");
+  const icp = settings?.icpNumber?.trim() || null;
+  const email = settings?.contactEmail?.trim() || null;
+  const xUrl = settings?.xUrl?.trim() || CONTACT_INFO.xUrl;
   return (
     <footer className="border-t border-zinc-200 bg-white/60 pb-4 pt-5 text-center text-xs text-muted-foreground">
       <FooterCollapsible
-        copyrightLine={t("copyrightLine")}
+        copyrightLine={copyrightLine}
+        copyrightExtra={
+          icp ? (
+            <a
+              href="https://beian.miit.gov.cn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-slate-400 transition hover:text-orange-600"
+            >
+              {icp}
+            </a>
+          ) : undefined
+        }
         expandLabel={t("expand")}
         collapseLabel={t("collapse")}
       >
@@ -61,7 +84,7 @@ export async function Footer() {
           |
         </span>
         <a
-          href={CONTACT_INFO.xUrl}
+          href={xUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
@@ -73,7 +96,7 @@ export async function Footer() {
           |
         </span>
         <a
-          href={EMAIL_URL}
+          href={email ? `mailto:${email}` : EMAIL_URL}
           className="flex items-center gap-1.5 text-zinc-600 transition hover:text-zinc-900"
         >
           <MailIcon className="h-4 w-4" />

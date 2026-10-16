@@ -5,6 +5,8 @@ import { useState, type ReactNode } from "react";
 type Props = {
   /** 主版权行（始终显示，加粗样式由本组件统一渲染）。 */
   copyrightLine: string;
+  /** 版权行后的附加节点（如 ICP 备案链接；可选，CMS SiteSettings.icpNumber 接线）。 */
+  copyrightExtra?: ReactNode;
   /** 折叠态按钮文案（如「展开」/ Expand）。 */
   expandLabel: string;
   /** 展开态按钮文案（如「收起」/ Collapse）。 */
@@ -21,6 +23,7 @@ type Props = {
  */
 export function FooterCollapsible({
   copyrightLine,
+  copyrightExtra,
   expandLabel,
   collapseLabel,
   children,
@@ -38,6 +41,7 @@ export function FooterCollapsible({
       </div>
       <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-x-2 gap-y-1 px-6 pb-2 pt-1">
         <p className="text-sm font-semibold text-zinc-600">{copyrightLine}</p>
+        {copyrightExtra}
         <button
           type="button"
           aria-expanded={expanded}

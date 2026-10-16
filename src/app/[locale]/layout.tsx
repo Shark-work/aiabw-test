@@ -14,6 +14,7 @@ import { DailyCheckinModal } from "@/components/daily-checkin-modal";
 import { SwRegister } from "@/components/sw-register";
 import { ThemeProvider } from "@/components/theme-provider";
 import { routing } from "@/i18n/routing";
+import { getSiteSettings } from "@/lib/cms/loaders";
 import { SITE_URL, getAlternates } from "@/lib/site";
 
 // 本应用强依赖数据库 / Cookie / 请求上下文（认证、支付、Neon），
@@ -31,31 +32,41 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   // middleware 注入的无前缀路径（如 /pets），用于 per-page canonical + hreflang
   const h = await headers();
   const pathname = h.get("x-pathname") ?? "/";
+  // CMS 站点设置（任务一读取侧接线：站点名/slogan/favicon 后台可改，60s 缓存 + afterChange 即新；
+  // 空表/未配置/字段留空 → 回退 i18n 硬编码，<title>/<meta> 永不为空）
+  const settings = await getSiteSettings();
+  const cmsName = (locale === "en" ? settings?.siteNameEn : settings?.siteNameZh)?.trim() || null;
+  const cmsSlogan = (locale === "en" ? settings?.sloganEn : settings?.sloganZh)?.trim() || null;
+  const title = cmsName && cmsSlogan ? `${cmsName} - ${cmsSlogan}` : t("metaTitle");
+  const description = cmsSlogan ?? t("metaDescription");
+  const favicon = settings?.faviconUrl?.trim() || null;
   return {
     metadataBase: new URL(SITE_URL),
-    title: t("metaTitle"),
-    description: t("metaDescription"),
+    title,
+    description,
+    // favicon：CMS 填了才覆盖 app/icon.svg 文件约定（留空 = 默认图标不变）
+    ...(favicon ? { icons: { icon: favicon } } : {}),
     alternates: getAlternates(pathname, locale),
     robots: { index: true, follow: true },
     openGraph: {
       type: "website",
       locale,
-      siteName: t("appName"),
-      title: t("metaTitle"),
-      description: t("metaDescription"),
+      siteName: cmsName ?? t("appName"),
+      title,
+      description,
       url: `${SITE_URL}/${locale}${pathname === "/" ? "" : pathname}`,
     },
     // Twitter Card 大图模式（图片由 [locale]/twitter-image 约定文件注入）
     twitter: {
       card: "summary_large_image",
-      title: t("metaTitle"),
-      description: t("metaDescription"),
+      title,
+      description,
     },
   };
 }
 
 /** 全局 WebSite + Organization 结构化数据（GEO：供 AI 引擎抓取品牌与内容概貌）。 */
-function SiteJsonLd({ locale, name, description }: { locale: string; name: string; description: string }) {
+function SiteJsonLd({ locale, name, description, logoUrl }: { locale: string; name: string; description: string; logoUrl: string }) {
   const ld = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -70,7 +81,7 @@ function SiteJsonLd({ locale, name, description }: { locale: string; name: strin
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/icon.svg`,
+        url: logoUrl.startsWith("http") ? logoUrl : `${SITE_URL}${logoUrl}`,
       },
     },
   };
@@ -103,6 +114,11 @@ export default async function LocaleLayout({
 
   const messages = (await import(`../../../messages/${locale}.json`)).default;
   const t = await getTranslations("common");
+  // CMS 站点设置（任务一：与 generateMetadata 同一 loader，unstable_cache 60s 共享单查询）
+  const settings = await getSiteSettings();
+  const cmsName = (locale === "en" ? settings?.siteNameEn : settings?.siteNameZh)?.trim() || null;
+  const cmsSlogan = (locale === "en" ? settings?.sloganEn : settings?.sloganZh)?.trim() || null;
+  const cmsLogo = settings?.logoUrl?.trim() || "/icon.svg";
 
   // 宠物沉浸页（需求七.1）：/pet-movie 与 /pets/my/[id]/play 隐藏主站导航/页脚/客服/签到弹窗，
   // 页内迷你工具条（返回主站/静音/退出沉浸）接管——middleware 注入的 x-pathname 无 locale 前缀。
@@ -122,8 +138,13 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="antialiased flex min-h-screen flex-col">
-        {/* 全局结构化数据（WebSite + Organization，GEO 优化） */}
-        <SiteJsonLd locale={locale} name={t("appName")} description={t("metaDescription")} />
+        {/* 全局结构化数据（WebSite + Organization，GEO 优化；名称/描述/Logo 走 CMS 站点设置） */}
+        <SiteJsonLd
+          locale={locale}
+          name={cmsName ?? t("appName")}
+          description={cmsSlogan ?? t("metaDescription")}
+          logoUrl={cmsLogo}
+        />
         {/* locale 必须显式传入：next-intl v4 客户端 bundle 在 hydration 时若缺失 locale 会直接
             throw Error（线上曾因此报 “Application error: a client-side exception”）。 */}
         <NextIntlClientProvider locale={locale} messages={messages}>
