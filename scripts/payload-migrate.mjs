@@ -217,6 +217,8 @@ async function migrateGlobals() {
     data: {
       siteNameZh: "艾比世界", siteNameEn: "Aibi World",
       sloganZh: zh.home?.subtitle ?? null, sloganEn: en.home?.subtitle ?? null,
+      // logo/favicon/footerText 留空 = 前台回退 app/icon.svg 约定与 i18n footer.copyrightLine（不虚构红线）
+      logoUrl: null, faviconUrl: null, footerTextZh: null, footerTextEn: null,
       contactEmail: "aiabw@outlook.com", qqGroup: "1005445619",
       xUrl: "https://x.com/Aiabw_com", icpNumber: null, maintenanceMode: false,
     },

@@ -793,6 +793,19 @@ export interface SiteSetting {
   siteNameEn?: string | null;
   sloganZh?: string | null;
   sloganEn?: string | null;
+  /**
+   * public 路径（如 /icon.svg）或绝对 URL；留空 = 默认 /icon.svg（结构化数据/页眉品牌图）。
+   */
+  logoUrl?: string | null;
+  /**
+   * 留空 = 默认 app/icon.svg 约定文件；填了则全站 <link rel=icon> 走此地址。
+   */
+  faviconUrl?: string | null;
+  /**
+   * 替换页脚主版权行；留空 = 回退 i18n footer.copyrightLine。
+   */
+  footerTextZh?: string | null;
+  footerTextEn?: string | null;
   contactEmail?: string | null;
   qqGroup?: string | null;
   xUrl?: string | null;
@@ -902,6 +915,10 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   siteNameEn?: T;
   sloganZh?: T;
   sloganEn?: T;
+  logoUrl?: T;
+  faviconUrl?: T;
+  footerTextZh?: T;
+  footerTextEn?: T;
   contactEmail?: T;
   qqGroup?: T;
   xUrl?: T;

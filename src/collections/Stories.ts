@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 故事 Collection（后台化目标：worldview-data.ts 的世界观文本——创世神话 / 8 区域 /
@@ -20,6 +21,7 @@ export const Stories: CollectionConfig = {
   },
   defaultSort: "sortOrder",
   access: publicReadAdminWrite,
+  hooks: { afterChange: [revalidateAfterChange("stories")] },
   fields: [
     {
       name: "slug",

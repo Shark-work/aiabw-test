@@ -1,10 +1,11 @@
 /**
- * CMS 数据加载层（服务端专用；9 个 loader，全部带降级链 + 60s 缓存）。
+ * CMS 数据加载层（服务端专用；12 个 loader，全部带降级链 + 60s 缓存）。
  *
  * 统一语义（「改表即改站」的安全网）：
- *  - CMS 有数据 → 用 CMS（后台改表，60s 内全站生效）；
+ *  - CMS 有数据 → 用 CMS（后台改表，60s 内全站生效；afterChange hook revalidateTag
+ *    后下次请求即新——见 src/collections/revalidate.ts，任务六）；
  *  - CMS 空表 / 未配置 Turso / 查询异常 → 回退现有硬编码注册表，前台永不空白；
- *  - 缓存：unstable_cache revalidate=60s，缓存键自动含调用参数；
+ *  - 缓存：unstable_cache revalidate=60s + 失效 tag（任务六命名规范），缓存键自动含调用参数；
  *  - 富文本字段返回 Lexical JSON 原样（渲染在 ui-wiring 批次，loader 不做 HTML 转换）。
  */
 import { unstable_cache } from "next/cache";
@@ -46,16 +47,24 @@ export interface CmsProduct {
 export interface CmsTokenRule {
   ruleKey: string; points: number; dailyLimit?: number | null;
   cooldownMinutes?: number | null; enabled?: boolean | null;
+  /** 展示字段（规则列表用；白名单 Pick——id/内部审计字段绝不下发前台，任务五敏感字段红线）。 */
+  nameZh?: string | null; nameEn?: string | null;
+  descriptionZh?: string | null; descriptionEn?: string | null;
 }
-export type CmsGlobalData = SiteSetting | HomeHero | PointsEconomy;
 
 // ─────────────────────── 降级链封装（第一道闸 cmsEnabled，第二道闸 try/catch） ───────────────────────
+/**
+ * @param tag 缓存失效 tag（任务六命名规范：species/stories/pages/banners/products/token-rules/
+ *            pet-animations/site-settings/home-hero/points-economy；缺省 = key）。
+ *            后台 afterChange hook revalidateTag(tag) 后，下一次请求即拿新数据（不必等满 60s）。
+ */
 function withFallback<Args extends unknown[], T>(
   key: string,
   query: (...args: Args) => Promise<T | null>,
   fallback: (...args: Args) => T,
+  tag?: string,
 ): (...args: Args) => Promise<T> {
-  const cached = unstable_cache(query, ["cms", key], { revalidate: 60, tags: [`cms:${key}`] });
+  const cached = unstable_cache(query, ["cms", key], { revalidate: 60, tags: [tag ?? key] });
   return async (...args: Args) => {
     if (!cmsEnabled()) return fallback(...args);
     try {
@@ -91,6 +100,7 @@ export const getSpeciesList = withFallback(
       speciesId, nameZh: speciesId, nameEn: speciesId,
       rivePath: v.rivePath ?? null, staticImage: v.staticImage, sceneTheme: v.sceneTheme, sortOrder: 0,
     })),
+  "species",
 );
 
 // ─────────────────────── 2) 单物种视觉（舞台渲染用；回退 resolveSpeciesVisual 同形状） ───────────────────────
@@ -111,6 +121,7 @@ export const getSpeciesVisualById = withFallback(
     } satisfies SpeciesVisual;
   },
   (speciesId: string) => resolveSpeciesVisual(speciesId),
+  "species",
 );
 
 // ─────────────────────── 3) 情绪→动作映射（全局默认 + 物种覆写合并） ───────────────────────
@@ -135,6 +146,7 @@ export const getPetAnimationMap = withFallback(
     return map;
   },
   () => ({ ...MOOD_ACTION_MAP } as Record<string, string>),
+  "pet-animations",
 );
 
 // ─────────────────────── 4) 故事（按类别，仅已发布；世界观六类回退 worldview-data） ───────────────────────
@@ -208,6 +220,7 @@ export const getPageBySlug = withFallback(
     } satisfies CmsPage;
   },
   () => null as CmsPage | null,
+  "pages",
 );
 
 // ─────────────────────── 6) 横幅（enabled + 当前时间窗；空表 = 无横幅，不虚构红线） ───────────────────────
@@ -272,7 +285,7 @@ export const getProductList = withFallback(
 // ─────────────────────── 8) 积分规则（按键取单条；未命中 null → 调用方回退代码默认值） ───────────────────────
 export const getTokenRuleByKey = withFallback(
   "token-rule",
-  async (ruleKey: string) => {
+  async (ruleKey: string): Promise<CmsTokenRule | null> => {
     const cms = await getCms();
     const res = await cms.find({
       collection: "token-rules",
@@ -287,15 +300,58 @@ export const getTokenRuleByKey = withFallback(
     } satisfies CmsTokenRule;
   },
   () => null as CmsTokenRule | null,
+  "token-rules",
 );
 
-// ─────────────────────── 9) Global（site-settings / home-hero / points-economy 共用；未命中 null → 回退 i18n） ───────────────────────
-export const getCmsGlobal = withFallback(
-  "global",
-  async (slug: "site-settings" | "home-hero" | "points-economy") => {
+// ─────────────────────── 8b) 积分规则列表（/points 规则区展示；仅 enabled，白名单字段下发） ───────────────────────
+export const getTokenRuleList = withFallback(
+  "token-rule-list",
+  async () => {
     const cms = await getCms();
-    const doc = await cms.findGlobal({ slug, overrideAccess: true });
-    return (doc ?? null) as CmsGlobalData | null;
+    const res = await cms.find({
+      collection: "token-rules",
+      where: { enabled: { equals: true } },
+      limit: 100, sort: "ruleKey", overrideAccess: true,
+    });
+    if (res.docs.length === 0) return null;
+    return res.docs.map((d): CmsTokenRule => ({
+      ruleKey: d.ruleKey, nameZh: d.nameZh, nameEn: d.nameEn,
+      points: num(d.points), dailyLimit: d.dailyLimit, cooldownMinutes: d.cooldownMinutes,
+      enabled: d.enabled, descriptionZh: d.descriptionZh, descriptionEn: d.descriptionEn,
+    }));
   },
-  () => null as CmsGlobalData | null,
+  // 降级 = 空列表：规则展示属信息性内容，CMS 不可用时前台区块整体隐藏（不虚构规则红线）
+  () => [] as CmsTokenRule[],
+  "token-rules",
+);
+
+// ─────────────────────── 9) Globals（各立 cache key + 同名失效 tag；未命中 null → 调用方回退 i18n/代码默认值） ───────────────────────
+export const getSiteSettings = withFallback(
+  "site-settings",
+  async () => {
+    const cms = await getCms();
+    const doc = await cms.findGlobal({ slug: "site-settings", overrideAccess: true });
+    return (doc ?? null) as SiteSetting | null;
+  },
+  () => null as SiteSetting | null,
+);
+
+export const getHomeHero = withFallback(
+  "home-hero",
+  async () => {
+    const cms = await getCms();
+    const doc = await cms.findGlobal({ slug: "home-hero", overrideAccess: true });
+    return (doc ?? null) as HomeHero | null;
+  },
+  () => null as HomeHero | null,
+);
+
+export const getPointsEconomy = withFallback(
+  "points-economy",
+  async () => {
+    const cms = await getCms();
+    const doc = await cms.findGlobal({ slug: "points-economy", overrideAccess: true });
+    return (doc ?? null) as PointsEconomy | null;
+  },
+  () => null as PointsEconomy | null,
 );

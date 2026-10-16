@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 积分规则 Collection（后台化目标：散落代码各处的积分奖励/消耗额度——签到、探索、
@@ -20,6 +21,7 @@ export const TokenRules: CollectionConfig = {
     description: "积分奖励/消耗额度与每日限额：改表即调经济参数。",
   },
   access: publicReadAdminWrite,
+  hooks: { afterChange: [revalidateAfterChange("token-rules")] },
   fields: [
     {
       name: "ruleKey",

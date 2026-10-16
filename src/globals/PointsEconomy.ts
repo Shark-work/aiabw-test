@@ -1,6 +1,7 @@
 import type { GlobalConfig } from "payload";
 
 import { publicReadAdminWriteGlobal } from "../collections/access.ts";
+import { revalidateAfterChange } from "../collections/revalidate.ts";
 
 /**
  * 积分经济 Global（单例）：经济系统全局参数的总控面板。
@@ -13,6 +14,7 @@ export const PointsEconomy: GlobalConfig = {
   label: "积分经济",
   admin: { description: "积分宏观参数：注册赠送 / 连签上限 / 充值汇率 / 经济说明。" },
   access: publicReadAdminWriteGlobal,
+  hooks: { afterChange: [revalidateAfterChange("points-economy")] },
   fields: [
     {
       name: "signupBonus",

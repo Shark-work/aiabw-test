@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 通用内容页 Collection（后台化目标：关于 / 帮助 / 活动公告等「非业务逻辑页」
@@ -18,6 +19,7 @@ export const Pages: CollectionConfig = {
     description: "通用内容页：关于 / 帮助 / 活动公告等运营文案页。",
   },
   access: publicReadAdminWrite,
+  hooks: { afterChange: [revalidateAfterChange("pages")] },
   fields: [
     {
       name: "slug",

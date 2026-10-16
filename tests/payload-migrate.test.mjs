@@ -85,6 +85,17 @@ test("payload-migrate(E): PointsEconomy 默认值与现实一致（20/3/17 回�
   assert.ok(s.includes("signupBonus: 20") && s.includes("pointsPerCny: 17"), "迁移种子值一致");
 });
 
+test("payload-migrate(F): SiteSettings 种子含读取侧接线四字段（留空回退不虚构）", () => {
+  const s = read("scripts/payload-migrate.mjs");
+  for (const f of ["logoUrl", "faviconUrl", "footerTextZh", "footerTextEn"]) {
+    assert.ok(s.includes(`${f}: null`), `种子 ${f} 留空（前台回退默认，不虚构红线）`);
+  }
+  const g = read("src/globals/SiteSettings.ts");
+  for (const f of ["logoUrl", "faviconUrl", "footerTextZh", "footerTextEn"]) {
+    assert.ok(g.includes(`name: "${f}"`), `Global 字段 ${f} 与种子对齐`);
+  }
+});
+
 // ─────────────────────── F) 脚本封装与挂载 ───────────────────────
 test("payload-migrate(F): cms:migrate 封装 _paths-loader + 本测试挂载", () => {
   const pkg = JSON.parse(read("package.json"));

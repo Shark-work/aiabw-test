@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 横幅 Collection（后台化目标：首页 Hero 下横幅 / 商城限时特惠横幅 / 探索页公告条
@@ -20,6 +21,7 @@ export const Banners: CollectionConfig = {
   },
   defaultSort: "-priority",
   access: publicReadAdminWrite,
+  hooks: { afterChange: [revalidateAfterChange("banners")] },
   fields: [
     { name: "slug", type: "text", required: true, unique: true, label: "标识" },
     {

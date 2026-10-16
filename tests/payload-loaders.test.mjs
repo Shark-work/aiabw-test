@@ -29,25 +29,43 @@ test("payload-loaders(A): 单例 + 三道可用性闸 + 失败重试", () => {
   assert.ok(p.includes("cached = null"), "初始化失败解除缓存（下次重试）");
 });
 
-// ─────────────────────── B) 九 loader 与降级链封装 ───────────────────────
-test("payload-loaders(B1): 九 loader 全部导出", () => {
+// ─────────────────────── B) 十二 loader 与降级链封装 ───────────────────────
+test("payload-loaders(B1): 十二 loader 全部导出（Global 拆三 + 规则列表）", () => {
   const l = read("src/lib/cms/loaders.ts");
   for (const name of [
     "getSpeciesList", "getSpeciesVisualById", "getPetAnimationMap", "getStoriesByKind",
-    "getPageBySlug", "getBannersByPlacement", "getProductList", "getTokenRuleByKey", "getCmsGlobal",
+    "getPageBySlug", "getBannersByPlacement", "getProductList", "getTokenRuleByKey",
+    "getTokenRuleList", "getSiteSettings", "getHomeHero", "getPointsEconomy",
   ]) {
     assert.ok(l.includes(`export const ${name}`), `loader ${name}`);
   }
+  assert.ok(!l.includes("getCmsGlobal"), "共用 global loader 已拆分为三独立 loader（各自失效 tag）");
 });
 
-test("payload-loaders(B2): withFallback 封装 = cmsEnabled 闸 + try/catch + 60s 缓存", () => {
+test("payload-loaders(B2): withFallback 封装 = cmsEnabled 闸 + try/catch + 60s 缓存 + 失效 tag", () => {
   const l = read("src/lib/cms/loaders.ts");
   assert.ok(l.includes("unstable_cache"), "unstable_cache");
   assert.ok(l.includes("revalidate: 60"), "缓存 60s（任务书规格）");
+  assert.ok(l.includes("tags: [tag ?? key]"), "失效 tag（任务六 revalidateTag 对应）");
   assert.ok(l.includes("cmsEnabled()"), "第一道闸");
   assert.ok(l.includes("catch (err)"), "第二道闸 try/catch");
-  assert.ok((l.match(/withFallback\(/g) ?? []).length >= 9, "九 loader 全部经 withFallback 封装");
+  assert.ok((l.match(/withFallback\(/g) ?? []).length >= 12, "十二 loader 全部经 withFallback 封装");
   assert.ok(l.includes("overrideAccess: true"), "Local API 服务端读取绕 access（读公开语义）");
+});
+
+test("payload-loaders(B3): 失效 tag 命名对齐任务六规范", () => {
+  const l = read("src/lib/cms/loaders.ts");
+  // 与 collections/globals afterChange hook 的 revalidateAfterChange("<tag>") 一一对应
+  for (const tag of [
+    '"species"', '"pet-animations"', '"pages"', '"token-rules"',
+    '"site-settings"', '"home-hero"', '"points-economy"',
+  ]) {
+    assert.ok(l.includes(`  ${tag},`) || l.includes(`"${tag.slice(1, -1)}",\n`), `loader tag ${tag}`);
+  }
+  // stories / banners / products key 与 tag 同名（缺省 = key，无需显式第 4 参）
+  for (const key of ['"stories",', '"banners",', '"products",']) {
+    assert.ok(l.includes(key), `key=tag 同名 loader ${key}`);
+  }
 });
 
 // ─────────────────────── C) 降级数据源接线 ───────────────────────

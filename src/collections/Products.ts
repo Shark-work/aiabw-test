@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 商品 Collection（后台化目标：aibi-catalog.ts 道具 / 装扮商城 skin×effect / 卡包
@@ -22,6 +23,7 @@ export const Products: CollectionConfig = {
   },
   defaultSort: "sortOrder",
   access: publicReadAdminWrite,
+  hooks: { afterChange: [revalidateAfterChange("products")] },
   fields: [
     {
       name: "productId",

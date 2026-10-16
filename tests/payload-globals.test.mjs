@@ -34,10 +34,10 @@ test("payload-globals(A): 三 Global 全部注册且导入带 .ts 扩展名", ()
 });
 
 // ─────────────────────── B) 字段契约 ───────────────────────
-test("payload-globals(B1): SiteSettings 品牌/联系/备案/维护模式", () => {
+test("payload-globals(B1): SiteSettings 品牌/联系/备案/维护模式 + 读取侧接线字段", () => {
   const g = read("src/globals/SiteSettings.ts");
   assert.ok(g.includes('slug: "site-settings"'), "slug");
-  for (const f of ["siteNameZh", "siteNameEn", "sloganZh", "sloganEn", "contactEmail", "qqGroup", "xUrl", "icpNumber", "maintenanceMode", "maintenanceMessageZh", "maintenanceMessageEn"]) {
+  for (const f of ["siteNameZh", "siteNameEn", "sloganZh", "sloganEn", "logoUrl", "faviconUrl", "footerTextZh", "footerTextEn", "contactEmail", "qqGroup", "xUrl", "icpNumber", "maintenanceMode", "maintenanceMessageZh", "maintenanceMessageEn"]) {
     assert.ok(g.includes(`name: "${f}"`), `字段 ${f}`);
   }
   assert.ok(g.includes("defaultValue: false"), "维护模式默认关闭");
@@ -73,6 +73,7 @@ test("payload-globals(C): 三 Global 统一 publicReadAdminWriteGlobal", () => {
     const g = read(`src/globals/${name}.ts`);
     assert.ok(g.includes('from "../collections/access.ts"'), `${name} 引入公共 access`);
     assert.ok(g.includes("access: publicReadAdminWriteGlobal"), `${name} 应用 Global 策略`);
+    assert.ok(g.includes('from "../collections/revalidate.ts"'), `${name} 引入 revalidate hook`);
   }
 });
 

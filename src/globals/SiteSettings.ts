@@ -1,6 +1,7 @@
 import type { GlobalConfig } from "payload";
 
 import { publicReadAdminWriteGlobal } from "../collections/access.ts";
+import { revalidateAfterChange } from "../collections/revalidate.ts";
 
 /**
  * 站点设置 Global（单例）：站点名 / slogan / 联系渠道 / 备案 / 维护模式。
@@ -13,11 +14,31 @@ export const SiteSettings: GlobalConfig = {
   label: "站点设置",
   admin: { description: "全站单例：品牌 / 联系渠道 / 备案 / 维护模式。" },
   access: publicReadAdminWriteGlobal,
+  hooks: { afterChange: [revalidateAfterChange("site-settings")] },
   fields: [
     { name: "siteNameZh", type: "text", defaultValue: "艾比世界", label: "站点名（中）" },
     { name: "siteNameEn", type: "text", defaultValue: "Aibi World", label: "站点名（英）" },
     { name: "sloganZh", type: "textarea", label: "Slogan（中）" },
     { name: "sloganEn", type: "textarea", label: "Slogan（英）" },
+    {
+      name: "logoUrl",
+      type: "text",
+      label: "Logo URL",
+      admin: { description: "public 路径（如 /icon.svg）或绝对 URL；留空 = 默认 /icon.svg（结构化数据/页眉品牌图）。" },
+    },
+    {
+      name: "faviconUrl",
+      type: "text",
+      label: "Favicon URL",
+      admin: { description: "留空 = 默认 app/icon.svg 约定文件；填了则全站 <link rel=icon> 走此地址。" },
+    },
+    {
+      name: "footerTextZh",
+      type: "textarea",
+      label: "页脚版权行（中）",
+      admin: { description: "替换页脚主版权行；留空 = 回退 i18n footer.copyrightLine。" },
+    },
+    { name: "footerTextEn", type: "textarea", label: "页脚版权行（英）" },
     { name: "contactEmail", type: "email", label: "联系邮箱" },
     { name: "qqGroup", type: "text", label: "QQ 群号" },
     { name: "xUrl", type: "text", label: "X（Twitter）链接" },

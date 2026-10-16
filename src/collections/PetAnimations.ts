@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 宠物动画映射 Collection（后台化目标：sm-contract.ts 的 MOOD_ACTION_MAP 可按物种
@@ -22,6 +23,7 @@ export const PetAnimations: CollectionConfig = {
     description: "情绪 → 动作 → Rive 输入的映射；留空物种 = 全局默认。",
   },
   access: publicReadAdminWrite,
+  hooks: { afterChange: [revalidateAfterChange("pet-animations")] },
   fields: [
     {
       name: "species",

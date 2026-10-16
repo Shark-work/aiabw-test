@@ -1,6 +1,7 @@
 import type { GlobalConfig } from "payload";
 
 import { publicReadAdminWriteGlobal } from "../collections/access.ts";
+import { revalidateAfterChange } from "../collections/revalidate.ts";
 
 /**
  * 首页主视觉 Global（单例）：Hero 区标题/副标题/三 CTA/背景图/灵魂树彩蛋开关。
@@ -13,6 +14,7 @@ export const HomeHero: GlobalConfig = {
   label: "首页主视觉",
   admin: { description: "首页 Hero：标题 / 副标题 / CTA / 背景 / 彩蛋开关。" },
   access: publicReadAdminWriteGlobal,
+  hooks: { afterChange: [revalidateAfterChange("home-hero")] },
   fields: [
     { name: "titleZh", type: "text", label: "主标题（中）" },
     { name: "titleEn", type: "text", label: "主标题（英）" },

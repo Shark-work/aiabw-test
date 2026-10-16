@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 
 import { publicReadAdminWrite } from "./access.ts";
+import { revalidateAfterChange } from "./revalidate.ts";
 
 /**
  * 物种 Collection（后台化目标：species-visuals.ts 注册表 + characters.ts 角色人设
@@ -22,6 +23,8 @@ export const Species: CollectionConfig = {
   },
   defaultSort: "sortOrder",
   access: publicReadAdminWrite,
+  // 任务六：后台保存 → revalidateTag("species")，前台 60s ISR 变下次请求即新
+  hooks: { afterChange: [revalidateAfterChange("species")] },
   fields: [
     {
       name: "speciesId",
