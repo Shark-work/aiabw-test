@@ -7,6 +7,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { apiError, resolveLocale } from "@/i18n/api-errors";
 import { moderateText } from "@/lib/content-moderation";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
+import { getTokenRuleByKey } from "@/lib/cms/loaders";
 import { fallbackPetReply } from "@/lib/pets/characters";
 import { resolvePetIntent } from "@/lib/pets/intent-resolver";
 import {
@@ -152,7 +153,14 @@ export async function POST(req: Request) {
         { status: 429 },
       );
     }
-    const charged = todayChats >= PET_CHAT_FREE_DAILY;
+    // 每日免费句数走 CMS TokenRule（任务三读取侧接线：后台改 pet.chat.free-quota 即调额度，
+    // 60s 缓存 + afterChange 即新；loader 取不到/非法值 → 回退代码常量 PET_CHAT_FREE_DAILY，计费永不崩）
+    const freeRule = await getTokenRuleByKey("pet.chat.free-quota");
+    const freeDaily =
+      freeRule?.dailyLimit && freeRule.dailyLimit > 0
+        ? Math.floor(freeRule.dailyLimit)
+        : PET_CHAT_FREE_DAILY;
+    const charged = todayChats >= freeDaily;
 
     // 7) 扣费（仅超出免费额度；事务：行锁校验余额 → 扣分 → 流水；不足整体回滚 402）
     let points = 0;
@@ -286,7 +294,8 @@ export async function POST(req: Request) {
       action: result.action,
       intent: resolution.intent,
       points,
-      freeRemaining: Math.max(0, PET_CHAT_FREE_DAILY - todayChats - (refunded ? 0 : 1)),
+      freeDaily,
+      freeRemaining: Math.max(0, freeDaily - todayChats - (refunded ? 0 : 1)),
       happiness,
       hungerLevel,
       hungry: hungerLevel <= HUNGRY_THRESHOLD,

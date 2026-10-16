@@ -113,7 +113,7 @@ test("merge(5): i18n Tab 键双语新增 + 互跳条键清除", () => {
 test("merge(6): 入口引用统一指向 /pets/my", () => {
   assert.match(read("../src/components/layout/SiteHeader.tsx"), /href: "\/pets\/my"/);
   assert.match(read("../src/app/sitemap.ts"), /path: "\/pets\/my"/);
-  assert.match(read("../src/app/[locale]/points/page.tsx"), /href="\/pets\/my"/);
+  assert.match(read("../src/components/points/points-client.tsx"), /href="\/pets\/my"/); // RSC 壳拆分后页面内容所在地
   assert.match(read("../src/app/[locale]/handbooks/page.tsx"), /href="\/pets\/my"/);
   assert.match(read("../src/app/[locale]/marketplace/page.tsx"), /href="\/pets\/my"/);
   assert.match(read("../src/components/home/home-client.tsx"), /redirect=\/pets\/my/); // RSC 壳拆分后首页内容所在地

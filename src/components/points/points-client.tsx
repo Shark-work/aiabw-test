@@ -1,0 +1,411 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+
+import { Link } from "@/i18n/navigation";
+import { LivingPet } from "@/components/LivingPet";
+import { PointsRechargeModal } from "@/components/points-recharge-modal";
+import { notifyPointsInsufficient } from "@/lib/points-entry";
+import {
+  FIRST_PURCHASE_BONUS_MULTIPLIER,
+  POINTS_PACKS,
+  type PointsPack,
+} from "@/lib/points-recharge";
+
+type Log = { id: string; amount: number; reason: string; createdAt: string };
+
+/** CMS 积分经济视图（任务三读取侧接线：RSC 壳下发，白名单数值字段；null = CMS 未配置回退隐藏）。 */
+export interface PointsEconomyView {
+  signupBonus?: number | null;
+  checkinBase?: number | null;
+  checkinStreakMax?: number | null;
+  pointsPerCny?: number | null;
+}
+
+/** CMS 积分规则行（任务五：仅 enabled 下发；白名单展示字段——内部 id/审计字段不进 bundle）。 */
+export interface TokenRuleView {
+  ruleKey: string;
+  nameZh?: string | null;
+  nameEn?: string | null;
+  points: number;
+  dailyLimit?: number | null;
+  descriptionZh?: string | null;
+  descriptionEn?: string | null;
+}
+
+export function PointsClient({
+  economy = null,
+  rules = [],
+}: {
+  economy?: PointsEconomyView | null;
+  rules?: TokenRuleView[];
+}) {
+  const locale = useLocale();
+  const t = useTranslations("points");
+  const tc = useTranslations("common");
+  const te = useTranslations("pointsEntry");
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  // 积分兑换盲盒（心理学激励）
+  const [points, setPoints] = useState(0);
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemResult, setRedeemResult] = useState<{ id: string; speciesName: string; imageUrl: string; traits: { rarity?: string } } | null>(null);
+  const [redeemMsg, setRedeemMsg] = useState("");
+  // 积分充值（XorPay 码支付）：选中的档位，null = 弹窗关闭
+  const [rechargePack, setRechargePack] = useState<PointsPack | null>(null);
+  // 首充双倍（Phase 4）：未首充 → 档位卡显示 ×2 到账 + 「首充×2」角标
+  const [isFirstPurchase, setIsFirstPurchase] = useState(false);
+
+  const REDEEM_PRICE = 500;
+
+  // 拉取当前积分（兑换进度条）+ 首充状态（档位 ×2 标签）
+  useEffect(() => {
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    fetch("/api/auth/me", { headers })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.ok && d.user) setPoints(d.user.points ?? 0);
+      })
+      .catch(() => {});
+    fetch("/api/user/first-purchase/status", { headers })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.ok) setIsFirstPurchase(!!d.isFirstPurchase);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleRedeem = async () => {
+    if (redeeming) return;
+    const token = localStorage.getItem("aiabw_token");
+    if (!token) {
+      window.location.href = `/${locale}/login?redirect=/points`;
+      return;
+    }
+    setRedeeming(true);
+    setRedeemMsg("");
+    setRedeemResult(null);
+    try {
+      const res = await fetch("/api/points/redeem-pet", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.ok) {
+        setPoints(data.points ?? 0);
+        setRedeemResult(data.pet);
+        setRedeemMsg(t("redeemOk"));
+        void load();
+      } else {
+        setRedeemMsg(data?.error ?? t("redeemFail"));
+        if (res.status === 400 && points < REDEEM_PRICE) {
+          // 积分不足（Phase 4）：全局充值引导弹窗（未首充 → 首充双倍版）
+          notifyPointsInsufficient({ needed: REDEEM_PRICE });
+        }
+      }
+    } catch {
+      setRedeemMsg(t("redeemFail"));
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
+  const reasonLabel = (r: string) => {
+    const map: Record<string, string> = {
+      checkin: t("checkin"),
+      gacha: t("gacha"),
+      ugc_buy: t("ugcBuy"),
+      invite_reward: t("inviteReward"),
+      recharge: t("recharge"),
+    };
+    return map[r] ?? r;
+  };
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("aiabw_token");
+      if (!token) return;
+      const res = await fetch("/api/points-log", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data?.ok) setLogs(data.logs ?? []);
+      else setError(data?.error ?? tc("loadFailed"));
+    } catch {
+      setError(tc("networkError"));
+    } finally {
+      setLoading(false);
+    }
+  }, [tc]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const total = logs.reduce((s, l) => s + l.amount, 0);
+  // 充值记录：从积分流水过滤 reason='recharge'（与总流水共用一次 /api/points-log 拉取）
+  const rechargeLogs = logs.filter((l) => l.reason === "recharge");
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-rose-50 p-4 sm:p-6">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-zinc-900">{t("title")}</h1>
+            <p className="text-xs text-zinc-500">
+              {t("subtitle", { total: `${total > 0 ? "+" : ""}${total}` })}
+            </p>
+          </div>
+          <Link
+            href="/pets/my"
+            className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50"
+          >
+            {tc("back")}
+          </Link>
+        </div>
+
+        {/* 积分充值（XorPay 码支付；档位价格以服务端价格表 src/lib/points-recharge 为准） */}
+        <div className="mb-4 rounded-2xl border border-amber-100 bg-white/80 p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-zinc-800">{t("rechargeTitle")}</h2>
+            <span className="text-right text-[11px] text-zinc-400">{t("rechargeSub")}</span>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {POINTS_PACKS.map((p) => (
+              <button
+                key={p.points}
+                type="button"
+                onClick={() => setRechargePack(p)}
+                className="relative rounded-xl border border-amber-200 bg-gradient-to-b from-amber-50 to-white px-2 py-3 text-center transition hover:border-amber-400 hover:shadow"
+              >
+                {isFirstPurchase && (
+                  <span
+                    data-testid="points-pack-first-badge"
+                    className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-rose-500 to-orange-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"
+                  >
+                    {te("firstBadge")}
+                  </span>
+                )}
+                <div className="text-base font-extrabold text-amber-600">
+                  {isFirstPurchase ? p.points * FIRST_PURCHASE_BONUS_MULTIPLIER : p.points}
+                </div>
+                {isFirstPurchase && (
+                  <div className="text-[10px] text-zinc-400 line-through">{p.points}</div>
+                )}
+                <div className="text-[11px] text-zinc-400">{t("packPointsLabel")}</div>
+                <div className="mt-1 text-sm font-semibold text-zinc-700">¥{p.priceCny}</div>
+              </button>
+            ))}
+          </div>
+          {/* 充值记录（流水过滤 reason='recharge'，最多展示最近 5 条） */}
+          <div className="mt-3 border-t border-dashed border-amber-100 pt-3">
+            <h3 className="text-xs font-semibold text-zinc-500">{t("rechargeHistory")}</h3>
+            {rechargeLogs.length === 0 ? (
+              <p className="mt-1 text-[11px] text-zinc-400">{t("rechargeEmpty")}</p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {rechargeLogs.slice(0, 5).map((l) => (
+                  <li
+                    key={l.id}
+                    className="flex items-center justify-between text-[11px] text-zinc-500"
+                  >
+                    <span>{new Date(l.createdAt).toLocaleString(locale)}</span>
+                    <span className="font-semibold text-emerald-600">+{l.amount}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* CMS 积分经济 + 规则（任务三/五读取侧接线：后台改表 60s 内生效 + afterChange 即新；
+            economy 为 null 且 rules 为空（CMS 未配置/空表）→ 区块整体隐藏，页面与接入前完全一致） */}
+        {(economy || rules.length > 0) && (
+          <div className="mb-5 rounded-2xl border border-sky-100 bg-white/80 p-4 shadow-sm">
+            {economy && (
+              <>
+                <h2 className="text-sm font-semibold text-zinc-800">{t("economyTitle")}</h2>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    { label: t("ecoSignupBonus"), value: economy.signupBonus },
+                    { label: t("ecoCheckinBase"), value: economy.checkinBase },
+                    { label: t("ecoStreakMax"), value: economy.checkinStreakMax },
+                    { label: t("ecoPointsPerCny"), value: economy.pointsPerCny },
+                  ].map((c) => (
+                    <div
+                      key={c.label}
+                      className="rounded-xl border border-sky-100 bg-sky-50/50 px-2 py-2.5 text-center"
+                    >
+                      <div className="text-base font-extrabold text-sky-600">{c.value ?? "-"}</div>
+                      <div className="mt-0.5 text-[10px] leading-tight text-zinc-500">{c.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {rules.length > 0 && (
+              <>
+                <h2 className={`text-sm font-semibold text-zinc-800 ${economy ? "mt-4" : ""}`}>
+                  {t("rulesTitle")}
+                </h2>
+                <ul className="mt-2 space-y-1.5">
+                  {rules.map((r) => (
+                    <li
+                      key={r.ruleKey}
+                      className="flex items-start justify-between gap-3 rounded-lg border border-zinc-100 bg-white px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-zinc-700">
+                          {(locale === "en" ? r.nameEn : r.nameZh) || r.ruleKey}
+                        </p>
+                        {(locale === "en" ? r.descriptionEn : r.descriptionZh) ? (
+                          <p className="mt-0.5 text-[10px] leading-snug text-zinc-400">
+                            {locale === "en" ? r.descriptionEn : r.descriptionZh}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="shrink-0 text-right text-[11px]">
+                        {r.points !== 0 && (
+                          <span
+                            className={`font-bold ${r.points > 0 ? "text-emerald-600" : "text-rose-500"}`}
+                          >
+                            {r.points > 0 ? `+${r.points}` : r.points}
+                          </span>
+                        )}
+                        {r.dailyLimit ? (
+                          <p className="text-zinc-400">{t("ruleDailyLimit", { n: r.dailyLimit })}</p>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* 积分兑换盲盒（心理学激励：目标渐进 + 稀缺） */}
+        <div className="mb-5 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-violet-900">{t("redeemTitle")}</p>
+              <p className="mt-0.5 text-xs text-violet-600">{t("redeemSub")}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              {t("redeemDailyLimit")}
+            </span>
+          </div>
+
+          {/* 进度条：越接近目标越兴奋 */}
+          <div className="mt-3">
+            <div className="flex justify-between text-[11px] text-zinc-500">
+              <span>
+                {t("redeemPrice")}: {REDEEM_PRICE} ⭐
+              </span>
+              <span>
+                {points} / {REDEEM_PRICE} ⭐
+              </span>
+            </div>
+            <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-white">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500 transition-all duration-500"
+                style={{ width: `${Math.min(100, (points / REDEEM_PRICE) * 100)}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-[11px] font-medium text-violet-700">
+              {points >= REDEEM_PRICE
+                ? t("redeemProgressReady")
+                : t("redeemProgress", { need: REDEEM_PRICE - points })}
+            </p>
+          </div>
+
+          {/* 兑换反馈 */}
+          {redeemMsg && (
+            <p
+              className={`mt-2 text-xs font-medium ${
+                redeemResult ? "text-emerald-700" : "text-red-600"
+              }`}
+            >
+              {redeemMsg}
+            </p>
+          )}
+          {redeemResult && (
+            <div className="mt-2 flex items-center gap-3 rounded-xl bg-white/80 p-2">
+              <LivingPet
+                src={redeemResult.imageUrl}
+                alt={redeemResult.speciesName}
+                tail={false}
+                className="h-10 w-10 rounded-full border border-violet-200 object-cover"
+              />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-zinc-800">{redeemResult.speciesName}</p>
+                <p className="truncate font-mono text-[10px] text-zinc-400">{redeemResult.id}</p>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => void handleRedeem()}
+            disabled={redeeming || points < REDEEM_PRICE}
+            className="mt-3 w-full rounded-full bg-violet-500 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-600 disabled:opacity-40"
+          >
+            {redeeming ? t("redeeming") : t("redeemBtn")}
+          </button>
+        </div>
+
+        {loading && <p className="py-10 text-center text-sm text-zinc-400">{tc("loading")}</p>}
+        {error && <p className="py-10 text-center text-sm text-red-600">{error}</p>}
+        {!loading && !error && logs.length === 0 && (
+          <p className="py-10 text-center text-sm text-zinc-400">{t("empty")}</p>
+        )}
+
+        <div className="space-y-2">
+          {logs.map((l) => (
+            <div
+              key={l.id}
+              className="flex items-center justify-between rounded-xl border border-zinc-100 bg-white/90 px-4 py-2.5 shadow-sm"
+            >
+              <div>
+                <div className="text-sm font-medium text-zinc-700">
+                  {reasonLabel(l.reason)}
+                </div>
+                <div className="text-xs text-zinc-400">
+                  {new Date(l.createdAt).toLocaleString(locale)}
+                </div>
+              </div>
+              <span
+                className={`font-semibold ${
+                  l.amount >= 0 ? "text-emerald-600" : "text-red-500"
+                }`}
+              >
+                {l.amount >= 0 ? "+" : ""}
+                {l.amount}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 积分充值弹窗：下单 → 扫码 → 轮询余额到账 → 刷新流水 */}
+      <PointsRechargeModal
+        open={rechargePack !== null}
+        pack={rechargePack}
+        baselinePoints={points}
+        onClose={() => setRechargePack(null)}
+        onCredited={(now) => {
+          setPoints(now);
+          setRechargePack(null);
+          void load();
+        }}
+      />
+    </main>
+  );
+}
+

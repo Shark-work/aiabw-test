@@ -11,11 +11,12 @@ import { speciesAvatarFor } from "@/lib/species-avatars";
 import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { characterView, resolveCharacter } from "@/lib/pets/characters";
 import { isRiveAssetAvailable } from "@/lib/pets/rive-asset-server";
-import { getSpeciesVisualById } from "@/lib/cms/loaders";
+import { getSpeciesVisualById, getTokenRuleByKey } from "@/lib/cms/loaders";
 import {
   HUNGER_SETTLE_SQL,
   HUNGRY_THRESHOLD,
   LONG_ABSENCE_HOURS,
+  PET_CHAT_FREE_DAILY,
   PLAY_ITEMS,
   PLAY_ITEM_SOURCE,
 } from "@/lib/pet-play-config";
@@ -114,6 +115,13 @@ export async function GET(req: Request) {
     // 视觉配置走 CMS loader（60s 缓存；空表/未配置回退 resolveSpeciesVisual 注册表——
     // 后台改物种视觉「改表即改站」，2026-10-18 ui-wiring）
     const visual = await getSpeciesVisualById(speciesId ?? "");
+    // 每日免费对话句数（任务三 CMS TokenRule 下发：前端「今日免费 X/Y」total 不硬编码；
+    // loader 取不到 → 回退代码常量，与 /api/pet/chat 计费口径同源）
+    const freeRule = await getTokenRuleByKey("pet.chat.free-quota");
+    const chatFreeDaily =
+      freeRule?.dailyLimit && freeRule.dailyLimit > 0
+        ? Math.floor(freeRule.dailyLimit)
+        : PET_CHAT_FREE_DAILY;
 
     return NextResponse.json({
       ok: true,
@@ -131,6 +139,7 @@ export async function GET(req: Request) {
       character: characterView(resolveCharacter(pet.petType), locale),
       // Rive 上架探测（按物种 rivePath 逐路径）：未上架 → 前端零请求直降静态立绘；上架自动切 Rive
       riveAvailable: visual.rivePath ? isRiveAssetAvailable(visual.rivePath) : false,
+      chatFreeDaily,
       hungry: hungerLevel <= HUNGRY_THRESHOLD,
       // 久别重逢（距上次互动 ≥ LONG_ABSENCE_HOURS）：前端进场 sleepy 态 + wake 唤醒
       returning: absenceHours >= LONG_ABSENCE_HOURS,

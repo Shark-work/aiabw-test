@@ -78,7 +78,7 @@ test("points-recharge(4): 数据层 ref 列 + 唯一索引 + SCHEMA_VERSION ≥ 
 });
 
 test("points-recharge(5): /points 页充值入口 + 充值记录 + 弹窗链路", () => {
-  const page = read("../src/app/[locale]/points/page.tsx");
+  const page = read("../src/components/points/points-client.tsx"); // RSC 壳拆分后页面内容所在地
   assert.match(page, /POINTS_PACKS/);
   assert.match(page, /PointsRechargeModal/);
   assert.match(page, /recharge: t\("recharge"\)/);

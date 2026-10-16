@@ -231,7 +231,14 @@
     "rechargeFail": "充值下单失败，请稍后重试",
     "rechargeHistory": "充值记录",
     "rechargeEmpty": "暂无充值记录",
-    "recharge": "积分充值"
+    "recharge": "积分充值",
+    "economyTitle": "📊 积分经济总览",
+    "ecoSignupBonus": "🎁 注册赠送",
+    "ecoCheckinBase": "📅 每日签到基准",
+    "ecoStreakMax": "🔥 连签封顶（天）",
+    "ecoPointsPerCny": "💱 充值汇率（1 元 ≈ N 积分）",
+    "rulesTitle": "📜 积分规则",
+    "ruleDailyLimit": "每日限 {n} 次"
   },
   "handbooks": {
     "title": "记忆手账",

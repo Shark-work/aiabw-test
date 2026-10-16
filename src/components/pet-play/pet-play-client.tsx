@@ -11,7 +11,7 @@ import { useAntiDebug } from "@/components/pet-play/use-anti-debug";
 import { ChatBubble } from "@/components/pet-play/chat-bubble";
 import { isPetMuted, playPetSound, setPetMuted } from "@/lib/pet-sound";
 import { trackPet, trackPetExitOnce } from "@/lib/pet-track";
-import type { PetAction, PetMood } from "@/lib/pet-play-config";
+import { PET_CHAT_FREE_DAILY, type PetAction, type PetMood } from "@/lib/pet-play-config";
 
 interface PlayPet {
   id: string;
@@ -62,6 +62,8 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [toast, setToast] = useState("");
   const [freeRemaining, setFreeRemaining] = useState<number | null>(null);
+  // 每日免费句数总额（任务三：服务端 CMS TokenRule 下发，缺省回退代码常量——total 不硬编码）
+  const [chatFreeDaily, setChatFreeDaily] = useState(PET_CHAT_FREE_DAILY);
   const [rechargeOpen, setRechargeOpen] = useState(false);
   const [muted, setMuted] = useState(true);
 
@@ -112,6 +114,9 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
         setPoints(data.points);
         setItems(data.items);
         setRiveAvailable(data.riveAvailable === true);
+        if (typeof data.chatFreeDaily === "number" && data.chatFreeDaily > 0) {
+          setChatFreeDaily(data.chatFreeDaily);
+        }
         setPhase("ready");
         // 开场白由角色配置下发（需求一：文案不硬编码）；饥饿宠物进场即 hungry 态 + 买粮提示
         setReply(data.character?.greeting ?? "");
@@ -205,6 +210,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
       setIntensity(typeof data.intensity === "number" ? data.intensity : 0.5);
       setPoints(data.points);
       if (typeof data.freeRemaining === "number") setFreeRemaining(data.freeRemaining);
+      if (typeof data.freeDaily === "number" && data.freeDaily > 0) setChatFreeDaily(data.freeDaily);
       setPet((p) => (p ? { ...p, happiness: data.happiness, hungerLevel: data.hungerLevel } : p));
       if (data.hungry) setToast(t("hungryHint"));
       playPetSound("reply");
@@ -391,7 +397,7 @@ export function PetPlayClient({ adoptionId }: { adoptionId: string }) {
           </div>
           {freeRemaining !== null && (
             <div className="hidden rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-medium text-emerald-300 sm:block">
-              {t("freeToday", { left: freeRemaining, total: 5 })}
+              {t("freeToday", { left: freeRemaining, total: chatFreeDaily })}
             </div>
           )}
           <div className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-amber-300">

@@ -231,7 +231,14 @@
     "rechargeFail": "Failed to create the order, please try again",
     "rechargeHistory": "Top-up History",
     "rechargeEmpty": "No top-ups yet",
-    "recharge": "Points top-up"
+    "recharge": "Points top-up",
+    "economyTitle": "📊 Points Economy",
+    "ecoSignupBonus": "🎁 Sign-up bonus",
+    "ecoCheckinBase": "📅 Daily check-in base",
+    "ecoStreakMax": "🔥 Streak cap (days)",
+    "ecoPointsPerCny": "💱 Top-up rate (¥1 ≈ N pts)",
+    "rulesTitle": "📜 Points Rules",
+    "ruleDailyLimit": "Up to {n}×/day"
   },
   "handbooks": {
     "title": "Memory Journals",

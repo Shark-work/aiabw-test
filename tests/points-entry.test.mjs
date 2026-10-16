@@ -149,14 +149,14 @@ test("points-entry(11): 402 触发点 dispatch（盲盒 / 结晶共鸣 / 积分�
   const breed = read("../src/components/collection/nfr-breed-modal.tsx");
   assert.match(breed, /import \{ notifyPointsInsufficient \} from "@\/lib\/points-entry"/);
   assert.match(breed, /res\.status === 402[\s\S]{0,200}notifyPointsInsufficient\(\{ needed: BREED_COST_POINTS \}\)/);
-  const page = read("../src/app/[locale]/points/page.tsx");
+  const page = read("../src/components/points/points-client.tsx"); // RSC 壳拆分后页面内容所在地
   assert.match(page, /import \{ notifyPointsInsufficient \} from "@\/lib\/points-entry"/);
   assert.match(page, /res\.status === 400 && points < REDEEM_PRICE[\s\S]{0,200}notifyPointsInsufficient\(\{ needed: REDEEM_PRICE \}\)/);
 });
 
 // === 8) /points 首充标签 ===
 test("points-entry(12): /points 页首充 ×2 标签（状态拉取 + 角标 + 划线原价）", () => {
-  const page = read("../src/app/[locale]/points/page.tsx");
+  const page = read("../src/components/points/points-client.tsx"); // RSC 壳拆分后页面内容所在地
   assert.match(page, /\/api\/user\/first-purchase\/status/);
   assert.match(page, /data-testid="points-pack-first-badge"/);
   assert.match(page, /p\.points \* FIRST_PURCHASE_BONUS_MULTIPLIER/);
