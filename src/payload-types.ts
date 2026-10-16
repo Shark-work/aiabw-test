@@ -69,6 +69,13 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    species: Species;
+    'pet-animations': PetAnimation;
+    stories: Story;
+    pages: Page;
+    banners: Banner;
+    products: Product;
+    'token-rules': TokenRule;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +85,13 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    species: SpeciesSelect<false> | SpeciesSelect<true>;
+    'pet-animations': PetAnimationsSelect<false> | PetAnimationsSelect<true>;
+    stories: StoriesSelect<false> | StoriesSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    banners: BannersSelect<false> | BannersSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    'token-rules': TokenRulesSelect<false> | TokenRulesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -168,6 +182,272 @@ export interface Media {
   focalY?: number | null;
 }
 /**
+ * 宠物物种：视觉资产 / 场景主题 / 展示人设。改表即改站，无需发版。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "species".
+ */
+export interface Species {
+  id: number;
+  /**
+   * pet_type "species:<id>" 的 id 部分，如 persian / snow-leopard。
+   */
+  speciesId: string;
+  nameZh: string;
+  nameEn: string;
+  /**
+   * 展示用（文档/卡片）。System Prompt 不入库，仍由服务端代码构建。
+   */
+  personality?: string | null;
+  greetingZh?: string | null;
+  greetingEn?: string | null;
+  /**
+   * 留空 = 该物种无 Rive 素材，直用静态立绘（绝不复用其他物种素材）。
+   */
+  rivePath?: string | null;
+  /**
+   * public 下路径如 /avatars/persian.png；留空 = 运行时按物种头像派生。
+   */
+  staticImage?: string | null;
+  /**
+   * 舞台背景氛围，CSS 类 pet-scene-<theme>；未识别回退 meadow。
+   */
+  sceneTheme?: string | null;
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * 情绪 → 动作 → Rive 输入的映射；留空物种 = 全局默认。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pet-animations".
+ */
+export interface PetAnimation {
+  id: number;
+  species?: (number | null) | Species;
+  mood: 'idle' | 'happy' | 'sad' | 'angry' | 'hungry' | 'thinking' | 'sleepy';
+  action: 'idle' | 'eat' | 'sleep' | 'think' | 'wave' | 'happy' | 'sad' | 'angry' | 'rub';
+  /**
+   * 留空 = 仅 Number 输入（emotion/intensity）驱动，无 Trigger。
+   */
+  riveTrigger?: ('pet' | 'eat' | 'play' | 'sleep' | 'wake') | null;
+  intensityDefault?: number | null;
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * 世界观 / 区域志 / 信条 / 词条 / 古灵传说 / 灵魂卡故事。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories".
+ */
+export interface Story {
+  id: number;
+  /**
+   * 如 creation / region:town / creed:resonance / glossary:soul-seed。
+   */
+  slug: string;
+  kind: 'creation-myth' | 'region' | 'life-form' | 'creed' | 'glossary' | 'ancient-legend' | 'card-story';
+  titleZh: string;
+  titleEn: string;
+  summaryZh?: string | null;
+  summaryEn?: string | null;
+  contentZh?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  contentEn?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  emoji?: string | null;
+  sortOrder?: number | null;
+  /**
+   * 取消勾选 = 草稿，前台 loader 不可见。
+   */
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * 通用内容页：关于 / 帮助 / 活动公告等运营文案页。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  /**
+   * 如 about / help / event-2026-spring。
+   */
+  slug: string;
+  titleZh: string;
+  titleEn: string;
+  bodyZh?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  bodyEn?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  status?: ('published' | 'draft') | null;
+  seoTitleZh?: string | null;
+  seoTitleEn?: string | null;
+  seoDescZh?: string | null;
+  seoDescEn?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * 运营横幅：位置 + 时间窗 + CTA；无真实活动不虚构（红线）。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "banners".
+ */
+export interface Banner {
+  id: number;
+  slug: string;
+  placement: 'home-hero' | 'shop-top' | 'explore-top' | 'pet-play' | 'global-topbar';
+  titleZh: string;
+  titleEn: string;
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  ctaTextZh?: string | null;
+  ctaTextEn?: string | null;
+  ctaUrl?: string | null;
+  image?: (number | null) | Media;
+  imagePath?: string | null;
+  startAt?: string | null;
+  endAt?: string | null;
+  priority?: number | null;
+  enabled?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * 可购买项目录：道具 / 装扮 / 特效 / 卡包。改价即改站。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  /**
+   * 与业务路由引用一致，如 evolution_stone / skin_starry。
+   */
+  productId: string;
+  kind: 'consumable' | 'skin' | 'effect' | 'pack' | 'bundle';
+  nameZh: string;
+  nameEn: string;
+  descriptionZh?: string | null;
+  descriptionEn?: string | null;
+  /**
+   * 如 { "growthExp": 50 } / { "evolve": true }；无效果留空。
+   */
+  effectPayload?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  pricePoints: number;
+  /**
+   * 红线：最低 1 元，禁止 0.x 元。
+   */
+  priceCny?: number | null;
+  rarity?: ('common' | 'rare' | 'epic' | 'legendary') | null;
+  enabled?: boolean | null;
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * 积分奖励/消耗额度与每日限额：改表即调经济参数。
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "token-rules".
+ */
+export interface TokenRule {
+  id: number;
+  /**
+   * 如 checkin.daily / exploration.complete / postcard.share。
+   */
+  ruleKey: string;
+  nameZh: string;
+  nameEn: string;
+  points: number;
+  dailyLimit?: number | null;
+  cooldownMinutes?: number | null;
+  enabled?: boolean | null;
+  descriptionZh?: string | null;
+  descriptionEn?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -198,6 +478,34 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'species';
+        value: number | Species;
+      } | null)
+    | ({
+        relationTo: 'pet-animations';
+        value: number | PetAnimation;
+      } | null)
+    | ({
+        relationTo: 'stories';
+        value: number | Story;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'banners';
+        value: number | Banner;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'token-rules';
+        value: number | TokenRule;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -283,6 +591,134 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "species_select".
+ */
+export interface SpeciesSelect<T extends boolean = true> {
+  speciesId?: T;
+  nameZh?: T;
+  nameEn?: T;
+  personality?: T;
+  greetingZh?: T;
+  greetingEn?: T;
+  rivePath?: T;
+  staticImage?: T;
+  sceneTheme?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pet-animations_select".
+ */
+export interface PetAnimationsSelect<T extends boolean = true> {
+  species?: T;
+  mood?: T;
+  action?: T;
+  riveTrigger?: T;
+  intensityDefault?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stories_select".
+ */
+export interface StoriesSelect<T extends boolean = true> {
+  slug?: T;
+  kind?: T;
+  titleZh?: T;
+  titleEn?: T;
+  summaryZh?: T;
+  summaryEn?: T;
+  contentZh?: T;
+  contentEn?: T;
+  emoji?: T;
+  sortOrder?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  slug?: T;
+  titleZh?: T;
+  titleEn?: T;
+  bodyZh?: T;
+  bodyEn?: T;
+  status?: T;
+  seoTitleZh?: T;
+  seoTitleEn?: T;
+  seoDescZh?: T;
+  seoDescEn?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "banners_select".
+ */
+export interface BannersSelect<T extends boolean = true> {
+  slug?: T;
+  placement?: T;
+  titleZh?: T;
+  titleEn?: T;
+  content?: T;
+  ctaTextZh?: T;
+  ctaTextEn?: T;
+  ctaUrl?: T;
+  image?: T;
+  imagePath?: T;
+  startAt?: T;
+  endAt?: T;
+  priority?: T;
+  enabled?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  productId?: T;
+  kind?: T;
+  nameZh?: T;
+  nameEn?: T;
+  descriptionZh?: T;
+  descriptionEn?: T;
+  effectPayload?: T;
+  pricePoints?: T;
+  priceCny?: T;
+  rarity?: T;
+  enabled?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "token-rules_select".
+ */
+export interface TokenRulesSelect<T extends boolean = true> {
+  ruleKey?: T;
+  nameZh?: T;
+  nameEn?: T;
+  points?: T;
+  dailyLimit?: T;
+  cooldownMinutes?: T;
+  enabled?: T;
+  descriptionZh?: T;
+  descriptionEn?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

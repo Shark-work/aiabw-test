@@ -11,7 +11,14 @@ import sharp from "sharp";
 // ⚠️ 相对导入必须带 .ts 显式扩展名：Payload CLI 以 --disable-transpile（Node 24 原生
 // type-stripping ESM）加载本文件，原生 ESM 解析不认无扩展名相对路径；
 // 显式扩展名对 Next webpack/turbopack 与 tsc（allowImportingTsExtensions）同样合法。
+import { Banners } from "./src/collections/Banners.ts";
 import { Media } from "./src/collections/Media.ts";
+import { Pages } from "./src/collections/Pages.ts";
+import { PetAnimations } from "./src/collections/PetAnimations.ts";
+import { Products } from "./src/collections/Products.ts";
+import { Species } from "./src/collections/Species.ts";
+import { Stories } from "./src/collections/Stories.ts";
+import { TokenRules } from "./src/collections/TokenRules.ts";
 import { Users } from "./src/collections/Users.ts";
 
 const filename = fileURLToPath(import.meta.url);
@@ -54,7 +61,7 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, "src/payload-types.ts"),
   },
-  collections: [Users, Media],
+  collections: [Users, Media, Species, PetAnimations, Stories, Pages, Banners, Products, TokenRules],
   plugins: [
     ...(process.env.BLOB_READ_WRITE_TOKEN
       ? [
